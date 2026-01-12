@@ -20,7 +20,7 @@ class Resques63API{
   private function getAPIOverviewData(){
     $connection = new Database();
     $product = new Products($connection);
-    $result = $product->generate_sku();
+    $result = $product->getPendingProducts();
 
 
     echo json_encode ($result);
