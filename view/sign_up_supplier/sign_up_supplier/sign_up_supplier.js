@@ -1,8 +1,8 @@
 class ClassSignUp {
   constructor() {
 
-/*
-   nameSignUp.value = "Ale";
+
+/*   nameSignUp.value = "Ale";
     emailSignUp.value =  "aleinarossui@gmail.com";
     phoneSignUp.value = "57 312 348 9880";
     companySignUp.value = "Aleina";
@@ -11,23 +11,20 @@ class ClassSignUp {
     address1SignUp.value = "Finca La Carmelia";
     address2SignUp.value = "";
     postcodeSignUp.value = "47999";
-    passwordSignUp.value =  "Aprch14?...";
+    passwordSignUp.value =  "Aprch14?...";*/
 
-     */
-
-
-    /*  nameSignUp.value = "Ian";
+       nameSignUp.value = "Ian";
       emailSignUp.value =  "ian@kan-do-it.com";
-      phoneSignUp.value = "57 312 348 9880";
+      phoneSignUp.value = "44 4567896433";
       companySignUp.value = "Promoflow";
       countrySignUp.value = "England";
-      citySignUp.value = "England";
-      address1SignUp.value = "England";
+      citySignUp.value = "Southampton";
+      address1SignUp.value = "....";
       address2SignUp.value = "";
-      postcodeSignUp.value = "47999";
+      postcodeSignUp.value = "000000";
       passwordSignUp.value =  "32skiff32!CI";
 
-      */
+
 
     this.onPaused = false;
     signupEnter.addEventListener("click", function(){

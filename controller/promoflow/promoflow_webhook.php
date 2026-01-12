@@ -1,7 +1,4 @@
 <?php
-
-
-
 class Resques63API{
   public function handleResques63API(){
 
@@ -18,7 +15,6 @@ class Resques63API{
         echo json_encode(['response' => false, 'error' => 'Unsupported action']);
         break;
     }
-
   }
 
   private function getAPIOverviewData(){
