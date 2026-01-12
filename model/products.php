@@ -562,7 +562,7 @@ class Products {
 
       return [
         'success' => true,
-        'data'    => $items
+        'result'    => $items
       ];
 
     } catch (PDOException $e) {
