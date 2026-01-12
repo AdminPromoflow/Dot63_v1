@@ -1,17 +1,6 @@
 <?php
 
-header('Content-Type: application/json; charset=utf-8');
 
-$data = json_decode(file_get_contents('php://input'), true) ?? [];
-
-$action = $data['action'] ?? null;
-
-echo json_encode([
-  "ok" => true,
-  "action" => $action,
-  "msg" => "Acceso permitido2"
-]);
-exit;
 
 class Resques63API{
   public function handleResques63API(){
@@ -25,7 +14,7 @@ class Resques63API{
     echo json_encode([
       "ok" => true,
       "action" => $action,
-      "msg" => "Acceso permitido2"
+      "msg" => "Acceso permitido3"
     ]);
     exit;
 
