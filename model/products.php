@@ -520,6 +520,58 @@ class Products {
       }
   }
 
+  public function getPendingProducts(){
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      /* 1) Traer productos pendientes (is_approved = 0) */
+      $stmt = $pdo->prepare("
+        SELECT
+          p.SKU,
+          p.name,
+          p.date_status,
+          p.is_approved,
+          p.supplier_id,
+          s.contact_name,
+          s.company_name
+        FROM products p
+        LEFT JOIN suppliers s
+          ON s.supplier_id = p.supplier_id
+        WHERE p.is_approved = 0
+        ORDER BY p.date_status DESC, p.product_id DESC
+      ");
+
+      $stmt->execute();
+      $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      $items = [];
+      foreach ($rows as $r) {
+        $items[] = [
+          'sku'         => (string)($r['SKU'] ?? ''),
+          'name'        => (string)($r['name'] ?? ''),
+          'date_status' => $r['date_status'], // TIME o lo que tengas guardado
+          'is_approved' => (int)($r['is_approved'] ?? 0),
+          'supplier_id' => (int)($r['supplier_id'] ?? 0),
+          'supplier'    => [
+            'contact_name' => (string)($r['contact_name'] ?? ''),
+            'company_name' => (string)($r['company_name'] ?? ''),
+          ],
+        ];
+      }
+
+      return [
+        'success' => true,
+        'data'    => $items
+      ];
+
+    } catch (PDOException $e) {
+      error_log('getPendingProducts error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
+
+
 
 
 

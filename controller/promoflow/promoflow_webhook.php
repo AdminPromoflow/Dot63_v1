@@ -18,15 +18,17 @@ class Resques63API{
   }
 
   private function getAPIOverviewData(){
-    echo json_encode([
-      "ok" => true,
-      "action" => $action,
-      "msg" => "Acceso permitido5"
-    ]);
+    $connection = new Database();
+    $product = new Products($connection);
+    $result = $product->generate_sku();
+
+
+    echo json_encode ($result);
   }
 
-
 }
+include "../../controller/config/database.php";
+include_once "../../model/products.php"; // modelo correcto
 
 if ($payload = (json_decode(file_get_contents("php://input"), true) ?? [])) {
   $apiHandler = new Resques63API();

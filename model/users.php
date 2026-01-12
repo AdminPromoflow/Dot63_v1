@@ -74,8 +74,6 @@ class Users {
       $this->postcode = $postcode;
   }
 
-
-
   public function getPasswordUserByEmail() {
     if (empty($this->email)) {
       return null; // Asegúrate de llamar antes a setEmail($email)
@@ -103,11 +101,6 @@ class Users {
     }
   }
 
-
-  /*
-   * Crea un nuevo supplier con password (hash).
-   * Mapea tus propiedades a las columnas de `suppliers`.
-   */
    public function createUser() {
      try {
        // Si ya existe, responde y corta
@@ -151,9 +144,6 @@ class Users {
        return;
      }
    }
-
-
-
 
    public function checkIfUserExistsByEmail() {
      if (empty($this->email)) {
@@ -230,55 +220,48 @@ class Users {
      }
    }
 
-
-
-
    public function requestUpdateProfileInfo() {
-  if (empty($this->email)) return false; // clave de búsqueda
+    if (empty($this->email)) return false; // clave de búsqueda
 
-  try {
-    $pdo = $this->connection->getConnection();
-    // Asegúrate de tener PDO::ERRMODE_EXCEPTION en tu conexión
+    try {
+      $pdo = $this->connection->getConnection();
+      // Asegúrate de tener PDO::ERRMODE_EXCEPTION en tu conexión
 
-    $stmt = $pdo->prepare("
-      UPDATE suppliers
-      SET
-        contact_name  = :contact_name,
-        phone         = :phone,
-        company_name  = :company_name,
-        country       = :country,
-        city          = :city,
-        address_line1 = :address_line1,
-        address_line2 = :address_line2,
-        postal_code   = :postal_code
-      WHERE email = :email
-      LIMIT 1
-    ");
+      $stmt = $pdo->prepare("
+        UPDATE suppliers
+        SET
+          contact_name  = :contact_name,
+          phone         = :phone,
+          company_name  = :company_name,
+          country       = :country,
+          city          = :city,
+          address_line1 = :address_line1,
+          address_line2 = :address_line2,
+          postal_code   = :postal_code
+        WHERE email = :email
+        LIMIT 1
+      ");
 
-    $stmt->execute([
-      ':contact_name'  => $this->name ?? null,
-      ':phone'         => $this->phone ?? null,
-      ':company_name'  => $this->company_name ?? null,
-      ':country'       => $this->country ?? null,
-      ':city'          => $this->city ?? null,
-      ':address_line1' => $this->address_line1 ?? null,
-      ':address_line2' => $this->address_line2 ?? null,
-      ':postal_code'   => $this->postcode ?? null, // ojo: setter setPostcode → columna postal_code
-      ':email'         => $this->email
-    ]);
+      $stmt->execute([
+        ':contact_name'  => $this->name ?? null,
+        ':phone'         => $this->phone ?? null,
+        ':company_name'  => $this->company_name ?? null,
+        ':country'       => $this->country ?? null,
+        ':city'          => $this->city ?? null,
+        ':address_line1' => $this->address_line1 ?? null,
+        ':address_line2' => $this->address_line2 ?? null,
+        ':postal_code'   => $this->postcode ?? null, // ojo: setter setPostcode → columna postal_code
+        ':email'         => $this->email
+      ]);
 
-    // rowCount() puede ser 0 si no hubo cambios, pero la ejecución fue correcta.
-    return true;
-  } catch (PDOException $e) {
-    error_log('requestUpdateProfileInfo error (' . $this->email . '): ' . $e->getMessage());
-    return false;
-  }
-}
+      // rowCount() puede ser 0 si no hubo cambios, pero la ejecución fue correcta.
+      return true;
+    } catch (PDOException $e) {
+      error_log('requestUpdateProfileInfo error (' . $this->email . '): ' . $e->getMessage());
+      return false;
+    }
+    }
 
-
-
-
-
-
+  
 }
 ?>
