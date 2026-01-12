@@ -41,8 +41,8 @@ class Resques63API{
 
 }
 
-//if ($payload = (json_decode(file_get_contents("php://input"), true) ?? [])) {
+if ($payload = (json_decode(file_get_contents("php://input"), true) ?? [])) {
   $apiHandler = new Resques63API();
   $apiHandler->handleResques63API();
-//}
+}
 ?>
