@@ -9,6 +9,10 @@ class Resques63API{
       case 'get_API_overview_data':
         $this->getAPIOverviewData($data);
         break;
+        case 'get_preview_product_details':
+          $this->getPreviewProductDetails($data);
+          break;
+
 
       default:
         header('Content-Type: application/json; charset=utf-8');
@@ -26,6 +30,15 @@ class Resques63API{
     echo json_encode ($result);
   }
 
+
+  private function getPreviewProductDetails(){
+  //  $connection = new Database();
+  //  $product = new Products($connection);
+  //  $result = $product->getPendingProducts();
+
+
+    echo json_encode ($data["sku"]);
+  }
 }
 include "../../controller/config/database.php";
 include_once "../../model/products.php"; // modelo correcto
