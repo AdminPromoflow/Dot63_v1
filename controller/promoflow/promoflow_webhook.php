@@ -27,7 +27,7 @@ class Resques63API{
     $result = $product->getPendingProducts();
 
 
-    echo json_encode ($result);
+    echo  ($result);
   }
 
 

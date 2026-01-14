@@ -53,7 +53,7 @@ class Product {
     $variation_details = $variation->getVariationsSKUBySKUProduct();
 
 
-    echo json_encode(array($company,$category_name, $product_details, $variation_details ));
+    return json_encode(array($company,$category_name, $product_details, $variation_details ));
 
   //  $this->sendAPIPromoflow(array($company,$category_name, $product_details, $variation_details ));
   }
