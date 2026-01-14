@@ -57,11 +57,7 @@ class Resques63API{
     $variation_details = $variation->getVariationsSKUBySKUProduct();
 
 
-    return  json_encode(array($company,$category_name, $product_details, $variation_details ));
-
-
-
-  //  echo json_encode ($data["sku"]);
+    echo  json_encode(array($company,$category_name, $product_details, $variation_details ));
   }
 }
 
