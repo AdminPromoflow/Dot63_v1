@@ -27,7 +27,7 @@ class Resques63API{
     $result = $product->getPendingProducts();
 
 
-    echo  ($result);
+    echo json_encode ($result);
   }
 
 
@@ -57,11 +57,11 @@ class Resques63API{
     $variation_details = $variation->getVariationsSKUBySKUProduct();
 
 
-    echo json_encode(array($company,$category_name, $product_details, $variation_details ));
+    return  (array($company,$category_name, $product_details, $variation_details ));
 
 
 
-    echo json_encode ($data["sku"]);
+  //  echo json_encode ($data["sku"]);
   }
 }
 
