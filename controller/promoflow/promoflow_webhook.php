@@ -37,7 +37,7 @@ class Resques63API{
   //  $result = $product->getPendingProducts();
 
 
-    echo json_encode ($data["sku"]);
+    echo json_encode ($data[sku]);
   }
 }
 include "../../controller/config/database.php";
