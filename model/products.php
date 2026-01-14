@@ -390,7 +390,6 @@ class Products {
     }
   }
 
-
   public function updateGroupIdBySKU() {
 
     $sku = trim((string)$this->sku);
@@ -520,24 +519,43 @@ class Products {
       }
   }
 
-  public function getPendingProducts(){
+  public function getPendingProducts() {
 
     try {
       $pdo = $this->connection->getConnection();
 
-      /* 1) Traer productos pendientes (is_approved = 0) */
       $stmt = $pdo->prepare("
         SELECT
-          p.SKU,
+          p.SKU AS product_sku,
           p.name,
           p.date_status,
           p.is_approved,
           p.supplier_id,
+
           s.contact_name,
-          s.company_name
+          s.company_name,
+
+          vfirst.variation_sku AS sku_variations
+
         FROM products p
         LEFT JOIN suppliers s
           ON s.supplier_id = p.supplier_id
+
+        -- Primer “hijo” (primera variation) por producto
+        LEFT JOIN (
+          SELECT v1.product_id, v1.SKU AS variation_sku
+          FROM variations v1
+          INNER JOIN (
+            SELECT product_id, MIN(variation_id) AS first_variation_id
+            FROM variations
+            WHERE product_id IS NOT NULL
+            AND parent_id IS NULL
+            GROUP BY product_id
+          ) fv
+            ON fv.first_variation_id = v1.variation_id
+        ) vfirst
+          ON vfirst.product_id = p.product_id
+
         WHERE p.is_approved = 0
         ORDER BY p.date_status DESC, p.product_id DESC
       ");
@@ -548,9 +566,11 @@ class Products {
       $items = [];
       foreach ($rows as $r) {
         $items[] = [
-          'sku'         => (string)($r['SKU'] ?? ''),
+          // SKU del PRODUCTO (igual al que ya traías)
+          'SKU'            => (string)($r['product_sku'] ?? ''),
+          'sku_variations' => (string)($r['sku_variations'] ?? ''),
           'name'        => (string)($r['name'] ?? ''),
-          'date_status' => $r['date_status'], // TIME o lo que tengas guardado
+          'date_status' => $r['date_status'],
           'is_approved' => (int)($r['is_approved'] ?? 0),
           'supplier_id' => (int)($r['supplier_id'] ?? 0),
           'supplier'    => [
@@ -562,7 +582,7 @@ class Products {
 
       return [
         'success' => true,
-        'result'    => $items
+        'result'  => $items
       ];
 
     } catch (PDOException $e) {
