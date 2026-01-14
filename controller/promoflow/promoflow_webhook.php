@@ -31,13 +31,13 @@ class Resques63API{
   }
 
 
-  private function getPreviewProductDetails(){
+  private function getPreviewProductDetails($data){
   //  $connection = new Database();
   //  $product = new Products($connection);
   //  $result = $product->getPendingProducts();
 
 
-    echo json_encode ($data[sku]);
+    echo json_encode ($data["sku"]);
   }
 }
 include "../../controller/config/database.php";
