@@ -32,16 +32,45 @@ class Resques63API{
 
 
   private function getPreviewProductDetails($data){
-  //  $connection = new Database();
-  //  $product = new Products($connection);
-  //  $result = $product->getPendingProducts();
+    header('Content-Type: application/json; charset=utf-8');
+
+    $connection = new Database();
+    $user = new Users($connection);
+    $user->setSKU($data['sku']);
+    $company = $user->getUserCompanyBySKU();
+
+
+    $connection = new Database();
+    $category = new Categories($connection);
+    $category->setSKU($data['sku']);
+    $category_name = $category->getCategoryBySKU();
+
+    $connection = new Database();
+    $product = new Products($connection);
+    $product->setSku($data['sku']);
+    $product_details = $product->getProductDetailsBySKU();
+
+
+    $connection = new Database();
+    $variation = new Variation($connection);
+    $variation->setSku($data['sku']);
+    $variation_details = $variation->getVariationsSKUBySKUProduct();
+
+
+    echo json_encode(array($company,$category_name, $product_details, $variation_details ));
+
 
 
     echo json_encode ($data["sku"]);
   }
 }
+
 include "../../controller/config/database.php";
-include_once "../../model/products.php"; // modelo correcto
+include "../../model/products.php";
+include "../../model/users.php";
+include "../../model/categories.php";
+include "../../model/variations.php";
+include "../../controller/products/variations.php";
 
 if ($payload = (json_decode(file_get_contents("php://input"), true) ?? [])) {
   $apiHandler = new Resques63API();
