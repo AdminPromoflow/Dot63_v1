@@ -149,7 +149,7 @@ class ProductsSupplierClass {
         throw new Error("Network error.");
       })
       .then((txt) => {
-        alert(txt);
+      //  alert(txt);
         const res = JSON.parse(txt);
 
         // ✅ res esperado: { success:true, data:[...] }

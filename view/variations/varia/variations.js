@@ -389,6 +389,7 @@ class Variations {
         throw new Error("Network error.");
       })
       .then(data => {
+        alert(data);
         const json = JSON.parse(data);
       //  alert(json["groups_by_product"][1]);
 
