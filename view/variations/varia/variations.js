@@ -631,7 +631,7 @@ class Variations {
     for (const row of (Array.isArray(dataVariations) ? dataVariations : [])) {
       const sku  = row?.SKU ?? row?.sku ?? '';
       if (!sku || sku === (dataCurrent?.sku ?? '')) continue;
-
+      alert(sku);
       const name = row?.name ?? '(unnamed variation)';
       const opt = document.createElement('option');
       opt.value = sku;
