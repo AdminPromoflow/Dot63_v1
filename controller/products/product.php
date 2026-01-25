@@ -105,7 +105,7 @@ class Product {
 
 
       $response   = $products->getProductsBasicBySupplierEmail();
-
+      echo json_encode("buenas");exit;
       echo json_encode($response);
     }
 
