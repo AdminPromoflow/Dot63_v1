@@ -178,7 +178,6 @@ class Products {
            'success'      => true,
            'id'           => $newId,
            'sku'          => $this->sku,
-           'supplier_id'  => $this->supplier_id
          ];
        } catch (PDOException $e) {
          error_log('create product error: ' . $e->getMessage());
