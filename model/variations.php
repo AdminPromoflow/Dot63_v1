@@ -277,11 +277,11 @@ class Variation {
       try {
           $pdo = $this->connection->getConnection();
 
-          // 1) Obtener product_id, name y SKU desde products por SKU de producto
+          // 1) Obtener product_id, name, SKU y group_id desde products por SKU de producto
           $stmt = $pdo->prepare("
-              SELECT product_id, name AS product_name, SKU AS product_sku
+              SELECT product_id, name AS product_name, SKU AS product_sku, group_id
               FROM products
-              WHERE SKU = :sku
+              WHERE LOWER(SKU) = LOWER(:sku)
               LIMIT 1
           ");
           $stmt->execute([':sku' => $this->sku]);
@@ -294,25 +294,31 @@ class Variation {
           $productId   = (int)$prod['product_id'];
           $productName = $prod['product_name'];
           $productSku  = $prod['product_sku'];
+          $groupId     = !empty($prod['group_id']) ? (int)$prod['group_id'] : null;
 
           // 2) Variación actual + datos del padre (name/sku) en una sola consulta
           $stmt = $pdo->prepare("
               SELECT
+                v.variation_id,
                 v.name,
                 v.image,
                 v.SKU,
                 v.pdf_artwork,
                 v.name_pdf_artwork,
                 v.parent_id,
-                v.`group` AS variation_group,
-                p.name AS parent_name,
-                p.SKU  AS parent_sku
+                vp.name AS parent_name,
+                vp.SKU  AS parent_sku
               FROM variations v
-              LEFT JOIN products p ON p.variation_id = v.parent_id
-              WHERE v.product_id = :pid AND v.SKU = :vsku
+              LEFT JOIN variations vp
+                ON vp.variation_id = v.parent_id
+              WHERE v.product_id = :pid
+                AND LOWER(v.SKU) = LOWER(:vsku)
               LIMIT 1
           ");
-          $stmt->execute([':pid' => $productId, ':vsku' => $this->sku_variation]);
+          $stmt->execute([
+              ':pid'  => $productId,
+              ':vsku' => $this->sku_variation
+          ]);
           $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
           if (!$row) {
@@ -321,7 +327,7 @@ class Variation {
 
           // 3) Listar todas las variaciones del producto (name, SKU)
           $stmt = $pdo->prepare("
-              SELECT name, SKU
+              SELECT variation_id, name, SKU
               FROM variations
               WHERE product_id = :pid
               ORDER BY name ASC
@@ -329,49 +335,56 @@ class Variation {
           $stmt->execute([':pid' => $productId]);
           $variations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-          // 4) Quinta consulta: listar `group` de todas las variations del producto, sin repetir
-          $stmt = $pdo->prepare("
-              SELECT DISTINCT `group`
-              FROM variations
-              WHERE product_id = :pid
-                AND `group` IS NOT NULL
-                AND `group` <> ''
-              ORDER BY `group` ASC
-          ");
-          $stmt->execute([':pid' => $productId]);
-
-          // Devuelve una lista simple: ['Group A', 'Group B', ...]
-          $groupsByProduct = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+          // 4) Con product_id (vía group->category) traer type_variations asociados a la categoría del producto
+          //    (si el producto no tiene group_id, devolverá lista vacía)
+          $typeVariations = [];
+          if ($groupId !== null) {
+              $stmt = $pdo->prepare("
+                  SELECT
+                    tv.type_id,
+                    tv.type_name,
+                    tv.description,
+                    tv.category_id
+                  FROM products p
+                  INNER JOIN `groups` g
+                    ON g.group_id = p.group_id
+                  INNER JOIN type_variations tv
+                    ON tv.category_id = g.category_id
+                  WHERE p.product_id = :pid
+                  ORDER BY tv.type_name ASC
+              ");
+              $stmt->execute([':pid' => $productId]);
+              $typeVariations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+          }
 
           // 5) Respuesta final (sin json_encode)
           return [
-              'success'    => true,
-              'product'    => [
+              'success' => true,
+              'product' => [
                   'product_id'   => $productId,
                   'product_name' => $productName,
                   'product_sku'  => $productSku,
+                  'group_id'     => $groupId,
               ],
-              'variations' => $variations, // cada item: ['name'=>..., 'SKU'=>...]
-              'current'    => [
+              'variations' => $variations,
+              'current' => [
+                  'variation_id'     => (int)$row['variation_id'],
                   'name'             => $row['name'],
                   'image'            => $row['image'] ?? null,
                   'sku'              => $row['SKU'],
                   'pdf_artwork'      => $row['pdf_artwork'] ?? null,
                   'name_pdf_artwork' => $row['name_pdf_artwork'] ?? null,
-                  'parent_id'        => $row['parent_id'] ? (int)$row['parent_id'] : null,
-                  'group'            => $row['variation_group'] ?? null,
+                  'parent_id'        => !empty($row['parent_id']) ? (int)$row['parent_id'] : null,
               ],
-              // ← name y sku del parent_id (puede ser null si no tiene padre)
-              'parent'     => [
+              'parent' => [
                   'name' => $row['parent_name'] ?? null,
                   'sku'  => $row['parent_sku']  ?? null,
               ],
-              // Lista de todos los group del producto (sin repetir)
-              'groups_by_product' => $groupsByProduct,
+              'type_variations' => $typeVariations,
           ];
 
       } catch (PDOException $e) {
-          error_log('getVariationDetailsBySkus: '.$e->getMessage());
+          error_log('getVariationDetailsBySkus: ' . $e->getMessage());
           return ['success' => false, 'error' => 'DB error'];
       }
   }
