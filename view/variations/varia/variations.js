@@ -391,7 +391,7 @@ class Variations {
       .then(data => {
       //  alert(data);
         const json = JSON.parse(data);
-        alert(JSON.stringify(json["variations"]));
+        alert(JSON.stringify(json["product"]));
 
         if (json["success"]) {
           this.drawParentsVariationItems(json["variations"], json["product"], json["current"]);
