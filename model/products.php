@@ -208,12 +208,12 @@ class Products {
                  return json_encode(['success' => false, 'error' => 'Supplier not found'], JSON_UNESCAPED_UNICODE);
              }
 
-             // 2) supplier_id -> products
+             // 2) supplier_id -> products (incluye group_id)
              $sql2 = "SELECT
                          p.product_id,
-                         p.SKU        AS sku,
-                         p.name       AS product_name,
-                         p.status     AS status,
+                         p.SKU         AS sku,
+                         p.name        AS product_name,
+                         p.status      AS status,
                          p.date_status AS status_date,
                          p.group_id
                       FROM products p
@@ -227,7 +227,37 @@ class Products {
                  return json_encode(['success' => true, 'data' => []], JSON_UNESCAPED_UNICODE);
              }
 
-             // Preparar IDs únicos de groups para consulta #3
+             // 3) product_id -> variation_sku (SKU de la primera variation insertada)
+             $productIds = [];
+             foreach ($products as $p) {
+                 $productIds[(int)$p['product_id']] = true;
+             }
+             $productIds = array_keys($productIds);
+
+             $firstVariationSkuByProductId = [];
+             if (!empty($productIds)) {
+                 $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+
+                 $sql3 = "SELECT v.product_id, v.SKU AS variation_sku
+                          FROM variations v
+                          INNER JOIN (
+                             SELECT product_id, MIN(variation_id) AS min_variation_id
+                             FROM variations
+                             WHERE product_id IN ($placeholders)
+                             GROUP BY product_id
+                          ) t
+                            ON t.product_id = v.product_id
+                           AND t.min_variation_id = v.variation_id";
+                 $stmt3 = $pdo->prepare($sql3);
+                 $stmt3->execute($productIds);
+                 $rows3 = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+
+                 foreach ($rows3 as $r) {
+                     $firstVariationSkuByProductId[(int)$r['product_id']] = $r['variation_sku'] ?? null;
+                 }
+             }
+
+             // 4) group_id -> groups (group_name, category_id)
              $groupIds = [];
              foreach ($products as $p) {
                  if (!empty($p['group_id'])) {
@@ -236,22 +266,21 @@ class Products {
              }
              $groupIds = array_keys($groupIds);
 
-             // 3) group_id -> groups (incluye category_id)
              $groupsById = [];
              $categoryIds = [];
 
              if (!empty($groupIds)) {
                  $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
 
-                 $sql3 = "SELECT
+                 $sql4 = "SELECT
                              g.group_id,
-                             g.name       AS group_name,
+                             g.name AS group_name,
                              g.category_id
                           FROM `groups` g
                           WHERE g.group_id IN ($placeholders)";
-                 $stmt3 = $pdo->prepare($sql3);
-                 $stmt3->execute($groupIds);
-                 $groups = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+                 $stmt4 = $pdo->prepare($sql4);
+                 $stmt4->execute($groupIds);
+                 $groups = $stmt4->fetchAll(PDO::FETCH_ASSOC);
 
                  foreach ($groups as $g) {
                      $gid = (int)$g['group_id'];
@@ -264,19 +293,19 @@ class Products {
                  $categoryIds = array_keys($categoryIds);
              }
 
-             // 4) category_id -> categories
+             // 5) category_id -> categories (category_name)
              $categoriesById = [];
              if (!empty($categoryIds)) {
                  $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
 
-                 $sql4 = "SELECT
+                 $sql5 = "SELECT
                              c.category_id,
                              c.name AS category_name
                           FROM categories c
                           WHERE c.category_id IN ($placeholders)";
-                 $stmt4 = $pdo->prepare($sql4);
-                 $stmt4->execute($categoryIds);
-                 $cats = $stmt4->fetchAll(PDO::FETCH_ASSOC);
+                 $stmt5 = $pdo->prepare($sql5);
+                 $stmt5->execute($categoryIds);
+                 $cats = $stmt5->fetchAll(PDO::FETCH_ASSOC);
 
                  foreach ($cats as $c) {
                      $categoriesById[(int)$c['category_id']] = $c;
@@ -286,6 +315,7 @@ class Products {
              // Armar respuesta final por producto
              $result = [];
              foreach ($products as $p) {
+                 $pid = (int)$p['product_id'];
                  $gid = !empty($p['group_id']) ? (int)$p['group_id'] : null;
 
                  $groupName = null;
@@ -305,17 +335,19 @@ class Products {
                  }
 
                  $result[] = [
-                     'product_id'    => (int)$p['product_id'],
-                     'sku'           => $p['sku'] ?? null,
-                     'product_name'  => $p['product_name'] ?? null,
-                     'status'        => $p['status'] ?? null,
-                     'status_date'   => $p['status_date'] ?? null,
+                     'product_id'           => $pid,
+                     'sku'                  => $p['sku'] ?? null,
+                     'product_name'         => $p['product_name'] ?? null,
+                     'status'               => $p['status'] ?? null,
+                     'status_date'          => $p['status_date'] ?? null,
 
-                     'group_id'      => $gid,
-                     'group_name'    => $groupName,
+                     'first_variation_sku'  => $firstVariationSkuByProductId[$pid] ?? null,
 
-                     'category_id'   => $categoryId,
-                     'category_name' => $categoryName,
+                     'group_id'             => $gid,
+                     'group_name'           => $groupName,
+
+                     'category_id'          => $categoryId,
+                     'category_name'        => $categoryName,
                  ];
              }
 
@@ -326,7 +358,6 @@ class Products {
              return json_encode(['success' => false, 'error' => 'DB error'], JSON_UNESCAPED_UNICODE);
          }
      }
-
 
   /* ===========================
      UPDATE (lote): name, description, status, category_id
