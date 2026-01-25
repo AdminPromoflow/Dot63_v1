@@ -186,42 +186,145 @@ class Products {
      }
 
 
-     public function getProductsBasicBySupplierEmail() {
-       if (empty($this->email)) {
-         return json_encode(['success'=>false,'error'=>'Email required'], JSON_UNESCAPED_UNICODE);
-       }
+     public function getProductsBasicBySupplierEmail()
+     {
+         if (empty($this->email)) {
+             return json_encode(['success' => false, 'error' => 'Email required'], JSON_UNESCAPED_UNICODE);
+         }
 
-       try {
-         $pdo = $this->connection->getConnection();
+         try {
+             $pdo = $this->connection->getConnection();
 
-         $sql = "SELECT
-                   p.`SKU`  AS sku,
-                   p.`name` AS product_name,
-                   COALESCE(c.`name`, '') AS category_name,
-                   p.`status` AS status,
-                   vdef.`SKU` AS default_variation_sku
-                 FROM products p
-                 INNER JOIN suppliers s
-                   ON s.supplier_id = p.supplier_id
-                 LEFT JOIN categories c
-                   ON c.category_id = p.category_id
-                 LEFT JOIN variations vdef
-                   ON vdef.product_id = p.product_id
-                  AND LOWER(vdef.`name`) = 'default'
-                  AND (vdef.parent_id IS NULL OR vdef.parent_id = 0)
-                 WHERE LOWER(s.email) = LOWER(:email)
-                 ORDER BY p.`name` ASC";
+             // 1) email -> supplier_id
+             $sql1 = "SELECT supplier_id
+                      FROM suppliers
+                      WHERE LOWER(email) = LOWER(:email)
+                      LIMIT 1";
+             $stmt1 = $pdo->prepare($sql1);
+             $stmt1->execute([':email' => $this->email]);
+             $supplierId = $stmt1->fetchColumn();
 
-         $stmt = $pdo->prepare($sql);
-         $stmt->execute([':email' => $this->email]);
-         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+             if (!$supplierId) {
+                 return json_encode(['success' => false, 'error' => 'Supplier not found'], JSON_UNESCAPED_UNICODE);
+             }
 
-         return json_encode(['success'=>true,'data'=>$rows], JSON_UNESCAPED_UNICODE);
+             // 2) supplier_id -> products
+             $sql2 = "SELECT
+                         p.product_id,
+                         p.SKU        AS sku,
+                         p.name       AS product_name,
+                         p.status     AS status,
+                         p.date_status AS status_date,
+                         p.group_id
+                      FROM products p
+                      WHERE p.supplier_id = :supplier_id
+                      ORDER BY p.name ASC";
+             $stmt2 = $pdo->prepare($sql2);
+             $stmt2->execute([':supplier_id' => $supplierId]);
+             $products = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-       } catch (PDOException $e) {
-         error_log('getProductsBasicBySupplierEmail error: '.$e->getMessage());
-         return json_encode(['success'=>false,'error'=>'DB error'], JSON_UNESCAPED_UNICODE);
-       }
+             if (!$products) {
+                 return json_encode(['success' => true, 'data' => []], JSON_UNESCAPED_UNICODE);
+             }
+
+             // Preparar IDs únicos de groups para consulta #3
+             $groupIds = [];
+             foreach ($products as $p) {
+                 if (!empty($p['group_id'])) {
+                     $groupIds[(int)$p['group_id']] = true;
+                 }
+             }
+             $groupIds = array_keys($groupIds);
+
+             // 3) group_id -> groups (incluye category_id)
+             $groupsById = [];
+             $categoryIds = [];
+
+             if (!empty($groupIds)) {
+                 $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
+
+                 $sql3 = "SELECT
+                             g.group_id,
+                             g.name       AS group_name,
+                             g.category_id
+                          FROM `groups` g
+                          WHERE g.group_id IN ($placeholders)";
+                 $stmt3 = $pdo->prepare($sql3);
+                 $stmt3->execute($groupIds);
+                 $groups = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+
+                 foreach ($groups as $g) {
+                     $gid = (int)$g['group_id'];
+                     $groupsById[$gid] = $g;
+
+                     if (!empty($g['category_id'])) {
+                         $categoryIds[(int)$g['category_id']] = true;
+                     }
+                 }
+                 $categoryIds = array_keys($categoryIds);
+             }
+
+             // 4) category_id -> categories
+             $categoriesById = [];
+             if (!empty($categoryIds)) {
+                 $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
+
+                 $sql4 = "SELECT
+                             c.category_id,
+                             c.name AS category_name
+                          FROM categories c
+                          WHERE c.category_id IN ($placeholders)";
+                 $stmt4 = $pdo->prepare($sql4);
+                 $stmt4->execute($categoryIds);
+                 $cats = $stmt4->fetchAll(PDO::FETCH_ASSOC);
+
+                 foreach ($cats as $c) {
+                     $categoriesById[(int)$c['category_id']] = $c;
+                 }
+             }
+
+             // Armar respuesta final por producto
+             $result = [];
+             foreach ($products as $p) {
+                 $gid = !empty($p['group_id']) ? (int)$p['group_id'] : null;
+
+                 $groupName = null;
+                 $categoryId = null;
+                 $categoryName = null;
+
+                 if ($gid !== null && isset($groupsById[$gid])) {
+                     $groupName = $groupsById[$gid]['group_name'] ?? null;
+
+                     if (!empty($groupsById[$gid]['category_id'])) {
+                         $categoryId = (int)$groupsById[$gid]['category_id'];
+
+                         if (isset($categoriesById[$categoryId])) {
+                             $categoryName = $categoriesById[$categoryId]['category_name'] ?? null;
+                         }
+                     }
+                 }
+
+                 $result[] = [
+                     'product_id'    => (int)$p['product_id'],
+                     'sku'           => $p['sku'] ?? null,
+                     'product_name'  => $p['product_name'] ?? null,
+                     'status'        => $p['status'] ?? null,
+                     'status_date'   => $p['status_date'] ?? null,
+
+                     'group_id'      => $gid,
+                     'group_name'    => $groupName,
+
+                     'category_id'   => $categoryId,
+                     'category_name' => $categoryName,
+                 ];
+             }
+
+             return (['success' => true, 'data' => $result], JSON_UNESCAPED_UNICODE);
+
+         } catch (PDOException $e) {
+             error_log('getProductsBasicBySupplierEmail error: ' . $e->getMessage());
+             return (['success' => false, 'error' => 'DB error'], JSON_UNESCAPED_UNICODE);
+         }
      }
 
 
