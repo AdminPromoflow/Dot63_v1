@@ -391,7 +391,7 @@ class Variations {
       .then(data => {
       //  alert(data);
         const json = JSON.parse(data);
-        alert(JSON.stringify(json["current"]));
+        //alert(JSON.stringify(json["current"]));
 
         if (json["success"]) {
           this.drawParentsVariationItems(json["variations"], json["product"], json["current"]);
@@ -621,6 +621,8 @@ class Variations {
   }
 
   drawParentsVariationItems(dataVariations = [], dataProduct = {}, dataCurrent = {}) {
+
+    alert(JSON.stringify(dataVariations + dataProduct + dataCurrent));
     const sel = this.parentSelect || document.getElementById('parent_variations');
     if (!sel) return;
 
