@@ -224,7 +224,7 @@ class ProductsSupplierClass {
       const p = list[i] || {};
 
       const sku = (p.sku || "").toString();
-      const skuVariation = (p.default_variation_sku || "").toString();
+      const skuVariation = (p.first_variation_sku || "").toString();
       const name = (p.product_name || "Untitled product").toString();
       const category = (p.category_name || "—").toString();
       const statusRaw = (p.status || "draft").toString().toLowerCase();
