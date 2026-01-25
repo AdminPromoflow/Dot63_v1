@@ -115,11 +115,14 @@ body{
   border: 2px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 12px 10px;
-  max-height: 60px;
+  max-height: 90px;
   background: #fff;
   cursor: pointer;
   display: grid;
   gap: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   transition:
     transform .15s ease,
     box-shadow .15s ease,
