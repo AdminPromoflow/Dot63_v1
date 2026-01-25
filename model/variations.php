@@ -308,7 +308,7 @@ class Variation {
                 p.name AS parent_name,
                 p.SKU  AS parent_sku
               FROM variations v
-              LEFT JOIN variations p ON p.variation_id = v.parent_id
+              LEFT JOIN products p ON p.variation_id = v.parent_id
               WHERE v.product_id = :pid AND v.SKU = :vsku
               LIMIT 1
           ");
