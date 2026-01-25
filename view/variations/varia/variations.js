@@ -389,18 +389,18 @@ class Variations {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
+      //  alert(data);
         const json = JSON.parse(data);
-      //  alert(json["groups_by_product"][1]);
+        alert(JSON.stringify(json["variations"]));
 
         if (json["success"]) {
           this.drawParentsVariationItems(json["variations"], json["product"], json["current"]);
-          this.drawImageVariationSelected(json["current"]["image"]);
-          this.setPdfPreview(json["current"]["pdf_artwork"], json["current"]["name_pdf_artwork"]);
-          this.setImagePreview(json["current"]["image"]);
-          this.renderMenuTop(json["variations"]);
-          this.drawItemsGroup(json["groups_by_product"], json["current"]["group"]);
-          this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
+        //  this.drawImageVariationSelected(json["current"]["image"]);
+          //this.setPdfPreview(json["current"]["pdf_artwork"], json["current"]["name_pdf_artwork"]);
+          //this.setImagePreview(json["current"]["image"]);
+          //this.renderMenuTop(json["variations"]);
+          //this.drawItemsGroup(json["groups_by_product"], json["current"]["group"]);
+        //  this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
         }
       })
       .catch(error => {
