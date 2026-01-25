@@ -99,6 +99,7 @@ body{
 .cp-group-wrapper{
   display: grid;
   gap: 6px;
+
 }
 
 .cp-group-grid{
@@ -114,6 +115,7 @@ body{
   border: 2px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 12px 10px;
+  max-height: 60px;
   background: #fff;
   cursor: pointer;
   display: grid;
