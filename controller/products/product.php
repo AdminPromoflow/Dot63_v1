@@ -103,10 +103,10 @@ class Product {
 
       $products->setEmail($_SESSION['email']);
 
-      echo json_encode("buenas");exit;
+    //  echo json_encode("buenas");exit;
 
       $response   = $products->getProductsBasicBySupplierEmail();
-      echo json_encode($response);
+      echo ($response);
     }
 
   private function saveProductDetails($data){

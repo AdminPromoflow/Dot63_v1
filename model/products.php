@@ -319,11 +319,11 @@ class Products {
                  ];
              }
 
-             return (['success' => true, 'data' => $result], JSON_UNESCAPED_UNICODE);
+             return json_encode(['success' => true, 'data' => $result], JSON_UNESCAPED_UNICODE);
 
          } catch (PDOException $e) {
              error_log('getProductsBasicBySupplierEmail error: ' . $e->getMessage());
-             return (['success' => false, 'error' => 'DB error'], JSON_UNESCAPED_UNICODE);
+             return json_encode(['success' => false, 'error' => 'DB error'], JSON_UNESCAPED_UNICODE);
          }
      }
 
