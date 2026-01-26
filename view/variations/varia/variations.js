@@ -277,7 +277,7 @@ class Variations {
 
     if (this.groupCreateBtn) {
       this.groupCreateBtn.addEventListener('click', () => {
-        this.createGroup();
+      //  this.createGroup();
       });
     }
 
@@ -636,61 +636,61 @@ class Variations {
     }
   }
 
-  createGroup() {
-    // This creates a "group" name and sends it to backend via update_group_name.
-    // Then it inserts the new option into the select and selects it.
-
-    const name = (this.groupNameInput?.value || '').trim();
-    if (!name) {
-      alert('Please enter a group name.');
-      this.groupNameInput?.focus();
-      return;
-    }
-
-    const skuVariation = new URLSearchParams(window.location.search).get('sku_variation') || '';
-
-    const url = "../../controller/products/variations.php";
-    const payload = {
-      action: "update_group_name",
-      sku_variation: skuVariation,
-      group_name: name
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-      .then(r => {
-        if (!r.ok) throw new Error("Network error.");
-        return r.text();
-      })
-      .then(text => {
-        const json = JSON.parse(text);
-
-        // Even if backend returns success, we still update UI in the select
-        if (json?.success && this.groupSelect) {
-          const createOpt = this.groupSelect.querySelector('option[value="__create_group__"]');
-
-          // Insert the newly created group option before the create option
-          if (createOpt) {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            this.groupSelect.insertBefore(opt, createOpt);
-            this.groupSelect.value = name;
-          }
-        }
-
-        alert(`The group "${name}" has been created.`);
-
-        // Close modal
-        if (this.groupModal) this.groupModal.hidden = true;
-      })
-      .catch(err => {
-        console.error("Error:", err);
-      });
-  }
+  // createGroup() {
+  //   // This creates a "group" name and sends it to backend via update_group_name.
+  //   // Then it inserts the new option into the select and selects it.
+  //
+  //   const name = (this.groupNameInput?.value || '').trim();
+  //   if (!name) {
+  //     alert('Please enter a group name.');
+  //     this.groupNameInput?.focus();
+  //     return;
+  //   }
+  //
+  //   const skuVariation = new URLSearchParams(window.location.search).get('sku_variation') || '';
+  //
+  //   const url = "../../controller/products/variations.php";
+  //   const payload = {
+  //     action: "update_group_name",
+  //     sku_variation: skuVariation,
+  //     group_name: name
+  //   };
+  //
+  //   fetch(url, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(payload)
+  //   })
+  //     .then(r => {
+  //       if (!r.ok) throw new Error("Network error.");
+  //       return r.text();
+  //     })
+  //     .then(text => {
+  //       const json = JSON.parse(text);
+  //
+  //       // Even if backend returns success, we still update UI in the select
+  //       if (json?.success && this.groupSelect) {
+  //         const createOpt = this.groupSelect.querySelector('option[value="__create_group__"]');
+  //
+  //         // Insert the newly created group option before the create option
+  //         if (createOpt) {
+  //           const opt = document.createElement('option');
+  //           opt.value = name;
+  //           opt.textContent = name;
+  //           this.groupSelect.insertBefore(opt, createOpt);
+  //           this.groupSelect.value = name;
+  //         }
+  //       }
+  //
+  //       alert(`The group "${name}" has been created.`);
+  //
+  //       // Close modal
+  //       if (this.groupModal) this.groupModal.hidden = true;
+  //     })
+  //     .catch(err => {
+  //       console.error("Error:", err);
+  //     });
+  // }
 }
 
 // Instantiate once (the only code outside the class)

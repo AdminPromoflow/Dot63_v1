@@ -306,6 +306,7 @@ class Variation {
                 v.pdf_artwork,
                 v.name_pdf_artwork,
                 v.parent_id,
+                v.type_id,
                 vp.name AS parent_name,
                 vp.SKU  AS parent_sku
               FROM variations v
@@ -375,6 +376,9 @@ class Variation {
                   'pdf_artwork'      => $row['pdf_artwork'] ?? null,
                   'name_pdf_artwork' => $row['name_pdf_artwork'] ?? null,
                   'parent_id'        => !empty($row['parent_id']) ? (int)$row['parent_id'] : null,
+
+                  // ✅ NUEVO: type_id agregado al return
+                  'type_id'          => !empty($row['type_id']) ? (int)$row['type_id'] : null,
               ],
               'parent' => [
                   'name' => $row['parent_name'] ?? null,
@@ -388,7 +392,6 @@ class Variation {
           return ['success' => false, 'error' => 'DB error'];
       }
   }
-
 
 
   public function createDefaultVariation(): array
