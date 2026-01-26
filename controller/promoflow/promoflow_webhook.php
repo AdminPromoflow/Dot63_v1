@@ -12,13 +12,24 @@ class Resques63API{
         case 'get_preview_product_details':
           $this->getPreviewProductDetails($data);
           break;
-
+          case 'approve_product':
+            $this->approveProduct($data);
+            break;
 
       default:
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['response' => false, 'error' => 'Unsupported action']);
         break;
     }
+  }
+
+  private function approveProduct(){
+    $connection = new Database();
+    $product = new Products($connection);
+    $result = $product->getPendingProducts();
+
+
+    echo json_encode ("vamos bien");
   }
 
   private function getAPIOverviewData(){
