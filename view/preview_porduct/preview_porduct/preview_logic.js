@@ -100,7 +100,6 @@ class PreviewLogic {
 
         // Debug: inspect the variations payload
       previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
-         alert(JSON.stringify(variationsBlock.Variations.Default));
 
         /**
          * Group variations (Default) by "group"
@@ -179,7 +178,7 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
-        alert(text);
+      //  alert(text);
         let json;
 
         // 4) Parse JSON with error handling
@@ -263,7 +262,7 @@ class PreviewLogic {
         }
 
         // Debug: inspect the variations payload
-        alert(JSON.stringify(variationsBlock));
+      //  alert(JSON.stringify(variationsBlock));
 
         // alert(JSON.stringify(variationsBlock.Variations.Default));
 
