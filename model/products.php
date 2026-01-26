@@ -60,6 +60,32 @@ class Products {
       return false;
     }
   }
+  private function approveProductWithSKU(): bool
+  {
+      try {
+          if (empty($this->sku)) {
+              return false;
+          }
+
+          $pdo = $this->connection->getConnection();
+
+          $sql = "UPDATE products
+                     SET is_approved = 1
+                   WHERE LOWER(SKU) = LOWER(:sku)
+                   LIMIT 1";
+
+          $stmt = $pdo->prepare($sql);
+          $stmt->execute([
+              ':sku' => $this->sku,
+          ]);
+
+          return $stmt->rowCount() > 0;
+
+      } catch (PDOException $e) {
+          error_log('approveProductWithSKU error: ' . $e->getMessage());
+          return false;
+      }
+  }
 
 
   public function getSupplierDetailsBySKU(): ?array

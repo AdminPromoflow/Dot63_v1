@@ -23,13 +23,14 @@ class Resques63API{
     }
   }
 
-  private function approveProduct(){
+  private function approveProduct($data){
     $connection = new Database();
     $product = new Products($connection);
-    $result = $product->getPendingProducts();
+    $product->setSku($data['sku']);
+    $result = $product->approveProductWidthSKU();
 
 
-    echo json_encode ("vamos bien3");
+    echo json_encode ($result);
   }
 
   private function getAPIOverviewData(){
