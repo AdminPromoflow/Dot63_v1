@@ -13,6 +13,7 @@ class Variation {
   private $isAttachAPDF;
   private $group_name;
   private $name_pdf_artwork;
+  private ?int $type_id = null;
 
 
 
@@ -22,7 +23,9 @@ class Variation {
   // ===== Setters =====
   public function setId($id)              { $this->product_id = (int)$id; }
 
-
+  public function setTypeId(?int $typeId): void{
+      $this->type_id = $typeId;
+  }
   public function setIsAttachAnImage($isAttachAnImage): void
   {
       // true para: true, 1, "1", "true", "on", "yes" (case-insensitive)
@@ -430,31 +433,30 @@ class Variation {
   }
 
   // En tu modelo Variation
+
   public function updateVariationDetails(): bool
   {
-      // 1) SKU objetivo (la variación que vamos a actualizar)
       $targetSku = trim((string)($this->sku_variation ?? ''));
       if ($targetSku === '') {
-          return false; // Esto está bien
+          return false;
       }
 
       try {
           $pdo = $this->connection->getConnection();
           $pdo->beginTransaction();
 
-          // 2) parent_id obligatorio: buscar por SKU del padre (variación)
+          // 1) Resolve parent_id from parent SKU (if provided)
           $stmt = $pdo->prepare("
               SELECT variation_id
               FROM variations
               WHERE SKU = :parentSku
               LIMIT 1
           ");
-          $stmt->execute([':parentSku' => (string)$this->sku_parent_variation]);
+          $stmt->execute([':parentSku' => (string)($this->sku_parent_variation ?? '')]);
           $parentId = $stmt->fetch(\PDO::FETCH_COLUMN);
 
-          // 3) Si no retorna parentId: buscar la variación 'default' por NOMBRE dentro del mismo producto del target
+          // 2) Fallback: find "default" parent within the same product
           if ($parentId === false) {
-              // 3.a) Obtener product_id de la variación objetivo
               $stmt = $pdo->prepare("
                   SELECT product_id
                   FROM variations
@@ -463,12 +465,12 @@ class Variation {
               ");
               $stmt->execute([':sku' => $targetSku]);
               $pid = $stmt->fetch(\PDO::FETCH_COLUMN);
+
               if ($pid === false) {
                   $pdo->rollBack();
-                  return false; // no se pudo determinar el producto del target
+                  return false;
               }
 
-              // 3.b) Buscar variación cuyo nombre contenga 'default' (case-insensitive) en ese producto
               $stmt = $pdo->prepare("
                   SELECT variation_id
                   FROM variations
@@ -483,113 +485,71 @@ class Variation {
               ]);
               $parentId = $stmt->fetch(\PDO::FETCH_COLUMN);
 
-              // 4) Si tampoco se encuentra, abortar
               if ($parentId === false) {
                   $pdo->rollBack();
                   return false;
               }
 
-              $parentId = (int)$parentId; // normalizar a int
+              $parentId = (int)$parentId;
           } else {
-              $parentId = (int)$parentId; // normalizar a int cuando sí existía por SKU padre
+              $parentId = (int)$parentId;
           }
 
-          // 5) UPDATE por SKU de la variación objetivo
+          // 3) Build UPDATE dynamically based on attach flags
+          $set = [
+              'name = :name',
+              'type_id = :type_id',
+              'name_pdf_artwork = :name_pdf_artwork',
+              'parent_id = :parent_id',
+          ];
 
-          if ($this->isAttachAnImage && $this->isAttachAPDF) {
+          if ((int)$this->isAttachAnImage === 1) {
+              $set[] = 'image = :image';
+          }
+          if ((int)$this->isAttachAPDF === 1) {
+              $set[] = 'pdf_artwork = :pdf_artwork';
+          }
 
-              $stmt = $pdo->prepare("
-                  UPDATE variations
-                     SET name             = :name,
-                         `group`          = :group_name,
-                         image            = :image,
-                         pdf_artwork      = :pdf_artwork,
-                         name_pdf_artwork = :name_pdf_artwork,
-                         parent_id        = :parent_id
-                   WHERE SKU = :sku
-                   LIMIT 1
-              ");
+          $sql = "
+              UPDATE variations
+                 SET " . implode(",\n                   ", $set) . "
+               WHERE SKU = :sku
+               LIMIT 1
+          ";
 
-              $stmt->bindValue(':name',             (string)($this->name ?? ''),              \PDO::PARAM_STR);
-              $stmt->bindValue(':group_name',       (string)($this->group_name ?? ''),        \PDO::PARAM_STR);
-              $stmt->bindValue(':image',            (string)($this->image ?? ''),             \PDO::PARAM_STR); // TEXT
-              $stmt->bindValue(':pdf_artwork',      (string)($this->pdf_artwork ?? ''),       \PDO::PARAM_STR); // TEXT
-              $stmt->bindValue(':name_pdf_artwork', (string)($this->name_pdf_artwork ?? ''),  \PDO::PARAM_STR);
-              $stmt->bindValue(':parent_id',        $parentId,                                \PDO::PARAM_INT);
-              $stmt->bindValue(':sku',              $targetSku,                               \PDO::PARAM_STR);
+          $stmt = $pdo->prepare($sql);
 
-          } elseif ($this->isAttachAnImage && !$this->isAttachAPDF) {
+          // Bind common fields
+          $stmt->bindValue(':name', (string)($this->name ?? ''), \PDO::PARAM_STR);
 
-              $stmt = $pdo->prepare("
-                  UPDATE variations
-                     SET name             = :name,
-                         `group`          = :group_name,
-                         image            = :image,
-                         name_pdf_artwork = :name_pdf_artwork,
-                         parent_id        = :parent_id
-                   WHERE SKU = :sku
-                   LIMIT 1
-              ");
+          // type_id can be NULL
+          if ($this->type_id === null) {
+              $stmt->bindValue(':type_id', null, \PDO::PARAM_NULL);
+          } else {
+              $stmt->bindValue(':type_id', (int)$this->type_id, \PDO::PARAM_INT);
+          }
 
-              $stmt->bindValue(':name',             (string)($this->name ?? ''),             \PDO::PARAM_STR);
-              $stmt->bindValue(':group_name',       (string)($this->group_name ?? ''),       \PDO::PARAM_STR);
-              $stmt->bindValue(':image',            (string)($this->image ?? ''),            \PDO::PARAM_STR); // TEXT
-              $stmt->bindValue(':name_pdf_artwork', (string)($this->name_pdf_artwork ?? ''), \PDO::PARAM_STR);
-              $stmt->bindValue(':parent_id',        $parentId,                               \PDO::PARAM_INT);
-              $stmt->bindValue(':sku',              $targetSku,                              \PDO::PARAM_STR);
+          $stmt->bindValue(':name_pdf_artwork', (string)($this->name_pdf_artwork ?? ''), \PDO::PARAM_STR);
+          $stmt->bindValue(':parent_id', $parentId, \PDO::PARAM_INT);
+          $stmt->bindValue(':sku', $targetSku, \PDO::PARAM_STR);
 
-          } elseif (!$this->isAttachAnImage && $this->isAttachAPDF) {
-
-              $stmt = $pdo->prepare("
-                  UPDATE variations
-                     SET name             = :name,
-                         `group`          = :group_name,
-                         pdf_artwork      = :pdf_artwork,
-                         name_pdf_artwork = :name_pdf_artwork,
-                         parent_id        = :parent_id
-                   WHERE SKU = :sku
-                   LIMIT 1
-              ");
-
-              $stmt->bindValue(':name',             (string)($this->name ?? ''),             \PDO::PARAM_STR);
-              $stmt->bindValue(':group_name',       (string)($this->group_name ?? ''),       \PDO::PARAM_STR);
-              $stmt->bindValue(':pdf_artwork',      (string)($this->pdf_artwork ?? ''),      \PDO::PARAM_STR); // TEXT
-              $stmt->bindValue(':name_pdf_artwork', (string)($this->name_pdf_artwork ?? ''), \PDO::PARAM_STR);
-              $stmt->bindValue(':parent_id',        $parentId,                               \PDO::PARAM_INT);
-              $stmt->bindValue(':sku',              $targetSku,                              \PDO::PARAM_STR);
-
-          } elseif (!$this->isAttachAnImage && !$this->isAttachAPDF) {
-
-              $stmt = $pdo->prepare("
-                  UPDATE variations
-                     SET name             = :name,
-                         `group`          = :group_name,
-                         name_pdf_artwork = :name_pdf_artwork,
-                         parent_id        = :parent_id
-                   WHERE SKU = :sku
-                   LIMIT 1
-              ");
-
-              $stmt->bindValue(':name',             (string)($this->name ?? ''),             \PDO::PARAM_STR);
-              $stmt->bindValue(':group_name',       (string)($this->group_name ?? ''),       \PDO::PARAM_STR);
-              $stmt->bindValue(':name_pdf_artwork', (string)($this->name_pdf_artwork ?? ''), \PDO::PARAM_STR);
-              $stmt->bindValue(':parent_id',        $parentId,                               \PDO::PARAM_INT);
-              $stmt->bindValue(':sku',              $targetSku,                              \PDO::PARAM_STR);
+          // Bind optional file paths only if included in SET
+          if ((int)$this->isAttachAnImage === 1) {
+              $stmt->bindValue(':image', (string)($this->image ?? ''), \PDO::PARAM_STR);
+          }
+          if ((int)$this->isAttachAPDF === 1) {
+              $stmt->bindValue(':pdf_artwork', (string)($this->pdf_artwork ?? ''), \PDO::PARAM_STR);
           }
 
           $ok = $stmt->execute();
           $pdo->commit();
 
-          return $ok; // true si ejecutó correctamente (aunque no cambie filas)
+          return $ok;
       } catch (\PDOException $e) {
-          if (isset($pdo)) {
-              $pdo->rollBack();
-          }
-          // error_log('updateVariationDetails error (sku '.$targetSku.'): '.$e->getMessage());
+          if (isset($pdo)) $pdo->rollBack();
           return false;
       }
   }
-
   public function updategroupNameBySkuVariation(): bool
   {
 

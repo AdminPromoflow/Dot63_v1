@@ -403,59 +403,39 @@ class Variations {
     }
   }
 
-  renderTypeVariationsSelect(typeVariationsRaw, typeIdSelected) {
+  renderTypeVariationsSelect(typeVariationsRaw, type_id_selected) {
     if (!this.typeSelect) return;
+    if (!Array.isArray(typeVariationsRaw)) return;
 
-    // If backend returns null/invalid, we still keep placeholder
-    const list = Array.isArray(typeVariationsRaw) ? typeVariationsRaw : [];
+    // Reset select (placeholder only)
+    this.typeSelect.innerHTML = '<option value="" disabled selected>Select type variation</option>';
 
-    // Remove previously injected options (keep placeholder at index 0)
-    this.typeSelect
-      .querySelectorAll('option[data-source="type_list"]')
-      .forEach(opt => opt.remove());
-
-    const frag = document.createDocumentFragment();
-
-    // Create <option> per type variation
-    for (let i = 0; i < list.length; i++) {
-      const typeId   = String(list[i]?.type_id ?? '').trim();
-      const typeName = String(list[i]?.type_name ?? '').trim();
+    // Append options
+    for (let i = 0; i < typeVariationsRaw.length; i++) {
+      const typeId   = String(typeVariationsRaw[i]?.type_id ?? '').trim();
+      const typeName = String(typeVariationsRaw[i]?.type_name ?? '').trim();
       if (!typeId || !typeName) continue;
 
       const opt = document.createElement('option');
-
-      // value is the type_id (best for saving to backend)
-      opt.value = typeId;
-
-      // Requested: each item has an id derived from type_id
-      // NOTE: using a prefix avoids CSS/querySelector issues with numeric IDs.
-      opt.id = `type_${typeId}`;
-
-      // Optional dataset (handy for debugging)
-      opt.dataset.typeId = typeId;
-      opt.dataset.source = 'type_list';
-
+      opt.value = typeId;         // IMPORTANT: sent to backend as type_id
+      opt.id    = `type_${typeId}`; // DOM id requested (safe prefix)
       opt.textContent = typeName;
-      frag.appendChild(opt);
+
+      this.typeSelect.appendChild(opt);
     }
 
-    this.typeSelect.appendChild(frag);
-
-    // Selection rule:
-    // - If typeIdSelected is null/empty => keep no selection (placeholder)
-    // - Else select by matching option.value === typeIdSelected
-    const selected = (typeIdSelected === null || typeIdSelected === undefined)
+    // Apply selection rules
+    const selected = (type_id_selected === null || type_id_selected === undefined)
       ? ''
-      : String(typeIdSelected).trim();
+      : String(type_id_selected).trim();
 
     this.typeSelect.value = selected || '';
 
-    // If the selected value does not exist in the options, fallback to placeholder
+    // If selected doesn't exist => fallback to empty (placeholder)
     if (selected && this.typeSelect.value !== selected) {
       this.typeSelect.value = '';
     }
   }
-
   renderServerPreviews(current) {
     // Server image preview
     if (this.imgPreview) {
@@ -493,91 +473,85 @@ class Variations {
      Save + create variation
      ========================= */
 
-  saveVariationDetails() {
-    // Read URL context
-    const { skuProduct, skuVariation } = this.readSkuParamsFromUrl();
+     saveVariationDetails() {
+       // Read URL context
+       const { skuProduct, skuVariation } = this.readSkuParamsFromUrl();
 
-    // Read selected parent sku (if any)
-    let skuParentVariation = '';
-    if (this.parentSelect?.selectedOptions?.[0]) {
-      const opt = this.parentSelect.selectedOptions[0];
-      skuParentVariation = String(opt.dataset?.sku || opt.value || '').trim();
-    }
+       // Read selected parent sku (if any)
+       let skuParentVariation = '';
+       if (this.parentSelect?.selectedOptions?.[0]) {
+         const opt = this.parentSelect.selectedOptions[0];
+         skuParentVariation = String(opt.dataset?.sku || opt.value || '').trim();
+       }
 
-    // Read selected type_id (from "typeSelect")
-    const typeId = String(this.typeSelect?.value || '').trim();
+       // Read selected type_id
+       const typeId = String(this.typeSelect?.value || '').trim();
 
-    // Read files
-    const imageFile = this.imgInput?.files?.[0] || null;
-    const pdfFile   = this.pdfInput?.files?.[0] || null;
+       // Read files
+       const imageFile = this.imgInput?.files?.[0] || null;
+       const pdfFile   = this.pdfInput?.files?.[0] || null;
 
-    // Validate only if present
-    if (imageFile && !imageFile.type.startsWith('image/')) {
-      alert('The selected image file is not valid.');
-      return;
-    }
-    if (pdfFile && pdfFile.type !== 'application/pdf') {
-      alert('Please select a valid PDF file.');
-      return;
-    }
+       // Validate only if present
+       if (imageFile && !imageFile.type.startsWith('image/')) {
+         alert('The selected image file is not valid.');
+         return;
+       }
+       if (pdfFile && pdfFile.type !== 'application/pdf') {
+         alert('Please select a valid PDF file.');
+         return;
+       }
 
-    // Build FormData
-    const fd = new FormData();
-    fd.append('action',        'save_variation_details');
-    fd.append('sku_product',   skuProduct);
-    fd.append('sku_variation', skuVariation);
+       // Build FormData
+       const fd = new FormData();
+       fd.append('action',        'save_variation_details');
+       fd.append('sku_product',   skuProduct);
+       fd.append('sku_variation', skuVariation);
 
-    // Attach flags for backend (keep existing files if user did not attach new ones)
-    fd.append('isAttachAnImage', this.attachImage ? '1' : '0');
-    fd.append('isAttachAPDF',    this.attachPDF   ? '1' : '0');
+       // Attach flags for backend (keep existing files if user did not attach new ones)
+       fd.append('isAttachAnImage', this.attachImage ? '1' : '0');
+       fd.append('isAttachAPDF',    this.attachPDF   ? '1' : '0');
 
-    // Core fields
-    fd.append('name', (this.nameInput?.value || '').trim());
+       // Core fields
+       fd.append('name', (this.nameInput?.value || '').trim());
+       fd.append('name_pdf_artwork', (this.namePdfInput?.value || '').trim());
 
-    // Optional PDF label
-    fd.append('name_pdf_artwork', (this.namePdfInput?.value || '').trim());
+       // IMPORTANT: Save type_id (or empty string => backend converts to NULL)
+       fd.append('type_id', typeId);
 
-    // Save type_id (recommended)
-    fd.append('type_id', typeId);
+       // Parent sku (optional)
+       if (skuParentVariation) fd.append('sku_parent_variation', skuParentVariation);
 
-    // OPTIONAL: If your backend still expects "group" name, remove this line.
-    // Keeping it here avoids breaking existing controllers while you migrate.
-    fd.append('group', typeId);
+       // Files (optional)
+       if (imageFile) fd.append('imageFile', imageFile);
+       if (pdfFile)   fd.append('pdfFile', pdfFile);
 
-    // Parent sku (optional)
-    if (skuParentVariation) fd.append('sku_parent_variation', skuParentVariation);
+       // Send request
+       fetch("../../controller/products/variations.php", {
+         method: "POST",
+         headers: { "X-Requested-With": "XMLHttpRequest" },
+         body: fd
+       })
+         .then(r => {
+           if (!r.ok) throw new Error("Network error.");
+           return r.json();
+         })
+         .then(data => {
+           if (!data?.success) {
+             console.error("Save failed:", data);
+             alert(data?.message || "Could not save the variation.");
+             return;
+           }
 
-    // Files (optional)
-    if (imageFile) fd.append('imageFile', imageFile);
-    if (pdfFile)   fd.append('pdfFile',   pdfFile);
-
-    // Send request
-    fetch("../../controller/products/variations.php", {
-      method: "POST",
-      headers: { "X-Requested-With": "XMLHttpRequest" },
-      body: fd
-    })
-      .then(r => {
-        if (!r.ok) throw new Error("Network error.");
-        return r.json();
-      })
-      .then(data => {
-        if (!data?.success) {
-          console.error("Save failed:", data);
-          alert(data?.message || "Could not save the variation.");
-          return;
-        }
-
-        // Go next step in wizard
-        if (window.headerAddProduct?.goNext) {
-          window.headerAddProduct.goNext('../../view/images/index.php');
-        }
-      })
-      .catch(err => {
-        console.error("Error:", err);
-        alert("Network/server error while saving.");
-      });
-  }
+           // Go next step in wizard
+           if (window.headerAddProduct?.goNext) {
+             window.headerAddProduct.goNext('../../view/images/index.php');
+           }
+         })
+         .catch(err => {
+           console.error("Error:", err);
+           alert("Network/server error while saving.");
+         });
+     }
 
   addNewVariation() {
     // Create a new variation and redirect to it

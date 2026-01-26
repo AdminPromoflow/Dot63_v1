@@ -56,79 +56,69 @@ class Variations {
   {
       header('Content-Type: application/json; charset=utf-8');
 
-      // Datos base
-      $sku_product   = $_POST['sku_product']   ?? $data['sku_product']   ?? null;
-      $sku_parent_variation   = $_POST['sku_parent_variation']   ?? $data['sku_parent_variation']   ?? null;
+      // Base data
+      $sku_product         = $_POST['sku_product']         ?? $data['sku_product']         ?? null;
+      $sku_variation       = $_POST['sku_variation']       ?? $data['sku_variation']       ?? null;
+      $sku_parent_variation= $_POST['sku_parent_variation']?? $data['sku_parent_variation']?? null;
 
+      // IMPORTANT: cast flags to int so "0" is not treated as truthy
+      $isAttachAnImage = (int)($_POST['isAttachAnImage'] ?? $data['isAttachAnImage'] ?? 0);
+      $isAttachAPDF    = (int)($_POST['isAttachAPDF']    ?? $data['isAttachAPDF']    ?? 0);
 
+      $name            = $_POST['name']            ?? $data['name']            ?? null;
+      $name_pdf_artwork= $_POST['name_pdf_artwork']?? $data['name_pdf_artwork']?? null;
 
-      $isAttachAnImage   = $_POST['isAttachAnImage']   ?? $data['isAttachAnImage']   ?? null;
-      $isAttachAPDF   = $_POST['isAttachAPDF']   ?? $data['isAttachAPDF']   ?? null;
+      // NEW: type_id (empty => NULL)
+      $type_id = $_POST['type_id'] ?? $data['type_id'] ?? null;
+      $type_id = ($type_id === '' || $type_id === null) ? null : (int)$type_id;
 
+      $imageFile = $_FILES['imageFile'] ?? null;
+      $pdfFile   = $_FILES['pdfFile']   ?? null;
 
-
-      $sku_variation = $_POST['sku_variation'] ?? $data['sku_variation'] ?? null;
-      $name = $_POST['name'] ?? $data['name'] ?? null;
-      $variation_name = $_POST['name'] ?? $data['name'] ?? null;
-      $name_pdf_artwork = $_POST['name_pdf_artwork'] ?? $data['name_pdf_artwork'] ?? null;
-      $group = $_POST['group'] ?? $data['group'] ?? null;
-      $imageFile     = $_FILES['imageFile']    ?? null;
-      $pdfFile       = $_FILES['pdfFile']      ?? null;  // ← nuevo
-
-      // (Opcional) supplier (como antes)
+      // Supplier fallback (kept from your logic)
       $supplier = ['supplier_id' => null, 'supplier_name' => null];
-
       if ($sku_product) {
           $product = new Products(new Database());
           $product->setSku($sku_product);
           $supplier = $product->getSupplierDetailsBySKU() ?: $supplier;
       }
 
+      $imagePath = '';
+      $pdfPath   = '';
 
-      $imagePath   = '';
-      $pdfPath     = '';
-
-      if ($isAttachAnImage) {
-        $resImg = $this->handleImageUpload($imageFile,  $supplier, $sku_product, $sku_variation);
-        $imagePath   = $resImg;
+      if ($isAttachAnImage === 1) {
+          $imagePath = $this->handleImageUpload($imageFile, $supplier, $sku_product, $sku_variation) ?: '';
       }
 
-      if ($isAttachAPDF) {
-        $resPdf = $this->handlePdfUpload($pdfFile, $supplier, $sku_product, $sku_variation);
-        $pdfPath     = $resPdf;
+      if ($isAttachAPDF === 1) {
+          $pdfPath = $this->handlePdfUpload($pdfFile, $supplier, $sku_product, $sku_variation) ?: '';
       }
-
-
-
 
       $connection = new Database();
-      $variation = new Variation($connection);
-
+      $variation  = new Variation($connection);
 
       $variation->setName($name ?: '');
       $variation->setIsAttachAnImage($isAttachAnImage);
       $variation->setIsAttachAPDF($isAttachAPDF);
       $variation->setSKUVariation($sku_variation ?: '');
       $variation->setImage($imagePath ?: '');
-      $variation->setPdfArtwork($pdfPath   ?: '');
-      $variation->setSKUParentVariation($sku_parent_variation   ?: '');
+      $variation->setPdfArtwork($pdfPath ?: '');
+      $variation->setSKUParentVariation($sku_parent_variation ?: '');
+      $variation->setNamePdfArtwork($name_pdf_artwork ?: '');
 
-      $variation->setNamePdfArtwork($name_pdf_artwork   ?: '');
-      $variation->setGroupName($group   ?: '');
-
+      // IMPORTANT: save type_id into variations.type_id
+      $variation->setTypeId($type_id);
 
       $ok = $variation->updateVariationDetails();
 
-
       echo json_encode([
-          'success'        => $ok,
-          'image_path'     => $imagePath ?: '',
-          'pdf_path'       => $pdfPath   ?: '',
-          'variation_name'   => $variation_name,
-          'sku_parent_variation' => $sku_parent_variation
+          'success'              => $ok,
+          'image_path'           => $imagePath ?: '',
+          'pdf_path'             => $pdfPath ?: '',
+          'sku_parent_variation' => $sku_parent_variation,
+          'type_id'              => $type_id,
       ]);
   }
-
 
 
   /**
