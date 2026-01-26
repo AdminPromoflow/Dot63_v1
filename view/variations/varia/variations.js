@@ -631,10 +631,10 @@ class Variations {
 
     for (let i = 0; i < list.length; i++) {
       const sku = String(list[i]?.SKU ?? list[i]?.sku ?? '').trim();
-      alert(sku);
       if (!sku || sku === currentSku) continue;
 
       const name = String(list[i]?.name ?? '(unnamed variation)').trim();
+      alert(name);
 
       const opt = document.createElement('option');
       opt.value = sku;
