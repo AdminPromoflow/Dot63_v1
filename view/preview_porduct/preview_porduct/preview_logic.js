@@ -91,7 +91,7 @@ class PreviewLogic {
     //  previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
 
 
-      //this.drawHeaders(supplierBlock, categoryBlock, productBlock);
+      this.drawHeaders(supplierBlock, categoryBlock, productBlock);
 
       this.drawProductDetails(productBlock);
 
