@@ -60,7 +60,7 @@ class Products {
       return false;
     }
   }
-  private function approveProductWithSKU(): bool
+  public function approveProductWithSKU(): bool
   {
     echo json_encode ($this->sku);exit;
 
