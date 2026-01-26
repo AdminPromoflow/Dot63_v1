@@ -395,13 +395,13 @@ class Variations {
 
         if (json["success"]) {
           this.renderMenuTop(json["variations"]);
+            this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
 
           this.drawParentsVariationItems(json["variations"], json["product"], json["current"]);
         //  this.drawImageVariationSelected(json["current"]["image"]);
           //this.setPdfPreview(json["current"]["pdf_artwork"], json["current"]["name_pdf_artwork"]);
           //this.setImagePreview(json["current"]["image"]);
           //this.drawItemsGroup(json["groups_by_product"], json["current"]["group"]);
-        //  this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
         }
       })
       .catch(error => {
@@ -634,7 +634,7 @@ class Variations {
       const sku = String(list[i]?.SKU ?? list[i]?.sku ?? '').trim();
 
       if (!sku || sku === currentSku) continue;
-      alert(sku + currentSku + "Buenas ");
+      //alert(sku + currentSku + "Buenas ");
 
       const name = String(list[i]?.name ?? '(unnamed variation)').trim();
 
