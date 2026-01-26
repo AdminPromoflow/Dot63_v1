@@ -491,7 +491,7 @@ class Variations {
   }
 
   renderTypeVariationsSelect(typeVariationsRaw, type_id) {
-    alert(type_id + "Bueno");
+    alert(JSON.stringify(typeVariationsRaw));
     if (!this.groupSelect) return;
     if (!this.isArray(typeVariationsRaw)) return;
 
