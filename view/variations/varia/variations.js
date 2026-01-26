@@ -300,13 +300,15 @@ class Variations {
     this.getVariationDetails();
   }
 
-  getVariationDetails() {
-    // Read current context from URL
-    const params = new URLSearchParams(window.location.search);
-    const skuProduct   = params.get('sku');
-    const skuVariation = params.get('sku_variation');
+  // Split version of getVariationDetails() to keep it readable and maintainable.
+  // All helpers are now class methods (no inner functions).
+  // Each method does ONE thing: fetch, parse, render section, etc.
 
-    // Prepare backend request
+  getVariationDetails() {
+    // 1) Read URL context
+    const { skuProduct, skuVariation } = this.readSkuParamsFromUrl();
+
+    // 2) Build request
     const url = "../../controller/products/variations.php";
     const payload = {
       action: "get_variation_details",
@@ -314,6 +316,7 @@ class Variations {
       sku_variation: skuVariation
     };
 
+    // 3) Fetch + parse JSON
     fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -321,180 +324,246 @@ class Variations {
     })
       .then(r => {
         if (!r.ok) throw new Error("Network error.");
-        return r.text(); // your backend returns text; we parse JSON manually
+        return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
-        const json = JSON.parse(text);
-
+        const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
-        // --- 1) Render top menu items ---
-        if (this.menuList) {
-          this.menuList.innerHTML = '';
+        // 4) Render each UI block with small focused functions
+        this.renderTopMenu(json.variations, skuVariation);
+        this.renderCurrentNameAndDefaultRules(json.current);
+        this.renderParentSelect(json.variations, json.current, json.parent, json.product);
+        this.renderTypeVariationsSelect(json.type_variations);
+        this.renderServerPreviews(json.current);
 
-          const variations = isArr(json.variations) ? json.variations : [];
-          for (let i = 0; i < variations.length; i++) {
-            const name = (variations[i]?.name ?? '(unnamed)').toString();
-            const sku  = (variations[i]?.SKU ?? variations[i]?.sku ?? '').toString();
-
-            const li = document.createElement('li');
-            li.dataset.sku = sku;
-            li.style.padding = '8px 10px';
-            li.style.borderRadius = '10px';
-            li.style.cursor = 'default';
-            li.innerHTML = `<strong>${name}</strong>${sku ? ` <small style="color:var(--muted)">— ${sku}</small>` : ''}`;
-
-            this.menuList.appendChild(li);
-          }
-
-          // Highlight the current sku_variation in the menu (if possible)
-          const currentSkuV = (skuVariation || '').trim().toUpperCase();
-          this.menuList.querySelectorAll('li').forEach(li => {
-            const candidate = (li.dataset.sku || '').trim().toUpperCase();
-            if (candidate && candidate === currentSkuV) li.classList.add('is-selected');
-          });
-
-          // Keep the menu closed by default
-          this.menuList.hidden = true;
-          if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
-        }
-
-        // --- 2) Set current name in the input + apply "Default" rules ---
-        const currentName = (json.current?.name ?? '').toString();
-        if (this.nameInput) this.nameInput.value = currentName;
-
-        if (currentName === 'Default') {
-          alert(
-            "1) If you won't add any variations, keep 'Default variation' selected. (Editing options for 'Default' are disabled.)\n" +
-            "2) Click 'Save & Next'.\n" +
-            "3) Add images, items, and prices.\n\n" +
-            "— OR —\n" +
-            "If you will use variations: click 'Add' and create your first-level variations with 'Parent variation' set to 'Default'."
-          );
-
-          if (this.parentSelect) this.parentSelect.disabled = true;
-          if (this.nameInput)    this.nameInput.disabled   = true;
-          if (this.imgInput)     this.imgInput.disabled    = true;
-          if (this.pdfInput)     this.pdfInput.disabled    = true;
-        }
-
-        // --- 3) Render "Parent variation" select (exclude current variation) ---
-        if (this.parentSelect) {
-          const variations = isArr(json.variations) ? json.variations : [];
-          const currentSku = (json.current?.sku ?? json.current?.SKU ?? '').toString().trim();
-
-          this.parentSelect.innerHTML = '<option value="" disabled selected>Select a parent</option>';
-
-          for (let i = 0; i < variations.length; i++) {
-            const sku = (variations[i]?.SKU ?? variations[i]?.sku ?? '').toString().trim();
-            if (!sku || sku === currentSku) continue;
-
-            const name = (variations[i]?.name ?? '(unnamed variation)').toString();
-
-            const opt = document.createElement('option');
-            opt.value = sku;
-            opt.dataset.sku = sku;
-            opt.textContent = `${name} — ${sku}`;
-            this.parentSelect.appendChild(opt);
-          }
-
-          // Try to select the parent if backend provides it
-          // If the parent sku is not in the options, it will stay on placeholder.
-          const targetParent =
-            (json.parent?.sku ?? json.parent?.SKU ?? '') ||
-            (json.product?.product_sku ?? '');
-
-          const wanted = targetParent.toString().trim().toUpperCase();
-
-          let matched = false;
-          for (const opt of this.parentSelect.options) {
-            const v = (opt.value || '').trim().toUpperCase();
-            const d = (opt.getAttribute('data-sku') || '').trim().toUpperCase();
-            if ((v && v === wanted) || (d && d === wanted)) {
-              opt.selected = true;
-              this.parentSelect.value = opt.value;
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) this.parentSelect.selectedIndex = 0;
-        }
-
-        // --- 4) Render "type_variations" into the <select id="group"> (no selection for now) ---
-        // We insert type options BEFORE "__create_group__" so the modal option stays at the bottom.
-        if (this.groupSelect && isArr(json.type_variations)) {
-          const createOpt = this.groupSelect.querySelector('option[value="__create_group__"]');
-          if (createOpt) {
-            // Remove previous type options
-            this.groupSelect
-              .querySelectorAll('option[data-source="type_list"]')
-              .forEach(opt => opt.remove());
-
-            // Insert new type options
-            for (let i = 0; i < json.type_variations.length; i++) {
-              const id   = (json.type_variations[i]?.type_id ?? '').toString().trim();
-              const name = (json.type_variations[i]?.type_name ?? '').toString().trim();
-              if (!id || !name) continue;
-
-              const opt = document.createElement('option');
-              opt.value = id;
-              opt.textContent = name;
-              opt.dataset.source = 'type_list';
-              this.groupSelect.insertBefore(opt, createOpt);
-            }
-
-            // Keep "no selection" for now
-            this.groupSelect.value = '';
-          }
-        }
-
-        // --- 5) Render server previews (optional but important UX) ---
-        // Image preview from backend (icon image)
-        if (this.imgPreview) {
-          const serverImage = (json.current?.image ?? '').toString().trim();
-
-          if (serverImage) {
-            const href = serverImage.startsWith('http') || serverImage.startsWith('data:') || serverImage.startsWith('blob:')
-              ? serverImage
-              : '../../' + serverImage.replace(/^\/+/, '');
-
-            this.imgPreview.innerHTML =
-              `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="${href}">`;
-          } else {
-            // Placeholder icon if no image saved
-            this.imgPreview.innerHTML =
-              `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="../../view/variations/images/add_image.png">`;
-          }
-        }
-
-        // PDF preview link from backend (artwork)
-        if (this.pdfPreview) {
-          const serverPdf = (json.current?.pdf_artwork ?? '').toString().trim();
-          const pdfName   = (json.current?.name_pdf_artwork ?? '').toString();
-
-          // Set the optional PDF name field if it exists in HTML
-          const namePdfInput = document.getElementById('name_pdf_artwork');
-          if (namePdfInput) namePdfInput.value = pdfName;
-
-          if (serverPdf) {
-            const href = serverPdf.startsWith('/') ? serverPdf : '/' + serverPdf.replace(/^\/+/, '');
-            this.pdfPreview.innerHTML = `<a href="../..${href}" download="artwork.pdf">artwork.pdf</a>`;
-          } else {
-            this.pdfPreview.innerHTML = '';
-          }
-        }
-
-        // IMPORTANT: On initial load we keep attach flags OFF.
-        // That means: if user clicks Save without changing files, backend should keep existing files.
+        // 5) Reset attach flags after initial load
         this.attachImage = false;
         this.attachPDF   = false;
       })
       .catch(err => {
         console.error("Error:", err);
       });
+  }
 
-    // Small local helper used above (kept inside method to reduce extra class methods)
-    function isArr(v) { return Array.isArray(v); }
+  /* =========================
+     Helpers (small + reusable)
+     ========================= */
+
+  readSkuParamsFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      skuProduct: params.get('sku') || '',
+      skuVariation: params.get('sku_variation') || ''
+    };
+  }
+
+  isArray(v) {
+    return Array.isArray(v);
+  }
+
+  safeJsonParse(text) {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("Invalid JSON:", e);
+      return null;
+    }
+  }
+
+  /* =========================
+     Render blocks (UI sections)
+     ========================= */
+
+  renderTopMenu(variationsRaw, skuVariation) {
+    if (!this.menuList) return;
+
+    // Clear menu list
+    this.menuList.innerHTML = '';
+
+    const variations = this.isArray(variationsRaw) ? variationsRaw : [];
+
+    // Build <li> items
+    for (let i = 0; i < variations.length; i++) {
+      const name = String(variations[i]?.name ?? '(unnamed)');
+      const sku  = String(variations[i]?.SKU ?? variations[i]?.sku ?? '');
+
+      const li = document.createElement('li');
+      li.dataset.sku = sku;
+      li.style.padding = '8px 10px';
+      li.style.borderRadius = '10px';
+      li.style.cursor = 'default';
+      li.innerHTML = `<strong>${name}</strong>${sku ? ` <small style="color:var(--muted)">— ${sku}</small>` : ''}`;
+
+      this.menuList.appendChild(li);
+    }
+
+    // Highlight current SKU variation
+    const wanted = String(skuVariation || '').trim().toUpperCase();
+    this.menuList.querySelectorAll('li').forEach(li => {
+      const candidate = String(li.dataset.sku || '').trim().toUpperCase();
+      if (candidate && candidate === wanted) li.classList.add('is-selected');
+    });
+
+    // Close menu by default
+    this.menuList.hidden = true;
+    if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  renderCurrentNameAndDefaultRules(current) {
+    const currentName = String(current?.name ?? '');
+
+    // Set name input
+    if (this.nameInput) this.nameInput.value = currentName;
+
+    // Apply "Default" restrictions
+    if (currentName === 'Default') {
+      alert(
+        "1) If you won't add any variations, keep 'Default variation' selected. (Editing options for 'Default' are disabled.)\n" +
+        "2) Click 'Save & Next'.\n" +
+        "3) Add images, items, and prices.\n\n" +
+        "— OR —\n" +
+        "If you will use variations: click 'Add' and create your first-level variations with 'Parent variation' set to 'Default'."
+      );
+
+      if (this.parentSelect) this.parentSelect.disabled = true;
+      if (this.nameInput)    this.nameInput.disabled   = true;
+      if (this.imgInput)     this.imgInput.disabled    = true;
+      if (this.pdfInput)     this.pdfInput.disabled    = true;
+    }
+  }
+
+  renderParentSelect(variationsRaw, current, parent, product) {
+    if (!this.parentSelect) return;
+
+    const variations = this.isArray(variationsRaw) ? variationsRaw : [];
+
+    // Current variation SKU (exclude it from parents)
+    const currentSku = String(current?.sku ?? current?.SKU ?? '').trim();
+
+    // Reset select with placeholder
+    this.parentSelect.innerHTML = '<option value="" disabled selected>Select a parent</option>';
+
+    // Append options
+    for (let i = 0; i < variations.length; i++) {
+      const sku = String(variations[i]?.SKU ?? variations[i]?.sku ?? '').trim();
+      if (!sku || sku === currentSku) continue;
+
+      const name = String(variations[i]?.name ?? '(unnamed variation)');
+
+      const opt = document.createElement('option');
+      opt.value = sku;
+      opt.dataset.sku = sku;
+      opt.textContent = `${name} — ${sku}`;
+      this.parentSelect.appendChild(opt);
+    }
+
+    // Auto-select parent if backend provides it (otherwise stays on placeholder)
+    this.trySelectParent(parent, product);
+  }
+
+  trySelectParent(parent, product) {
+    if (!this.parentSelect) return;
+
+    const targetParent =
+      String(parent?.sku ?? parent?.SKU ?? '') ||
+      String(product?.product_sku ?? '');
+
+    const wanted = String(targetParent).trim().toUpperCase();
+    if (!wanted) return;
+
+    let matched = false;
+
+    for (const opt of this.parentSelect.options) {
+      const byValue = String(opt.value || '').trim().toUpperCase();
+      const byData  = String(opt.getAttribute('data-sku') || '').trim().toUpperCase();
+
+      if ((byValue && byValue === wanted) || (byData && byData === wanted)) {
+        opt.selected = true;
+        this.parentSelect.value = opt.value;
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched) this.parentSelect.selectedIndex = 0;
+  }
+
+  renderTypeVariationsSelect(typeVariationsRaw) {
+    if (!this.groupSelect) return;
+    if (!this.isArray(typeVariationsRaw)) return;
+
+    // We insert "type options" before the create-group option
+    const createOpt = this.groupSelect.querySelector('option[value="__create_group__"]');
+    if (!createOpt) return;
+
+    // Remove old type options
+    this.groupSelect
+      .querySelectorAll('option[data-source="type_list"]')
+      .forEach(opt => opt.remove());
+
+    // Insert new type options
+    for (let i = 0; i < typeVariationsRaw.length; i++) {
+      const id   = String(typeVariationsRaw[i]?.type_id ?? '').trim();
+      const name = String(typeVariationsRaw[i]?.type_name ?? '').trim();
+      if (!id || !name) continue;
+
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = name;
+      opt.dataset.source = 'type_list';
+      this.groupSelect.insertBefore(opt, createOpt);
+    }
+
+    // For now: do not select anything
+    this.groupSelect.value = '';
+  }
+
+  renderServerPreviews(current) {
+    this.renderServerImagePreview(current?.image);
+    this.renderServerPdfPreview(current?.pdf_artwork, current?.name_pdf_artwork);
+  }
+
+  renderServerImagePreview(imagePath) {
+    if (!this.imgPreview) return;
+
+    const serverImage = String(imagePath ?? '').trim();
+
+    if (serverImage) {
+      const href =
+        serverImage.startsWith('http') ||
+        serverImage.startsWith('data:') ||
+        serverImage.startsWith('blob:')
+          ? serverImage
+          : '../../' + serverImage.replace(/^\/+/, '');
+
+      this.imgPreview.innerHTML =
+        `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="${href}">`;
+      return;
+    }
+
+    // Placeholder if empty
+    this.imgPreview.innerHTML =
+      `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="../../view/variations/images/add_image.png">`;
+  }
+
+  renderServerPdfPreview(pdfPath, pdfName) {
+    if (!this.pdfPreview) return;
+
+    const serverPdf = String(pdfPath ?? '').trim();
+    const nameLabel = String(pdfName ?? '');
+
+    // Fill the name input if it exists
+    const namePdfInput = document.getElementById('name_pdf_artwork');
+    if (namePdfInput) namePdfInput.value = nameLabel;
+
+    if (!serverPdf) {
+      this.pdfPreview.innerHTML = '';
+      return;
+    }
+
+    const href = serverPdf.startsWith('/') ? serverPdf : '/' + serverPdf.replace(/^\/+/, '');
+    this.pdfPreview.innerHTML = `<a href="../..${href}" download="artwork.pdf">artwork.pdf</a>`;
   }
 
   saveVariationDetails() {
