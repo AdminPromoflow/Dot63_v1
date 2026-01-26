@@ -35,7 +35,6 @@ class Product {
     $user->setSKU($data['sku']);
     $company = $user->getUserCompanyBySKU();
 
-
     $connection = new Database();
     $category = new Categories($connection);
     $category->setSKU($data['sku']);
@@ -46,16 +45,12 @@ class Product {
     $product->setSku($data['sku']);
     $product_details = $product->getProductDetailsBySKU();
 
-
     $connection = new Database();
     $variation = new Variation($connection);
     $variation->setSku($data['sku']);
     $variation_details = $variation->getVariationsSKUBySKUProduct();
 
-
     echo json_encode(array($company,$category_name, $product_details, $variation_details ));
-
-  //  $this->sendAPIPromoflow(array($company,$category_name, $product_details, $variation_details ));
   }
 
 
