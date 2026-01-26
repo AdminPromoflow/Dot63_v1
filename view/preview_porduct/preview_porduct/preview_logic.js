@@ -93,43 +93,7 @@ class PreviewLogic {
 
       this.drawHeaders(supplierBlock, categoryBlock, productBlock);
 
-      this.drawProductDetails(productBlock);
-        /**
-         * Group variations (Default) by "group"
-         * - Build a distinct list of group names
-         * - Create a structure: [{ group: "WIDTH", items: [...] }, ...]
-         */
-        const list = variationsBlock?.Variations?.Default ?? [];
-
-        // Unique group names (fallback to UNGROUPED)
-        const groupNames = [...new Set(list.map(v => (v?.group || "UNGROUPED").trim()))];
-
-        // [{ group: "WIDTH", items: [...] }, ...]
-        let detailsByGroup = [];
-
-        // 1) Initialise container for each group
-        for (let j = 0; j < groupNames.length; j++) {
-          detailsByGroup.push({
-            group: groupNames[j],
-            items: []
-          });
-        }
-
-        // 2) Assign each variation to its matching group
-        for (let i = 0; i < list.length; i++) {
-          const v = list[i];
-          const g = (v?.group || "UNGROUPED").trim();
-
-          const index = detailsByGroup.findIndex(x => x.group === g);
-
-          if (index !== -1) {
-            detailsByGroup[index].items.push(v);
-          }
-        }
-      //  alert(JSON.stringify(productBlock));
-
-        // 5) Render header + product details
-
+    //  this.drawProductDetails(productBlock);
 
 
       })
