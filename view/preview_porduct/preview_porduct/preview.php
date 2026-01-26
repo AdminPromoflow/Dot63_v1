@@ -247,7 +247,6 @@ $jsTime2  = @filemtime($jsPath2)  ?: time();
               </button> -->
             </div>
           </div>
-        -->
         </section>
       </section>
 
