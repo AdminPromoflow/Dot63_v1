@@ -66,7 +66,7 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
-      //  alert(text);
+        alert(text);
         let json;
 
         // 4) Parse JSON with error handling
@@ -178,21 +178,13 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
-        alert(text);
+      //  alert(text);
         let json;
 
-        // 4) Parse JSON with error handling
-        try {
           json = JSON.parse(text);
-        } catch (e) {
-          console.error("Invalid JSON:", e, text);
-          return;
-        }
 
-        if (!Array.isArray(json)) {
-          console.error("Unexpected JSON format:", json);
-          return;
-        }
+
+
 
       })
       .catch(error => {
