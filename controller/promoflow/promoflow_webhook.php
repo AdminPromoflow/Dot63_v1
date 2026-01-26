@@ -27,7 +27,7 @@ class Resques63API{
     $connection = new Database();
     $product = new Products($connection);
     $product->setSku($data['sku']);
-    echo json_encode ($data['sku']);exit;
+  //  echo json_encode ($data['sku']);exit;
 
 
     $result = $product->approveProductWidthSKU();
