@@ -86,7 +86,7 @@ class PreviewLogic {
         if (section_variations) {
           section_variations.innerHTML = "";
         }
-        alert(JSON.stringify(variationsBlock));
+        alert(JSON.stringify(variationsBlock.default_variation_sku));
         // Debug: inspect the variations payload
     //  previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
 
