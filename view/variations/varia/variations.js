@@ -621,28 +621,31 @@ class Variations {
   }
 
   drawParentsVariationItems(dataVariations = [], dataProduct = {}, dataCurrent = {}) {
-
-    alert(Array.isArray(dataVariations) );
     const sel = this.parentSelect || document.getElementById('parent_variations');
     if (!sel) return;
 
+    const list = Array.isArray(dataVariations) ? dataVariations : [];
+    const currentSku = String(dataCurrent?.sku ?? dataCurrent?.SKU ?? '').trim();
+
     sel.innerHTML = '<option value="" disabled selected>Select a parent</option>';
 
-    for (const row of (Array.isArray(dataVariations) ? dataVariations : [])) {
-      const sku  = row?.SKU ?? row?.sku ?? '';
-      if (!sku || sku === (dataCurrent?.sku ?? '')) continue;
+    for (let i = 0; i < list.length; i++) {
+      const sku = String(list[i]?.SKU ?? list[i]?.sku ?? '').trim();
       alert(sku);
-      const name = row?.name ?? '(unnamed variation)';
+      if (!sku || sku === currentSku) continue;
+
+      const name = String(list[i]?.name ?? '(unnamed variation)').trim();
+
       const opt = document.createElement('option');
       opt.value = sku;
       opt.dataset.sku = sku;
       opt.textContent = `${name} — ${sku}`;
       sel.appendChild(opt);
     }
-
-    // 👇 Aquí ya no se añade "+ Create new group…"
-    // porque eso ahora vive en el <select id="group">
   }
+
+
+
 
 }
 
