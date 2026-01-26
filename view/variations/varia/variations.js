@@ -490,35 +490,65 @@ class Variations {
     if (!matched) this.parentSelect.selectedIndex = 0;
   }
 
-  renderTypeVariationsSelect(typeVariationsRaw, type_id) {
-    alert(JSON.stringify(typeVariationsRaw));
+  renderTypeVariationsSelect(typeVariationsRaw, type_id_selected) {
+    // typeVariationsRaw must be an array of objects like:
+    // [{ type_id: "6", type_name: "Bag colour", ... }, ...]
     if (!this.groupSelect) return;
     if (!this.isArray(typeVariationsRaw)) return;
 
-    // We insert "type options" before the create-group option
+    // We insert options before the special "create group" option
     const createOpt = this.groupSelect.querySelector('option[value="__create_group__"]');
     if (!createOpt) return;
 
-    // Remove old type options
+    // Remove previously injected options (only those created by this renderer)
     this.groupSelect
       .querySelectorAll('option[data-source="type_list"]')
       .forEach(opt => opt.remove());
 
-    // Insert new type options
+    // Build options
     for (let i = 0; i < typeVariationsRaw.length; i++) {
-      const id   = String(typeVariationsRaw[i]?.type_id ?? '').trim();
-      const name = String(typeVariationsRaw[i]?.type_name ?? '').trim();
-      if (!id || !name) continue;
+      const typeId   = String(typeVariationsRaw[i]?.type_id ?? '').trim();
+      const typeName = String(typeVariationsRaw[i]?.type_name ?? '').trim();
+      if (!typeId || !typeName) continue;
 
       const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = name;
+
+      // value is what gets submitted/saved (recommended: type_id)
+      opt.value = typeId;
+
+      // "id" attribute requested: option DOM id = type_id
+      // Note: IDs should not start with a number in CSS selectors unless escaped.
+      // Using a prefix keeps it safe and still contains the type_id.
+      opt.id = `type_${typeId}`;
+
+      // Also store raw type_id in dataset for easy lookup/debugging
+      opt.dataset.typeId = typeId;
+
+      opt.textContent = typeName;
       opt.dataset.source = 'type_list';
+
       this.groupSelect.insertBefore(opt, createOpt);
     }
 
-    // For now: do not select anything
-    this.groupSelect.value = '';
+    // Selection rules:
+    // - If type_id_selected is null/empty => keep placeholder (no selection)
+    // - Else select the option whose type_id matches
+    const selected = (type_id_selected === null || type_id_selected === undefined)
+      ? ''
+      : String(type_id_selected).trim();
+
+    if (!selected) {
+      this.groupSelect.value = '';
+      return;
+    }
+
+    // Since option.value == type_id, this selects correctly if it exists
+    this.groupSelect.value = selected;
+
+    // If the id does not exist in the list, fall back to "no selection"
+    if (this.groupSelect.value !== selected) {
+      this.groupSelect.value = '';
+    }
   }
 
   renderServerPreviews(current) {
