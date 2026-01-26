@@ -391,12 +391,12 @@ class Variations {
       .then(data => {
       //  alert(data);
         const json = JSON.parse(data);
-        alert(JSON.stringify(json["type_variations"]));
+      //  alert(JSON.stringify(json["type_variations"]));
 
         if (json["success"]) {
           this.renderMenuTop(json["variations"]);
-            this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
-
+          this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
+          this.renderTypeVariation(json["type_variations"]);
           this.drawParentsVariationItems(json["variations"], json["product"], json["current"]);
         //  this.drawImageVariationSelected(json["current"]["image"]);
           //this.setPdfPreview(json["current"]["pdf_artwork"], json["current"]["name_pdf_artwork"]);
@@ -408,6 +408,40 @@ class Variations {
         console.error("Error:", error);
       });
   }
+
+  renderTypeVariation(type_variations) {
+  // Validación básica
+  if (!groupSelect || !Array.isArray(type_variations)) return;
+
+  // Opción especial (si la tienes en el HTML/placeholder init)
+  const createOpt = groupSelect.querySelector('option[value="__create_group__"]');
+  if (!createOpt) return;
+
+  // 1) Limpiar opciones previas creadas por esta función
+  groupSelect
+    .querySelectorAll('option[data-source="type_list"]')
+    .forEach(opt => opt.remove());
+
+  // 2) Crear opciones desde type_variations
+  for (let i = 0; i < type_variations.length; i++) {
+    const id   = String(type_variations[i]?.type_id ?? '').trim();
+    const name = String(type_variations[i]?.type_name ?? '').trim();
+
+    // Si viene incompleto, lo saltamos
+    if (!id || !name) continue;
+
+    const opt = document.createElement('option');
+    opt.value = id;                 // value = type_id (recomendado para backend)
+    opt.textContent = name;         // texto visible = type_name
+    opt.dataset.source = 'type_list'; // marca que viene de la lista de types
+    opt.dataset.typeName = name;      // opcional: si luego quieres leer el nombre sin buscarlo
+    groupSelect.insertBefore(opt, createOpt);
+  }
+
+  // 3) Por el momento no seleccionar nada:
+  //    - Si tu placeholder tiene value="" y está disabled+selected, esto lo mantiene.
+  groupSelect.value = '';
+}
 
    drawItemsGroup(groups_by_product, currentGroup) {
     // groups_by_product viene como array de strings: ['Group A', 'Group B', ...]
