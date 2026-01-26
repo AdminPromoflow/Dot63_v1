@@ -23,7 +23,6 @@ const groupSelect   = document.getElementById('group');
 const groupModal      = document.getElementById('group_modal');
 const groupNameInput  = document.getElementById('group_name_input');
 const groupCancelBtn  = document.getElementById('group_cancel_btn');
-const groupCreateBtn  = document.getElementById('group_create_btn');
 
 // ===== Helpers =====
 function extractSkuFromText(txt) {
@@ -181,7 +180,6 @@ class Variations {
     if (!groupSelect) return;
     groupSelect.innerHTML = `
       <option value="" disabled selected>Select a group</option>
-      <option value="__create_group__">+ Create new group…</option>
     `;
   }
 
@@ -217,9 +215,7 @@ class Variations {
     }
 
     // NUEVO: enviamos el group si no es la opción de crear
-    if (groupSelect && groupSelect.value && groupSelect.value !== '__create_group__') {
-      fd.append('group', groupSelect.value);
-    }
+
 
     if (imageFile) fd.append('imageFile', imageFile);
     if (pdfFile)   fd.append('pdfFile',   pdfFile);
@@ -414,7 +410,6 @@ class Variations {
   if (!groupSelect || !Array.isArray(type_variations)) return;
 
   // Opción especial (si la tienes en el HTML/placeholder init)
-  const createOpt = groupSelect.querySelector('option[value="__create_group__"]');
   if (!createOpt) return;
 
   // 1) Limpiar opciones previas creadas por esta función
@@ -447,7 +442,6 @@ class Variations {
     // groups_by_product viene como array de strings: ['Group A', 'Group B', ...]
     if (!groupSelect || !Array.isArray(groups_by_product)) return;
 
-    const createOpt = groupSelect.querySelector('option[value="__create_group__"]');
     if (!createOpt) return;
 
     // Limpiar opciones anteriores creadas dinámicamente
@@ -723,13 +717,7 @@ if (groupSelect) {
     lastGroupValue = groupSelect.value || '';
   });
 
-  groupSelect.addEventListener('change', (e) => {
-    if (e.target.value === '__create_group__') {
-      openGroupModal();
-      // volvemos al valor anterior, no dejamos "__create_group__" seleccionado
-      groupSelect.value = lastGroupValue || '';
-    }
-  });
+
 }
 
 function openGroupModal() {
@@ -744,30 +732,6 @@ function closeGroupModal() {
   groupModal.hidden = true;
 }
 
-function createGroup() {
-  const name = groupNameInput.value.trim();
-
-  if (!name) {
-    alert('Please enter a group name.');
-    groupNameInput.focus();
-    return;
-  }
-
-  // Aquí más adelante puedes hacer fetch(...) para guardarlo en la BD.
-  // De momento solo mostramos un alert y, opcionalmente, añadimos el grupo al select.
-
-  makeAjaxRequestUpdateGroup(name);
-  alert(`The group "${name}" has been created.`);
-
-  if (groupSelect) {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    groupSelect.insertBefore(opt, groupSelect.querySelector('option[value="__create_group__"]'));
-    groupSelect.value = name;
-  }
-  closeGroupModal();
-}
 
 function makeAjaxRequestUpdateGroup(group_name){
   const params = new URLSearchParams(window.location.search);
@@ -807,9 +771,7 @@ function makeAjaxRequestUpdateGroup(group_name){
 }
 
 // Eventos de botones del modal
-if (groupCreateBtn) {
-  groupCreateBtn.addEventListener('click', createGroup);
-}
+
 
 if (groupCancelBtn) {
   groupCancelBtn.addEventListener('click', closeGroupModal);
