@@ -622,7 +622,7 @@ class Variations {
 
   drawParentsVariationItems(dataVariations = [], dataProduct = {}, dataCurrent = {}) {
 
-  //  alert(JSON.stringify(dataVariations) + JSON.stringify(dataProduct) + JSON.stringify(dataCurrent));
+    alert(Array.isArray(dataVariations) );
     const sel = this.parentSelect || document.getElementById('parent_variations');
     if (!sel) return;
 
