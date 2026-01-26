@@ -151,6 +151,9 @@ class PreviewLogic {
         alert("Error loading preview data.");
       });
   }
+
+
+
   getDataVariationBySKU(sku_variation){
 
     if (!sku_variation) {
@@ -192,6 +195,7 @@ class PreviewLogic {
         alert("Error loading preview data.");
       });
   }
+
   getDataProduct() {
     // 1) Get SKU from the URL query string
     const params = new URLSearchParams(window.location.search);
@@ -224,6 +228,8 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
+
+        alert("raro" + text);
         let json;
 
         // 4) Parse JSON with error handling
