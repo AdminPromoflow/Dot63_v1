@@ -82,10 +82,7 @@ class PreviewLogic {
         const variationsBlock = findBlock("default_variation_sku");
 
         // Clear variations section before rendering (if present)
-        const section_variations = document.getElementById("section_variations");
-        if (section_variations) {
-          section_variations.innerHTML = "";
-        }
+      
 
         // Debug: inspect the variations payload
     //  previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
