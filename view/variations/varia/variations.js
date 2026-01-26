@@ -634,7 +634,7 @@ class Variations {
       if (!sku || sku === currentSku) continue;
 
       const name = String(list[i]?.name ?? '(unnamed variation)').trim();
-      alert(list[0].name);
+      alert(list[i].name);
 
       const opt = document.createElement('option');
       opt.value = sku;
