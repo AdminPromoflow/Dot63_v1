@@ -29,7 +29,7 @@ class Resques63API{
     $result = $product->getPendingProducts();
 
 
-    echo json_encode ("vamos bien");
+    echo json_encode ("vamos bien3");
   }
 
   private function getAPIOverviewData(){
