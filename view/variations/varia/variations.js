@@ -1,232 +1,577 @@
-// ===== Referencias DOM base =====
-const form          = document.getElementById('variationForm');
-const parentSelect  = document.getElementById('parent_variations');
-const parentChips   = document.getElementById('parent_chips');
-const nameInput     = document.getElementById('variation_name');
-
-const imgInput      = document.getElementById('variation_image');
-const imgPreview    = document.getElementById('img_preview');
-const clearImageBtn = document.getElementById('clear_image');
-
-const pdfInput      = document.getElementById('variation_pdf');
-const pdfPreview    = document.getElementById('pdf_preview');
-const clearPdfBtn   = document.getElementById('clear_pdf');
-
-const addBtn        = document.getElementById('add_variation');
-const menuBtn       = document.getElementById('menu_btn');
-const menuList      = document.getElementById('menu_list');
-const nextBtn       = document.getElementById('next_variations');
-
-const groupSelect   = document.getElementById('group');
-
-// Modal group
-const groupModal      = document.getElementById('group_modal');
-const groupNameInput  = document.getElementById('group_name_input');
-const groupCancelBtn  = document.getElementById('group_cancel_btn');
-
-// ===== Helpers =====
-function extractSkuFromText(txt) {
-  if (!txt) return null;
-  const m = txt.match(/sku[:\s-]*([A-Z0-9._-]+)/i) || txt.match(/\[([A-Z0-9._-]+)\]/i);
-  return m ? m[1] : null;
-}
-
-// ===== Clase principal =====
 class Variations {
-
   constructor() {
+    // --- Cache all DOM references inside the class (no globals) ---
+    this.form          = document.getElementById('variationForm');
+
+    this.parentSelect  = document.getElementById('parent_variations');
+    this.parentChips   = document.getElementById('parent_chips'); // not used yet, kept for future UI
+    this.nameInput     = document.getElementById('variation_name');
+
+    this.imgInput      = document.getElementById('variation_image');
+    this.imgPreview    = document.getElementById('img_preview');
+    this.clearImageBtn = document.getElementById('clear_image');
+
+    this.pdfInput      = document.getElementById('variation_pdf');
+    this.pdfPreview    = document.getElementById('pdf_preview');
+    this.clearPdfBtn   = document.getElementById('clear_pdf');
+
+    this.addBtn        = document.getElementById('add_variation');
+    this.menuBtn       = document.getElementById('menu_btn');
+    this.menuList      = document.getElementById('menu_list');
+    this.nextBtn       = document.getElementById('next_variations');
+
+    // NOTE: In your current flow this <select id="group"> is being used to render "type_variations".
+    // Later you can split it into a dedicated <select id="type_variations"> if you want.
+    this.groupSelect   = document.getElementById('group');
+
+    // Modal "Create group"
+    this.groupModal     = document.getElementById('group_modal');
+    this.groupNameInput = document.getElementById('group_name_input');
+    this.groupCancelBtn = document.getElementById('group_cancel_btn');
+    this.groupCreateBtn = document.getElementById('group_create_btn');
+
+    // --- State flags sent to the backend ---
+    // They indicate whether the user is attaching a NEW file in this session.
     this.attachImage = false;
     this.attachPDF   = false;
 
-    this.parentSelect = parentSelect;
-    this.menuBtn      = menuBtn;
-    this.menuList     = menuList;
+    // Used to restore the previous select value when user picks "__create_group__"
+    this.lastGroupValue = this.groupSelect ? (this.groupSelect.value || '') : '';
 
-    this.bindImagePreview();
-    this.bindPdfPreview();
-    this.bindMenuList();
-    this.bindHeaderAndButtons();
+    // If we create an ObjectURL for image preview, we should revoke it to avoid memory leaks.
+    this.currentImageObjectUrl = null;
 
-    this.initGroupSelectPlaceholder();
-
-    this.getVariationDetails();
+    // --- Init everything ---
+    this.init();
   }
 
-  // --- Bindings básicos ---
-
-  bindImagePreview() {
-    if (!imgInput || !imgPreview) return;
-
-    imgInput.addEventListener('change', () => {
-      this.attachImage = true;
-      imgPreview.innerHTML = '';
-      const file = imgInput.files?.[0];
-      if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        alert('El archivo de imagen no es válido.');
-        imgInput.value = '';
-        return;
-      }
-
-      const url = URL.createObjectURL(file);
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = 'Selected variation image preview (icon)';
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      imgPreview.appendChild(img);
-    });
-
-    if (clearImageBtn) {
-      clearImageBtn.addEventListener('click', () => {
-        imgInput.value = '';
-        imgPreview.innerHTML = '';
-        this.attachImage = false;
-      });
-    }
+  // Small helper kept inside the class (used for fallback parsing only)
+  static extractSkuFromText(txt) {
+    if (!txt) return null;
+    const m =
+      txt.match(/sku[:\s-]*([A-Z0-9._-]+)/i) ||
+      txt.match(/\[([A-Z0-9._-]+)\]/i);
+    return m ? m[1] : null;
   }
 
-  bindPdfPreview() {
-    if (!pdfInput || !pdfPreview) return;
-
-    pdfInput.addEventListener('change', () => {
-      this.attachPDF = true;
-      pdfPreview.innerHTML = '';
-      const file = pdfInput.files?.[0];
-      if (!file) return;
-
-      if (file.type !== 'application/pdf') {
-        alert('Selecciona un PDF válido.');
-        pdfInput.value = '';
-        this.attachPDF = false;
-        return;
-      }
-
-      const pill = document.createElement('div');
-      pill.className = 'cp-file-pill';
-
-      const name = document.createElement('span');
-      name.textContent = file.name;
-
-      const size = document.createElement('small');
-      size.textContent = `(${Math.round(file.size / 1024)} KB)`;
-
-      pill.appendChild(name);
-      pill.appendChild(size);
-      pdfPreview.appendChild(pill);
-    });
-
-    if (clearPdfBtn) {
-      clearPdfBtn.addEventListener('click', () => {
-        pdfInput.value = '';
-        pdfPreview.innerHTML = '';
-        this.attachPDF = false;
-      });
-    }
-  }
-
-  bindMenuList() {
-    if (!this.menuList) return;
-
-    this.menuList.addEventListener('click', (e) => {
-      const li = e.target.closest('li');
-      if (!li || !this.menuList.contains(li)) return;
-
-      // limpiar selección previa
-      this.menuList.querySelectorAll('.is-selected')
-        .forEach(el => el.classList.remove('is-selected'));
-
-      li.classList.add('is-selected');
-
-      const { name, sku } = this.parseNameSkuFromText(li.textContent);
-
-      this.menuList.hidden = true;
-      if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
-
-      const params = new URLSearchParams(window.location.search);
-      const sku_product = params.get('sku');
-
-      window.location.href =
-        `../../view/variations/index.php?sku=${encodeURIComponent(sku_product)}&sku_variation=${encodeURIComponent(sku)}`;
-    });
-  }
-
-  bindHeaderAndButtons() {
+  init() {
+    // 1) Tell the global header wizard that we are on "variations"
     document.addEventListener('DOMContentLoaded', () => {
-      if (window.headerAddProduct && typeof headerAddProduct.setCurrentHeader === 'function') {
-        headerAddProduct.setCurrentHeader('variations');
+      if (window.headerAddProduct && typeof window.headerAddProduct.setCurrentHeader === 'function') {
+        window.headerAddProduct.setCurrentHeader('variations');
       }
     });
 
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        if (nameInput.value.trim() !== "") {
-          this.saveVariationDetails();
-        } else {
-          alert("Please add a name to the variation.");
+    // 2) Initialize the "group" select with a placeholder + create option
+    //    (We keep "__create_group__" so the modal can be opened from the select)
+    if (this.groupSelect) {
+      this.groupSelect.innerHTML = `
+        <option value="" disabled selected>Select a group</option>
+        <option value="__create_group__">+ Create new group…</option>
+      `;
+      this.groupSelect.value = ''; // keep "no selection" for now
+    }
+
+    // 3) Bind image upload preview + clear
+    if (this.imgInput && this.imgPreview) {
+      this.imgInput.addEventListener('change', () => {
+        // User selected a new file: mark as "attach image"
+        this.attachImage = true;
+
+        // Reset preview UI
+        this.imgPreview.innerHTML = '';
+
+        const file = this.imgInput.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('The selected image file is not valid.');
+          this.imgInput.value = '';
+          this.attachImage = false;
+          return;
+        }
+
+        // Revoke previous ObjectURL if it exists (avoid memory leak)
+        if (this.currentImageObjectUrl) {
+          URL.revokeObjectURL(this.currentImageObjectUrl);
+          this.currentImageObjectUrl = null;
+        }
+
+        // Create a temporary local URL for preview
+        const url = URL.createObjectURL(file);
+        this.currentImageObjectUrl = url;
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Selected variation image preview (icon)';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        this.imgPreview.appendChild(img);
+      });
+    }
+
+    if (this.clearImageBtn && this.imgInput && this.imgPreview) {
+      this.clearImageBtn.addEventListener('click', () => {
+        // Clear the input and preview
+        this.imgInput.value = '';
+        this.imgPreview.innerHTML = '';
+
+        // Reset attach flag (means: "I am not attaching a NEW image now")
+        this.attachImage = false;
+
+        // Revoke ObjectURL if we created one
+        if (this.currentImageObjectUrl) {
+          URL.revokeObjectURL(this.currentImageObjectUrl);
+          this.currentImageObjectUrl = null;
         }
       });
     }
 
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
+    // 4) Bind PDF upload preview + clear
+    if (this.pdfInput && this.pdfPreview) {
+      this.pdfInput.addEventListener('change', () => {
+        this.attachPDF = true;
+        this.pdfPreview.innerHTML = '';
+
+        const file = this.pdfInput.files?.[0];
+        if (!file) return;
+
+        if (file.type !== 'application/pdf') {
+          alert('Please select a valid PDF file.');
+          this.pdfInput.value = '';
+          this.attachPDF = false;
+          return;
+        }
+
+        // Simple "pill" preview with name + size
+        const pill = document.createElement('div');
+        pill.className = 'cp-file-pill';
+
+        const name = document.createElement('span');
+        name.textContent = file.name;
+
+        const size = document.createElement('small');
+        size.textContent = `(${Math.round(file.size / 1024)} KB)`;
+
+        pill.appendChild(name);
+        pill.appendChild(size);
+        this.pdfPreview.appendChild(pill);
+      });
+    }
+
+    if (this.clearPdfBtn && this.pdfInput && this.pdfPreview) {
+      this.clearPdfBtn.addEventListener('click', () => {
+        this.pdfInput.value = '';
+        this.pdfPreview.innerHTML = '';
+        this.attachPDF = false;
+      });
+    }
+
+    // 5) Bind Save & Next
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', () => {
+        // Basic validation: name is required
+        const name = (this.nameInput?.value || '').trim();
+        if (!name) {
+          alert('Please add a name to the variation.');
+          return;
+        }
+        this.saveVariationDetails();
+      });
+    }
+
+    // 6) Bind "+ New variation"
+    if (this.addBtn) {
+      this.addBtn.addEventListener('click', () => {
         this.addNewVariation();
       });
     }
-  }
 
-  initGroupSelectPlaceholder() {
-    if (!groupSelect) return;
-    groupSelect.innerHTML = `
-      <option value="" disabled selected>Select a group</option>
-    `;
-  }
+    // 7) Bind top menu toggle + close on outside click + close on ESC
+    if (this.menuBtn && this.menuList) {
+      this.menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
 
-  // --- Lógica de guardado ---
+        const willOpen = this.menuList.hidden === true;
+        this.menuList.hidden = !willOpen;
+        this.menuBtn.setAttribute('aria-expanded', String(willOpen));
+      });
 
-  saveVariationDetails() {
-    const params        = new URLSearchParams(window.location.search);
-    const sku_product   = params.get('sku');
-    const sku_variation = params.get('sku_variation');
+      document.addEventListener('click', (e) => {
+        if (!this.menuBtn.contains(e.target) && !this.menuList.contains(e.target)) {
+          if (!this.menuList.hidden) {
+            this.menuList.hidden = true;
+            this.menuBtn.setAttribute('aria-expanded', 'false');
+          }
+        }
+      });
 
-    const parentUI      = document.getElementById('parent_variations');
-
-    const name_pdf_artwork      = document.getElementById('name_pdf_artwork');
-    const group      = document.getElementById('group');
-
-    const sku_parent_variation = this.getSkuParentId(parentUI);
-    const imageFile     = this.getSelectedImageFile(imgInput);
-    const pdfFile       = this.getSelectedPdfFile(pdfInput);
-
-
-    const fd = new FormData();
-    fd.append('action',        'save_variation_details');
-    fd.append('sku_product',   sku_product   || '');
-    fd.append('sku_variation', sku_variation || '');
-    fd.append('isAttachAnImage', this.attachImage ? '1' : '0');
-    fd.append('isAttachAPDF',   this.attachPDF   ? '1' : '0');
-    fd.append('name',          (nameInput?.value || '').trim());
-    fd.append('name_pdf_artwork',          (name_pdf_artwork?.value || '').trim());
-    fd.append('group',          (group?.value || '').trim());
-
-    if (sku_parent_variation) {
-      fd.append('sku_parent_variation', sku_parent_variation);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !this.menuList.hidden) {
+          this.menuList.hidden = true;
+          this.menuBtn.setAttribute('aria-expanded', 'false');
+          this.menuBtn.focus();
+        }
+      });
     }
 
-    // NUEVO: enviamos el group si no es la opción de crear
+    // 8) Bind menu click (navigate to selected sku_variation)
+    if (this.menuList) {
+      this.menuList.addEventListener('click', (e) => {
+        const li = e.target.closest('li');
+        if (!li || !this.menuList.contains(li)) return;
 
+        // Clear previous selection UI
+        this.menuList.querySelectorAll('.is-selected').forEach(el => el.classList.remove('is-selected'));
+        li.classList.add('is-selected');
 
+        // Prefer dataset.sku (we set it when rendering the menu)
+        // Fallback to parsing the text if dataset is missing
+        const skuVariation =
+          (li.dataset?.sku && li.dataset.sku.trim()) ||
+          Variations.extractSkuFromText(li.textContent || '');
+
+        if (!skuVariation) return;
+
+        // Close menu UI
+        this.menuList.hidden = true;
+        if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
+
+        // Keep sku_product from URL, replace sku_variation
+        const skuProduct = new URLSearchParams(window.location.search).get('sku') || '';
+
+        window.location.href =
+          `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVariation)}`;
+      });
+    }
+
+    // 9) Bind "Create group" modal logic from the select
+    if (this.groupSelect) {
+      this.groupSelect.addEventListener('focus', () => {
+        // Save current value so we can restore it if user picks "__create_group__"
+        this.lastGroupValue = this.groupSelect.value || '';
+      });
+
+      this.groupSelect.addEventListener('change', (e) => {
+        if (e.target.value === '__create_group__') {
+          // Open modal
+          if (this.groupModal) this.groupModal.hidden = false;
+          if (this.groupNameInput) {
+            this.groupNameInput.value = '';
+            this.groupNameInput.focus();
+          }
+
+          // Restore previous value (do not keep "__create_group__" selected)
+          this.groupSelect.value = this.lastGroupValue || '';
+        }
+      });
+    }
+
+    // 10) Bind modal buttons + overlay click + ESC close
+    if (this.groupCancelBtn) {
+      this.groupCancelBtn.addEventListener('click', () => {
+        if (this.groupModal) this.groupModal.hidden = true;
+      });
+    }
+
+    if (this.groupCreateBtn) {
+      this.groupCreateBtn.addEventListener('click', () => {
+        this.createGroup();
+      });
+    }
+
+    if (this.groupModal) {
+      this.groupModal.addEventListener('click', (e) => {
+        // Close modal when clicking the dark overlay (not the dialog)
+        if (e.target === this.groupModal) {
+          this.groupModal.hidden = true;
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.groupModal && !this.groupModal.hidden) {
+        this.groupModal.hidden = true;
+      }
+    });
+
+    // 11) Load initial data from backend and render the page
+    this.getVariationDetails();
+  }
+
+  getVariationDetails() {
+    // Read current context from URL
+    const params = new URLSearchParams(window.location.search);
+    const skuProduct   = params.get('sku');
+    const skuVariation = params.get('sku_variation');
+
+    // Prepare backend request
+    const url = "../../controller/products/variations.php";
+    const payload = {
+      action: "get_variation_details",
+      sku: skuProduct,
+      sku_variation: skuVariation
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then(r => {
+        if (!r.ok) throw new Error("Network error.");
+        return r.text(); // your backend returns text; we parse JSON manually
+      })
+      .then(text => {
+        const json = JSON.parse(text);
+
+        if (!json?.success) return;
+
+        // --- 1) Render top menu items ---
+        if (this.menuList) {
+          this.menuList.innerHTML = '';
+
+          const variations = isArr(json.variations) ? json.variations : [];
+          for (let i = 0; i < variations.length; i++) {
+            const name = (variations[i]?.name ?? '(unnamed)').toString();
+            const sku  = (variations[i]?.SKU ?? variations[i]?.sku ?? '').toString();
+
+            const li = document.createElement('li');
+            li.dataset.sku = sku;
+            li.style.padding = '8px 10px';
+            li.style.borderRadius = '10px';
+            li.style.cursor = 'default';
+            li.innerHTML = `<strong>${name}</strong>${sku ? ` <small style="color:var(--muted)">— ${sku}</small>` : ''}`;
+
+            this.menuList.appendChild(li);
+          }
+
+          // Highlight the current sku_variation in the menu (if possible)
+          const currentSkuV = (skuVariation || '').trim().toUpperCase();
+          this.menuList.querySelectorAll('li').forEach(li => {
+            const candidate = (li.dataset.sku || '').trim().toUpperCase();
+            if (candidate && candidate === currentSkuV) li.classList.add('is-selected');
+          });
+
+          // Keep the menu closed by default
+          this.menuList.hidden = true;
+          if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
+        }
+
+        // --- 2) Set current name in the input + apply "Default" rules ---
+        const currentName = (json.current?.name ?? '').toString();
+        if (this.nameInput) this.nameInput.value = currentName;
+
+        if (currentName === 'Default') {
+          alert(
+            "1) If you won't add any variations, keep 'Default variation' selected. (Editing options for 'Default' are disabled.)\n" +
+            "2) Click 'Save & Next'.\n" +
+            "3) Add images, items, and prices.\n\n" +
+            "— OR —\n" +
+            "If you will use variations: click 'Add' and create your first-level variations with 'Parent variation' set to 'Default'."
+          );
+
+          if (this.parentSelect) this.parentSelect.disabled = true;
+          if (this.nameInput)    this.nameInput.disabled   = true;
+          if (this.imgInput)     this.imgInput.disabled    = true;
+          if (this.pdfInput)     this.pdfInput.disabled    = true;
+        }
+
+        // --- 3) Render "Parent variation" select (exclude current variation) ---
+        if (this.parentSelect) {
+          const variations = isArr(json.variations) ? json.variations : [];
+          const currentSku = (json.current?.sku ?? json.current?.SKU ?? '').toString().trim();
+
+          this.parentSelect.innerHTML = '<option value="" disabled selected>Select a parent</option>';
+
+          for (let i = 0; i < variations.length; i++) {
+            const sku = (variations[i]?.SKU ?? variations[i]?.sku ?? '').toString().trim();
+            if (!sku || sku === currentSku) continue;
+
+            const name = (variations[i]?.name ?? '(unnamed variation)').toString();
+
+            const opt = document.createElement('option');
+            opt.value = sku;
+            opt.dataset.sku = sku;
+            opt.textContent = `${name} — ${sku}`;
+            this.parentSelect.appendChild(opt);
+          }
+
+          // Try to select the parent if backend provides it
+          // If the parent sku is not in the options, it will stay on placeholder.
+          const targetParent =
+            (json.parent?.sku ?? json.parent?.SKU ?? '') ||
+            (json.product?.product_sku ?? '');
+
+          const wanted = targetParent.toString().trim().toUpperCase();
+
+          let matched = false;
+          for (const opt of this.parentSelect.options) {
+            const v = (opt.value || '').trim().toUpperCase();
+            const d = (opt.getAttribute('data-sku') || '').trim().toUpperCase();
+            if ((v && v === wanted) || (d && d === wanted)) {
+              opt.selected = true;
+              this.parentSelect.value = opt.value;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) this.parentSelect.selectedIndex = 0;
+        }
+
+        // --- 4) Render "type_variations" into the <select id="group"> (no selection for now) ---
+        // We insert type options BEFORE "__create_group__" so the modal option stays at the bottom.
+        if (this.groupSelect && isArr(json.type_variations)) {
+          const createOpt = this.groupSelect.querySelector('option[value="__create_group__"]');
+          if (createOpt) {
+            // Remove previous type options
+            this.groupSelect
+              .querySelectorAll('option[data-source="type_list"]')
+              .forEach(opt => opt.remove());
+
+            // Insert new type options
+            for (let i = 0; i < json.type_variations.length; i++) {
+              const id   = (json.type_variations[i]?.type_id ?? '').toString().trim();
+              const name = (json.type_variations[i]?.type_name ?? '').toString().trim();
+              if (!id || !name) continue;
+
+              const opt = document.createElement('option');
+              opt.value = id;
+              opt.textContent = name;
+              opt.dataset.source = 'type_list';
+              this.groupSelect.insertBefore(opt, createOpt);
+            }
+
+            // Keep "no selection" for now
+            this.groupSelect.value = '';
+          }
+        }
+
+        // --- 5) Render server previews (optional but important UX) ---
+        // Image preview from backend (icon image)
+        if (this.imgPreview) {
+          const serverImage = (json.current?.image ?? '').toString().trim();
+
+          if (serverImage) {
+            const href = serverImage.startsWith('http') || serverImage.startsWith('data:') || serverImage.startsWith('blob:')
+              ? serverImage
+              : '../../' + serverImage.replace(/^\/+/, '');
+
+            this.imgPreview.innerHTML =
+              `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="${href}">`;
+          } else {
+            // Placeholder icon if no image saved
+            this.imgPreview.innerHTML =
+              `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="../../view/variations/images/add_image.png">`;
+          }
+        }
+
+        // PDF preview link from backend (artwork)
+        if (this.pdfPreview) {
+          const serverPdf = (json.current?.pdf_artwork ?? '').toString().trim();
+          const pdfName   = (json.current?.name_pdf_artwork ?? '').toString();
+
+          // Set the optional PDF name field if it exists in HTML
+          const namePdfInput = document.getElementById('name_pdf_artwork');
+          if (namePdfInput) namePdfInput.value = pdfName;
+
+          if (serverPdf) {
+            const href = serverPdf.startsWith('/') ? serverPdf : '/' + serverPdf.replace(/^\/+/, '');
+            this.pdfPreview.innerHTML = `<a href="../..${href}" download="artwork.pdf">artwork.pdf</a>`;
+          } else {
+            this.pdfPreview.innerHTML = '';
+          }
+        }
+
+        // IMPORTANT: On initial load we keep attach flags OFF.
+        // That means: if user clicks Save without changing files, backend should keep existing files.
+        this.attachImage = false;
+        this.attachPDF   = false;
+      })
+      .catch(err => {
+        console.error("Error:", err);
+      });
+
+    // Small local helper used above (kept inside method to reduce extra class methods)
+    function isArr(v) { return Array.isArray(v); }
+  }
+
+  saveVariationDetails() {
+    // Read current context from URL
+    const params = new URLSearchParams(window.location.search);
+    const skuProduct   = params.get('sku') || '';
+    const skuVariation = params.get('sku_variation') || '';
+
+    // Read the parent sku from the select (if selected)
+    let skuParentVariation = '';
+    if (this.parentSelect && this.parentSelect.tagName === 'SELECT') {
+      const opt = this.parentSelect.selectedOptions?.[0];
+      if (opt) {
+        skuParentVariation =
+          (opt.dataset?.sku && opt.dataset.sku.trim()) ||
+          (opt.value && !/\s|\|/.test(opt.value) ? opt.value.trim() : '') ||
+          (Variations.extractSkuFromText(opt.textContent || '') || '');
+      }
+    }
+
+    // Files (if user selected any)
+    const imageFile = this.imgInput?.files?.[0] || null;
+    const pdfFile   = this.pdfInput?.files?.[0] || null;
+
+    // Validate files only if they exist
+    if (imageFile && !imageFile.type.startsWith('image/')) {
+      alert('The selected image file is not valid.');
+      return;
+    }
+    if (pdfFile && pdfFile.type !== 'application/pdf') {
+      alert('Please select a valid PDF file.');
+      return;
+    }
+
+    // Read extra fields from HTML (present in your PHP)
+    const namePdfArtworkInput = document.getElementById('name_pdf_artwork');
+
+    // Build FormData (text + files)
+    const fd = new FormData();
+    fd.append('action',        'save_variation_details');
+    fd.append('sku_product',   skuProduct);
+    fd.append('sku_variation', skuVariation);
+
+    // Attach flags used by your backend
+    fd.append('isAttachAnImage', this.attachImage ? '1' : '0');
+    fd.append('isAttachAPDF',    this.attachPDF   ? '1' : '0');
+
+    // Core fields
+    fd.append('name', (this.nameInput?.value || '').trim());
+
+    // Optional label for pdf artwork
+    fd.append('name_pdf_artwork', (namePdfArtworkInput?.value || '').trim());
+
+    // IMPORTANT: Use the select value as the "group/type" value for now.
+    // If you later split "group" and "type_variations", this is where you change it.
+    const groupValue = (this.groupSelect?.value || '').trim();
+    if (groupValue && groupValue !== '__create_group__') {
+      fd.append('group', groupValue);
+    } else {
+      fd.append('group', '');
+    }
+
+    // Parent variation (optional)
+    if (skuParentVariation) {
+      fd.append('sku_parent_variation', skuParentVariation);
+    }
+
+    // Files (optional)
     if (imageFile) fd.append('imageFile', imageFile);
-    if (pdfFile)   fd.append('pdfFile',   pdfFile);
+    if (pdfFile)   fd.append('pdfFile', pdfFile);
 
+    // Send request
     const url = "../../controller/products/variations.php";
 
     fetch(url, {
       method: "POST",
-      headers: {
-        "X-Requested-With": "XMLHttpRequest"
-      },
+      headers: { "X-Requested-With": "XMLHttpRequest" },
       body: fd
     })
       .then(r => {
@@ -235,560 +580,118 @@ class Variations {
       })
       .then(data => {
         if (data?.success) {
-          if (window.headerAddProduct && typeof headerAddProduct.goNext === 'function') {
-            headerAddProduct.goNext('../../view/images/index.php');
+          // Move the wizard to the next step
+          if (window.headerAddProduct && typeof window.headerAddProduct.goNext === 'function') {
+            window.headerAddProduct.goNext('../../view/images/index.php');
           }
         } else {
-          console.error("Guardado no exitoso:", data);
-          alert(data?.message || "No se pudo guardar la variación.");
+          console.error("Save failed:", data);
+          alert(data?.message || "Could not save the variation.");
         }
       })
       .catch(err => {
         console.error("Error:", err);
-        alert("Error de red o servidor al guardar.");
+        alert("Network/server error while saving.");
       });
   }
-
-  getSkuParentId(parentEl) {
-    if (!parentEl) return null;
-
-    // Caso SELECT
-    if (parentEl.tagName === 'SELECT') {
-      const opt = parentEl.selectedOptions && parentEl.selectedOptions[0];
-      if (!opt) return null;
-      if (opt.dataset && opt.dataset.sku) return opt.dataset.sku.trim();
-      if (opt.value && !/\s|\|/.test(opt.value)) return opt.value.trim();
-      return extractSkuFromText(opt.textContent || '');
-    }
-
-    // Caso LISTA (UL/OL)
-    const li = parentEl.querySelector('.is-selected');
-    if (!li) return null;
-    if (li.dataset && li.dataset.sku) return li.dataset.sku.trim();
-    return extractSkuFromText(li.textContent || '');
-  }
-
-  getSelectedImageFile(inputEl) {
-    const f = inputEl?.files?.[0] || null;
-    if (!f) return null;
-    if (!f.type.startsWith('image/')) return null;
-    return f;
-  }
-
-  getSelectedPdfFile(inputEl) {
-    const f = inputEl?.files?.[0] || null;
-    if (!f) return null;
-    if (f.type !== 'application/pdf') return null;
-    return f;
-  }
-
-  // --- Aux SKU & textos ---
-
-  parseNameSkuFromText(text) {
-    const raw = (text ?? '').toString().trim();
-    if (raw === '') return { name: '', sku: '' };
-
-    const skuPattern = /[A-Z]{3,}-\d{8}-\d{6}-\d{6}-[A-F0-9]{10}/i;
-
-    const anyMatch = raw.match(skuPattern);
-    if (anyMatch) {
-      const sku  = anyMatch[0].trim();
-      const name = raw.replace(skuPattern, '').replace(/[—–\-:()\s]+$/,'').trim();
-      return { name: name.replace(/[—–\-:]\s*$/,'').trim(), sku };
-    }
-
-    const sepPattern = /\s*[—–\-:]\s*/;
-    const parts = raw.split(sepPattern).filter(Boolean);
-    if (parts.length >= 2) {
-      const last = parts[parts.length - 1].trim();
-      if (skuPattern.test(last)) {
-        parts.pop();
-        const sku  = last;
-        const name = parts.join(' — ').trim();
-        return { name, sku };
-      }
-    }
-
-    const mParen = raw.match(/\(([^)]+)\)\s*$/);
-    if (mParen && skuPattern.test(mParen[1])) {
-      const sku  = mParen[1].trim();
-      const name = raw.slice(0, mParen.index).trim();
-      return { name, sku };
-    }
-
-    return { name: raw, sku: '' };
-  }
-
-  // --- Creación y carga de variación ---
 
   addNewVariation() {
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
+    // Create a new variation in backend and redirect to edit it
+    const skuProduct = getQueryParam('sku');
+    if (!skuProduct) return;
 
     const url = "../../controller/products/variations.php";
-    const data = {
+    const payload = {
       action: "create_new_variation",
-      sku: sku
+      sku: skuProduct
     };
 
     fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     })
-      .then(response => {
-        if (response.ok) {
-          return response.text();
-        }
-        throw new Error("Network error.");
+      .then(r => {
+        if (!r.ok) throw new Error("Network error.");
+        return r.text();
       })
-      .then(data => {
-        const json = JSON.parse(data);
-        const sku_variation = json["sku_variation"];
+      .then(text => {
+        const json = JSON.parse(text);
+        if (!json?.success) return;
 
-        if (json["success"]) {
-          alert("The new variation has been successfully created. Please fill in the details and save once you’ve finished.");
-          window.location.href =
-            `../../view/variations/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(sku_variation)}`;
-        }
+        const skuVariation = json.sku_variation;
+        alert("The new variation has been successfully created. Please fill in the details and save once you’ve finished.");
+
+        window.location.href =
+          `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVariation)}`;
       })
-      .catch(error => {
-        console.error("Error:", error);
+      .catch(err => {
+        console.error("Error:", err);
       });
+
+    // Local helper kept inside method to avoid extra class methods
+    function getQueryParam(key) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(key);
+    }
   }
 
-  getVariationDetails() {
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
-    const sku_variation = params.get('sku_variation');
+  createGroup() {
+    // This creates a "group" name and sends it to backend via update_group_name.
+    // Then it inserts the new option into the select and selects it.
+
+    const name = (this.groupNameInput?.value || '').trim();
+    if (!name) {
+      alert('Please enter a group name.');
+      this.groupNameInput?.focus();
+      return;
+    }
+
+    const skuVariation = new URLSearchParams(window.location.search).get('sku_variation') || '';
 
     const url = "../../controller/products/variations.php";
-    const data = {
-      action: "get_variation_details",
-      sku: sku,
-      sku_variation: sku_variation
+    const payload = {
+      action: "update_group_name",
+      sku_variation: skuVariation,
+      group_name: name
     };
 
     fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     })
-      .then(response => {
-        if (response.ok) {
-          return response.text();
-        }
-        throw new Error("Network error.");
+      .then(r => {
+        if (!r.ok) throw new Error("Network error.");
+        return r.text();
       })
-      .then(data => {
-      //  alert(data);
-        const json = JSON.parse(data);
-      //  alert(JSON.stringify(json["type_variations"]));
+      .then(text => {
+        const json = JSON.parse(text);
 
-        if (json["success"]) {
-          this.renderMenuTop(json["variations"]);
-          this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
-          this.renderTypeVariation(json["type_variations"]);
-          this.drawParentsVariationItems(json["variations"], json["product"], json["current"]);
-        //  this.drawImageVariationSelected(json["current"]["image"]);
-          //this.setPdfPreview(json["current"]["pdf_artwork"], json["current"]["name_pdf_artwork"]);
-          //this.setImagePreview(json["current"]["image"]);
-          //this.drawItemsGroup(json["groups_by_product"], json["current"]["group"]);
+        // Even if backend returns success, we still update UI in the select
+        if (json?.success && this.groupSelect) {
+          const createOpt = this.groupSelect.querySelector('option[value="__create_group__"]');
+
+          // Insert the newly created group option before the create option
+          if (createOpt) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            this.groupSelect.insertBefore(opt, createOpt);
+            this.groupSelect.value = name;
+          }
         }
+
+        alert(`The group "${name}" has been created.`);
+
+        // Close modal
+        if (this.groupModal) this.groupModal.hidden = true;
       })
-      .catch(error => {
-        console.error("Error:", error);
+      .catch(err => {
+        console.error("Error:", err);
       });
   }
-
-  renderTypeVariation(type_variations) {
-  // Validación básica
-  if (!groupSelect || !Array.isArray(type_variations)) return;
-
-  // Opción especial (si la tienes en el HTML/placeholder init)
-  if (!createOpt) return;
-
-  // 1) Limpiar opciones previas creadas por esta función
-  groupSelect
-    .querySelectorAll('option[data-source="type_list"]')
-    .forEach(opt => opt.remove());
-
-  // 2) Crear opciones desde type_variations
-  for (let i = 0; i < type_variations.length; i++) {
-    const id   = String(type_variations[i]?.type_id ?? '').trim();
-    const name = String(type_variations[i]?.type_name ?? '').trim();
-
-    // Si viene incompleto, lo saltamos
-    if (!id || !name) continue;
-
-    const opt = document.createElement('option');
-    opt.value = id;                 // value = type_id (recomendado para backend)
-    opt.textContent = name;         // texto visible = type_name
-    opt.dataset.source = 'type_list'; // marca que viene de la lista de types
-    opt.dataset.typeName = name;      // opcional: si luego quieres leer el nombre sin buscarlo
-    groupSelect.insertBefore(opt, createOpt);
-  }
-
-  // 3) Por el momento no seleccionar nada:
-  //    - Si tu placeholder tiene value="" y está disabled+selected, esto lo mantiene.
-  groupSelect.value = '';
 }
 
-   drawItemsGroup(groups_by_product, currentGroup) {
-    // groups_by_product viene como array de strings: ['Group A', 'Group B', ...]
-    if (!groupSelect || !Array.isArray(groups_by_product)) return;
-
-    if (!createOpt) return;
-
-    // Limpiar opciones anteriores creadas dinámicamente
-    groupSelect
-      .querySelectorAll('option[data-source="group_list"]')
-      .forEach(opt => opt.remove());
-
-    // Recorrer el array y crear las opciones
-    for (let i = 0; i < groups_by_product.length; i++) {
-      const value = groups_by_product[i];
-      const opt = document.createElement('option');
-      opt.value = value;
-      opt.textContent = value;
-      opt.dataset.source = 'group_list'; // marca que viene de la lista de grupos
-      groupSelect.insertBefore(opt, createOpt);
-    }
-
-    // Intentar seleccionar el grupo actual si existe en la lista
-    if (currentGroup && groups_by_product.includes(currentGroup)) {
-      groupSelect.value = currentGroup;
-    } else {
-      // No seleccionar nada
-      groupSelect.value = ''; // asumiendo que tienes una opción placeholder con value=""
-    }
-  }
-
-
-
-  selectCurrentVariation(dataVariations, dataProduct, dataCurrent, dataParent) {
-    if (nameInput) {
-      nameInput.value = dataCurrent["name"] || '';
-    }
-
-    if (dataCurrent["name"] === "Default") {
-      alert(
-        "1) If you won't add any variations, keep 'Default variation' selected. (Editing options for 'Default' are disabled.)\n" +
-        "2) Click 'Save & Next'.\n" +
-        "3) Add images, items, and prices.\n\n" +
-        "— OR —\n" +
-        "If you will use variations: click 'Add' and create your first-level variations with 'Parent variation' set to 'Default'."
-      );
-
-      if (parentSelect) parentSelect.disabled = true;
-      if (nameInput)    nameInput.disabled   = true;
-      if (imgInput)     imgInput.disabled    = true;
-      if (pdfInput)     pdfInput.disabled    = true;
-    }
-
-    this.selectMenuCurrentItemBySku();
-    this.selectParentVariationsItems(dataVariations, dataProduct, dataCurrent, dataParent);
-  }
-
-  selectParentVariationsItems(dataVariations = [], dataProduct = {}, dataCurrent = {}, dataParent = {}) {
-    const sel = this.parentSelect || document.getElementById('parent_variations');
-    if (!sel) return;
-
-    const target = (dataParent && dataParent.sku)
-      ? dataParent.sku
-      : dataProduct?.product_sku;
-
-    if (!target) return;
-
-    const norm   = s => String(s || '').trim().toUpperCase();
-    const wanted = norm(target);
-
-    let matched = false;
-    for (const opt of sel.options) {
-      const byValue = norm(opt.value);
-      const byData  = norm(opt.getAttribute('data-sku'));
-      if ((byValue && byValue === wanted) || (byData && byData === wanted)) {
-        opt.selected = true;
-        sel.value = opt.value;
-        matched = true;
-        break;
-      }
-    }
-
-    if (!matched) sel.selectedIndex = 0;
-  }
-
-  selectMenuCurrentItemBySku() {
-    const currentUrl = new URL(window.location.href);
-    const skuv = currentUrl.searchParams.get('sku_variation');
-    if (!skuv) return false;
-
-    const ul  = this.menuList || document.getElementById('menu_list');
-    const btn = this.menuBtn  || document.getElementById('menu_btn');
-    if (!ul) return false;
-
-    ul.querySelectorAll('.is-selected').forEach(el => el.classList.remove('is-selected'));
-
-    const norm   = s => String(s || '').trim().toUpperCase();
-    const wanted = norm(skuv);
-
-    for (const li of ul.querySelectorAll('li')) {
-      const skuData = li.dataset?.sku;
-      const skuText = li.querySelector('small')?.textContent?.replace(/^—\s*/, '');
-      const candidate = norm(skuData || skuText);
-
-      if (candidate && candidate === wanted) {
-        li.classList.add('is-selected');
-        ul.hidden = true;
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-        return true;
-      }
-    }
-    return false;
-  }
-
-  renderMenuTop(items) {
-    const ul = this.menuList || document.getElementById('menu_list');
-    if (!ul) return;
-
-    ul.innerHTML = '';
-    if (!Array.isArray(items) || items.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No items to show';
-      li.style.padding = '8px 10px';
-      li.style.borderRadius = '10px';
-      ul.appendChild(li);
-      ul.hidden = false;
-      return;
-    }
-
-    for (const it of items) {
-      const name = it.name ?? '(unnamed)';
-      const sku  = it.SKU ?? it.sku ?? '';
-
-      const li = document.createElement('li');
-      li.style.padding = '8px 10px';
-      li.style.borderRadius = '10px';
-      li.style.cursor = 'default';
-      li.dataset.sku = sku;
-      li.innerHTML = `<strong>${name}</strong>${sku ? ` <small style="color:var(--muted)">— ${sku}</small>` : ''}`;
-      ul.appendChild(li);
-    }
-  }
-
-  drawImageVariationSelected(urlCurrentImage) {
-    if (!imgPreview) return;
-    imgPreview.innerHTML = '';
-
-    let url;
-    if (urlCurrentImage && String(urlCurrentImage).trim() !== '') {
-      const u = String(urlCurrentImage).trim();
-      if (/^(https?:|data:|blob:)/i.test(u)) {
-        url = u;
-      } else {
-        url = '../../' + u.replace(/^\/+/, '');
-      }
-    } else {
-      url = '../../view/variations/images/add_image.png';
-    }
-
-    const img = new Image();
-    img.alt = 'Selected variation image preview (icon)';
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    img.src = url;
-    img.onerror = () => { img.src = '../../view/variations/images/add_image.png'; };
-
-    imgPreview.appendChild(img);
-  }
-
-  setPdfPreview(url, namePDF) {
-
-    const name_pdf_artwork = document.getElementById("name_pdf_artwork");
-    name_pdf_artwork.value = namePDF;
-
-
-    if (!pdfPreview) return;
-
-    const u = (url || '').trim();
-    if (!u) {
-      pdfPreview.textContent = '';
-      return;
-    }
-
-    const href = (/^(https?:)?\/\//.test(u) || u.startsWith('/'))
-      ? u
-      : '/' + u.replace(/^\/+/, '');
-
-    pdfPreview.innerHTML = `<a href="../..${href}" download="artwork.pdf">artwork.pdf</a>`;
-  }
-
-  setImagePreview(url) {
-    if (!imgPreview) return;
-
-    const u = (url || '').trim();
-    if (!u) { imgPreview.textContent = ''; return; }
-
-    const href = (/^(https?:)?\/\//.test(u) || u.startsWith('/'))
-      ? u
-      : '/' + u.replace(/^\/+/, '');
-
-    imgPreview.innerHTML =
-      `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="../..${href}">`;
-  }
-
-  isAttachAnImage(attachImage){
-    this.attachImage = !!attachImage;
-  }
-
-  isAttachAPDF(attachPDF){
-    this.attachPDF = !!attachPDF;
-  }
-
-  drawParentsVariationItems(dataVariations = [], dataProduct = {}, dataCurrent = {}) {
-    const sel = this.parentSelect || document.getElementById('parent_variations');
-    if (!sel) return;
-
-    const list = Array.isArray(dataVariations) ? dataVariations : [];
-    const currentSku = String(dataCurrent?.sku ?? dataCurrent?.SKU ?? '').trim();
-
-    sel.innerHTML = '<option value="" disabled selected>Select a parent</option>';
-
-    for (let i = 0; i < list.length; i++) {
-      const sku = String(list[i]?.SKU ?? list[i]?.sku ?? '').trim();
-
-      if (!sku || sku === currentSku) continue;
-      //alert(sku + currentSku + "Buenas ");
-
-      const name = String(list[i]?.name ?? '(unnamed variation)').trim();
-
-      const opt = document.createElement('option');
-      opt.value = sku;
-      opt.dataset.sku = sku;
-      opt.textContent = `${name} — ${sku}`;
-      sel.appendChild(opt);
-    }
-  }
-
-
-
-
-}
-
-// ===== Instanciamos la clase =====
-const variationClass = new Variations();
-
-// ===== Toggle del menú superior (Change variation) =====
-if (menuBtn && menuList) {
-  menuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isHidden = menuList.hidden;
-    menuList.hidden = !isHidden;
-    menuBtn.setAttribute('aria-expanded', String(!isHidden));
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!menuBtn.contains(e.target) && !menuList.contains(e.target)) {
-      if (!menuList.hidden) {
-        menuList.hidden = true;
-        menuBtn.setAttribute('aria-expanded', 'false');
-      }
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !menuList.hidden) {
-      menuList.hidden = true;
-      menuBtn.setAttribute('aria-expanded', 'false');
-      menuBtn.focus();
-    }
-  });
-}
-
-// ===== Lógica del modal "Create group" ligada al <select id="group"> =====
-let lastGroupValue = groupSelect ? (groupSelect.value || '') : '';
-
-if (groupSelect) {
-  groupSelect.addEventListener('focus', () => {
-    lastGroupValue = groupSelect.value || '';
-  });
-
-
-}
-
-function openGroupModal() {
-  if (!groupModal) return;
-  groupModal.hidden = false;
-  groupNameInput.value = '';
-  groupNameInput.focus();
-}
-
-function closeGroupModal() {
-  if (!groupModal) return;
-  groupModal.hidden = true;
-}
-
-
-function makeAjaxRequestUpdateGroup(group_name){
-  const params = new URLSearchParams(window.location.search);
-  const sku_variation = params.get('sku_variation');
-
-  const url = "../../controller/products/variations.php";
-  const data = {
-    action: "update_group_name",
-    sku_variation: sku_variation,
-    group_name: group_name
-  };
-
-  fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  })
-    .then(response => {
-      if (response.ok) {
-        return response.text();
-      }
-      throw new Error("Network error.");
-    })
-    .then(data => {
-      alert(data);
-      const json = JSON.parse(data);
-
-      if (json["success"]) {
-
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-    });
-}
-
-// Eventos de botones del modal
-
-
-if (groupCancelBtn) {
-  groupCancelBtn.addEventListener('click', closeGroupModal);
-}
-
-// Cerrar modal haciendo clic en el fondo oscuro
-if (groupModal) {
-  groupModal.addEventListener('click', (e) => {
-    if (e.target === groupModal) {
-      closeGroupModal();
-    }
-  });
-}
-
-// Cerrar modal con Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && groupModal && !groupModal.hidden) {
-    closeGroupModal();
-  }
-});
+// Instantiate once (the only code outside the class)
+new Variations();
