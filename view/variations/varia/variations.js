@@ -394,11 +394,12 @@ class Variations {
         //alert(JSON.stringify(json["current"]));
 
         if (json["success"]) {
+          this.renderMenuTop(json["variations"]);
+
           this.drawParentsVariationItems(json["variations"], json["product"], json["current"]);
         //  this.drawImageVariationSelected(json["current"]["image"]);
           //this.setPdfPreview(json["current"]["pdf_artwork"], json["current"]["name_pdf_artwork"]);
           //this.setImagePreview(json["current"]["image"]);
-          //this.renderMenuTop(json["variations"]);
           //this.drawItemsGroup(json["groups_by_product"], json["current"]["group"]);
         //  this.selectCurrentVariation(json["variations"], json["product"], json["current"], json["parent"]);
         }
