@@ -631,9 +631,9 @@ class Variations {
 
     for (let i = 0; i < list.length; i++) {
       const sku = String(list[i]?.SKU ?? list[i]?.sku ?? '').trim();
-      alert(sku + currentSku);
 
       if (!sku || sku === currentSku) continue;
+      alert(sku + currentSku + "Buenas ");
 
       const name = String(list[i]?.name ?? '(unnamed variation)').trim();
 
