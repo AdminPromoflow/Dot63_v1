@@ -37,12 +37,12 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
     <form id="variationForm" class="cp-form" autocomplete="off" novalidate>
       <!-- NUEVO: Group -->
       <div class="cp-field">
-        <label class="cp-label" for="group">Group</label>
+        <label class="cp-label" for="group">Variation type</label>
         <select id="group" name="group" class="cp-select" aria-describedby="group_help">
           <!-- Se rellena en JS (placeholder + + Create new group…) -->
         </select>
         <small id="group_help" class="cp-hint">
-          Select a variation group or create a new one.
+          Select a variation type
         </small>
       </div>
 
