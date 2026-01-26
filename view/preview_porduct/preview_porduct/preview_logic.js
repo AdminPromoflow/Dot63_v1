@@ -84,7 +84,7 @@ class PreviewLogic {
         // Clear variations section before rendering (if present)
         const section_variations = document.getElementById("section_variations");
         if (section_variations) {
-        //  section_variations.innerHTML = "";
+          section_variations.innerHTML = "";
         }
 
         // Debug: inspect the variations payload
