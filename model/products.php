@@ -62,7 +62,7 @@ class Products {
   }
   public function approveProductWithSKU(): bool
   {
-    echo json_encode ($this->sku);exit;
+  //  echo json_encode ($this->sku);exit;
 
       try {
           if (empty($this->sku)) {
