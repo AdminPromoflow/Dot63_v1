@@ -389,9 +389,9 @@ class Variations {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
+      //  alert(data);
         const json = JSON.parse(data);
-        //alert(JSON.stringify(json["current"]));
+        alert(JSON.stringify(json["type_variations"]));
 
         if (json["success"]) {
           this.renderMenuTop(json["variations"]);
