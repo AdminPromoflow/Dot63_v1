@@ -327,6 +327,7 @@ class Variations {
         return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
+        alert(text);
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
