@@ -327,7 +327,7 @@ class Variations {
         return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
-        alert(text);
+        //alert(text);
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
@@ -335,7 +335,7 @@ class Variations {
         this.renderTopMenu(json.variations, skuVariation);
         this.renderCurrentNameAndDefaultRules(json.current);
         this.renderParentSelect(json.variations, json.current, json.parent, json.product);
-        this.renderTypeVariationsSelect(json.type_variations);
+        this.renderTypeVariationsSelect(json.type_variations, json.current.type_id);
         this.renderServerPreviews(json.current);
 
         // 5) Reset attach flags after initial load
@@ -490,7 +490,8 @@ class Variations {
     if (!matched) this.parentSelect.selectedIndex = 0;
   }
 
-  renderTypeVariationsSelect(typeVariationsRaw) {
+  renderTypeVariationsSelect(typeVariationsRaw, type_id) {
+    alert(type_id + "Bueno");
     if (!this.groupSelect) return;
     if (!this.isArray(typeVariationsRaw)) return;
 
