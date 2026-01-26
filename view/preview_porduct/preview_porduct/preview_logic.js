@@ -178,7 +178,7 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
-      //  alert(text);
+        alert(text);
         let json;
 
         // 4) Parse JSON with error handling
