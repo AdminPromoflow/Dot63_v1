@@ -628,11 +628,11 @@ class Variations {
     const currentSku = String(dataCurrent?.sku ?? dataCurrent?.SKU ?? '').trim();
 
     sel.innerHTML = '<option value="" disabled selected>Select a parent</option>';
+    alert(list[0].name);
 
     for (let i = 0; i < list.length; i++) {
       const sku = String(list[i]?.SKU ?? list[i]?.sku ?? '').trim();
       if (!sku || sku === currentSku) continue;
-      alert(list[i].name);
 
       const name = String(list[i]?.name ?? '(unnamed variation)').trim();
 
