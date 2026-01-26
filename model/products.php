@@ -62,6 +62,8 @@ class Products {
   }
   private function approveProductWithSKU(): bool
   {
+    echo json_encode ($this->sku);exit;
+
       try {
           if (empty($this->sku)) {
               return false;
@@ -73,7 +75,6 @@ class Products {
                      SET is_approved = 1
                    WHERE LOWER(SKU) = LOWER(:sku)
                    LIMIT 1";
-                   echo json_encode ($this->sku);exit;
 
           $stmt = $pdo->prepare($sql);
           $stmt->execute([
