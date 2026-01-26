@@ -30,7 +30,7 @@ class Resques63API{
   //  echo json_encode ($data['sku']);exit;
 
 
-    $result = $product->approveProductWidthSKU();
+    $result = $product->approveProductWithSKU();
 
 
     echo json_encode ($result);
