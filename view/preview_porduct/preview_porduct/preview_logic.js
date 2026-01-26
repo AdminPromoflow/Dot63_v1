@@ -66,11 +66,10 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
-        alert(text);
+        //alert(text);
         let json;
 
           json = JSON.parse(text);
-
 
         // Helper: find the first block containing a given key
         const findBlock = (key) => json.find(obj => obj && obj[key]) || null;
@@ -86,9 +85,8 @@ class PreviewLogic {
         if (section_variations) {
           section_variations.innerHTML = "";
         }
-        alert(JSON.stringify(variationsBlock.default_variation_sku));
         // Debug: inspect the variations payload
-    //  previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
+      previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
 
 
       this.drawHeaders(supplierBlock, categoryBlock, productBlock);
@@ -132,7 +130,7 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
-      //  alert(text);
+        alert("Buenas" + text);
         let json;
 
           json = JSON.parse(text);
