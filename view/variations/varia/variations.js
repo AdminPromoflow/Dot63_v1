@@ -389,7 +389,7 @@ class Variations {
         throw new Error("Network error.");
       })
       .then(data => {
-      //  alert(data);
+        alert(data);
         const json = JSON.parse(data);
         //alert(JSON.stringify(json["current"]));
 
