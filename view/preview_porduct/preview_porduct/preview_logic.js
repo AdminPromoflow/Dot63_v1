@@ -68,23 +68,13 @@ class PreviewLogic {
       .then(text => {
         alert(text);
         let json;
-
-          json = JSON.parse(text);
-
-        // Helper: find the first block containing a given key
-        const findBlock = (key) => json.find(obj => obj && obj[key]) || null;
-
-        // Extract blocks
-        const supplierBlock = findBlock("company_name");
-        const categoryBlock = findBlock("category_name");
-        const productBlock = findBlock("product_details");
-        const variationsBlock = findBlock("default_variation_sku");
+        json = JSON.parse(text);
 
         // Clear variations section before rendering (if present)
-        const section_variations = document.getElementById("section_variations");
-        if (section_variations) {
-          section_variations.innerHTML = "";
-        }
+        // const section_variations = document.getElementById("section_variations");
+        // if (section_variations) {
+        //   section_variations.innerHTML = "";
+        // }
         // Debug: inspect the variations payload
   //    previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
 
@@ -97,7 +87,7 @@ class PreviewLogic {
       })
       .catch(error => {
         console.error("Error fetching preview:", error);
-        alert("Error loading preview data.");
+      //  alert("Error loading preview data.");
       });
   }
 

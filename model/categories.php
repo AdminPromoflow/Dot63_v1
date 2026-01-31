@@ -24,38 +24,37 @@ class Categories {
     return preg_replace('/\s+/', ' ', $s);
   }
 
-  public function getCategoryBySKU() {
-    // Usamos el SKU que se haya seteado previamente
+  public function getCategoryBySKU(): ?array {
     $sku = trim((string)$this->sku);
 
-    if ($sku === '' || strlen($sku) > 50) {
-        return null; // Asegúrate de llamar antes a setSKU($sku)
+    if ($sku === '' || mb_strlen($sku) > 50) {
+      return null;
     }
 
     try {
-        $pdo = $this->connection->getConnection();
+      $pdo = $this->connection->getConnection();
 
-        $stmt = $pdo->prepare("
-            SELECT
-                c.name AS category_name
-            FROM products p
-            INNER JOIN categories c
-                ON c.category_id = p.category_id
-            WHERE p.SKU = :sku
-            LIMIT 1
-        ");
+      $stmt = $pdo->prepare("
+        SELECT categories.name AS category_name
+        FROM products
+        INNER JOIN `groups`
+          ON `groups`.group_id = products.group_id
+        INNER JOIN categories
+          ON categories.category_id = `groups`.category_id
+        WHERE products.SKU = :sku
+        LIMIT 1
+      ");
 
-        $stmt->execute([':sku' => $sku]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+      $stmt->execute([':sku' => $sku]);
+      $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Devuelve datos de la categoría + algo del producto, o null si no encuentra
-        return $row ?: null;
+      return $row ?: null;
 
     } catch (PDOException $e) {
-        error_log('getCategoryBySKU error (SKU ' . $sku . '): ' . $e->getMessage());
-        return null;
+      error_log('getCategoryBySKU error (SKU ' . $sku . '): ' . $e->getMessage());
+      return null;
     }
-}
+  }
 
   public function getCategoryIdByName(){
       try {
