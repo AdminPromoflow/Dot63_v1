@@ -6,9 +6,11 @@ $base = realpath(__DIR__ . '/../../view/items/items/');
 // Si existen los archivos, crea un hash del contenido; si no, usa time()
 $cssPath = $base . '/items.css';
 $jsPath  = $base . '/items.js';
-
+$jsLogicPath  = $base . '/items_logic.js';
 $cssVer = file_exists($cssPath) ? md5_file($cssPath) : time();
 $jsVer  = file_exists($jsPath)  ? md5_file($jsPath)  : time();
+$jsLogicVer  = file_exists($jsLogicPath)  ? md5_file($jsLogicPath)  : time();
+
 ?>
 
 <link rel="stylesheet" href="../../view/items/items/items.css?v=<?= $cssVer ?>">
@@ -76,4 +78,5 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath)  : time();
   </div>
 </main>
 
+<script src="../../view/items/items/items_logic.js?v=<?= $jsLogicVer ?>" defer></script>
 <script src="../../view/items/items/items.js?v=<?= $jsVer ?>" defer></script>

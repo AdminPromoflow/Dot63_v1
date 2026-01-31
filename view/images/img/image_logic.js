@@ -150,6 +150,9 @@ class ImageLogic {
         let parsed;
         try { parsed = JSON.parse(txt); } catch { return; }
         if (!parsed?.success) {
+          alert("The image has been deleted successfully.");
+        }
+        else {
           alert("The image could not be deleted. Please refresh the page and try again.");
         }
       })
