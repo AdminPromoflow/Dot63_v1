@@ -1,14 +1,15 @@
 <?php
-// Versionado de assets (ajusta las rutas según tu estructura)
-$cssTime = filemtime('../../view/product_details/product_details/product_details.css'); // reutilizamos el mismo CSS base
-$jsTime  = filemtime('../../view/product_details/product_details/product_details.js'); // nuevo JS para esta pantalla
+$cssFs = __DIR__ . '/../../view/product_details/product_details/product_details.css';
+$jsFs  = __DIR__ . '/../../view/product_details/product_details/product_details.js';
+
+$cssTime = is_file($cssFs) ? filemtime($cssFs) : time();
+$jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
 ?>
 <link rel="stylesheet" href="../../view/product_details/product_details/product_details.css?v=<?= $cssTime ?>">
 
 <!-- =============== Create Product: Product Details Tab =============== -->
 <main class="create_product" aria-labelledby="pd-title">
   <h1 id="pd-title" class="sr-only">Create Product — Product Details</h1>
-
   <!-- Tabs (mismo panel) -->
   <!-- Tabs (promotions removed) -->
   <?php include "../../view/global/header_add_product/header_add_product.php" ?>
@@ -43,7 +44,7 @@ $jsTime  = filemtime('../../view/product_details/product_details/product_details
         <select id="pd_status" name="status" aria-describedby="pd_status_help">
           <option value="">Select status…</option>
           <option value="draft">Draft</option>
-          <option value="active">Active</option>
+          <option id="active_product" value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="archived">Archived</option>
         </select>
@@ -76,10 +77,10 @@ $jsTime  = filemtime('../../view/product_details/product_details/product_details
           placeholder="Short, compelling summary of the product features and materials…"
           aria-describedby="pd_desc_help pd_desc_count"
         ></textarea>
-        <div class="cp-field-row">
+        <!-- <div class="cp-field-row">
           <small id="pd_desc_help" class="cp-hint">Optional.</small>
           <small id="pd_desc_count" class="cp-hint">0 characters</small>
-        </div>
+        </div> -->
       </div>
     </form>
 
@@ -87,8 +88,11 @@ $jsTime  = filemtime('../../view/product_details/product_details/product_details
 
   <!-- Footer: Next -->
   <div class="cp-footer">
-    <button class="btn btn-primary" id="next_product_details" type="button">Save & Next</button>
-
+    <button class="btn btn-danger" id="reset" type="button">Reset</button>
+    <div class="cp-footer-actions">
+      <button class="btn btn-primary" id="save" type="button">Save</button>
+      <button class="btn" id="next_product_details" type="button">Save & Next</button>
+    </div>
   </div>
 </main>
 

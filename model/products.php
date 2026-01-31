@@ -556,53 +556,47 @@ class Products {
     $sku = trim((string)$this->sku);
     $groupId = (int)($this->group_id ?? 0);
 
-  //  echo json_encode($sku);exit;
-
-
-    // Validaciones mínimas
-    if ($sku === '' || mb_strlen($sku) > 50) {
-      return ['success' => false, 'error' => 'Invalid SKU'];
+    if ($sku === '') {
+      return ['success' => false, 'error' => 'SKU required'];
     }
     if ($groupId <= 0) {
-      return ['success' => false, 'error' => 'Invalid group_id'];
+      return ['success' => false, 'error' => 'Group ID required'];
     }
 
     try {
       $pdo = $this->connection->getConnection();
 
-      /* 1) Validar que el grupo exista (y opcionalmente que esté aprobado) */
-      $stmtG = $pdo->prepare("
-        SELECT group_id
-        FROM `groups`
-        WHERE group_id = :group_id
-        LIMIT 1
-      ");
-      $stmtG->execute([':group_id' => $groupId]);
-
-      if ($stmtG->fetchColumn() === false) {
-        return ['success' => false, 'error' => 'Group not found'];
-      }
-
-      /* 2) Actualizar products.group_id usando el SKU */
-      $stmtU = $pdo->prepare("
+      $stmt = $pdo->prepare("
         UPDATE products
         SET group_id = :group_id
-        WHERE SKU = :sku
+        WHERE sku = :sku
         LIMIT 1
       ");
-      $stmtU->execute([
+      $stmt->execute([
         ':group_id' => $groupId,
-        ':sku' => $sku
+        ':sku'      => $sku,
       ]);
 
-      if ($stmtU->rowCount() === 0) {
-        return ['success' => false, 'error' => 'Product not found for SKU (or no changes)'];
+      // Si cambió algo
+      if ($stmt->rowCount() > 0) {
+        return ['success' => true, 'updated' => 1];
       }
 
-      return ['success' => true];
+      // rowCount() = 0 => puede ser SKU inexistente o mismo valor
+      $check = $pdo->prepare("SELECT group_id FROM products WHERE sku = :sku LIMIT 1");
+      $check->execute([':sku' => $sku]);
+      $row = $check->fetch(PDO::FETCH_ASSOC);
+
+      // SKU no existe
+      if (!$row) {
+        return ['success' => false, 'error' => 'Product not found for SKU'];
+      }
+
+      // SKU existe y ya tenía ese mismo group_id (o no hubo cambio real)
+      return ['success' => true, 'updated' => 0];
 
     } catch (PDOException $e) {
-      error_log('updateGroupIdBySKU error (SKU ' . $sku . '): ' . $e->getMessage());
+      error_log('updateGroupIdBySKU error: ' . $e->getMessage());
       return ['success' => false, 'error' => 'DB error'];
     }
   }
@@ -616,13 +610,11 @@ class Products {
     try {
       $pdo = $this->connection->getConnection();
 
-      $sql = "SELECT p.name, p.description, p.status, p.descriptive_tagline
+      $sql = "SELECT p.name, p.description, p.status, p.descriptive_tagline,
+                     p.date_status, p.is_approved
               FROM products p
               WHERE p.SKU = :sku
               LIMIT 1";
-      // Si tu colación fuera case-sensitive:
-      // $sql = "SELECT name, description, status FROM products
-      //         WHERE SKU COLLATE utf8mb4_general_ci = :sku LIMIT 1";
 
       $stmt = $pdo->prepare($sql);
       $stmt->execute([':sku' => trim($this->sku)]);

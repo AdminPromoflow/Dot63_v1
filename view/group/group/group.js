@@ -1,6 +1,9 @@
 class ClassGroup {
   constructor() {
 
+    const reset = document.getElementById("reset");
+    const save = document.getElementById("save");
+
     document.addEventListener('DOMContentLoaded', () => {
       headerAddProduct.setCurrentHeader('group');
     });
@@ -12,9 +15,29 @@ class ClassGroup {
     //   classGroup.createNewGroup();
     // });
 
+    reset.addEventListener("click", function(){
+      const groups = document.querySelectorAll(".cp-group");
+      if (groups.length > 0) {
+        const firstId = groups[0].id;
+        classGroup.group_selected = firstId;
+        classGroup.updateGroup(false);
+        alert("Group reset to Unassigned Group");
+        window.location.reload();
+      }
+    })
+
+    save.addEventListener("click", function(){
+      if (Number.isInteger(classGroup.group_selected)) {
+        classGroup.updateGroup(false);
+        alert("The selected group has been saved.");
+      } else {
+        alert("Please select a group first.");
+      }
+    });
+
     next_group.addEventListener("click", () => {
       if (Number.isInteger(classGroup.group_selected)) {
-        classGroup.updateGroup();
+        classGroup.updateGroup(true);
       } else {
         alert("Please select a group first.");
       }
@@ -61,7 +84,7 @@ class ClassGroup {
       });
   }
 
-  updateGroup(){
+  updateGroup(goNext = false){
     const params = new URLSearchParams(window.location.search);
     const sku = params.get('sku');
 
@@ -82,12 +105,13 @@ class ClassGroup {
         throw new Error("Network error.");
       })
       .then(data => {
-      //    alert(data);
+         // alert(data);
         const res = JSON.parse(data);
 
         if (res["success"]) {
-          // Siguiente paso después de Group (ajústalo a tu siguiente vista real)
-          headerAddProduct.goNext('../../view/product_details/index.php');
+          if (goNext) {
+            headerAddProduct.goNext('../../view/product_details/index.php');
+          }
         }
       })
       .catch(error => {
@@ -179,3 +203,64 @@ const new_group            = document.getElementById("new_group");
 const next_group           = document.getElementById("next_group");
 const group_list           = document.getElementById("group_list");
 const classGroup           = new ClassGroup();
+
+class GroupArrows {
+  constructor({
+    wrapperSelector = '.cp-group-wrapper',
+    scrollerSelector = '.cp-group-grid',
+    upId = 'arrow_up_group',
+    downId = 'arrow_down_group',
+    step = 'ratio',
+    stepPx = 200,
+    stepRatio = 0.8
+  } = {}) {
+    this.wrapper = document.querySelector(wrapperSelector);
+    this.scroller = document.querySelector(scrollerSelector);
+    this.up = document.getElementById(upId);
+    this.down = document.getElementById(downId);
+
+    if (!this.wrapper || !this.scroller || (!this.up && !this.down)) return;
+
+    this.step = step;
+    this.stepPx = stepPx;
+    this.stepRatio = stepRatio;
+
+    this.update = this.update.bind(this);
+    this.onUp = () => this.scroll(-1);
+    this.onDown = () => this.scroll(1);
+
+    this.up?.addEventListener('click', this.onUp);
+    this.down?.addEventListener('click', this.onDown);
+    this.scroller.addEventListener('scroll', this.update, { passive: true });
+    addEventListener('resize', this.update);
+    this.update();
+  }
+
+  getStep() {
+    if (this.step === 'px') return this.stepPx;
+    if (this.step === 'ratio') return this.scroller.clientHeight * this.stepRatio;
+    return this.scroller.clientHeight; // 'page'
+  }
+
+  scroll(dir) {
+    this.scroller.scrollBy({
+      top: this.getStep() * dir,
+      left: 0,
+      behavior: 'smooth'
+    });
+  }
+
+  update() {
+    const el = this.scroller;
+    const max = el.scrollHeight - el.clientHeight;
+    const y = el.scrollTop;
+    const margin = 6;
+
+    if (this.up) this.up.style.display = y > margin ? 'flex' : 'none';
+    if (this.down) this.down.style.display = y < max - margin ? 'flex' : 'none';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  new GroupArrows();
+});

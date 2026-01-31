@@ -24,6 +24,8 @@ $jsTime  = filemtime('../../view/group/group/group.js');  // ejemplo: '../Home/5
 
     <!-- Existing groups -->
     <div class="cp-group-wrapper">
+      <button id="arrow_up_group" class="page_arrow page_arrow--up" type="button" aria-label="Scroll up">▲</button>
+      <button id="arrow_down_group" class="page_arrow page_arrow--down" type="button" aria-label="Scroll down">▼</button>
       <div class="cp-group-grid" id="group_list" role="list">
         <div class="cp-group" role="listitem">
           <span class="cp-group-name">Lanyards</span>
@@ -61,7 +63,11 @@ $jsTime  = filemtime('../../view/group/group/group.js');  // ejemplo: '../Home/5
 
   <!-- Footer: Next button -->
   <div class="cp-footer">
-    <button class="btn btn-primary" id="next_group" type="button">Save & Next</button>
+    <button class="btn btn-danger" id="reset" type="button">Reset</button>
+    <div class="cp-footer-actions">
+      <button class="btn btn-primary" id="save" type="button">Save</button>
+      <button class="btn" id="next_group" type="button">Save & Next</button>
+    </div>
   </div>
 </main>
 

@@ -64,7 +64,11 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');   // ejempl
 
   <!-- Footer: Next button -->
   <div class="cp-footer">
-    <button class="btn btn-primary" id="next_category" type="button">Save & Next</button>
+    <button class="btn btn-danger" id="reset" type="button">Reset</button>
+    <div class="cp-footer-actions">
+      <button class="btn btn-primary" id="save" type="button">Save</button>
+      <button class="btn" id="next_category" type="button">Save & Next</button>
+    </div>
   </div>
 </main>
 

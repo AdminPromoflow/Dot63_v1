@@ -1,19 +1,41 @@
-.cp-tab{
-  cursor: pointer;
-}
 /* Tabs / Card / Form (reutiliza tu patrón) */
 .cp-tabs{
-  position: sticky; top:0; z-index:5; background:var(--card);
-  border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
-  display:flex; flex-wrap:wrap; gap:6px; padding:8px; margin-bottom:16px;
+  position: sticky; top:0; z-index:10; background:#ffffff;
+  border:1px solid #e1e5e9; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px; margin-bottom:20px;
+  align-items: center;
 }
 .cp-tab{
-  text-decoration:none; color:var(--text); border:1px solid var(--border);
-  background:#fff; padding:8px 12px; border-radius:999px; font-weight:700; font-size:.95rem;
-  transition: background .15s, transform .15s, box-shadow .15s, color .15s, border-color .15s;
+  text-decoration:none; color:#2c3e50; border:1px solid #e1e5e9;
+  background:#ffffff; padding:10px 16px; border-radius:8px; font-weight:600; font-size:0.9rem;
+  transition: all 0.2s ease; white-space: nowrap;
+  position: relative; overflow: hidden;
 }
-.cp-tab:hover{ transform: translateY(-1px); box-shadow: var(--shadow); }
-.cp-tab.active{ background: var(--brand); color:#fff; border-color: var(--brand); }
+.cp-tab:hover{ 
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12); 
+  background: #f8f9fa;
+  border-color: #d1d5db;
+  color: #1a202c;
+  cursor: pointer;
+}
+.cp-tab.active{ 
+  background: linear-gradient(135deg, #005548 0%, #006b5a 100%); 
+  color:#ffffff; 
+  border-color: #005548;
+  box-shadow: 0 4px 12px rgba(0,85,72,0.3);
+  transform: translateY(-1px);
+}
+.cp-tab.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
 
 .cp-card{
   background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
