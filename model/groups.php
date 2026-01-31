@@ -70,7 +70,35 @@ class Groups {
       return null;
     }
   }
+  public function getGroupNameBySKU(): ?array {
+    $sku = trim((string)$this->sku);
 
+    if ($sku === '' || mb_strlen($sku) > 50) {
+      return null;
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      $stmt = $pdo->prepare("
+        SELECT `groups`.name AS group_name
+        FROM products
+        INNER JOIN `groups`
+          ON `groups`.group_id = products.group_id
+        WHERE products.SKU = :sku
+        LIMIT 1
+      ");
+
+      $stmt->execute([':sku' => $sku]);
+      $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      return $row ?: null;
+
+    } catch (PDOException $e) {
+      error_log('getGroupBySKU error (SKU ' . $sku . '): ' . $e->getMessage());
+      return null;
+    }
+  }
   /**
    * Busca el group_id por name (y opcionalmente por category_id para evitar ambigüedad)
    * @return int|false

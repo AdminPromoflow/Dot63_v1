@@ -38,7 +38,12 @@ class Product {
     $connection = new Database();
     $category = new Categories($connection);
     $category->setSKU($data['sku']);
-    $category_name = $category->getCategoryBySKU();
+    $category_name = $category->getCategoryNameBySKU();
+
+    $connection = new Database();
+    $group = new Groups($connection);
+    $group->setSKU($data['sku']);
+    $group_name = $group->getGroupNameBySKU();
 
     $connection = new Database();
     $product = new Products($connection);
@@ -50,7 +55,7 @@ class Product {
     $variation->setSku($data['sku']);
     $variation_details = $variation->getVariationsSKUBySKUProduct();
 
-    echo json_encode(array($company,$category_name, $product_details, $variation_details ));
+    echo json_encode(array($company,$category_name, $group_name, $product_details, $variation_details ));
   }
 
 
@@ -60,6 +65,7 @@ include "../../controller/config/database.php";
 include "../../model/products.php";
 include "../../model/users.php";
 include "../../model/categories.php";
+include "../../model/groups.php";
 include "../../model/variations.php";
 include "../../controller/products/variations.php";
 

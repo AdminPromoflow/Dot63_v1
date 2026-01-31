@@ -24,7 +24,7 @@ class Categories {
     return preg_replace('/\s+/', ' ', $s);
   }
 
-  public function getCategoryBySKU(): ?array {
+  public function getCategoryNameBySKU(): ?array {
     $sku = trim((string)$this->sku);
 
     if ($sku === '' || mb_strlen($sku) > 50) {
