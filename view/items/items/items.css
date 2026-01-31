@@ -277,6 +277,57 @@ body{
   display:flex;
   gap:8px;
 }
+
+.cp-list{
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cp-card-item{
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.cp-card-item .row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cp-card-item .small{
+  font-size: .8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cp-card-item input[type="text"],
+.cp-card-item textarea{
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: .92rem;
+  background: #fff;
+  color: var(--text);
+}
+
+.cp-card-item textarea{
+  min-height: 96px;
+  resize: vertical;
+}
+
+.btn-icon{
+  padding: 8px 10px;
+  min-width: 40px;
+  line-height: 1;
+}
 .cp-actions-decision{
   flex-wrap: wrap;
   justify-content: flex-start;
