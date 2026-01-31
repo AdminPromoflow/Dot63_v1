@@ -51,8 +51,11 @@ class ImageLogic {
       locals.forEach(it => fd.append('images[]', it.file, it.name));
 
       try {
+        loader.show();
+
         const data = await this.createUpdateImages(fd);
         if (data?.success) {
+          loader.hide();
           window.headerAddProduct.goNext('../../view/items/index.php');
         }
       } catch (err) {
