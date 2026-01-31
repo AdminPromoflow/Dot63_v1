@@ -66,7 +66,7 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
-        //alert(text);
+        alert(text);
         let json;
 
           json = JSON.parse(text);
@@ -86,12 +86,12 @@ class PreviewLogic {
           section_variations.innerHTML = "";
         }
         // Debug: inspect the variations payload
-      previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
+  //    previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
 
 
-      this.drawHeaders(supplierBlock, categoryBlock, productBlock);
+    //  this.drawHeaders(supplierBlock, categoryBlock, productBlock);
 
-      this.drawProductDetails(productBlock);
+    //  this.drawProductDetails(productBlock);
 
 
       })
