@@ -95,7 +95,7 @@ class ImageLogic {
   }
 
   onReset() {
-    alert("In process of creation");
+    alert('(pending implementation).');
   }
 
   async onSubmit(e) {

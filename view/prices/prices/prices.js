@@ -392,10 +392,9 @@ class Prices {
     }
 
     if (this.resetBtn) {
-      this.resetBtn.addEventListener('click', () => {
-        if (this.form) this.form.reset();
-        this.rows = [];
-        this.renderRows();
+      this.resetBtn.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        alert('(pending implementation).');
       });
     }
 
@@ -426,7 +425,10 @@ class Prices {
     }
 
     if (this.form) {
-      this.form.addEventListener('submit', (e) => this.save(e));
+      this.form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.save(false);
+      });
     }
 
     if (this.nextBtn) {

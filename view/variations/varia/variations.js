@@ -26,7 +26,7 @@ class Variations {
     this.addBtn       = document.getElementById('add_variation');
     this.saveBtn      = document.getElementById('save_variation');
     this.nextBtn      = document.getElementById('next_variations');
-    this.deleteBtn    = document.getElementById('delete_variation');
+    this.resetBtn     = document.getElementById('reset_form');
 
     // IMPORTANT: This select now renders "type_variations" (type_id/type_name).
     // Keep the HTML id as "group" if you want, but conceptually this is "type".
@@ -101,6 +101,14 @@ class Variations {
   }
 
   bindButtons() {
+    // Reset (pending)
+    if (this.resetBtn) {
+      this.resetBtn.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        alert('(pending implementation).');
+      });
+    }
+
     // Save & Next
     if (this.nextBtn) {
       this.nextBtn.addEventListener('click', () => {
@@ -125,13 +133,6 @@ class Variations {
         this.saveVariationDetails(false);
         alert('The variation details have been saved successfully.');
 
-      });
-    }
-
-    // Delete (UI placeholder for now)
-    if (this.deleteBtn) {
-      this.deleteBtn.addEventListener('click', () => {
-        alert('Delete variation (pending implementation).');
       });
     }
 

@@ -562,7 +562,10 @@ class Items {
     }
 
     if (this.resetBtn) {
-      this.resetBtn.addEventListener('click', () => this.resetForm());
+      this.resetBtn.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        alert('(pending implementation).');
+      });
     }
 
     if (this.form) {
