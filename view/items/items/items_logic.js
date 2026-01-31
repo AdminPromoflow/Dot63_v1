@@ -287,7 +287,7 @@ class ItemsLogic {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
+      //  alert(data);
         var parsed = JSON.parse(data);
 
         if (parsed["success"]) {
