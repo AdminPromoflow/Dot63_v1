@@ -11,17 +11,17 @@
   transition: all 0.2s ease; white-space: nowrap;
   position: relative; overflow: hidden;
 }
-.cp-tab:hover{ 
-  transform: translateY(-2px); 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12); 
+.cp-tab:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   background: #f8f9fa;
   border-color: #d1d5db;
   color: #1a202c;
   cursor: pointer;
 }
-.cp-tab.active{ 
-  background: linear-gradient(135deg, #005548 0%, #006b5a 100%); 
-  color:#ffffff; 
+.cp-tab.active{
+  background: linear-gradient(135deg, #005548 0%, #006b5a 100%);
+  color:#ffffff;
   border-color: #005548;
   box-shadow: 0 4px 12px rgba(0,85,72,0.3);
   transform: translateY(-1px);

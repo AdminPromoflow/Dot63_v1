@@ -11,27 +11,56 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
 </head>
 <body>
 
-<main class="create_product" aria-labelledby="var-title">
+ <main class="create_product" aria-labelledby="var-title">
   <!--  <h1 id="var-title" class="sr-only">Create Product — Variations</h1> -->
 
   <!-- Tabs / Header -->
   <?php include "../../view/global/header_add_product/header_add_product.php"; ?>
 
-  <section class="cp-card" aria-labelledby="cp-var-title">
+  <section class="cp-card cp-section" aria-labelledby="cp-var-decision-title">
     <header class="cp-card-header">
-      <h2 id="cp-var-title">Create Variation</h2>
+      <h2 id="cp-var-decision-title">Variations</h2>
+    </header>
 
-      <!-- Mini menú variaciones (derecha) -->
-      <div class="cp-actions" style="gap:6px; position:relative;">
-        <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
-          Change variation ▾
-        </button>
-        <ul id="menu_list" class="cp-menu-list" hidden
-            style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:220px; max-height:260px; overflow:auto;">
-          <!-- Se rellena dinámicamente -->
-        </ul>
-        <button class="btn btn-primary" id="add_variation" type="button" aria-label="Add variation">+ New variation</button>
+    <div class="cp-decision">
+      <div class="cp-choice">
+        <label class="cp-choice-label" for="variations_no">
+          <input id="variations_no" name="variations_mode" type="radio" value="no" checked>
+          <span>No, I won’t add variations</span>
+        </label>
+
+        <div class="cp-choice-body">
+          <div class="cp-tip" id="no_variations_tip">
+            <strong>Next step:</strong> Upload the product PDF and click <strong>Save &amp; Next</strong>.
+          </div>
+        </div>
       </div>
+
+      <div class="cp-choice">
+        <label class="cp-choice-label" for="variations_yes">
+          <input id="variations_yes" name="variations_mode" type="radio" value="yes">
+          <span>Yes, I want variations</span>
+        </label>
+
+        <div class="cp-choice-body">
+          <div class="cp-actions cp-actions-decision" style="gap:6px; position:relative;">
+            <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
+              Change variation ▾
+            </button>
+            <ul id="menu_list" class="cp-menu-list" hidden
+                style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:220px; max-height:260px; overflow:auto;">
+            </ul>
+            <button class="btn btn-primary" id="add_variation" type="button" aria-label="Add variation">+ New variation</button>
+          </div>
+          <small class="cp-hint">Pick an existing variation to modify, or create a new one.</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cp-card cp-section" id="variation_details_section" aria-labelledby="cp-var-title">
+    <header class="cp-card-header">
+      <h2 id="cp-var-title">Variation Details</h2>
     </header>
 
     <form id="variationForm" class="cp-form" autocomplete="off" novalidate>
@@ -80,35 +109,37 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
         <div class="cp-img-preview" id="img_preview" aria-live="polite"></div>
       </div>
 
-      <!-- PDF (artwork) - columna izquierda -->
-      <div class="cp-field">
-        <label class="cp-label" for="variation_pdf">PDF artwork</label>
-        <div class="cp-inline-row">
-          <input id="variation_pdf" name="variation_pdf" type="file" accept="application/pdf">
-          <button type="button" class="btn btn-ghost" id="clear_pdf">Remove</button>
-        </div>
-        <div class="cp-file-preview" id="pdf_preview" aria-live="polite">
-          <span class="cp-file-pill">
-            <span class="cp-file-pill-main">No file selected.</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- NUEVO: Nombre del PDF (columna derecha) -->
-      <div class="cp-field">
-        <label class="cp-label" for="name_pdf_artwork">Artwork file name</label>
-        <input
-          id="name_pdf_artwork"
-          name="name_pdf_artwork"
-          type="text"
-          placeholder="e.g., client-logo-2025.pdf"
-        >
-        <small class="cp-hint">
-          Optional label for this artwork file. Visible in internal views.
-        </small>
-      </div>
-
     </form>
+
+    <div class="cp-pdf-block">
+      <div class="cp-form cp-pdf-form">
+        <div class="cp-field">
+          <label class="cp-label" for="variation_pdf">PDF artwork</label>
+          <div class="cp-inline-row">
+            <input id="variation_pdf" name="variation_pdf" type="file" accept="application/pdf">
+            <button type="button" class="btn btn-ghost" id="clear_pdf">Remove</button>
+          </div>
+          <div class="cp-file-preview" id="pdf_preview" aria-live="polite">
+            <span class="cp-file-pill">
+              <span class="cp-file-pill-main">No file selected.</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="cp-field">
+          <label class="cp-label" for="name_pdf_artwork">Artwork file name</label>
+          <input
+            id="name_pdf_artwork"
+            name="name_pdf_artwork"
+            type="text"
+            placeholder="e.g., client-logo-2025.pdf"
+          >
+          <small class="cp-hint">
+            Optional label for this artwork file. Visible in internal views.
+          </small>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- Modal para crear nuevo group -->
@@ -129,8 +160,12 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
     </div>
   </div>
 
-  <div class="cp-footer">
-    <button class="btn btn-primary" id="next_variations" type="button">Save & Next</button>
+  <div class="cp-footer" id="variation_actions_section">
+    <button class="btn btn-danger" id="delete_variation" type="button">Delete variation</button>
+    <div class="cp-footer-actions">
+      <button class="btn btn-primary" id="save_variation" type="button">Save</button>
+      <button class="btn btn-primary" id="next_variations" type="button">Save & Next</button>
+    </div>
   </div>
 </main>
 

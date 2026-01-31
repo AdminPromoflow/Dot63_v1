@@ -18,9 +18,14 @@ body{
   background: radial-gradient(circle at top, #e5f3ef 0, #f3f4f6 45%, #f9fafb 100%);
 }
 
+.is-hidden{
+  display: none !important;
+}
+
 /* Contenedor principal */
 .create_product{
   max-width:1100px;
+  width: 80vw;
   margin: 0 auto;
   margin-top: 100px; /* margen superior fijo que quieres en todas las pantallas */
   padding:20px;
@@ -41,6 +46,7 @@ body{
   gap:6px;
   padding:8px;
   margin-bottom:16px;
+  width: 100%;
 }
 
 .cp-tab{
@@ -76,6 +82,24 @@ body{
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding:20px 18px 18px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.cp-card.cp-section::before{
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #005548 0%, #006b5a 50%, #005548 100%);
+  opacity: 0.8;
+}
+
+.cp-section{
+  margin-bottom: 16px;
 }
 
 .cp-card-header{
@@ -96,10 +120,12 @@ body{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:14px 16px;
+  min-width: 0;
 }
 .cp-field{
   display:grid;
   gap:6px;
+  min-width: 0;
 }
 .cp-field-full{
   grid-column:1 / -1;
@@ -132,6 +158,8 @@ body{
   outline:none;
   min-height:42px;
   font-size:.94rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 .cp-form input:focus,
 .cp-form select:focus,
@@ -144,6 +172,7 @@ body{
   display:grid;
   grid-template-columns:1fr auto;
   gap:8px;
+  align-items: center;
 }
 
 .cp-select{
@@ -250,6 +279,14 @@ body{
   color:#fff;
   border-color: var(--brand);
 }
+.btn-danger{
+  background: #b42318;
+  color:#fff;
+  border-color: #b42318;
+}
+.btn-danger:hover{
+  box-shadow: 0 10px 30px rgba(180, 35, 24, .18);
+}
 .btn-ghost{
   background:#fff;
 }
@@ -270,7 +307,69 @@ body{
   margin:18px 0 0;
   padding:10px 0 0;
   display:flex;
+  justify-content:space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cp-footer-actions{
+  display:flex;
   justify-content:flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cp-decision{
+  display: grid;
+  gap: 12px;
+}
+
+.cp-choice{
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  background: #fff;
+}
+
+.cp-choice.is-selected{
+  border-color: rgba(0,85,72,.45);
+  box-shadow: 0 10px 30px rgba(0,85,72,.10);
+}
+
+.cp-choice-label{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+
+.cp-choice-body{
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.cp-tip{
+  border: 1px solid rgba(0,85,72,.22);
+  background: rgba(0,85,72,.06);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: .92rem;
+  line-height: 1.25;
+}
+
+.cp-pdf-block{
+  margin-top: 14px;
+}
+
+.cp-pdf-form{
+  align-items: start;
+}
+
+.cp-actions-decision{
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 /* Preview sencillo del PDF (fichita) */
@@ -359,13 +458,99 @@ body{
 
 /* Responsive */
 @media (max-width: 860px){
+  .create_product{
+    padding: 16px;
+    margin-top: 90px;
+  }
+
+  .cp-card{
+    padding: 16px 14px 14px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .cp-card-header{
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
   .cp-form{
     grid-template-columns:1fr;
   }
+
+  .cp-inline-row{
+    grid-template-columns: 1fr;
+  }
+
+  .cp-img-preview{
+    place-items: start;
+  }
 }
 @media (max-width: 560px){
+  .create_product{
+    padding: 14px;
+    margin-top: 80px;
+  }
+
+  .cp-card-header h2{
+    font-size: 1.05rem;
+  }
+
+  .cp-footer{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cp-footer-actions{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn,
+  .btn-primary,
+  .btn-danger{
+    width: 100%;
+  }
+
+  .cp-actions{
+    width: 100%;
+  }
+
+  .cp-actions-decision{
+    width: 100%;
+  }
+
+  .cp-actions-decision .btn{
+    width: 100%;
+  }
+
+  .cp-choice{
+    padding: 12px;
+  }
+
+  .cp-tip{
+    font-size: .9rem;
+  }
+
   .cp-table th:nth-child(4),
   .cp-table td:nth-child(4){
     text-align:right;
+  }
+}
+
+@media (max-width: 400px){
+  .cp-form{
+    grid-template-columns: 1fr;
+  }
+
+  .cp-pdf-form{
+    grid-template-columns: 1fr;
+  }
+
+  .cp-inline-row{
+    grid-template-columns: 1fr;
+  }
+
+  .cp-actions{
+    flex-direction: column;
+    align-items: stretch;
   }
 }

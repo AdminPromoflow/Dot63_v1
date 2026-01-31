@@ -5,6 +5,10 @@ class Variations {
     // --- Cache DOM references (single source of truth) ---
     this.form         = document.getElementById('variationForm');
 
+    this.variationsNoRadio  = document.getElementById('variations_no');
+    this.variationsYesRadio = document.getElementById('variations_yes');
+    this.noVariationsTip    = document.getElementById('no_variations_tip');
+
     this.parentSelect = document.getElementById('parent_variations');
     this.nameInput    = document.getElementById('variation_name');
 
@@ -20,7 +24,9 @@ class Variations {
     this.menuList     = document.getElementById('menu_list');
 
     this.addBtn       = document.getElementById('add_variation');
+    this.saveBtn      = document.getElementById('save_variation');
     this.nextBtn      = document.getElementById('next_variations');
+    this.deleteBtn    = document.getElementById('delete_variation');
 
     // IMPORTANT: This select now renders "type_variations" (type_id/type_name).
     // Keep the HTML id as "group" if you want, but conceptually this is "type".
@@ -60,12 +66,38 @@ class Variations {
     }
 
     // Bind UI events (kept minimal and focused)
+    this.bindDecisionUi();
     this.bindFileInputs();
     this.bindMenu();
     this.bindButtons();
 
     // Initial load from backend
     this.getVariationDetails();
+  }
+
+  bindDecisionUi() {
+    const noChoice = this.variationsNoRadio?.closest('.cp-choice');
+    const yesChoice = this.variationsYesRadio?.closest('.cp-choice');
+
+    const updateUi = () => {
+      const isNo = !!this.variationsNoRadio?.checked;
+
+      if (this.noVariationsTip) {
+        this.noVariationsTip.hidden = !isNo;
+      }
+
+      if (noChoice) noChoice.classList.toggle('is-selected', isNo);
+      if (yesChoice) yesChoice.classList.toggle('is-selected', !isNo);
+
+      if (this.form) {
+        this.form.classList.toggle('is-hidden', isNo);
+      }
+    };
+
+    if (this.variationsNoRadio) this.variationsNoRadio.addEventListener('change', updateUi);
+    if (this.variationsYesRadio) this.variationsYesRadio.addEventListener('change', updateUi);
+
+    updateUi();
   }
 
   bindButtons() {
@@ -78,7 +110,26 @@ class Variations {
           alert('Please add a name to the variation.');
           return;
         }
-        this.saveVariationDetails();
+        this.saveVariationDetails(true);
+      });
+    }
+
+    // Save (no next)
+    if (this.saveBtn) {
+      this.saveBtn.addEventListener('click', () => {
+        const name = (this.nameInput?.value || '').trim();
+        if (!name) {
+          alert('Please add a name to the variation.');
+          return;
+        }
+        this.saveVariationDetails(false);
+      });
+    }
+
+    // Delete (UI placeholder for now)
+    if (this.deleteBtn) {
+      this.deleteBtn.addEventListener('click', () => {
+        alert('Delete variation (pending implementation).');
       });
     }
 
@@ -473,7 +524,7 @@ class Variations {
      Save + create variation
      ========================= */
 
-     saveVariationDetails() {
+     saveVariationDetails(goNext = true) {
        // Read URL context
        const { skuProduct, skuVariation } = this.readSkuParamsFromUrl();
 
@@ -543,7 +594,7 @@ class Variations {
            }
 
            // Go next step in wizard
-           if (window.headerAddProduct?.goNext) {
+           if (goNext && window.headerAddProduct?.goNext) {
              window.headerAddProduct.goNext('../../view/images/index.php');
            }
          })

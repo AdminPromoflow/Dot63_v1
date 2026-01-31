@@ -20,6 +20,7 @@ body{
 /* Contenedor principal */
 .create_product{
   max-width: 1100px;
+  width: 80vw;
   margin: 0 auto;
   margin-top: 100px; /* lo que me pediste guardar */
   padding: 20px;
@@ -41,6 +42,7 @@ body{
   padding: 12px 16px;
   margin-bottom: 20px;
   align-items: center;
+  width: 100%;
 }
 
 .cp-tab{
@@ -91,6 +93,7 @@ body{
   padding: 24px;
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 .cp-card::before {
   content: '';
@@ -219,6 +222,12 @@ body{
   grid-template-columns: 1fr auto;
   gap: 12px;
   align-items: end;
+}
+@media (max-width: 768px){
+  .cp-card{
+    min-width: 0;
+    width: 100%;
+  }
 }
 .cp-inline-row input{
   border: 1px solid #e1e5e9;
