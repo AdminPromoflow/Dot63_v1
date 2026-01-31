@@ -7,83 +7,15 @@
  */
 class Items {
   constructor() {
+    if (window.ItemsLogic) {
+      this.logic = new window.ItemsLogic(this);
+    }
 
     // Wait for the DOM to be ready before wiring anything up
     document.addEventListener('DOMContentLoaded', () => {
 
-      this.setupVariationMenu(); // dropdown: open/close, select, navigate
-      this.init();               // form refs, state, events, initial data load
-    });
-  }
-
-  // ==========================================================
-  // == VARIATION MENU (TOP DROPDOWN)
-  // ==========================================================
-  setupVariationMenu() {
-    const menuBtn  = document.getElementById('menu_btn');
-    const menuList = document.getElementById('menu_list');
-
-    // Cache elements on the instance for reuse elsewhere
-    this.menuBtn = menuBtn;
-    this.menuList = menuList;
-
-    if (!(menuBtn && menuList)) return;
-
-    /** Open/close the menu with a click on the button */
-    menuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isHidden = menuList.hidden;
-      menuList.hidden = !isHidden;
-      menuBtn.setAttribute('aria-expanded', String(!isHidden));
-    });
-
-    /** Close the menu when clicking anywhere outside it */
-    document.addEventListener('click', (e) => {
-      if (!menuBtn.contains(e.target) && !menuList.contains(e.target)) {
-        if (!menuList.hidden) {
-          menuList.hidden = true;
-          menuBtn.setAttribute('aria-expanded', 'false');
-        }
-      }
-    });
-
-    /** Close the menu with the Escape key, then return focus to the button */
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !menuList.hidden) {
-        menuList.hidden = true;
-        menuBtn.setAttribute('aria-expanded', 'false');
-        menuBtn.focus();
-      }
-    });
-
-    /** Handle a click on any <li> within the menu */
-    menuList.addEventListener('click', (e) => {
-      const li = e.target.closest('li');
-      if (!li || !menuList.contains(li)) return;
-
-      // Clear previous selection, if any
-      menuList.querySelectorAll('.is-selected').forEach(el => {
-        el.classList.remove('is-selected');
-        el.setAttribute('aria-selected', 'false');
-      });
-
-      // Mark the newly-selected item
-      li.classList.add('is-selected');
-      li.setAttribute('aria-selected', 'true');
-
-      // Derive name and SKU from the list item’s text
-      const { name, sku } = this.parseNameSkuFromText(li.textContent);
-
-      // Close the menu UI
-      menuList.hidden = true;
-      menuBtn.setAttribute('aria-expanded', 'false');
-
-      // Navigate to the same page but with the selected variation in the query string
-      const params = new URLSearchParams(window.location.search);
-      const sku_product = params.get('sku');
-
-      window.location.href =
-        `../../view/items/index.php?sku=${encodeURIComponent(sku_product)}&sku_variation=${encodeURIComponent(sku)}`;
+      this.logic?.setupVariationMenu(); // dropdown: open/close, select, navigate
+      this.init();                      // form refs, state, events, initial data load
     });
   }
 
@@ -103,117 +35,12 @@ class Items {
     this.itemsState = [];
 
     // Highlight the current header step, if available
-    if (window.headerAddProduct) {
-      headerAddProduct.setCurrentHeader('items');
-    }
+    this.logic?.setCurrentHeader();
 
     // Wire events, then fetch variations to populate the menu
     this.bindEvents();
-    this.getItemsDetails();
-    this.getVariationDetails();
-  }
-
-  // Fetch current product/variation details and menu options from the server,
-  // then render the variation menu and select the current one based on the URL.
-  getVariationDetails() {
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
-    const sku_variation = params.get('sku_variation');
-
-    const url = "../../controller/products/variations.php";
-    const data = {
-      action: "get_variation_details",
-      sku: sku,
-      sku_variation: sku_variation
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-    .then(response => {
-      if (response.ok) return response.json();
-      throw new Error("Network error.");
-    })
-    .then(data => {
-      if (data?.success) {
-        this.renderMenuTop(data.variations);
-        // Must run AFTER rendering the <li> items
-        this.selectMenuCurrentItemBySku();
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-    });
-  }
-
-
-
-  // Fetch current product/variation details and menu options from the server,
-  // then render the variation menu and select the current one based on the URL.
-  getItemsDetails() {
-    const params = new URLSearchParams(window.location.search);
-    const sku_variation = params.get('sku_variation');
-
-    const url = "../../controller/products/item.php";
-    const data = {
-      action: "get_items_details",
-      sku_variation: sku_variation
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-    .then(response => {
-      if (response.ok) return response.json();
-      throw new Error("Network error.");
-    })
-    .then(data => {
-    //  alert(JSON.stringify(data));
-
-      if (data?.success) {
-        items.drawItems(data.items);
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-    });
-  }
-
-  // Mark the <li> in the menu that matches ?sku_variation=... in the current URL
-  selectMenuCurrentItemBySku() {
-    const currentUrl = new URL(window.location.href);
-    const skuv = currentUrl.searchParams.get('sku_variation');
-    if (!skuv) return false;
-
-    const ul  = this.menuList || document.getElementById('menu_list');
-    const btn = this.menuBtn  || document.getElementById('menu_btn');
-    if (!ul) return false;
-
-    // Clear any previous selection
-    ul.querySelectorAll('.is-selected').forEach(el => el.classList.remove('is-selected'));
-
-    const norm   = s => String(s || '').trim().toUpperCase();
-    const wanted = norm(skuv);
-
-    // Try to match either data-sku or the SKU shown in the <small> text
-    for (const li of ul.querySelectorAll('li')) {
-      const skuData = li.dataset?.sku;
-      const skuText = li.querySelector('small')?.textContent?.replace(/^—\s*/, '');
-      const candidate = norm(skuData || skuText);
-
-      if (candidate && candidate === wanted) {
-        li.classList.add('is-selected');
-        li.setAttribute('aria-selected', 'true');
-        ul.hidden = true;
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-        return true;
-      }
-    }
-    return false;
+    this.logic?.getItemsDetails();
+    this.logic?.getVariationDetails();
   }
 
   // Extract { name, sku } from a line of menu text (robust to a few formats)
@@ -255,51 +82,6 @@ class Items {
 
     // Fallback: no SKU detected, return the whole string as the name
     return { name: raw, sku: '' };
-  }
-
-  // Render the top menu list with the available variations
-  renderMenuTop(items) {
-    const ul = document.getElementById('menu_list');
-    if (!ul) return;
-
-    // Accept either a plain array or an object containing a .variations array
-    const list = Array.isArray(items) ? items
-               : (items && Array.isArray(items.variations) ? items.variations : []);
-
-    ul.innerHTML = '';
-    ul.setAttribute('role', 'menu');
-
-    if (list.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No items to show';
-      li.setAttribute('role', 'menuitem');
-      li.setAttribute('tabindex', '-1');
-      ul.appendChild(li);
-      return;
-    }
-
-    // Minimal HTML-escape for safety
-    const escape = (s) => String(s ?? '').replace(/[&<>"']/g, m =>
-      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
-    );
-
-    const frag = document.createDocumentFragment();
-
-    list.forEach((it) => {
-      const name = (it?.name ?? '(unnamed)').trim() || '(unnamed)';
-      const sku  = (it?.SKU ?? it?.sku ?? '').trim();
-
-      const li = document.createElement('li');
-      li.setAttribute('role', 'menuitem');
-      li.setAttribute('tabindex', '-1');
-      li.dataset.name = name;
-      li.dataset.sku  = sku;
-
-      li.innerHTML = `<strong>${escape(name)}</strong>${sku ? ` <small style="color:var(--muted)">— ${escape(sku)}</small>` : ''}`;
-      frag.appendChild(li);
-    });
-
-    ul.appendChild(frag);
   }
 
   // ==========================================================
@@ -379,32 +161,18 @@ class Items {
   }
 
   removeItem(id_item) {
-    if (Number.isInteger( parseInt(id_item, 10))) {
-      const url = "../../controller/products/item.php";
-      const data = {
-        action: "delete_item",
-        id_item: id_item
-      };
-
-      fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      })
-      .then(response => {
-        if (response.ok) return response.json();
-        throw new Error("Network error.");
-      })
-      .then(data => {
-        alert(JSON.stringify(data));
-
-        if (data?.success) {
-          }
-      })
-      .catch(error => {
-        console.error("Error:", error);
-      });
+    if (Number.isInteger(parseInt(id_item, 10))) {
+      this.logic?.deleteItem(id_item)
+        ?.then(() => {
+          alert("The item has been successfully removed.");
+          location.reload();
+        })
+        ?.catch((error) => {
+          console.error("Error:", error);
+        });
+      return;
     }
+
     alert("The item has been successfully removed.");
     location.reload();
   }
@@ -432,99 +200,10 @@ class Items {
     this.list.innerHTML = '';
   }
 
-  // Persist the current list of items to the server
+  // Persist the current list of items to the server (delegated)
   async saveItems(e, goNext = false) {
-
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
-
-    if (this.itemsState.length === 0) {
-      alert('Please add at least one item.');
-      return;
-    }
-
-    // Basic validation: item text must not be empty
-    for (const it of this.itemsState) {
-      if (!it.text.trim()) {
-        alert('Item text cannot be empty.');
-        return;
-      }
-    }
-
-    const labelInput = document.querySelectorAll(".label-input");
-    const textInput = document.querySelectorAll(".text-input");
-
-    // Creamos arrays vacíos
-    const labels = [];
-    const texts = [];
-
-    // Recorremos todos los elementos
-    for (let i = 0; i < labelInput.length; i++) {
-      // Guardamos los valores en los arrays
-      labels.push(labelInput[i].value);
-      texts.push(textInput[i].value);
-    }
-
-
-  //  this.saveBtn.disabled = true;
-  //  this.saveBtn.textContent = 'Saving…';
-
-
-    const params = new URLSearchParams(window.location.search);
-    const sku_variation = params.get('sku_variation');
-
-
-    const url = "../../controller/products/item.php";
-    const data = {
-      action: "create_items",
-      sku_variation: sku_variation,
-      labels: labels,
-      texts: texts
-      };
-    // Make a fetch request to the given URL with the specified data.
-    return fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        // Check if the response is okay, if so, return the response text.
-        if (response.ok) {
-          return response.text();
-        }
-        // If the response is not okay, throw an error.
-        throw new Error("Network error.");
-      })
-      .then(data => {
-        alert(data);
-        var data = JSON.parse(data);
-
-       if (data["success"]) {
-         alert("The items have been saved successfully.");
-         if (goNext && window.headerAddProduct) {
-           headerAddProduct.goNext('../../view/prices/index.php');
-         }
-         return true;
-        }
-        return false;
-      })
-      .catch(error => {
-        // Log any errors to the console.
-        console.error("Error:", error);
-        return false;
-      });
-
-
-
-
-
-
-
-
-
-
-
+    return this.logic?.saveItems({ goNext });
   }
 
   // Wire all UI events for the item editor
@@ -562,22 +241,16 @@ class Items {
     }
 
     if (this.resetBtn) {
-      this.resetBtn.addEventListener('click', (e) => {
-        if (e && typeof e.preventDefault === 'function') e.preventDefault();
-        alert('(pending implementation).');
-      });
+      this.resetBtn.addEventListener('click', (e) => this.logic?.onReset(e));
     }
 
     if (this.form) {
-      this.form.addEventListener('submit', (e) => this.saveItems(e));
+      this.form.addEventListener('submit', (e) => this.logic?.onSubmit(e));
     }
 
     // Optional: proceed to the next step in the header wizard
     if (this.nextBtn) {
-      this.nextBtn.addEventListener('click', (e) => {
-        if (e && typeof e.preventDefault === 'function') e.preventDefault();
-        this.saveItems(null, true);
-      });
+      this.nextBtn.addEventListener('click', (e) => this.logic?.onNext(e));
     }
   }
 }
