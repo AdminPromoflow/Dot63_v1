@@ -1,16 +1,4 @@
-// preview_logic.js
 
-/**
- * PreviewLogic
- * ------------
- * Handles:
- * - Fetching preview data for a product/variation (via SKU in the URL)
- * - Rendering header/product details
- * - Rendering variation groups (first level)
- * - Handling selection behaviour (buttons + updating selected label)
- * - Rendering images/items/prices for the selected variation
- * - Basic gallery state (next image, change main image)
- */
 class PreviewLogic {
   constructor() {
     /**
@@ -25,12 +13,7 @@ class PreviewLogic {
      */
     // this.variationsFirstLevel will be initialised lazily
 
-    /**
-     * Load preview data immediately (SKU comes from URL)
-     * Note: getDataProduct() exists as an alternative flow (currently not called here).
-     */
     this.getDataProduct();
-    // this.getDataProduct();
   }
 
   getDataProduct() {
@@ -61,6 +44,7 @@ class PreviewLogic {
         return response.text();
       })
       .then(text => {
+        alert(text);
         let json = JSON.parse(text);
 
         // Tu respuesta es un array: [{company_name},{category_name},{group_name},{product_details:{...}},...]
