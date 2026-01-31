@@ -38,8 +38,6 @@ class PreviewLogic {
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
 
-    //alert(sku);
-
     if (!sku) {
       console.warn("No SKU in URL");
       return;
@@ -59,39 +57,78 @@ class PreviewLogic {
       body: JSON.stringify(data)
     })
       .then(response => {
-        // Network-level validation
-        if (!response.ok) {
-          throw new Error("Network error.");
-        }
+        if (!response.ok) throw new Error("Network error.");
         return response.text();
       })
       .then(text => {
-        alert(text);
-        let json;
-        json = JSON.parse(text);
+        let json = JSON.parse(text);
 
-        // Clear variations section before rendering (if present)
-        // const section_variations = document.getElementById("section_variations");
-        // if (section_variations) {
-        //   section_variations.innerHTML = "";
-        // }
-        // Debug: inspect the variations payload
-  //    previewLogic.getDataVariationBySKU(variationsBlock.default_variation_sku)
+        // Tu respuesta es un array: [{company_name},{category_name},{group_name},{product_details:{...}},...]
+        const company_name  = (json.find(x => x.company_name)?.company_name) ?? "";
+        const category_name = (json.find(x => x.category_name)?.category_name) ?? "";
+        const group_name    = (json.find(x => x.group_name)?.group_name) ?? "";
 
+        const product_details = (json.find(x => x.product_details)?.product_details) ?? {};
+        const product_name = product_details.product_name ?? "";
+        const descriptive_tagline = product_details.descriptive_tagline ?? "";
+        const description = product_details.description ?? "";
 
-    //  this.drawHeaders(supplierBlock, categoryBlock, productBlock);
-
-    //  this.drawProductDetails(productBlock);
-
-
+        // 4) Llamar funciones y pintar
+        previewLogic.renderBreadcrumb(category_name, group_name);
+        previewLogic.renderSectionLabel(category_name);
+        previewLogic.renderProductTitle(product_name);
+        previewLogic.renderBrandName(company_name);
+        previewLogic.renderTagline(descriptive_tagline);
+        previewLogic.renderDescription(description);
       })
       .catch(error => {
         console.error("Error fetching preview:", error);
-      //  alert("Error loading preview data.");
       });
   }
+  renderBreadcrumb(category_name, group_name) {
+    const sp_breadcrumbs = document.getElementById("sp_breadcrumbs");
+    if (!sp_breadcrumbs) return;
 
+    sp_breadcrumbs.innerHTML = `
+      <li><a href="#">${category_name || ""}</a></li>
+      <li><a href="#">${group_name || ""}</a></li>
+    `;
+  }
 
+  renderSectionLabel(category_name) {
+    const sp_category = document.getElementById("sp_category");
+    if (!sp_category) return;
+
+    sp_category.textContent = category_name || "";
+  }
+
+  renderProductTitle(product_name) {
+    const sp_title = document.getElementById("sp-title");
+    if (!sp_title) return;
+
+    sp_title.textContent = product_name || "";
+  }
+
+  renderBrandName(company_name) {
+    const sp_brand = document.getElementById("sp-brand");
+    if (!sp_brand) return;
+
+    sp_brand.textContent = company_name || "";
+  }
+
+  renderTagline(descriptive_tagline) {
+    const sp_subtitle = document.getElementById("sp_subtitle");
+    if (!sp_subtitle) return;
+
+    sp_subtitle.textContent = descriptive_tagline || "";
+  }
+
+  renderDescription(description) {
+    const sp_desc = document.getElementById("sp_desc");
+    if (!sp_desc) return;
+
+    sp_desc.textContent = description || "";
+  }
 
   getDataVariationBySKU(sku_variation){
 
