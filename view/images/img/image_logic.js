@@ -118,7 +118,19 @@ class ImageLogic {
     fd.append('meta', JSON.stringify(locals.map((it, i) => ({ order: i, filename: it.name }))));
 
     locals.forEach(it => fd.append('images[]', it.file, it.name));
-    this.createUpdateImages(fd);
+
+
+    try {
+      loader.show();
+
+      const data = await this.createUpdateImages(fd);
+      if (data?.success) {
+        loader.hide();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return;
   }
 
   deleteImage(link_image) {
