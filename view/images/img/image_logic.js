@@ -98,7 +98,7 @@ class ImageLogic {
     alert("In process of creation");
   }
 
-  onSubmit(e) {
+  async onSubmit(e) {
     e.preventDefault();
 
     const params = new URLSearchParams(window.location.search);
@@ -106,10 +106,6 @@ class ImageLogic {
     const sku_product = params.get('sku');
 
     const locals = (this.images.items || []).filter(it => it.origin === 'local');
-  /*  if (!locals.length) {
-      alert('Please add at least one image.');
-      return;
-    }*/
 
     const fd = new FormData();
     fd.append('action', 'create_update_images');
@@ -119,10 +115,8 @@ class ImageLogic {
 
     locals.forEach(it => fd.append('images[]', it.file, it.name));
 
-
     try {
       loader.show();
-
       const data = await this.createUpdateImages(fd);
       if (data?.success) {
         loader.hide();
@@ -130,7 +124,6 @@ class ImageLogic {
     } catch (err) {
       console.error(err);
     }
-    return;
   }
 
   deleteImage(link_image) {
