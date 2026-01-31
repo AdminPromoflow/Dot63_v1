@@ -1,6 +1,9 @@
 <?php
 $cssTime = filemtime('../../view/images/img/images.css');
 $jsTime  = filemtime('../../view/images/img/images.js');
+$jsLogicTime  = filemtime('../../view/images/img/image_logic.js');
+
+
 ?>
 <link rel="stylesheet" href="../../view/images/img/images.css?v=<?= $cssTime ?>">
 
@@ -63,10 +66,11 @@ $jsTime  = filemtime('../../view/images/img/images.js');
   <div class="cp-footer">
     <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
     <div class="cp-footer-actions">
-      <button class="btn btn-primary" type="submit" id="save_images" form="variationImagesForm">Save images</button>
-      <button class="btn" id="next_images" type="button">Save</button>
+      <button class="btn btn-primary" type="submit" id="save_images" form="variationImagesForm">Save</button>
+      <button class="btn" id="next_images" type="button">Save & Next</button>
     </div>
   </div>
 </main>
 
+<script src="../../view/images/img/image_logic.js?v=<?= $jsLogicTime ?>"></script>
 <script src="../../view/images/img/images.js?v=<?= $jsTime ?>"></script>

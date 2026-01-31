@@ -70,8 +70,8 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath)  : time();
   <div class="cp-footer">
     <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
     <div class="cp-footer-actions">
-      <button class="btn btn-primary" type="submit" id="save_items" form="variationItemsForm">Save items</button>
-      <button class="btn" id="next_items" type="button">Save</button>
+      <button class="btn btn-primary" type="submit" id="save_items" form="variationItemsForm">Save</button>
+      <button class="btn" id="next_items" type="button">Save & Next</button>
     </div>
   </div>
 </main>

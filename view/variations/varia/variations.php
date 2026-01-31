@@ -146,7 +146,7 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
     <button class="btn btn-danger" id="delete_variation" type="button">Delete variation</button>
     <div class="cp-footer-actions">
       <button class="btn btn-primary" id="save_variation" type="button">Save</button>
-      <button class="btn btn-primary" id="next_variations" type="button">Save & Next</button>
+      <button class="btn" id="next_variations" type="button">Save & Next</button>
     </div>
   </div>
 </main>

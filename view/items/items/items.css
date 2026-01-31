@@ -280,8 +280,10 @@ body{
 
 .cp-list{
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 12px;
   margin-top: 12px;
+  align-items: start;
 }
 
 .cp-card-item{
@@ -327,6 +329,12 @@ body{
   padding: 8px 10px;
   min-width: 40px;
   line-height: 1;
+}
+
+@media (max-width: 720px){
+  .cp-list{
+    grid-template-columns: 1fr;
+  }
 }
 .cp-actions-decision{
   flex-wrap: wrap;
@@ -377,6 +385,36 @@ body{
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* Footer buttons (match Prices) */
+.cp-footer .btn{
+  appearance:none;
+  border-radius:12px;
+  padding:10px 16px;
+  font-weight:700;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  cursor:pointer;
+  margin: 0;
+  transition: transform .15s, box-shadow .15s, background .15s, border-color .15s;
+}
+.cp-footer .btn:hover{
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.cp-footer .btn-primary{
+  background:var(--brand);
+  color:#fff;
+  border-color:var(--brand);
+  box-shadow: none;
+}
+.cp-footer .btn-danger{
+  border-color:#ef4444;
+  color:#ef4444;
+  background:#fff;
+  box-shadow: none;
 }
 
 /* ===== Variations / items menu (si usas lista) ===== */

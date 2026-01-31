@@ -80,7 +80,7 @@ class Image {
       // 3) Todos los archivos de images[]
       $files = $data['_files']['images'] ?? null;
       if (!$files || !isset($files['tmp_name']) || !is_array($files['tmp_name'])) {
-          echo json_encode(["success"=>false,"error"=>"No se recibieron archivos"]);
+          echo json_encode(["success"=>true,"message"=>"No se recibieron archivos"]);
           return;
       }
 
@@ -133,6 +133,7 @@ class Image {
 
       echo json_encode([
           "success"  => count($saved) > 0,
+          "message" => "The images have been uploaded successfully.",
           "supplier" => $supplier,
           "paths"    => $saved,
           "errors"   => $errors,
