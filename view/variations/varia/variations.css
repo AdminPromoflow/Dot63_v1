@@ -370,6 +370,20 @@ body{
 .cp-actions-decision{
   flex-wrap: wrap;
   justify-content: flex-start;
+  position: relative;
+  z-index: 50;
+}
+
+#variation_decision_section{
+  overflow: visible;
+}
+
+#menu_list{
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  right: auto !important;
+  z-index: 9999 !important;
 }
 
 /* Preview sencillo del PDF (fichita) */

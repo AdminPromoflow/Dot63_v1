@@ -10,22 +10,33 @@ $jsTime  = filemtime('../../view/images/img/images.js');
   <!-- Tabs / Header -->
   <?php include "../../view/global/header_add_product/header_add_product.php" ?>
 
-  <section class="cp-card" aria-labelledby="cp-vi-title">
+  <section class="cp-card cp-section" id="variation_decision_section" aria-labelledby="cp-var-decision-title">
+    <header class="cp-card-header">
+      <h2 id="cp-var-decision-title">Variations</h2>
+    </header>
+
+    <div class="cp-decision">
+      <div class="cp-choice">
+        <div class="cp-choice-body">
+          <div class="cp-actions cp-actions-decision" style="gap:6px; position:relative;">
+            <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
+              Select variation ▾
+            </button>
+            <ul id="menu_list" class="cp-menu-list" hidden>
+              <!-- Se rellena dinámicamente en JS -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cp-card cp-section" aria-labelledby="cp-vi-title">
 
     <header class="cp-card-header">
       <div>
         <h2 id="cp-vi-title">Images</h2>
         <p class="cp-subtitle">Upload and manage gallery images for this variation.</p>
-      </div>
-
-      <!-- Mini menú variaciones (derecha) -->
-      <div class="cp-actions" style="gap:6px; position:relative;">
-        <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
-          Change variation ▾
-        </button>
-        <ul id="menu_list" class="cp-menu-list" hidden>
-          <!-- Se rellena dinámicamente en JS -->
-        </ul>
       </div>
     </header>
 
@@ -46,18 +57,15 @@ $jsTime  = filemtime('../../view/images/img/images.js');
         <!-- Gallery preview (thumbnails 80×80) -->
         <div id="gallery" class="cp-gallery" aria-live="polite" aria-relevant="additions removals"></div>
       </div>
-
-      <!-- Actions -->
-      <div class="cp-actions end">
-      <!--  <button class="btn" type="button" id="reset_form">Reset</button> -->
-        <button class="btn btn-primary" type="submit" id="save_images">Upload images</button>
-      </div>
-
     </form>
   </section>
 
   <div class="cp-footer">
-    <button class="btn btn-primary" id="next_images" type="button">Save & Next</button>
+    <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
+    <div class="cp-footer-actions">
+      <button class="btn btn-primary" type="submit" id="save_images" form="variationImagesForm">Save images</button>
+      <button class="btn" id="next_images" type="button">Save</button>
+    </div>
   </div>
 </main>
 

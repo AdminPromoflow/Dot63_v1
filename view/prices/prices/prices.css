@@ -26,6 +26,22 @@ body{margin-top: 90px;}
   box-shadow:var(--shadow); padding:16px; margin-bottom:16px;
   width: 100%;
 }
+
+ .cp-card.cp-section::before{
+   content: '';
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   height: 3px;
+   background: linear-gradient(90deg, #005548 0%, #006b5a 50%, #005548 100%);
+   opacity: 0.8;
+ }
+
+ .cp-card{
+   position: relative;
+   overflow: hidden;
+ }
 .cp-card-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
 .cp-card-header h2{ margin:0; font-size:1.05rem; }
 
@@ -42,7 +58,54 @@ body{margin-top: 90px;}
 .cp-hint{ color:var(--muted); }
 
 .cp-actions{ display:flex; gap:8px; }
+.cp-actions-decision{
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  position: relative;
+  z-index: 50;
+}
+
+#variation_decision_section{
+  overflow: visible;
+}
+
+.cp-decision{
+  display: grid;
+  gap: 12px;
+}
+
+.cp-choice{
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  background: #fff;
+}
+
+.cp-choice-body{
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
 .cp-actions.end{ justify-content:flex-end; }
+
+/* Footer */
+.cp-footer{
+  margin: 15px 0 0;
+  padding: 10px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cp-footer-actions{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
 .btn{
   appearance:none; border-radius:12px; padding:10px 16px; font-weight:700; border:1px solid var(--border);
@@ -122,6 +185,11 @@ body{margin-top: 90px;}
 
 /* Menú de variaciones */
 #menu_list{
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  right: auto !important;
+  z-index: 9999 !important;
   min-width:240px; max-height:260px; overflow:auto; padding:6px; margin:0;
   list-style:none; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
 }

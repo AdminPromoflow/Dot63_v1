@@ -17,35 +17,17 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
   <!-- Tabs / Header -->
   <?php include "../../view/global/header_add_product/header_add_product.php"; ?>
 
-  <section class="cp-card cp-section" aria-labelledby="cp-var-decision-title">
+  <section class="cp-card cp-section" id="variation_decision_section" aria-labelledby="cp-var-decision-title">
     <header class="cp-card-header">
       <h2 id="cp-var-decision-title">Variations</h2>
     </header>
 
     <div class="cp-decision">
       <div class="cp-choice">
-        <label class="cp-choice-label" for="variations_no">
-          <input id="variations_no" name="variations_mode" type="radio" value="no" checked>
-          <span>No, I won’t add variations</span>
-        </label>
-
-        <div class="cp-choice-body">
-          <div class="cp-tip" id="no_variations_tip">
-            <strong>Next step:</strong> Upload the product PDF and click <strong>Save &amp; Next</strong>.
-          </div>
-        </div>
-      </div>
-
-      <div class="cp-choice">
-        <label class="cp-choice-label" for="variations_yes">
-          <input id="variations_yes" name="variations_mode" type="radio" value="yes">
-          <span>Yes, I want variations</span>
-        </label>
-
         <div class="cp-choice-body">
           <div class="cp-actions cp-actions-decision" style="gap:6px; position:relative;">
             <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
-              Change variation ▾
+              Select variation ▾
             </button>
             <ul id="menu_list" class="cp-menu-list" hidden
                 style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:220px; max-height:260px; overflow:auto;">

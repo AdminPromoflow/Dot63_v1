@@ -17,20 +17,31 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath) : time();
   <!-- Tabs -->
   <?php include "../../view/global/header_add_product/header_add_product.php" ?>
 
-  <section class="cp-card" aria-labelledby="cp-pr-title">
+  <section class="cp-card cp-section" id="variation_decision_section" aria-labelledby="cp-var-decision-title">
+    <header class="cp-card-header">
+      <h2 id="cp-var-decision-title">Variations</h2>
+    </header>
+
+    <div class="cp-decision">
+      <div class="cp-choice">
+        <div class="cp-choice-body">
+          <div class="cp-actions cp-actions-decision" style="gap:6px; position:relative;">
+            <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
+              Select variation ▾
+            </button>
+            <ul id="menu_list" class="cp-menu-list" hidden
+                style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:240px; max-height:260px; overflow:auto;">
+              <li>Loading…</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cp-card cp-section" aria-labelledby="cp-pr-title">
     <header class="cp-card-header">
       <h2 id="cp-pr-title">Prices</h2>
-
-      <!-- Menú de variaciones (derecha) -->
-      <div class="cp-actions" style="gap:6px; position:relative;">
-        <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
-          Change variation ▾
-        </button>
-        <ul id="menu_list" class="cp-menu-list" hidden
-            style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:240px; max-height:260px; overflow:auto;">
-          <li>Loading…</li>
-        </ul>
-      </div>
     </header>
 
     <!-- Formulario principal -->
@@ -47,15 +58,15 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath) : time();
           Add price rows. Each row spans the full width and includes only: Min qty, Max qty, Price.
         </small>
       </div>
-
-      <div class="cp-actions end cp-field-full">
-        <button class="btn btn-primary" type="submit" id="save_prices">Save prices</button>
-      </div>
     </form>
   </section>
 
   <div class="cp-footer">
-    <button class="btn btn-primary" id="next_prices" type="button">Next</button>
+    <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
+    <div class="cp-footer-actions">
+      <button class="btn btn-primary" type="submit" id="save_prices" form="variationPricesForm">Save prices</button>
+      <button class="btn" id="next_prices" type="button">Save</button>
+    </div>
   </div>
 </main>
 

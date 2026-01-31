@@ -78,6 +78,7 @@ class Prices {
     this.list    = document.getElementById('prices_list');
     this.saveBtn = document.getElementById('save_prices');
     this.nextBtn = document.getElementById('next_prices');
+    this.resetBtn = document.getElementById('reset_form');
 
     // Estado: cada fila => { id, min_qty, max_qty, price, order }
     this.rows = [];
@@ -307,8 +308,8 @@ class Prices {
   }
 
   // ========= Guardado =========
-  async save(e) {
-    e.preventDefault();
+  async save(e, goNext = false) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
     // Permite guardar con 0 filas (arrays vacíos) para dejar la variación sin precios
     const all = sel => Array.from(this.list.querySelectorAll(sel));
@@ -357,7 +358,7 @@ class Prices {
       prices
     };
 
-    fetch(url, {
+    return fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -367,18 +368,35 @@ class Prices {
       let data; try { data = JSON.parse(txt); } catch { data = { success:false }; }
       if (data.success) {
         alert("The prices have been saved successfully.");
+        if (goNext && window.headerAddProduct) {
+          headerAddProduct.goNext('../../view/preview_porduct/index.php');
+          return true;
+        }
         location.reload();
+        return true;
       } else {
         alert("There was a problem saving price rows.");
+        return false;
       }
     })
-    .catch(err => console.error("Error:", err));
+    .catch(err => {
+      console.error("Error:", err);
+      return false;
+    });
   }
 
   // ========= Eventos =========
   bindEvents() {
     if (this.addBtn) {
       this.addBtn.addEventListener('click', () => this.addRow('', '', ''));
+    }
+
+    if (this.resetBtn) {
+      this.resetBtn.addEventListener('click', () => {
+        if (this.form) this.form.reset();
+        this.rows = [];
+        this.renderRows();
+      });
     }
 
     if (this.list) {
@@ -411,10 +429,10 @@ class Prices {
       this.form.addEventListener('submit', (e) => this.save(e));
     }
 
-    if (this.nextBtn && window.headerAddProduct) {
-      this.nextBtn.addEventListener('click', () => {
-        alert("This page is being built — stay tuned!");
-        // headerAddProduct.goNext('../../view/nextSection/index.php');
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        this.save(null, true);
       });
     }
   }

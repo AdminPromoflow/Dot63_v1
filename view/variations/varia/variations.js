@@ -123,6 +123,8 @@ class Variations {
           return;
         }
         this.saveVariationDetails(false);
+        alert('The variation details have been saved successfully.');
+
       });
     }
 
@@ -260,8 +262,14 @@ class Variations {
           return;
         }
 
-        // Validate type
-        if (file.type !== 'application/pdf') {
+        // Validate type - more permissive for PDF MIME types
+        const isPdf = file.type === 'application/pdf'
+                   || file.type === 'application/x-pdf'
+                   || file.type === 'application/acrobat'
+                   || file.type === 'application/x-bzpdf'
+                   || file.name.toLowerCase().endsWith('.pdf');
+
+        if (!isPdf) {
           alert('Please select a valid PDF file.');
           this.pdfInput.value = '';
           this.attachPDF = false;
@@ -323,6 +331,7 @@ class Variations {
         return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
+      //  alert(text);
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
@@ -392,19 +401,9 @@ class Variations {
 
     // Apply "Default" restrictions
     if (currentName === 'Default') {
-      alert(
-        "1) If you won't add any variations, keep 'Default variation' selected. (Editing options for 'Default' are disabled.)\n" +
-        "2) Click 'Save & Next'.\n" +
-        "3) Add images, items, and prices.\n\n" +
-        "— OR —\n" +
-        "If you will use variations: click 'Add' and create your first-level variations with 'Parent variation' set to 'Default'."
-      );
-
-      if (this.parentSelect) this.parentSelect.disabled = true;
-      if (this.nameInput)    this.nameInput.disabled   = true;
-      if (this.imgInput)     this.imgInput.disabled    = true;
-      if (this.pdfInput)     this.pdfInput.disabled    = true;
-      if (this.typeSelect)   this.typeSelect.disabled  = true;
+      if (this.form) this.form.style.display = 'none';
+    } else {
+      if (this.form) this.form.style.display = 'block';
     }
   }
 
@@ -488,16 +487,26 @@ class Variations {
     }
   }
   renderServerPreviews(current) {
+    const toAssetUrl = (p) => {
+      const raw = String(p ?? '').trim();
+      if (!raw) return '';
+      if (raw.startsWith('http') || raw.startsWith('data:') || raw.startsWith('blob:')) return raw;
+
+      const rel = raw.replace(/^\/+/, '');
+      // If backend already returns a controller-relative path, just go up to project root.
+      if (rel.startsWith('controller/')) {
+        return '../../' + rel;
+      }
+      // Our uploads currently live under /controller/..., so serve them via that base.
+      return '../../controller/' + rel;
+    };
+
     // Server image preview
     if (this.imgPreview) {
       const serverImage = String(current?.image ?? '').trim();
 
       const src = serverImage
-        ? (
-            serverImage.startsWith('http') || serverImage.startsWith('data:') || serverImage.startsWith('blob:')
-              ? serverImage
-              : '../../' + serverImage.replace(/^\/+/, '')
-          )
+        ? (toAssetUrl(serverImage) || '../../view/variations/images/add_image.png')
         : '../../view/variations/images/add_image.png';
 
       this.imgPreview.innerHTML =
@@ -514,8 +523,26 @@ class Variations {
       if (!serverPdf) {
         this.pdfPreview.innerHTML = '';
       } else {
-        const href = serverPdf.startsWith('/') ? serverPdf : '/' + serverPdf.replace(/^\/+/, '');
-        this.pdfPreview.innerHTML = `<a href="../..${href}" download="artwork.pdf">artwork.pdf</a>`;
+        // Usar name_pdf_artwork si existe, sino extraer del path o usar "artwork.pdf"
+        const pdfName = String(current?.name_pdf_artwork ?? '').trim();
+        const displayName = pdfName || serverPdf.split('/').pop() || 'artwork.pdf';
+        const downloadName = displayName.endsWith('.pdf') ? displayName : displayName + '.pdf';
+
+        const href = toAssetUrl(serverPdf);
+
+        const pill = document.createElement('div');
+        pill.className = 'cp-file-pill';
+
+        pill.innerHTML = `
+          <a href="${href}" target="_blank" class="cp-file-pill-main" style="color: var(--primary); text-decoration: none;">
+            ${displayName}
+          </a>
+          <a href="${href}" download="${downloadName}" style="margin-left: 8px; font-size: 0.85em; color: var(--muted);">
+            ↓ Download
+          </a>
+        `;
+        this.pdfPreview.innerHTML = '';
+        this.pdfPreview.appendChild(pill);
       }
     }
   }
@@ -538,7 +565,7 @@ class Variations {
        // Read selected type_id
        const typeId = String(this.typeSelect?.value || '').trim();
 
-       // Read files
+       // Read files DIRECTLY from inputs (source of truth)
        const imageFile = this.imgInput?.files?.[0] || null;
        const pdfFile   = this.pdfInput?.files?.[0] || null;
 
@@ -547,9 +574,18 @@ class Variations {
          alert('The selected image file is not valid.');
          return;
        }
-       if (pdfFile && pdfFile.type !== 'application/pdf') {
-         alert('Please select a valid PDF file.');
-         return;
+
+       // More permissive PDF validation
+       if (pdfFile) {
+         const isPdf = pdfFile.type === 'application/pdf'
+                    || pdfFile.type === 'application/x-pdf'
+                    || pdfFile.type === 'application/acrobat'
+                    || pdfFile.type === 'application/x-bzpdf'
+                    || pdfFile.name.toLowerCase().endsWith('.pdf');
+         if (!isPdf) {
+           alert('Please select a valid PDF file.');
+           return;
+         }
        }
 
        // Build FormData
@@ -558,9 +594,13 @@ class Variations {
        fd.append('sku_product',   skuProduct);
        fd.append('sku_variation', skuVariation);
 
-       // Attach flags for backend (keep existing files if user did not attach new ones)
-       fd.append('isAttachAnImage', this.attachImage ? '1' : '0');
-       fd.append('isAttachAPDF',    this.attachPDF   ? '1' : '0');
+       // CRITICAL: Determine attach flags based on ACTUAL file presence at save time
+       // This ensures flag is always in sync with actual file
+       const hasImageFile = imageFile !== null;
+       const hasPdfFile = pdfFile !== null;
+
+       fd.append('isAttachAnImage', hasImageFile ? '1' : '0');
+       fd.append('isAttachAPDF',    hasPdfFile ? '1' : '0');
 
        // Core fields
        fd.append('name', (this.nameInput?.value || '').trim());
@@ -572,9 +612,9 @@ class Variations {
        // Parent sku (optional)
        if (skuParentVariation) fd.append('sku_parent_variation', skuParentVariation);
 
-       // Files (optional)
-       if (imageFile) fd.append('imageFile', imageFile);
-       if (pdfFile)   fd.append('pdfFile', pdfFile);
+       // Files (only if actually present)
+       if (hasImageFile) fd.append('imageFile', imageFile);
+       if (hasPdfFile) fd.append('pdfFile', pdfFile);
 
        // Send request
        fetch("../../controller/products/variations.php", {

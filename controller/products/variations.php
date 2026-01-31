@@ -75,6 +75,7 @@ class Variations {
       $imageFile = $_FILES['imageFile'] ?? null;
       $pdfFile   = $_FILES['pdfFile']   ?? null;
 
+  
       // Supplier fallback (kept from your logic)
       $supplier = ['supplier_id' => null, 'supplier_name' => null];
       if ($sku_product) {
@@ -91,7 +92,11 @@ class Variations {
       }
 
       if ($isAttachAPDF === 1) {
-          $pdfPath = $this->handlePdfUpload($pdfFile, $supplier, $sku_product, $sku_variation) ?: '';
+          $uploaded = $this->handlePdfUpload($pdfFile, $supplier, $sku_product, $sku_variation, $name_pdf_artwork);
+          // Solo actualizar pdfPath si el upload tuvo éxito (no null)
+          if ($uploaded !== null) {
+              $pdfPath = $uploaded;
+          }
       }
 
       $connection = new Database();
@@ -125,113 +130,295 @@ class Variations {
    * Stub: función “desocupada”. No sube ni valida nada.
    * Acepta nulls de forma segura.
    */
-   private function handleImageUpload(?array $imageFile = null, ?array $supplier = null, ?string $sku_product = null, ?string $sku_variation = null)
-   {
-
-       // Helpers
-       $clean = fn($v) => trim((string)$v);
-       $seg   = fn($v) => preg_replace('/[^\w\-]/', '_', $clean($v));
-
-       // 1) Archivo de origen
-       $f = $imageFile ?? ($_FILES['file'] ?? null);
-       if (!$f || !isset($f['error'], $f['name'], $f['tmp_name']) || $f['error'] !== UPLOAD_ERR_OK) {
+   private function handleImageUpload(
+       ?array $imageFile = null,
+       ?array $supplier = null,
+       ?string $sku_product = null,
+       ?string $sku_variation = null
+   ): ?string {
+       // 0) Validaciones mínimas
+       if (!$imageFile || empty($imageFile['tmp_name'])) {
            return null;
        }
-       $tmp  = $f['tmp_name'];
-       $orig = $f['name'];
-       if (!is_uploaded_file($tmp)) return null;
 
-       // 2) Datos limpios
-       $supplierId   = $seg($supplier['supplier_id']   ?? 'nd');
-       $supplierName = $seg($supplier['supplier_name'] ?? 'nd');
-       $skuP         = $seg($sku_product);
-       $skuV         = $seg($sku_variation);
+       $err = $imageFile['error'] ?? UPLOAD_ERR_NO_FILE;
+       if ($err !== UPLOAD_ERR_OK) {
+           error_log("IMAGE upload error code: " . $err);
+           return null;
+       }
 
-       // 3) Ruta ABSOLUTA al folder "controller" (este archivo vive en controller/products/*)
-       $controllerDir = realpath(__DIR__ . '/..'); // -> /ruta/a/63/controller
-       if ($controllerDir === false) return null;
+       $tmp = (string)$imageFile['tmp_name'];
+       if (!is_uploaded_file($tmp)) {
+           error_log("IMAGE tmp_name is not an uploaded file.");
+           return null;
+       }
 
-       // 4) Directorio destino (dentro de controller/uploads/...)
-       $dir = $controllerDir . '/uploads/' . $supplierId . '_' . $supplierName . '/' . $skuP . '/' . $skuV . '/';
+       // 1) Límite de tamaño (ajusta si quieres)
+       $size = (int)($imageFile['size'] ?? 0);
+       $maxBytes = 8 * 1024 * 1024; // 8MB
+       if ($size <= 0 || $size > $maxBytes) {
+           error_log("IMAGE invalid size: {$size} bytes");
+           return null;
+       }
 
-       // Crear si no existe
-       if (!is_dir($dir)) {
-           if (!mkdir($dir, 0755, true)) {
-               // Opcional: log para depurar permisos/ruta
-               error_log("No se pudo crear el directorio: " . $dir);
+       // 2) Validar MIME real
+       try {
+           $finfo = new finfo(FILEINFO_MIME_TYPE);
+           $mime  = $finfo->file($tmp);
+       } catch (\Throwable $e) {
+           error_log("IMAGE finfo failed: " . $e->getMessage());
+           return null;
+       }
+
+       // Tipos permitidos
+       $mimeToExt = [
+           'image/jpeg' => 'jpg',
+           'image/png'  => 'png',
+           'image/webp' => 'webp',
+           // Si quieres permitir GIF, descomenta:
+           // 'image/gif'  => 'gif',
+       ];
+
+       if (!isset($mimeToExt[$mime])) {
+           error_log("IMAGE invalid mime: " . $mime);
+           return null;
+       }
+
+       // 3) Validación extra: que realmente sea imagen
+       $imgInfo = @getimagesize($tmp);
+       if ($imgInfo === false) {
+           error_log("IMAGE getimagesize failed (not a real image).");
+           return null;
+       }
+
+       // 4) Sanitizadores
+       $clean = static function (string $value, int $maxLen = 80): string {
+           $value = trim($value);
+           $value = str_replace(['../', '..\\', '/', '\\'], '-', $value);
+           $value = preg_replace('/[^a-zA-Z0-9_-]+/', '_', $value) ?? '';
+           $value = preg_replace('/_+/', '_', $value) ?? '';
+           $value = trim($value, '_-');
+           return $value !== '' ? substr($value, 0, $maxLen) : 'unknown';
+       };
+
+       // 5) Datos supplier/sku (con fallbacks seguros)
+       $supplierIdRaw   = (string)($supplier['supplier_id']   ?? '');
+       $supplierNameRaw = (string)($supplier['supplier_name'] ?? '');
+
+       $supplierId   = $clean($supplierIdRaw, 30);
+       $supplierName = $clean($supplierNameRaw, 60);
+
+       $skuP = $clean((string)($sku_product ?? ''), 80);
+       $skuV = $clean((string)($sku_variation ?? ''), 80);
+
+       // 6) Nombre del archivo (base del nombre original)
+       $originalName = (string)($imageFile['name'] ?? 'image');
+       $baseName     = pathinfo($originalName, PATHINFO_FILENAME);
+       $safeBase     = $clean((string)$baseName, 120);
+
+       $ext = $mimeToExt[$mime];
+
+       // 7) Encontrar raíz del proyecto (robusto)
+       $dir = __DIR__;
+       $projectRoot = null;
+
+       while ($dir !== dirname($dir)) {
+           if (basename($dir) === 'controllers') {
+               $projectRoot = dirname($dir);
+               break;
+           }
+           $dir = dirname($dir);
+       }
+
+       if (!$projectRoot) {
+           $projectRoot = dirname(__DIR__);
+       }
+
+       // 8) Carpeta destino: views/uploads/{supplierId}_{supplierName}/{skuP}/{skuV}
+       $baseDir = $projectRoot . '/views/uploads';
+       $folder  = $baseDir . '/' . $supplierId . '_' . $supplierName . '/' . $skuP . '/' . $skuV;
+
+       if (!is_dir($folder)) {
+           if (!mkdir($folder, 0755, true)) {
+               error_log("IMAGE mkdir failed: " . $folder);
                return null;
            }
        }
 
-    //   echo json_encode();
+       if (!is_writable($folder)) {
+           error_log("IMAGE folder not writable: " . $folder);
+           return null;
+       }
 
-       // 5) Validación extensión + nombre seguro
-       $allow = ['jpg','jpeg','png','gif','webp'];
-       $ext   = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
-       if (!in_array($ext, $allow, true)) return null;
+       // 9) Nombre final + evitar sobrescribir
+       $finalName = $safeBase . '.' . $ext;
+       $destination = $folder . '/' . $finalName;
 
-       $safeName = bin2hex(random_bytes(8)) . '.' . $ext;
+       if (file_exists($destination)) {
+           $suffix = bin2hex(random_bytes(4));
+           $finalName = $safeBase . '_' . $suffix . '.' . $ext;
+           $destination = $folder . '/' . $finalName;
+       }
 
-       // 6) Mover archivo al destino absoluto
-       if (!move_uploaded_file($tmp, $dir . $safeName)) return null;
+       // 10) Mover archivo
+       if (!move_uploaded_file($tmp, $destination)) {
+           error_log("IMAGE move_uploaded_file failed: " . $destination);
+           return null;
+       }
 
-       // 7) Ruta RELATIVA pública que quieres devolver (sin “63”)
-       //    uploads está dentro de controller/
-       $rel = 'controller/uploads/' . $supplierId . '_' . $supplierName . '/' . $skuP . '/' . $skuV . '/' . $safeName;
-       return $rel;
+       // 11) Retornar ruta relativa para guardar en DB
+       return 'views/uploads/'
+           . $supplierId . '_' . $supplierName . '/'
+           . $skuP . '/'
+           . $skuV . '/'
+           . $finalName;
    }
 
 
 
-   private function handlePdfUpload(?array $pdfFile = null, ?array $supplier = null, ?string $sku_product = null, ?string $sku_variation = null): ?string
-   {
-       // Helpers (mismos de imagen)
-       $clean = fn($v) => trim((string)$v);
-       $seg   = fn($v) => preg_replace('/[^\w\-]/', '_', $clean($v));
-
-       // 1) Archivo de origen
-       $f = $pdfFile ?? ($_FILES['file'] ?? null);
-       if (!$f || !isset($f['error'], $f['name'], $f['tmp_name']) || $f['error'] !== UPLOAD_ERR_OK) {
+   private function handlePdfUpload(
+       ?array $pdfFile = null,
+       ?array $supplier = null,
+       ?string $sku_product = null,
+       ?string $sku_variation = null,
+       ?string $name_pdf_artwork = null
+   ): ?string {
+       // 0) Validaciones mínimas de presencia
+       if (!$pdfFile || empty($pdfFile['tmp_name'])) {
            return null;
        }
 
-       $tmp  = $f['tmp_name'];
-       $orig = $f['name'];
-       if (!is_uploaded_file($tmp)) return null;
+       $err = $pdfFile['error'] ?? UPLOAD_ERR_NO_FILE;
+       if ($err !== UPLOAD_ERR_OK) {
+           error_log("PDF upload error code: " . $err);
+           return null;
+       }
 
-       // 2) Datos limpios
-       $supplierId   = $seg($supplier['supplier_id']   ?? 'nd');
-       $supplierName = $seg($supplier['supplier_name'] ?? 'nd');
-       $skuP         = $seg($sku_product);
-       $skuV         = $seg($sku_variation);
+       $tmp = (string)$pdfFile['tmp_name'];
+       if (!is_uploaded_file($tmp)) {
+           error_log("PDF tmp_name is not an uploaded file.");
+           return null;
+       }
 
+       // 1) Límite de tamaño (ajusta si quieres)
+       $size = (int)($pdfFile['size'] ?? 0);
+       $maxBytes = 10 * 1024 * 1024; // 10MB
+       if ($size <= 0 || $size > $maxBytes) {
+           error_log("PDF invalid size: {$size} bytes");
+           return null;
+       }
 
-       // 3) Ruta ABSOLUTA al folder "controller" (este archivo vive en controller/products/*)
-       $controllerDir = realpath(__DIR__ . '/..'); // -> /ruta/a/63/controller
-       if ($controllerDir === false) return null;
+       // 2) Validar MIME real
+       try {
+           $finfo = new finfo(FILEINFO_MIME_TYPE);
+           $mime  = $finfo->file($tmp);
+       } catch (\Throwable $e) {
+           error_log("PDF finfo failed: " . $e->getMessage());
+           return null;
+       }
 
-       // 4) Directorio destino
-       $dir = $controllerDir . '/uploads/' . $supplierId . '_' . $supplierName . '/' . $skuP . '/' . $skuV . '/';
-       if (!is_dir($dir)) {
-           if (!mkdir($dir, 0755, true)) {
-               error_log("No se pudo crear el directorio: " . $dir);
+       if ($mime !== 'application/pdf') {
+           error_log("PDF invalid mime: " . $mime);
+           return null;
+       }
+
+       // 3) Sanitizadores (segmentos / nombre)
+       $clean = static function (string $value, int $maxLen = 80): string {
+           $value = trim($value);
+
+           // evita traversal y separadores
+           $value = str_replace(['../', '..\\', '/', '\\'], '-', $value);
+
+           // deja solo letras, números, guión y guión bajo
+           $value = preg_replace('/[^a-zA-Z0-9_-]+/', '_', $value) ?? '';
+           $value = preg_replace('/_+/', '_', $value) ?? '';
+           $value = trim($value, '_-');
+
+           return $value !== '' ? substr($value, 0, $maxLen) : 'unknown';
+       };
+
+       $ensurePdfName = static function (string $clientName, callable $cleanFn): string {
+           $clientName = trim($clientName);
+           if ($clientName === '') {
+               $clientName = 'artwork';
+           }
+           $base = pathinfo($clientName, PATHINFO_FILENAME);
+           $base = $cleanFn((string)$base, 120);
+           return $base . '.pdf';
+       };
+
+       // 4) Datos supplier/sku (con fallbacks seguros)
+       $supplierIdRaw   = (string)($supplier['supplier_id']   ?? '');
+       $supplierNameRaw = (string)($supplier['supplier_name'] ?? '');
+
+       $supplierId   = $clean($supplierIdRaw, 30);
+       $supplierName = $clean($supplierNameRaw, 60);
+
+       $skuP = $clean((string)($sku_product ?? ''), 80);
+       $skuV = $clean((string)($sku_variation ?? ''), 80);
+
+       // 5) Nombre final del PDF (usa input; si viene vacío, usa nombre real del archivo)
+       $clientProvided = (string)($name_pdf_artwork ?? '');
+       if (trim($clientProvided) === '') {
+           $clientProvided = (string)($pdfFile['name'] ?? 'artwork.pdf');
+       }
+       $finalName = $ensurePdfName($clientProvided, $clean);
+
+       // 6) Encontrar raíz del proyecto de forma robusta (sube hasta /controllers y luego 1 arriba)
+       $dir = __DIR__;
+       $projectRoot = null;
+
+       while ($dir !== dirname($dir)) {
+           if (basename($dir) === 'controllers') {
+               $projectRoot = dirname($dir);
+               break;
+           }
+           $dir = dirname($dir);
+       }
+
+       // fallback si no encontró carpeta controllers
+       if (!$projectRoot) {
+           $projectRoot = dirname(__DIR__);
+       }
+
+       // 7) Carpeta destino: views/uploads/{supplierId}_{supplierName}/{skuP}/{skuV}
+       $baseDir = $projectRoot . '/views/uploads';
+       $folder  = $baseDir . '/' . $supplierId . '_' . $supplierName . '/' . $skuP . '/' . $skuV;
+
+       if (!is_dir($folder)) {
+           if (!mkdir($folder, 0755, true)) {
+               error_log("PDF mkdir failed: " . $folder);
                return null;
            }
        }
 
-       // 5) Validación: solo PDF
-       $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
-       if ($ext !== 'pdf') return null;
+       if (!is_writable($folder)) {
+           error_log("PDF folder not writable: " . $folder);
+           return null;
+       }
 
-       // Nombre seguro .pdf
-       $safeName = bin2hex(random_bytes(8)) . '.pdf';
+       // 8) Evitar sobrescribir
+       $destination = $folder . '/' . $finalName;
 
-       // 6) Mover archivo
-       if (!move_uploaded_file($tmp, $dir . $safeName)) return null;
+       if (file_exists($destination)) {
+           $base = pathinfo($finalName, PATHINFO_FILENAME);
+           $suffix = bin2hex(random_bytes(4));
+           $finalName = $base . '_' . $suffix . '.pdf';
+           $destination = $folder . '/' . $finalName;
+       }
 
-       // 7) Devolver ruta RELATIVA pública
-       $rel = 'controller/uploads/' . $supplierId . '_' . $supplierName . '/' . $skuP . '/' . $skuV . '/' . $safeName;
-       return $rel;
+       // 9) Mover archivo
+       if (!move_uploaded_file($tmp, $destination)) {
+           error_log("PDF move_uploaded_file failed: " . $destination);
+           return null;
+       }
+
+       // 10) Ruta relativa para guardar en DB
+       return 'views/uploads/'
+           . $supplierId . '_' . $supplierName . '/'
+           . $skuP . '/'
+           . $skuV . '/'
+           . $finalName;
    }
 
 

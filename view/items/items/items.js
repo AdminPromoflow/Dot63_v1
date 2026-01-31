@@ -433,9 +433,9 @@ class Items {
   }
 
   // Persist the current list of items to the server
-  async saveItems(e) {
+  async saveItems(e, goNext = false) {
 
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
     if (this.itemsState.length === 0) {
       alert('Please add at least one item.');
@@ -481,7 +481,7 @@ class Items {
       texts: texts
       };
     // Make a fetch request to the given URL with the specified data.
-    fetch(url, {
+    return fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -502,11 +502,17 @@ class Items {
 
        if (data["success"]) {
          alert("The items have been saved successfully.");
+         if (goNext && window.headerAddProduct) {
+           headerAddProduct.goNext('../../view/prices/index.php');
+         }
+         return true;
         }
+        return false;
       })
       .catch(error => {
         // Log any errors to the console.
         console.error("Error:", error);
+        return false;
       });
 
 
@@ -564,10 +570,10 @@ class Items {
     }
 
     // Optional: proceed to the next step in the header wizard
-    if (this.nextBtn && window.headerAddProduct) {
-      this.nextBtn.addEventListener('click', () => {
-        //alert("This page is being built — stay tuned!");
-        headerAddProduct.goNext('../../view/prices/index.php');
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        this.saveItems(null, true);
       });
     }
   }
