@@ -233,6 +233,15 @@ class GroupArrows {
     this.down?.addEventListener('click', this.onDown);
     this.scroller.addEventListener('scroll', this.update, { passive: true });
     addEventListener('resize', this.update);
+
+    this.mo = new MutationObserver(() => this.update());
+    this.mo.observe(this.scroller, { childList: true, subtree: true });
+
+    if ('ResizeObserver' in window) {
+      this.ro = new ResizeObserver(() => this.update());
+      this.ro.observe(this.scroller);
+    }
+
     this.update();
   }
 
