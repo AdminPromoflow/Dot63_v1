@@ -482,6 +482,8 @@ class Variations {
 
     this.typeSelect.value = selected || '';
 
+    //alert(this.typeSelect.value);
+
     // If selected doesn't exist => fallback to empty (placeholder)
     if (selected && this.typeSelect.value !== selected) {
       this.typeSelect.value = '';

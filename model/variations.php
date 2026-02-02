@@ -3,6 +3,7 @@ class Variation {
   // ===== Atributos =====
   private $connection;          // PDO wrapper (->getConnection())
   private $product_id;          // FK al producto (padre)
+  private $variation_id;          // FK al producto (padre)
   private $name = null;
   private $sku  = null;
   private $sku_variation = null;
@@ -22,6 +23,9 @@ class Variation {
 
   // ===== Setters =====
   public function setId($id)              { $this->product_id = (int)$id; }
+  public function setVariationId($variation_id){
+    $this->variation_id = (int)$variation_id;
+  }
 
   public function setTypeId(?int $typeId): void{
       $this->type_id = $typeId;
@@ -58,184 +62,225 @@ class Variation {
   public function setPdfArtwork(?string $v){ $v = trim((string)$v); $this->pdf_artwork = ($v === '') ? null : $v; }
 
 
-  public function getDataVariationBySkuVariation(): array
+  public function getVariationChildrenById(): array
   {
-    if (empty($this->sku_variation)) {
-      return [
-        'success' => false,
-        'level' => 0,
-        'variations' => []
-      ];
+    $parentVariationId = (int)($this->variation_id ?? 0);
+
+    if ($parentVariationId <= 0) {
+      return ['success' => false, 'error' => 'variation_id requerido'];
     }
 
     try {
       $pdo = $this->connection->getConnection();
 
-      $stmtRoots = $pdo->prepare("
-        SELECT `variation_id`
-        FROM `variations`
-        WHERE `SKU` = :sku
-        ORDER BY `variation_id` ASC
-      ");
-      $stmtRoots->bindValue(':sku', $this->sku_variation, PDO::PARAM_STR);
-      $stmtRoots->execute();
-      $roots = $stmtRoots->fetchAll(PDO::FETCH_ASSOC);
-      $stmtRoots->closeCursor();
-
-      if (!$roots) {
-        return [
-          'success' => true,
-          'level' => 0,
-          'variations' => []
-        ];
-      }
-
-      $stmtVarById = $pdo->prepare("
-        SELECT
-          `variation_id`,
-          `name`,
-          `SKU`,
-          `image`,
-          `pdf_artwork`,
-          `name_pdf_artwork`,
-          `parent_id`
-        FROM `variations`
-        WHERE `variation_id` = :vid
+      // (Opcional) validar que exista el padre
+      $stmt = $pdo->prepare("
+        SELECT variations.variation_id
+        FROM variations
+        WHERE variations.variation_id = :id
         LIMIT 1
       ");
+      $stmt->execute([':id' => $parentVariationId]);
+      $exists = (int)$stmt->fetchColumn();
 
-      $stmtImages = $pdo->prepare("
-        SELECT `image_id`, `link`
-        FROM `images`
-        WHERE `variation_id` = :vid
-        ORDER BY `updated` DESC, `image_id` DESC
-      ");
-
-      $stmtItems = $pdo->prepare("
-        SELECT `item_id`, `name`, `description`
-        FROM `items`
-        WHERE `variation_id` = :vid
-        ORDER BY `item_id` ASC
-      ");
-
-      $stmtPrices = $pdo->prepare("
-        SELECT `price_id`, `min_quantity`, `max_quantity`, `price`
-        FROM `prices`
-        WHERE `variation_id` = :vid
-        ORDER BY `min_quantity` ASC, `max_quantity` ASC
-      ");
-
-      $stmtChildren = $pdo->prepare("
-        SELECT `variation_id`
-        FROM `variations`
-        WHERE `parent_id` = :vid
-        ORDER BY `variation_id` ASC
-      ");
-
-      $variationsOut = [];
-      $visited = [];
-      $maxDepthSafety = 60;
-
-      // ✅ ESTE es el nivel máximo padre->hijo alcanzado desde el SKU consultado
-      $maxLevel = 0;
-
-      $walk = function (int $variationId, int $depth) use (
-        &$walk,
-        &$visited,
-        &$variationsOut,
-        &$maxLevel,
-        $maxDepthSafety,
-        $stmtVarById,
-        $stmtImages,
-        $stmtItems,
-        $stmtPrices,
-        $stmtChildren
-      ): void {
-        if ($depth > $maxDepthSafety) {
-          return;
-        }
-
-        if (isset($visited[$variationId])) {
-          return;
-        }
-        $visited[$variationId] = true;
-
-        // ✅ actualiza nivel máximo
-        if ($depth > $maxLevel) {
-          $maxLevel = $depth;
-        }
-
-        $stmtVarById->bindValue(':vid', $variationId, PDO::PARAM_INT);
-        $stmtVarById->execute();
-        $v = $stmtVarById->fetch(PDO::FETCH_ASSOC);
-        $stmtVarById->closeCursor();
-
-        if (!$v) {
-          return;
-        }
-
-        $stmtImages->bindValue(':vid', $variationId, PDO::PARAM_INT);
-        $stmtImages->execute();
-        $images = $stmtImages->fetchAll(PDO::FETCH_ASSOC);
-        $stmtImages->closeCursor();
-
-        $stmtItems->bindValue(':vid', $variationId, PDO::PARAM_INT);
-        $stmtItems->execute();
-        $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
-        $stmtItems->closeCursor();
-
-        $stmtPrices->bindValue(':vid', $variationId, PDO::PARAM_INT);
-        $stmtPrices->execute();
-        $prices = $stmtPrices->fetchAll(PDO::FETCH_ASSOC);
-        $stmtPrices->closeCursor();
-
-        // ✅ Opcional: guardar el level por cada variación (muy útil)
-        $variationsOut[] = [
-          'level' => $depth,
-          'details' => [
-            'name' => $v['name'] ?? null,
-            'sku' => $v['SKU'] ?? null,
-            'image' => $v['image'] ?? null,
-            'pdf_artwork' => $v['pdf_artwork'] ?? null,
-            'name_pdf_artwork' => $v['name_pdf_artwork'] ?? null
-          ],
-          'images' => $images,
-          'items'  => $items,
-          'price'  => $prices
-        ];
-
-        // Recorrer hijos
-        $stmtChildren->bindValue(':vid', $variationId, PDO::PARAM_INT);
-        $stmtChildren->execute();
-        $childRows = $stmtChildren->fetchAll(PDO::FETCH_ASSOC);
-        $stmtChildren->closeCursor();
-
-        foreach ($childRows as $c) {
-          $walk((int)$c['variation_id'], $depth + 1);
-        }
-      };
-
-      foreach ($roots as $r) {
-        $walk((int)$r['variation_id'], 0);
+      if (!$exists) {
+        return ['success' => false, 'error' => 'Variación padre no encontrada por variation_id'];
       }
 
-      return [
-        'success' => true,
-        'level' => $maxLevel,          // ✅ ESTE es el “nivel padre->hijo” alcanzado
-        'variations' => $variationsOut
-      ];
+      // 1) Obtener variaciones hijas (SIN pdf_artwork / name_pdf_artwork)
+      $stmt = $pdo->prepare("
+        SELECT
+          variations.variation_id,
+          variations.name,
+          variations.SKU,
+          variations.image,
+          variations.parent_id,
+          variations.product_id,
+          variations.type_id
+        FROM variations
+        WHERE variations.parent_id = :parent_id
+        ORDER BY variations.variation_id ASC
+      ");
+      $stmt->execute([':parent_id' => $parentVariationId]);
+      $children = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      if (!$children) {
+        return ['success' => true, 'data' => []];
+      }
+
+      // IDs de las hijas para consultas IN (...)
+      $childIds = array_map(fn($r) => (int)$r['variation_id'], $children);
+      $placeholders = implode(',', array_fill(0, count($childIds), '?'));
+
+      // 2) Traer ARTWORK en bloque (pdf_artwork + name_pdf_artwork)
+      $stmt = $pdo->prepare("
+        SELECT
+          variations.variation_id,
+          variations.pdf_artwork,
+          variations.name_pdf_artwork
+        FROM variations
+        WHERE variations.variation_id IN ($placeholders)
+      ");
+      $stmt->execute($childIds);
+      $artworkRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      $artworkByVariation = [];
+      foreach ($artworkRows as $row) {
+        $vid = (int)$row['variation_id'];
+        $artworkByVariation[$vid] = [
+          'pdf_artwork' => $row['pdf_artwork'] ?? null,
+          'name_pdf_artwork' => $row['name_pdf_artwork'] ?? null,
+        ];
+      }
+
+      // 3) Traer IMAGES en bloque
+      $stmt = $pdo->prepare("
+        SELECT
+          images.image_id,
+          images.link,
+          images.updated,
+          images.variation_id
+        FROM images
+        WHERE images.variation_id IN ($placeholders)
+        ORDER BY images.image_id ASC
+      ");
+      $stmt->execute($childIds);
+      $imagesRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      $imagesByVariation = [];
+      foreach ($imagesRows as $row) {
+        $vid = (int)$row['variation_id'];
+        if (!isset($imagesByVariation[$vid])) $imagesByVariation[$vid] = [];
+        $imagesByVariation[$vid][] = $row;
+      }
+
+      // 4) Traer ITEMS en bloque
+      $stmt = $pdo->prepare("
+        SELECT
+          items.item_id,
+          items.name,
+          items.description,
+          items.variation_id
+        FROM items
+        WHERE items.variation_id IN ($placeholders)
+        ORDER BY items.item_id ASC
+      ");
+      $stmt->execute($childIds);
+      $itemsRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      $itemsByVariation = [];
+      foreach ($itemsRows as $row) {
+        $vid = (int)$row['variation_id'];
+        if (!isset($itemsByVariation[$vid])) $itemsByVariation[$vid] = [];
+        $itemsByVariation[$vid][] = $row;
+      }
+
+      // 5) Traer PRICES en bloque
+      $stmt = $pdo->prepare("
+        SELECT
+          prices.price_id,
+          prices.min_quantity,
+          prices.max_quantity,
+          prices.price,
+          prices.variation_id
+        FROM prices
+        WHERE prices.variation_id IN ($placeholders)
+        ORDER BY prices.price_id ASC
+      ");
+      $stmt->execute($childIds);
+      $pricesRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      $pricesByVariation = [];
+      foreach ($pricesRows as $row) {
+        $vid = (int)$row['variation_id'];
+        if (!isset($pricesByVariation[$vid])) $pricesByVariation[$vid] = [];
+        $pricesByVariation[$vid][] = $row;
+      }
+
+      // 6) EXTRA: type_name por type_id
+      $typeIds = [];
+      foreach ($children as $ch) {
+        if (!empty($ch['type_id'])) $typeIds[] = (int)$ch['type_id'];
+      }
+      $typeIds = array_values(array_unique($typeIds));
+
+      $typeNameById = [];
+      if (!empty($typeIds)) {
+        $typePlaceholders = implode(',', array_fill(0, count($typeIds), '?'));
+
+        $stmt = $pdo->prepare("
+          SELECT type_variations.type_id, type_variations.type_name
+          FROM type_variations
+          WHERE type_variations.type_id IN ($typePlaceholders)
+        ");
+        $stmt->execute($typeIds);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as $r) {
+          $typeNameById[(int)$r['type_id']] = $r['type_name'];
+        }
+      }
+
+      // 7) Armar estructura final
+      $result = [];
+      foreach ($children as $child) {
+        $vid = (int)$child['variation_id'];
+
+        // Agregar type_name dentro de "variation"
+        $tid = !empty($child['type_id']) ? (int)$child['type_id'] : 0;
+        $child['type_name'] = $tid ? ($typeNameById[$tid] ?? null) : null;
+
+        $result[] = [
+          'variation' => $child, // ✅ SIN pdf_artwork / name_pdf_artwork
+          'images'  => $imagesByVariation[$vid] ?? [],
+          'items'   => $itemsByVariation[$vid] ?? [],
+          'prices'  => $pricesByVariation[$vid] ?? [],
+          'artwork' => $artworkByVariation[$vid] ?? [
+            'pdf_artwork' => null,
+            'name_pdf_artwork' => null
+          ],
+        ];
+      }
+
+      return $result;
 
     } catch (PDOException $e) {
-      error_log('getDataVariationBySkuVariation error (' . $this->sku_variation . '): ' . $e->getMessage());
-      return [
-        'success' => false,
-        'level' => 0,
-        'variations' => []
-      ];
+      error_log('getVariationChildrenById: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
     }
   }
+  public function getTypeVariationsChildByVariationId(): array
+  {
+    $parentVariationId = (int)($this->variation_id ?? 0);
 
+    if ($parentVariationId <= 0) {
+      return ['success' => false, 'error' => 'variation_id required'];
+    }
 
+    try {
+      $pdo = $this->connection->getConnection();
+
+      $stmt = $pdo->prepare("
+        SELECT DISTINCT
+          variations.type_id,
+          type_variations.type_name
+        FROM variations
+        LEFT JOIN type_variations
+          ON type_variations.type_id = variations.type_id
+        WHERE variations.parent_id = :parent_variation_id
+        ORDER BY variations.type_id ASC
+      ");
+
+      $stmt->execute([':parent_variation_id' => $parentVariationId]);
+      $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      return $rows;
+
+    } catch (PDOException $e) {
+      error_log('getTypeVariationsChildByVariationId error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
 
 
   public function checkProductAndVariationExistenceBySkus(): bool
@@ -672,53 +717,53 @@ class Variation {
   }
 
 
-  public function getVariationsSKUBySKUProduct(): array
+  public function getVariationsIdBySKUProduct(): array
   {
-      if (!$this->sku) {
-          return ['success' => false, 'error' => 'Product SKU requerido'];
+    if (!$this->sku) {
+      return ['success' => false, 'error' => 'Product SKU requerido'];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      // 1) Obtener product_id por SKU del producto
+      $stmt = $pdo->prepare("
+        SELECT product_id
+        FROM products
+        WHERE SKU = :sku
+        LIMIT 1
+      ");
+      $stmt->execute([':sku' => $this->sku]);
+      $pid = (int)$stmt->fetchColumn();
+
+      if (!$pid) {
+        return ['success' => false, 'error' => 'Producto no encontrado por SKU'];
       }
 
-      try {
-          $pdo = $this->connection->getConnection();
+      // 2) Obtener el variation_id de la variación 'Default'
+      $stmt = $pdo->prepare("
+        SELECT variation_id
+        FROM variations
+        WHERE product_id = :pid
+          AND name = 'Default'
+        LIMIT 1
+      ");
+      $stmt->execute([':pid' => $pid]);
+      $defaultVariationId = (int)$stmt->fetchColumn();
 
-          // 1) Obtener product_id por SKU del producto
-          $stmt = $pdo->prepare("
-              SELECT product_id
-              FROM products
-              WHERE SKU = :sku
-              LIMIT 1
-          ");
-          $stmt->execute([':sku' => $this->sku]);
-          $pid = $stmt->fetchColumn();
-
-          if (!$pid) {
-              return ['success' => false, 'error' => 'Producto no encontrado por SKU'];
-          }
-
-          // 2) Obtener el SKU de la variación 'Default' del producto (un solo valor)
-          $stmt = $pdo->prepare("
-              SELECT SKU
-              FROM variations
-              WHERE product_id = :pid
-                AND name = 'Default'
-              LIMIT 1
-          ");
-          $stmt->execute([':pid' => (int)$pid]);
-          $defaultSku = $stmt->fetchColumn();
-
-          if (!$defaultSku) {
-              return ['success' => false, 'error' => "No se encontró la variación 'Default' para este producto"];
-          }
-
-          return [
-              'success' => true,
-              'default_variation_sku' => $defaultSku
-          ];
-
-      } catch (PDOException $e) {
-          error_log('getVariationsSKUBySKUProduct: ' . $e->getMessage());
-          return ['success' => false, 'error' => 'DB error'];
+      if (!$defaultVariationId) {
+        return ['success' => false, 'error' => "No se encontró la variación 'Default' para este producto"];
       }
+
+      return [
+        'success' => true,
+        'default_variation_id' => $defaultVariationId
+      ];
+
+    } catch (PDOException $e) {
+      error_log('getVariationsIdBySKUProduct: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
   }
 
 

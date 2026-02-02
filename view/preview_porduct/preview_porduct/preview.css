@@ -1,3 +1,38 @@
+/* =============================================================================
+   ✅ NEW: Wrappers "fantasma" (NO cambian el layout)
+   - display: contents; hace que el wrapper NO genere caja propia visual
+   - mantiene intacto el diseño aunque agreguemos divs extra
+============================================================================= */
+.wrap-images,
+.wrap-images-group,
+.wrap-items,
+.wrap-items-group,
+.wrap-prices,
+.wrap-prices-group,
+.wrap-artworks,
+.wrap-artworks-group,
+.wrap-prices-group,
+.wrap-price {
+  display: contents;
+}
+
+/* Evitar que pack-size se agrupe visualmente por wrappers */
+.wrap-items,
+.wrap-items-group {
+  display: block !important;
+}
+
+/* wrap-price visible pero sin afectar layout */
+.wrap-price {
+  display: contents !important;
+}
+
+/* ============================================================================
+
+  TU CSS ORIGINAL (sin cambios)
+
+============================================================================ */
+
 :root {
   --page-bg: #e4f3ee;
   --bg: var(--page-bg);
@@ -357,7 +392,10 @@ body {
   display: grid;
   gap: 8px;
 }
-
+.wrap-variations-group{
+  display: grid;
+  gap: 8px;
+}
 .var-label {
   display: flex;
   gap: 6px;
@@ -411,6 +449,19 @@ body {
 
 .var-option .opt-main {
   display: block;
+}
+
+.sp-packsize .var-option .opt-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sp-packsize .var-option .opt-main::before {
+  content: "⊕";
+  font-size: 0.8em;
+  opacity: 0.6;
 }
 
 .var-option .opt-sub {
@@ -568,8 +619,8 @@ body {
 /* PACK SIZE – banda separada columnas 1 y 2 */
 
 .sp-packsize {
-  grid-column: 1 / 3;   /* columnas 1 y 2 */
-  grid-row: 3;          /* debajo de sp-variations-bottom en desktop */
+  grid-column: 1 / 3;
+  grid-row: 3;
   margin-top: 8px;
   padding: 14px 18px;
   border-radius: var(--radius-sm);
@@ -596,6 +647,7 @@ body {
 
 .sp-packsize .var-option {
   min-width: 150px;
+  display: block;
 }
 
 .sp-packsize .opt-sub {
@@ -605,7 +657,7 @@ body {
 /* ITEMS NOTE – cuadro verde independiente */
 .sp-items-note {
   grid-column: 1 / 3;
-  grid-row: 5;   /* ahora va después de sp-artwork-downloads y sp-packsize */
+  grid-row: 5;
   margin-top: 8px;
   padding: 14px 18px;
   border-radius: var(--radius-sm);
@@ -645,7 +697,7 @@ body {
 
 .sp-artwork-downloads {
   grid-column: 1 / 3;
-  grid-row: 4;  /* va después de sp-packsize en desktop */
+  grid-row: 4;
   margin-top: 8px;
   padding: 14px 18px 16px;
   border-radius: var(--radius-sm);
@@ -887,44 +939,6 @@ body {
   will-change: transform;
 }
 
-/* Delivery extras (si las usas) */
-.extras-title {
-  font-weight: 620;
-  font-size: 0.98rem;
-  margin-bottom: 4px;
-}
-
-.extra-delivery-group {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-
-.extra-delivery {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.extra-delivery input[type="radio"] {
-  margin-top: 2px;
-}
-
-.extra-delivery-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.extra-main {
-  font-weight: 520;
-}
-
-.extra-sub {
-  font-size: 0.86rem;
-  color: var(--muted);
-}
-
 /* Acciones flotantes */
 .sp-actions {
   position: absolute;
@@ -961,7 +975,7 @@ body {
   border-color: var(--accent-hover);
 }
 
-/* En mobile, que no estorben tanto */
+/* En mobile */
 @media (max-width: 760px) {
   .sp-actions {
     right: 16px;

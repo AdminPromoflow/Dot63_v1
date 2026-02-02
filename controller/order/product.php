@@ -10,8 +10,8 @@ class Product {
       case 'get_preview_product_details':
         $this->getPreviewProductDetails($data);
         break;
-      case 'get_data_variation_by_sku_variation':
-        $this->getDataVariationBySkuVariation($data);
+      case 'get_variation_children_by_id':
+        $this->getVariationChildrenById($data);
         break;
       default:
         header('Content-Type: application/json; charset=utf-8');
@@ -20,12 +20,19 @@ class Product {
     }
   }
 
-  private function getDataVariationBySkuVariation($data){
+  private function getVariationChildrenById($data){
     $connection = new Database();
     $variation = new Variation($connection);
-    $variation->setSKUVariation($data['sku_variation']);
-    $variation_details = $variation->getDataVariationBySkuVariation();
-    echo json_encode($variation_details);
+    $variation->setVariationId($data['variation_id']);
+    $childVariations = $variation->getVariationChildrenById();
+
+    $connection = new Database();
+    $variation = new Variation($connection);
+    $variation->setVariationId($data['variation_id']);
+    $variationTypes = $variation->getTypeVariationsChildByVariationId();
+
+
+    echo json_encode(['childVariations' => $childVariations, 'variationTypes' => $variationTypes]);
   }
   private function getPreviewProductDetails($data){
     header('Content-Type: application/json; charset=utf-8');
@@ -53,7 +60,7 @@ class Product {
     $connection = new Database();
     $variation = new Variation($connection);
     $variation->setSku($data['sku']);
-    $variation_details = $variation->getVariationsSKUBySKUProduct();
+    $variation_details = $variation->getVariationsIdBySKUProduct();
 
     echo json_encode(array($company,$category_name, $group_name, $product_details, $variation_details ));
   }

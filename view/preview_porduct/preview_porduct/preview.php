@@ -1,200 +1,191 @@
 <?php
 // -----------------------------------------------------------------------------
-// Asset paths (CSS / JS)
-// Nota: se usan rutas relativas desde este archivo hacia la carpeta view.
+// Product Preview — Asset Versioning + Markup
 // -----------------------------------------------------------------------------
+
 $cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
 $jsPath  = '../../view/preview_porduct/preview_porduct/preview.js';
 $jsPath2 = '../../view/preview_porduct/preview_porduct/preview_logic.js';
 
-// -----------------------------------------------------------------------------
-// Cache-busting (versionado por timestamp)
-// filemtime() devuelve la fecha de última modificación del archivo.
-// Si por permisos/ruta falla, usamos time() como fallback para evitar romper la carga.
-// El operador @ evita que se muestre el warning si el archivo no existe.
-// -----------------------------------------------------------------------------
 $cssTime = @filemtime($cssPath) ?: time();
 $jsTime  = @filemtime($jsPath)  ?: time();
 $jsTime2 = @filemtime($jsPath2) ?: time();
 ?>
-<!-- Carga el CSS con parámetro ?v=timestamp para forzar refresh cuando el archivo cambie -->
+
 <link rel="stylesheet" href="<?= $cssPath ?>?v=<?= $cssTime ?>">
 
-<!--
-  MAIN: Contenedor principal de la vista de preview del producto.
-  aria-labelledby enlaza con el h1 (#sp-title) para accesibilidad.
--->
 <main class="sp-amz" aria-labelledby="sp-title">
-
-  <!-- Shell general: limita ancho / centra contenido / aplica padding según tu CSS -->
   <div class="sp-shell">
 
-    <!-- Breadcrumb: navegación de migas para dar contexto de categoría/subcategoría -->
+    <!-- Breadcrumb -->
     <nav aria-label="Breadcrumb" class="sp-breadcrumbs js-fade-up">
       <ol id="sp_breadcrumbs" class="crumbs">
-        <!-- En producción normalmente estas rutas se rellenan dinámicamente -->
         <li><a href="#">Office &amp; Stationery</a></li>
         <li><a href="#">Lanyards</a></li>
       </ol>
     </nav>
 
-    <!-- GRID PRINCIPAL: estructura a 3 columnas (galería / detalles / buybox) -->
+    <!-- GRID PRINCIPAL -->
     <section class="sp-grid">
 
-      <!-- Col 1: Galería (sticky + parallax ligero) -->
+      <!-- ===============================================================
+        Col 1: Galería
+      =============================================================== -->
       <aside class="sp-col sp-gallery" aria-label="Product media">
         <div class="sp-gallery-inner">
 
-          <!-- Wrapper principal del media (imagen/video) con clase js-parallax para efecto visual -->
           <div class="sp-main-wrapper js-parallax">
 
-            <!-- Botón anterior (por ahora sin handler; lo puedes conectar en previewLogic) -->
             <button type="button" class="sp-nav sp-nav-prev" aria-label="Previous media">‹</button>
 
-            <!-- Contenedor del media actual; aria-live para anunciar cambios en lectores de pantalla -->
-            <div class="sp-main" id="sp_main" aria-live="polite">
-              <!-- Placeholder si aún no hay media cargado por JS -->
-              <div class="cp-empty">No media</div>
+            <div class="sp-main wrap-images-group" id="wrap-images-group" aria-live="polite">
+
+              <!-- ✅ 12-13: Aquí van imágenes y 1 video, agrupados con wrap-images -->
+
+                <!-- Grupo 1: 2 imágenes -->
+                <div class="wrap-images">
+                  <img
+                    class="preview-media"
+                    src="../../view/preview_porduct/img/5ecd4b8a-c3ad-4bd4-a2ed-155007cec1f1.png"
+                    alt="Preview image 1"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                  <img
+                    class="preview-media"
+                    src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
+                    alt="Preview image 2"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                </div>
+
+                <!-- Grupo 2: 1 video -->
+                <div class="wrap-images">
+                  <video class="preview-media" controls preload="metadata">
+                    <source src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+
+                <div class="wrap-images">
+                  <img
+                    class="preview-media"
+                    src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859.png"
+                    alt="Preview image 1"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                  <img
+                    class="preview-media"
+                    src="../../view/preview_porduct/img/be2f5822-1db5-4ed3-aa84-8583b2b6c1cd.png"
+                    alt="Preview image 2"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                </div>
             </div>
 
-            <!-- Botón siguiente: llama a previewLogic.nextImage() -->
-            <button type="button"
-                    class="sp-nav sp-nav-next"
-                    aria-label="Next media"
-                    onclick="previewLogic.nextImage()">
+            <button
+              type="button"
+              class="sp-nav sp-nav-next"
+              aria-label="Next media"
+              onclick="previewGallery.nextImage()">
               ›
             </button>
+
           </div>
 
-          <!-- Miniaturas (lista de imágenes/video).
-               role="list" y role="listitem" para accesibilidad si se renderiza con botones. -->
-          <div class="sp-thumbs" id="sp_thumbs" role="list">
-            <!-- Aquí el JS debería inyectar miniaturas -->
-            <!--
-            Ejemplos (comentados):
-            - data-type="image" / "video"
-            - data-src: fuente del media para mostrar en sp_main
-            -->
-          </div>
+          <!-- Miniaturas (JS debería inyectarlas). -->
+          <div class="sp-thumbs" id="sp_thumbs" role="list"></div>
 
-          <!-- Nota UX: texto guía (si el cambio cada 5s depende de JS, conviene mantenerlo sincronizado) -->
           <small class="cp-hint">Hover to zoom • Media changes every 5 seconds</small>
+
         </div>
       </aside>
 
-      <!-- Col 2: Detalles del producto (normalmente la columna más ancha) -->
+      <!-- ===============================================================
+        Col 2: Detalles del producto
+      =============================================================== -->
       <section class="sp-col sp-details js-fade-up">
 
-        <!-- Etiqueta de categoría (texto corto superior) -->
-        <span id="sp_category" class="sp-category">
-          Lanyards &amp; ID Accessories
-        </span>
+        <span id="sp_category" class="sp-category">Lanyards &amp; ID Accessories</span>
 
-        <!-- Título principal (h1) enlazado por aria-labelledby desde el <main> -->
         <h1 id="sp-title" class="sp-title js-fade-up">
           Custom Printed Lanyards – 10mm to 35mm – Full Colour Logo – Breakaway Safety &amp; ID Badge Holders
         </h1>
 
-        <!-- Meta: marca del producto (sin SKU, según tu comentario) -->
         <div class="sp-meta js-fade-up">
           <span id="sp-brand" class="brand-link">Promoflow</span>
         </div>
 
-        <!-- Subtítulo / claim (inglés británico) -->
         <p id="sp_subtitle" class="sp-subtitle js-fade-up">
           Choose the width, pack size and clip type that match your event, office or school, then upload your artwork for full colour printing.
         </p>
 
-        <!-- Precio principal (formato grande) -->
-        <div class="sp-price-main js-fade-up">
-          <span class="sp-price-symbol" id="sp_currency_symbol">£</span>
-          <span id="sp_price" class="sp-price">
-            8<span class="sp-price-minor">.00</span>
-          </span>
-          <span id="sp_unit_hint" class="sp-unit-hint">per 100 units</span>
-        </div>
 
-        <!-- VARIATIONS ARRIBA: configuraciones principales (width/print side/clip type) -->
-        <section id="section_variations" class="sp-variations js-fade-up" aria-label="Product configuration">
+            <div class="sp-price-main js-fade-up">
+              <span class="sp-price-symbol" id="sp_currency_symbol">£</span>
+              <span id="sp_price" class="sp-price">
+                8<span class="sp-price-minor">.00</span>
+              </span>
+              <span id="sp_unit_hint" class="sp-unit-hint">per 100 units</span>
+            </div>
 
-          <!-- Grupo de variación: Width -->
-          <div class="var-group" aria-labelledby="var_label_size_1">
 
-            <!-- Etiqueta del grupo + valor seleccionado -->
+        <!-- VARIATIONS -->
+        <section id="wrap-variations-group" class="sp-variations js-fade-up wrap-variations-group" aria-label="Product configuration">
+
+          <!-- Width -->
+          <div class="wrap-variations" aria-labelledby="var_label_size_1">
             <div class="var-label">
               <span class="var-name">Width</span>
               <strong id="var_label_size_1">20mm</strong>
             </div>
 
-            <!-- Opciones del grupo (idealmente aquí el JS marca .is-selected y actualiza el label) -->
-            <div class="var-options" id="sp_var_group_size_1">
+            <div class="var-options" id="wrap-variations-group">
 
-              <!-- Opción: 10mm -->
               <button type="button" class="var-option js-scale-in">
-                <img class="var-thumb"
-                     src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg"
-                     alt="Slim lanyard sample">
+                <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg" alt="Slim lanyard sample">
                 <span class="opt-main">10mm</span>
               </button>
 
-              <!-- Opción: 15mm -->
               <button type="button" class="var-option js-scale-in">
-                <img class="var-thumb"
-                     src="https://upload.wikimedia.org/wikipedia/commons/4/40/Red_lanyard.jpg"
-                     alt="Narrow lanyard sample">
+                <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/40/Red_lanyard.jpg" alt="Narrow lanyard sample">
                 <span class="opt-main">15mm</span>
-                <span class="opt-sub">Lightweight</span>
               </button>
 
-              <!-- Opción seleccionada por defecto: 20mm -->
               <button type="button" class="var-option is-selected js-scale-in">
-                <img class="var-thumb"
-                     src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Lanyard_mit_Logo_bedruckt.jpg"
-                     alt="Standard 20mm printed lanyard">
+                <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Lanyard_mit_Logo_bedruckt.jpg" alt="Standard 20mm printed lanyard">
                 <span class="opt-main">20mm</span>
-                <span class="opt-sub">Most popular</span>
               </button>
 
-              <!-- Opción: 25mm -->
               <button type="button" class="var-option js-scale-in">
-                <img class="var-thumb"
-                     src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg"
-                     alt="Wide strap lanyard">
+                <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg" alt="Wide strap lanyard">
                 <span class="opt-main">25mm</span>
-                <span class="opt-sub">Extra logo space</span>
               </button>
 
-              <!-- Opción: 30mm -->
               <button type="button" class="var-option js-scale-in">
-                <img class="var-thumb"
-                     src="https://upload.wikimedia.org/wikipedia/commons/4/40/Red_lanyard.jpg"
-                     alt="Extra wide lanyard">
+                <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/40/Red_lanyard.jpg" alt="Extra wide lanyard">
                 <span class="opt-main">30mm</span>
-                <span class="opt-sub">Bold branding</span>
               </button>
 
-              <!-- Opción: 35mm -->
               <button type="button" class="var-option js-scale-in">
-                <img class="var-thumb"
-                     src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Lanyard_mit_Logo_bedruckt.jpg"
-                     alt="Oversized sponsor lanyard">
+                <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Lanyard_mit_Logo_bedruckt.jpg" alt="Oversized sponsor lanyard">
                 <span class="opt-main">35mm</span>
-                <span class="opt-sub">Sponsor logos</span>
               </button>
 
             </div>
           </div>
 
-          <!-- Grupo de variación: Print side -->
-          <div class="var-group" aria-labelledby="var_label_size_2">
-
+          <!-- Print side -->
+          <div class="wrap-variations" aria-labelledby="var_label_size_2">
             <div class="var-label">
               <span class="var-name">Print side</span>
               <strong id="var_label_size_2">Double sided</strong>
             </div>
 
             <div class="var-options">
-              <!-- Seleccionado por defecto -->
               <button type="button" class="var-option is-selected js-scale-in">
                 <span class="opt-main">Double sided</span>
               </button>
@@ -204,35 +195,50 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
                 <span class="opt-sub">Budget option</span>
               </button>
             </div>
-
           </div>
 
-          <!-- Grupo de variación: Clip type -->
-          <div class="var-group" aria-labelledby="var_label_size_3">
-
+          <!-- Clip type -->
+          <div class="wrap-variations" aria-labelledby="var_label_size_3">
             <div class="var-label">
               <span class="var-name">Clip type</span>
               <strong id="var_label_size_3">Swivel hook</strong>
             </div>
 
-            <!-- Opciones del clip:
-                 actualmente comentadas; el JS podría renderizarlas según el producto -->
             <div class="var-options">
-              <!-- Opciones ejemplo comentadas -->
-            </div>
 
+                <button type="button" class="var-option is-selected js-scale-in">
+                  <span class="opt-main">Double sided</span>
+                </button>
+
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">Single sided</span>
+                </button>
+                <button type="button" class="var-option  js-scale-in">
+                  <span class="opt-main">Double sided</span>
+                </button>
+
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">Single sided</span>
+                </button>
+                <button type="button" class="var-option  js-scale-in">
+                  <span class="opt-main">Double sided</span>
+                </button>
+
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">Single sided</span>
+                </button>
+            </div>
           </div>
 
         </section>
       </section>
 
-      <!-- VARIATIONS BOTTOM:
-           Contenedor “overflow” para mover .var-group que no quepan arriba (lógica desde JS). -->
-      <section class="sp-variations-bottom js-fade-up" aria-label="More configuration options">
-        <!-- JS moverá aquí los .var-group que no quepan en .sp-variations -->
-      </section>
+      <!-- VARIATIONS BOTTOM -->
+      <section class="sp-variations-bottom js-fade-up" aria-label="More configuration options"></section>
 
-      <!-- PACK SIZE: selección de cantidad/paquetes (sección de ancho mayor, entre columnas 1 y 2) -->
+      <!-- ===============================================================
+        PACK SIZE
+      =============================================================== -->
       <section class="sp-packsize js-fade-up" id="sp-packsize" aria-label="Pack sizes and bundle pricing">
         <div class="var-group var-group-pack" aria-labelledby="var_label_items">
 
@@ -241,65 +247,77 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
             <strong id="var_label_items">500 units</strong>
           </div>
 
-          <!-- Opciones de pack size; el JS debería recalcular unit/total y actualizar buybox -->
-          <div class="var-options" id="sp_var_group_items">
-            <button type="button" class="var-option js-scale-in">
-              <span class="opt-main">50</span>
-              <span class="opt-sub">Small teams · from £0.25 each</span>
-            </button>
+          <!-- ✅ 10: Agrupar botones dentro de wrap-items (sin id) -->
+          <div class="var-options wrap-prices-group" id="wrap-prices-group">
 
-            <button type="button" class="var-option js-scale-in">
-              <span class="opt-main">100</span>
-              <span class="opt-sub">Events · from £0.18 each</span>
-            </button>
+            <!-- Grupo A (2 botones) -->
+            <div class="wrap-price">
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">50</span>
+              </button>
 
-            <button type="button" class="var-option js-scale-in">
-              <span class="opt-main">200</span>
-              <span class="opt-sub">Schools · from £0.14 each</span>
-            </button>
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">100</span>
+              </button>
+            </div>
 
-            <!-- Seleccionado por defecto -->
-            <button type="button" class="var-option is-selected js-scale-in">
-              <span class="opt-main">500</span>
-              <span class="opt-sub">Best value · from £0.08 each</span>
-            </button>
+            <!-- Grupo B (4 botones) -->
+            <div class="wrap-price">
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">200</span>
+              </button>
 
-            <button type="button" class="var-option js-scale-in">
-              <span class="opt-main">1,000</span>
-              <span class="opt-sub">Conferences · bulk rates</span>
-            </button>
+              <button type="button" class="var-option is-selected js-scale-in">
+                <span class="opt-main">500</span>
+              </button>
 
-            <button type="button" class="var-option js-scale-in">
-              <span class="opt-main">2,000</span>
-              <span class="opt-sub">Large venues · bulk rates</span>
-            </button>
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">1,000</span>
+              </button>
 
-            <button type="button" class="var-option js-scale-in">
-              <span class="opt-main">3,000</span>
-              <span class="opt-sub">Trade shows · bulk rates</span>
-            </button>
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">2,000</span>
+              </button>
+            </div>
 
-            <button type="button" class="var-option js-scale-in">
-              <span class="opt-main">5,000</span>
-              <span class="opt-sub">Multi-site · bulk rates</span>
-            </button>
+            <!-- Grupo C (2 botones) -->
+            <div class="wrap-price">
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">3,000</span>
+              </button>
+
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">5,000</span>
+              </button>
+            </div>
+
           </div>
         </div>
       </section>
 
-      <!-- DESCARGA DE TEMPLATES (PDF):
-           Links con download para bajar plantillas de arte por ancho. -->
+      <!-- ===============================================================
+        ARTWORK DOWNLOADS (PDF)
+      =============================================================== -->
       <section class="sp-artwork-downloads js-fade-up" aria-label="Artwork templates">
         <h2 class="sp-artwork-heading">Download artwork templates (PDF)</h2>
 
-        <div class="sp-artwork-grid">
-          <!-- Nota: reemplaza href por tus rutas reales -->
-          <a href="/templates/lanyard-10mm.pdf" class="btn btn-artwork" download>10&nbsp;mm template</a>
-          <a href="/templates/lanyard-15mm.pdf" class="btn btn-artwork" download>15&nbsp;mm template</a>
-          <a href="/templates/lanyard-20mm.pdf" class="btn btn-artwork" download>20&nbsp;mm template</a>
-          <a href="/templates/lanyard-25mm.pdf" class="btn btn-artwork" download>25&nbsp;mm template</a>
-          <a href="/templates/lanyard-30mm.pdf" class="btn btn-artwork" download>30&nbsp;mm template</a>
-          <a href="/templates/lanyard-35mm.pdf" class="btn btn-artwork" download>35&nbsp;mm template</a>
+        <!-- ✅ 1-5: wrap-artworks va aquí (dentro del grid), sin id -->
+        <div class="sp-artwork-grid wrap-artworks-group" id="wrap-artworks-group">
+
+          <!-- Grupo 1 (2 links) -->
+          <div class="wrap-artworks">
+            <a href="/templates/lanyard-10mm.pdf" class="btn btn-artwork" download>10&nbsp;mm template</a>
+            <a href="/templates/lanyard-15mm.pdf" class="btn btn-artwork" download>15&nbsp;mm template</a>
+          </div>
+
+          <!-- Grupo 2 (4 links) -->
+          <div class="wrap-artworks">
+            <a href="/templates/lanyard-20mm.pdf" class="btn btn-artwork" download>20&nbsp;mm template</a>
+            <a href="/templates/lanyard-25mm.pdf" class="btn btn-artwork" download>25&nbsp;mm template</a>
+            <a href="/templates/lanyard-30mm.pdf" class="btn btn-artwork" download>30&nbsp;mm template</a>
+            <a href="/templates/lanyard-35mm.pdf" class="btn btn-artwork" download>35&nbsp;mm template</a>
+          </div>
+
         </div>
 
         <p class="sp-artwork-note">
@@ -307,53 +325,64 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
         </p>
       </section>
 
-      <!-- ITEMS NOTE: cuadro informativo (texto educativo para el usuario) -->
+      <!-- ===============================================================
+        ITEMS NOTE
+      =============================================================== -->
       <section class="sp-items-note js-fade-up" id="sp-items-note" aria-label="Items information">
-        <ul class="sp-items-list">
 
-          <li>
-            <strong class="sp-item-subtitle">What is one item?</strong>
-            <span>Each item refers to a single printed lanyard produced with your selected width, pack size and clip type.</span>
-          </li>
+        <!-- ✅ 6-8: wrap-items-group agrupa 1 o 2 items (sin ul/li para HTML válido) -->
+        <div class="sp-items-list wrap-items-group" id="wrap-items-group">
 
-          <li>
-            <strong class="sp-item-subtitle">How do pack sizes work?</strong>
-            <span>Pack quantities indicate the total number of individual lanyards supplied in your order, ready to hand out to staff, visitors or guests.</span>
-          </li>
+          <!-- Grupo 1 (2 items) -->
+          <div class="wrap-items">
+            <div class="sp-item">
+              <strong class="sp-item-subtitle">What is one item?</strong>
+              <span>Each item refers to a single printed lanyard produced with your selected width, pack size and clip type.</span>
+            </div>
 
-          <li>
-            <strong class="sp-item-subtitle">Consistent branding every time</strong>
-            <span>Your artwork, colours and logos are checked before production so each lanyard looks clean, sharp and on-brand.</span>
-          </li>
+            <div class="sp-item">
+              <strong class="sp-item-subtitle">How do pack sizes work?</strong>
+              <span>Pack quantities indicate the total number of individual lanyards supplied in your order, ready to hand out to staff, visitors or guests.</span>
+            </div>
+          </div>
 
-        </ul>
+          <!-- Grupo 2 (1 item) -->
+          <div class="wrap-items">
+            <div class="sp-item">
+              <strong class="sp-item-subtitle">Consistent branding every time</strong>
+              <span>Your artwork, colours and logos are checked before production so each lanyard looks clean, sharp and on-brand.</span>
+            </div>
+          </div>
+
+        </div>
       </section>
 
-      <!-- Col 3: Buy box (sticky) -->
+      <!-- ===============================================================
+        Col 3: Buy box
+      =============================================================== -->
       <aside class="sp-col sp-buybox" aria-label="Purchase options">
         <div class="box js-fade-up js-scale-in js-parallax">
 
-          <!-- Resumen de precios: unitario + total (idealmente actualizados por JS) -->
-          <div class="price-line">
-            <span class="label">Unit</span>
-            <strong id="bb_unit">£0.08</strong>
-          </div>
 
-          <div class="price-line">
-            <span class="label">Total</span>
-            <strong id="bb_total">£8.00</strong>
-          </div>
 
-          <!-- Información de envío -->
+              <div class="price-line">
+                <span class="label">Unit</span>
+                <strong id="bb_unit">£0.08</strong>
+              </div>
+
+              <div class="price-line">
+                <span class="label">Total</span>
+                <strong id="bb_total">£8.00</strong>
+              </div>
+
+
           <div class="ship">
             <span>Delivery</span>
             <small>Delivery only in England. Standard dispatch in 2–3 weeks.</small>
           </div>
 
-          <!-- Estado stock -->
           <div class="stock in">In stock</div>
 
-          <!-- CTA: botones de compra (por ahora deshabilitados hasta que haya selección válida) -->
           <button type="button" class="btn btn-primary btn-buy js-scale-in" id="bb_add">
             Add to basket (disabled)
           </button>
@@ -361,50 +390,32 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
           <button type="button" class="btn btn-ghost btn-buy js-scale-in" id="bb_buy" disabled>
             Buy now (disabled)
           </button>
+
         </div>
       </aside>
+
     </section>
 
-    <!-- Product Description: bloque de descripción (relleno dinámico por JS) -->
+    <!-- Product Description -->
     <section class="sp-about js-fade-up">
       <h2>Product Description</h2>
-
-      <div id="sp_desc" class="sp-desc">
-        <!-- Descripción dinámica -->
-      </div>
+      <div id="sp_desc" class="sp-desc"></div>
     </section>
 
-    <!-- Related products: cards (actualmente comentadas; JS o backend puede renderizar) -->
+    <!-- Related -->
     <section class="sp-related js-fade-up">
       <h2>More products you might like</h2>
-
-      <div class="related-grid">
-        <!-- Cards ejemplo comentadas -->
-      </div>
+      <div class="related-grid"></div>
     </section>
 
   </div>
 
-  <!-- Acciones flotantes: navegación y publicación -->
+  <!-- Actions -->
   <div class="sp-actions">
-
-    <!-- Volver a la edición -->
-    <button type="button"
-            class="btn btn-back-preview"
-            id="btn_back_edit">
-      Back to editing
-    </button>
-
-    <!-- Publicar el producto -->
-    <button type="button"
-            class="btn btn-publish-preview"
-            id="btn_publish">
-      Publish
-    </button>
-
+    <button type="button" class="btn btn-back-preview" id="btn_back_edit">Back to editing</button>
+    <button type="button" class="btn btn-publish-preview" id="btn_publish">Publish</button>
   </div>
 </main>
 
-<!-- Carga los JS con cache-busting para evitar archivos antiguos en el navegador -->
 <script src="<?= $jsPath ?>?v=<?= $jsTime ?>"></script>
 <script src="<?= $jsPath2 ?>?v=<?= $jsTime2 ?>"></script>
