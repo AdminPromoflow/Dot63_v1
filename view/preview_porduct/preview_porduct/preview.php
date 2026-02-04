@@ -143,7 +143,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
               <strong id="var_label_size_1">20mm</strong>
             </div>
 
-            <div class="var-options" id="wrap-variations-group">
+            <div class="var-options" >
 
               <button type="button" class="var-option js-scale-in">
                 <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg" alt="Slim lanyard sample">
@@ -248,50 +248,50 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
           </div>
 
           <!-- ✅ 10: Agrupar botones dentro de wrap-items (sin id) -->
-          <div class="var-options wrap-prices-group" id="wrap-prices-group">
+            <div class="var-options wrap-prices-group" id="wrap-prices-group">
 
-            <!-- Grupo A (2 botones) -->
-            <div class="wrap-price">
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">50</span>
-              </button>
+              <!-- Grupo A (2 botones) -->
+              <div class="wrap-price">
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">50</span>
+                </button>
 
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">100</span>
-              </button>
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">100</span>
+                </button>
+              </div>
+
+              <!-- Grupo B (4 botones) -->
+              <div class="wrap-price">
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">200</span>
+                </button>
+
+                <button type="button" class="var-option is-selected js-scale-in">
+                  <span class="opt-main">500</span>
+                </button>
+
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">1,000</span>
+                </button>
+
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">2,000</span>
+                </button>
+              </div>
+
+              <!-- Grupo C (2 botones) -->
+              <div class="wrap-price">
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">3,000</span>
+                </button>
+
+                <button type="button" class="var-option js-scale-in">
+                  <span class="opt-main">5,000</span>
+                </button>
+              </div>
+
             </div>
-
-            <!-- Grupo B (4 botones) -->
-            <div class="wrap-price">
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">200</span>
-              </button>
-
-              <button type="button" class="var-option is-selected js-scale-in">
-                <span class="opt-main">500</span>
-              </button>
-
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">1,000</span>
-              </button>
-
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">2,000</span>
-              </button>
-            </div>
-
-            <!-- Grupo C (2 botones) -->
-            <div class="wrap-price">
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">3,000</span>
-              </button>
-
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">5,000</span>
-              </button>
-            </div>
-
-          </div>
         </div>
       </section>
 
