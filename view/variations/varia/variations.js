@@ -356,7 +356,7 @@ class Variations {
      Rendering
      ========================= */
 
-     renderTopMenu(variationsRaw, skuVariation) {
+  renderTopMenu(variationsRaw, skuVariation) {
        if (!this.menuList) return;
 
        this.menuList.innerHTML = '';
@@ -384,7 +384,7 @@ class Variations {
          const level = Number(v.level ?? 0) || 0;
 
          const color = levelColors[level] || levelColors[levelColors.length - 1];
-         const indent = 28 + (level * 18); 
+         const indent = 28 + (level * 18);
 
          const li = document.createElement('li');
          li.dataset.sku = sku;
@@ -482,6 +482,7 @@ class Variations {
   }
 
   renderParentSelect(variationsRaw, current, parent, product) {
+    
     if (!this.parentSelect) return;
 
     const variations = Array.isArray(variationsRaw) ? variationsRaw : [];

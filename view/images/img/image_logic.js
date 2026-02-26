@@ -278,11 +278,31 @@ class ImageLogic {
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])
     );
 
+    // 🎨 Colores por nivel
+    const levelColors = [
+      '#0f2140', // level 0
+      '#0b6b6b', // level 1
+      '#7a4d0f', // level 2
+      '#5a2d82', // level 3
+      '#1d6b2a', // level 4+
+    ];
+
+    // ✅ SKU seleccionado (si lo tienes en tu clase o en el UL)
+    const wanted = String(
+      (this && this.skuVariation) ? this.skuVariation : (ul.dataset.selectedSku || '')
+    ).trim().toUpperCase();
+
     const frag = document.createDocumentFragment();
 
     list.forEach((it) => {
-      const name = (it?.name ?? '(unnamed)').trim() || '(unnamed)';
-      const sku = (it?.SKU ?? it?.sku ?? '').trim();
+      const name  = String((it?.name ?? '(unnamed)')).trim() || '(unnamed)';
+      const sku   = String((it?.SKU ?? it?.sku ?? '')).trim();
+      const level = Number(it?.level ?? 0) || 0;
+
+      const color = levelColors[level] || levelColors[levelColors.length - 1];
+
+      // ✅ +1 sangría global para todos
+      const indent = 28 + (level * 18);
 
       const li = document.createElement('li');
       li.setAttribute('role', 'menuitem');
@@ -290,7 +310,70 @@ class ImageLogic {
       li.dataset.name = name;
       li.dataset.sku = sku;
 
-      li.innerHTML = `<strong>${escape(name)}</strong>${sku ? ` <small style="color:var(--muted)">— ${escape(sku)}</small>` : ''}`;
+      // Base style
+      li.style.position = 'relative';
+      li.style.padding = '8px 10px';
+      li.style.paddingLeft = `${indent}px`;
+      li.style.borderRadius = '10px';
+      li.style.marginBottom = '6px';
+      li.style.cursor = 'default';
+
+      // Jerarquía visual
+      li.style.borderLeft = `4px solid ${color}`;
+      li.style.background = 'rgba(255,255,255,0.03)';
+
+      // Dot que se mueve con la sangría
+      li.insertAdjacentHTML(
+        'afterbegin',
+        `<span aria-hidden="true" style="
+          position:absolute;
+          left: ${Math.max(8, indent - 14)}px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: ${color};
+          opacity: .85;
+        "></span>`
+      );
+
+      // Contenido (sin L0/L1...)
+      li.innerHTML += `<strong>${escape(name)}</strong>${sku ? ` <small style="color:var(--muted)">— ${escape(sku)}</small>` : ''}`;
+
+      // ✅ Seleccionado visible
+      const candidate = String(sku).trim().toUpperCase();
+      const isSelected = wanted && candidate && candidate === wanted;
+
+      if (isSelected) {
+        li.classList.add('is-selected');
+        li.style.background = 'rgba(255,255,255,0.10)';
+        li.style.outline = '2px solid rgba(255,255,255,0.28)';
+        li.style.boxShadow = '0 10px 22px rgba(0,0,0,0.18)';
+        li.style.borderLeft = `6px solid ${color}`;
+
+        li.insertAdjacentHTML(
+          'beforeend',
+          `<span aria-hidden="true" style="
+            position:absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 2px solid ${color};
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:12px;
+            line-height:1;
+            color:${color};
+            background: rgba(255,255,255,0.06);
+          ">✓</span>`
+        );
+      }
+
       frag.appendChild(li);
     });
 
