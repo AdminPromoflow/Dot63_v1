@@ -1,23 +1,19 @@
-
 <?php
-// Rutas absolutas (seguras)
-$base = realpath(__DIR__ . '/../../view/items/items/');
+// Cache-busting robusto (md5 del archivo) con fallback seguro
+$base = realpath(__DIR__ . '/../items/items/') ?: (__DIR__ . '/../items/items/');
 
-// Si existen los archivos, crea un hash del contenido; si no, usa time()
-$cssPath = $base . '/items.css';
-$jsPath  = $base . '/items.js';
-$jsLogicPath  = $base . '/items_logic.js';
-$cssVer = file_exists($cssPath) ? md5_file($cssPath) : time();
-$jsVer  = file_exists($jsPath)  ? md5_file($jsPath)  : time();
-$jsLogicVer  = file_exists($jsLogicPath)  ? md5_file($jsLogicPath)  : time();
+$cssPath      = $base . 'items.css';
+$jsPath       = $base . 'items.js';
+$jsLogicPath  = $base . 'items_logic.js';
 
+$cssVer     = file_exists($cssPath)     ? md5_file($cssPath)     : time();
+$jsVer      = file_exists($jsPath)      ? md5_file($jsPath)      : time();
+$jsLogicVer = file_exists($jsLogicPath) ? md5_file($jsLogicPath) : time();
 ?>
 
 <link rel="stylesheet" href="../../view/items/items/items.css?v=<?= $cssVer ?>">
 
 <main class="create_product" aria-labelledby="it-title">
-<!--  <h1 id="it-title" class="sr-only">Create Product — Items</h1>-->
-
   <!-- Tabs -->
   <?php include "../../view/global/header_add_product/header_add_product.php" ?>
 
@@ -33,8 +29,9 @@ $jsLogicVer  = file_exists($jsLogicPath)  ? md5_file($jsLogicPath)  : time();
             <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
               Select variation ▾
             </button>
+
             <ul id="menu_list" class="cp-menu-list" hidden
-                style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:220px; max-height:260px; overflow:auto;">
+              style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:220px; max-height:260px; overflow:auto;">
             </ul>
           </div>
         </div>
@@ -43,19 +40,12 @@ $jsLogicVer  = file_exists($jsLogicPath)  ? md5_file($jsLogicPath)  : time();
   </section>
 
 
-  <section class="cp-card cp-section" aria-labelledby="cp-it-title">
+  <section class="cp-card cp-section" aria-labelledby="cp-items-title">
     <header class="cp-card-header">
-
-      <h2 id="cp-vi-title">Items</h2>
+      <h2 id="cp-items-title">Items</h2>
     </header>
 
-
-
     <form id="variationItemsForm" class="cp-form" autocomplete="off" novalidate>
-      <!-- 1) Parent variations (primero) -->
-
-
-      <!-- 2) Gestor de Items -->
       <div class="cp-field cp-field-full">
 
         <div class="cp-actions">
