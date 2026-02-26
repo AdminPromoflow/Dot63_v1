@@ -120,6 +120,7 @@ class PreviewLogic {
   }
 
   fetchChildVariationsById(variation_id) {
+    alert("entre");
   //  alert(variation_id);
     if (!variation_id) {
       console.warn("No variation_id provided");

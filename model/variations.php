@@ -534,75 +534,27 @@ class Variation {
       $pdo = $this->connection->getConnection();
 
       $stmt = $pdo->prepare("
-        WITH RECURSIVE
-        -- =========================
-        -- STEP 1: Descendants of parent (include parent)
-        -- =========================
-        descendants1 AS (
+        WITH RECURSIVE descendants AS (
+          -- Parent
           SELECT v.variation_id, v.parent_id, v.type_id
           FROM variations v
           WHERE v.variation_id = :parent_id
 
           UNION ALL
 
+          -- Children / grandchildren / etc.
           SELECT child.variation_id, child.parent_id, child.type_id
           FROM variations child
-          INNER JOIN descendants1 d
+          INNER JOIN descendants d
             ON child.parent_id = d.variation_id
-        ),
-
-        -- =========================
-        -- STEP 1.1: Unique type_ids from step 1 (includes NULL)
-        -- =========================
-        type_ids AS (
-          SELECT DISTINCT d1.type_id
-          FROM descendants1 d1
-        ),
-
-        -- =========================
-        -- STEP 2 (anchors): all variations with same type_id as step1 (NULL-safe match)
-        -- =========================
-        similar_roots AS (
-          SELECT DISTINCT v.variation_id, v.parent_id, v.type_id
-          FROM variations v
-          INNER JOIN type_ids t
-            ON v.type_id <=> t.type_id
-        ),
-
-        -- =========================
-        -- STEP 2: descendants of ALL similar roots
-        -- =========================
-        descendants2 AS (
-          SELECT sr.variation_id, sr.parent_id, sr.type_id
-          FROM similar_roots sr
-
-          UNION ALL
-
-          SELECT child.variation_id, child.parent_id, child.type_id
-          FROM variations child
-          INNER JOIN descendants2 d2
-            ON child.parent_id = d2.variation_id
-        ),
-
-        -- =========================
-        -- UNION step1 + step2 (just in case), keep unique rows
-        -- =========================
-        all_related AS (
-          SELECT variation_id, parent_id, type_id FROM descendants1
-          UNION
-          SELECT variation_id, parent_id, type_id FROM descendants2
         )
-
-        -- =========================
-        -- FINAL: only distinct type_id/type_name (includes NULL)
-        -- =========================
         SELECT DISTINCT
-          ar.type_id,
+          d.type_id,
           tv.type_name
-        FROM all_related ar
+        FROM descendants d
         LEFT JOIN type_variations tv
-          ON tv.type_id = ar.type_id
-        ORDER BY (ar.type_id IS NOT NULL), ar.type_id ASC
+          ON tv.type_id = d.type_id
+        ORDER BY d.type_id ASC
       ");
 
       $stmt->execute([':parent_id' => $parentVariationId]);
