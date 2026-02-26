@@ -374,8 +374,9 @@ class Variation {
               return ['success' => false, 'error' => 'Variation SKU no pertenece al producto dado o no existe'];
           }
 
-          // 3) ✅ Variaciones jerárquicas: padre -> hijos -> nietos (Opción A, MySQL 8+)
-          //    Devuelve también parent_id y depth (no rompe tu JS; solo agrega campos útiles)
+          // 3) ✅ Variations ORGANIZADAS por jerarquía (abuelo -> padre -> hijo -> nieto...)
+          //    Opción A (MySQL 8+): CTE recursivo para obtener orden depth-first,
+          //    luego armamos un árbol (children[]) en PHP.
           $stmt = $pdo->prepare("
               WITH RECURSIVE tree AS (
                 -- Raíces: parent_id NULL/0 o huérfanas (padre no existe dentro del mismo producto)
@@ -422,8 +423,9 @@ class Variation {
                 INNER JOIN tree t
                   ON t.variation_id = c.parent_id
                 WHERE c.product_id = :pid3
+                  AND t.depth < 50 -- seguridad anti-ciclos / loops
               )
-              SELECT variation_id, name, SKU, parent_id, depth
+              SELECT variation_id, name, SKU, parent_id, depth, sort_path
               FROM tree
               ORDER BY sort_path
           ");
@@ -432,7 +434,58 @@ class Variation {
               ':pid2' => $productId,
               ':pid3' => $productId,
           ]);
-          $variations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+          $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+          // ---- Construir árbol: cada nodo tiene children[]
+          // 1) Crear nodos
+          $nodes = [];
+          foreach ($rows as $r) {
+              $id = (int)$r['variation_id'];
+              $nodes[$id] = [
+                  'variation_id' => $id,
+                  'name'         => $r['name'] ?? '',
+                  'SKU'          => $r['SKU'] ?? '',
+                  'parent_id'    => !empty($r['parent_id']) ? (int)$r['parent_id'] : null,
+                  'depth'        => isset($r['depth']) ? (int)$r['depth'] : 0,
+                  'children'     => [],
+                  // sort_path SOLO para ordenar internamente (lo quitamos del output final)
+                  '__sort_path'  => $r['sort_path'] ?? '',
+              ];
+          }
+
+          // 2) Enlazar (padre -> children) respetando el orden del CTE (sort_path)
+          $roots = [];
+          foreach ($rows as $r) {
+              $id = (int)$r['variation_id'];
+              if (!isset($nodes[$id])) continue;
+
+              $parentId = !empty($r['parent_id']) ? (int)$r['parent_id'] : null;
+
+              if ($parentId && isset($nodes[$parentId])) {
+                  $nodes[$parentId]['children'][] = &$nodes[$id];
+              } else {
+                  $roots[] = &$nodes[$id];
+              }
+          }
+          // Romper referencias
+          unset($r);
+
+          // 3) Limpiar campo interno __sort_path del output
+          $stripInternal = function (&$n) use (&$stripInternal) {
+              unset($n['__sort_path']);
+              if (!empty($n['children']) && is_array($n['children'])) {
+                  foreach ($n['children'] as &$c) {
+                      $stripInternal($c);
+                  }
+                  unset($c);
+              }
+          };
+          foreach ($roots as &$rootNode) {
+              $stripInternal($rootNode);
+          }
+          unset($rootNode);
+
+          $variationsTree = $roots;
 
           // 4) Con product_id (vía group->category) traer type_variations asociados a la categoría del producto
           $typeVariations = [];
@@ -455,7 +508,7 @@ class Variation {
               $typeVariations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
           }
 
-          // 5) Respuesta final (sin json_encode)
+          // 5) Respuesta final
           return [
               'success' => true,
               'product' => [
@@ -464,7 +517,14 @@ class Variation {
                   'product_sku'  => $productSku,
                   'group_id'     => $groupId,
               ],
-              'variations' => $variations, // ✅ ahora viene en orden jerárquico
+
+              // ✅ AHORA: variations viene como árbol (abuelo -> padre -> hijo...)
+              'variations' => $variationsTree,
+
+              // (Opcional útil) si quieres mantener compatibilidad con tu JS actual que espera lista plana,
+              // descomenta esta línea y ajusta el frontend cuando ya estés lista:
+              // 'variations_flat' => array_map(fn($r) => ['variation_id'=>(int)$r['variation_id'],'name'=>$r['name'],'SKU'=>$r['SKU'],'parent_id'=>!empty($r['parent_id'])?(int)$r['parent_id']:null,'depth'=>(int)$r['depth']], $rows),
+
               'current' => [
                   'variation_id'     => (int)$row['variation_id'],
                   'name'             => $row['name'],
