@@ -119,7 +119,7 @@ class PreviewPage {
 
   initGalleryFromDom() {
     // primera lectura del DOM (si hay media hardcode)
-    this.rebuildGalleryFromDom(0, true);
+    //this.rebuildGalleryFromDom(0, true);
   }
 
   // ✅ NEW: reconstruye currentImages leyendo el DOM
