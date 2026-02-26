@@ -161,7 +161,7 @@ body{
 .nav-list a{
   display: block;
   padding: .9rem 1rem;
-  color: rgba(255,255,255,.92);
+  color: rgba(0,0,0,.92);
   border-radius: 10px;
   transition: background .2s ease, transform .2s ease, filter .2s ease;
 }
