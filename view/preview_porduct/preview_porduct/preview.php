@@ -136,8 +136,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
         <!-- VARIATIONS -->
         <section id="wrap-variations-group" class="sp-variations js-fade-up wrap-variations-group" aria-label="Product configuration">
 
-          <!-- Width -->
-          <div class="wrap-variations" aria-labelledby="var_label_size_1">
+          <!-- <div class="wrap-variations" aria-labelledby="var_label_size_1">
             <div class="var-label">
               <span class="var-name">Width</span>
               <strong id="var_label_size_1">20mm</strong>
@@ -178,7 +177,6 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
             </div>
           </div>
 
-          <!-- Print side -->
           <div class="wrap-variations" aria-labelledby="var_label_size_2">
             <div class="var-label">
               <span class="var-name">Print side</span>
@@ -197,7 +195,6 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
             </div>
           </div>
 
-          <!-- Clip type -->
           <div class="wrap-variations" aria-labelledby="var_label_size_3">
             <div class="var-label">
               <span class="var-name">Clip type</span>
@@ -228,7 +225,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
                   <span class="opt-main">Single sided</span>
                 </button>
             </div>
-          </div>
+          </div> -->
 
         </section>
       </section>
