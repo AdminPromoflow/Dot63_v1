@@ -142,6 +142,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
+        console.log(text);
         const json = JSON.parse(text);
 
         const variationTypes  = json.variationTypes || [];
