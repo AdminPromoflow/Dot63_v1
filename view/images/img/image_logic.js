@@ -82,7 +82,9 @@ class ImageLogic {
     li.classList.add('is-selected');
     li.setAttribute('aria-selected', 'true');
 
-    const { sku } = this.images.parseNameSkuFromText(li.textContent);
+    // ✅ YA NO parsea texto: toma el SKU del dataset
+    const sku = String(li.dataset.sku || '').trim();
+    if (!sku) return;
 
     menuList.hidden = true;
     if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
@@ -279,16 +281,8 @@ class ImageLogic {
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])
     );
 
-    // 🎨 Colores por nivel
-    const levelColors = [
-      '#0f2140', // level 0
-      '#0b6b6b', // level 1
-      '#7a4d0f', // level 2
-      '#5a2d82', // level 3
-      '#1d6b2a', // level 4+
-    ];
+    const levelColors = ['#0f2140', '#0b6b6b', '#7a4d0f', '#5a2d82', '#1d6b2a'];
 
-    // ✅ Seleccionado desde URL (si existe)
     const params = new URLSearchParams(window.location.search);
     const wanted = String(params.get('sku_variation') || '').trim().toUpperCase();
 
@@ -307,7 +301,7 @@ class ImageLogic {
       li.setAttribute('tabindex', '-1');
       li.setAttribute('aria-selected', 'false');
       li.dataset.name = name;
-      li.dataset.sku = sku;
+      li.dataset.sku  = sku;
 
       // Base style
       li.style.position = 'relative';
@@ -334,7 +328,7 @@ class ImageLogic {
         "></span>`
       );
 
-      // ✅ SKU invisible (pero está en el DOM)
+      // ✅ SKU invisible (queda en el DOM por si alguna lógica lo necesita)
       const skuHidden = sku
         ? `<span style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">${escape(sku)}</span>`
         : '';
