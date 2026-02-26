@@ -259,13 +259,14 @@ class ImageLogic {
     const ul = document.getElementById('menu_list');
     if (!ul) return;
 
-    const list = Array.isArray(items) ? items
+    const list = Array.isArray(items)
+      ? items
       : (items && Array.isArray(items.variations) ? items.variations : []);
 
     ul.innerHTML = '';
     ul.setAttribute('role', 'menu');
 
-    if (list.length === 0) {
+    if (!list || list.length === 0) {
       const li = document.createElement('li');
       li.textContent = 'No items to show';
       li.setAttribute('role', 'menuitem');
@@ -278,19 +279,94 @@ class ImageLogic {
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])
     );
 
+    // 🎨 Colores por nivel
+    const levelColors = [
+      '#0f2140', // level 0
+      '#0b6b6b', // level 1
+      '#7a4d0f', // level 2
+      '#5a2d82', // level 3
+      '#1d6b2a', // level 4+
+    ];
+
+    // ✅ Seleccionado desde URL (si existe)
+    const params = new URLSearchParams(window.location.search);
+    const wanted = String(params.get('sku_variation') || '').trim().toUpperCase();
+
     const frag = document.createDocumentFragment();
 
     list.forEach((it) => {
-      const name = (it?.name ?? '(unnamed)').trim() || '(unnamed)';
-      const sku = (it?.SKU ?? it?.sku ?? '').trim();
+      const name  = String((it?.name ?? '(unnamed)')).trim() || '(unnamed)';
+      const sku   = String((it?.SKU ?? it?.sku ?? '')).trim();
+      const level = Number(it?.level ?? 0) || 0;
+
+      const color = levelColors[level] || levelColors[levelColors.length - 1];
+      const indent = 28 + (level * 18); // ✅ sangría extra global + por nivel
 
       const li = document.createElement('li');
       li.setAttribute('role', 'menuitem');
       li.setAttribute('tabindex', '-1');
+      li.setAttribute('aria-selected', 'false');
       li.dataset.name = name;
       li.dataset.sku = sku;
 
-      li.innerHTML = `<strong>${escape(name)}</strong>${sku ? ` <small style="color:var(--muted)">— ${escape(sku)}</small>` : ''}`;
+      // Base style
+      li.style.position = 'relative';
+      li.style.padding = '8px 10px';
+      li.style.paddingLeft = `${indent}px`;
+      li.style.borderRadius = '10px';
+      li.style.cursor = 'default';
+      li.style.marginBottom = '6px';
+
+      // Level style
+      li.style.borderLeft = `4px solid ${color}`;
+      li.style.background = 'rgba(255,255,255,0.03)';
+
+      // Dot aligned with indent
+      li.insertAdjacentHTML(
+        'afterbegin',
+        `<span aria-hidden="true" style="
+          position:absolute;
+          left:${Math.max(8, indent - 14)}px;
+          top:50%;
+          transform:translateY(-50%);
+          width:8px;height:8px;border-radius:999px;
+          background:${color};opacity:.85;
+        "></span>`
+      );
+
+      // ✅ SKU invisible (pero está en el DOM)
+      const skuHidden = sku
+        ? `<span style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">${escape(sku)}</span>`
+        : '';
+
+      // ✅ Solo nombre visible
+      li.innerHTML += `<strong>${escape(name)}</strong>${skuHidden}`;
+
+      // ✅ Seleccionado visible
+      const candidate = String(sku || '').trim().toUpperCase();
+      if (candidate && wanted && candidate === wanted) {
+        li.classList.add('is-selected');
+        li.setAttribute('aria-selected', 'true');
+        li.style.background = 'rgba(255,255,255,0.10)';
+        li.style.outline = '2px solid rgba(255,255,255,0.28)';
+        li.style.boxShadow = '0 10px 22px rgba(0,0,0,0.18)';
+        li.style.borderLeft = `6px solid ${color}`;
+
+        li.insertAdjacentHTML(
+          'beforeend',
+          `<span aria-hidden="true" style="
+            position:absolute;
+            right:10px;top:50%;
+            transform:translateY(-50%);
+            width:18px;height:18px;border-radius:999px;
+            border:2px solid ${color};
+            display:flex;align-items:center;justify-content:center;
+            font-size:12px;line-height:1;color:${color};
+            background: rgba(255,255,255,0.06);
+          ">✓</span>`
+        );
+      }
+
       frag.appendChild(li);
     });
 
