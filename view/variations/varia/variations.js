@@ -335,7 +335,7 @@ class Variations {
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
-        alert(JSON.stringify(json.type_variations) + "  " + JSON.stringify(json.current?.type_id);
+        alert(JSON.stringify(json.type_variations) + "  " + JSON.stringify(json.current?.type_id));
 
 
         // Render page sections (each method does one job)
