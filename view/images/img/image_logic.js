@@ -339,7 +339,7 @@ class ImageLogic {
       );
 
       // Contenido (sin L0/L1...)
-      li.innerHTML += `<strong>${escape(name)}</strong>${sku ? ` <small style="color:var(--muted)">— ${escape(sku)}</small>` : ''}`;
+      li.innerHTML += `<strong>${escape(name)}</strong>${sku ? `` : ''}`;
 
       // ✅ Seleccionado visible
       const candidate = String(sku).trim().toUpperCase();
