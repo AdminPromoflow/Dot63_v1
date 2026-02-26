@@ -16,7 +16,7 @@
   display: contents;
 }
 
-/* Evitar que items-note se agrupe visualmente por wrappers */
+/* Evitar que pack-size se agrupe visualmente por wrappers */
 .wrap-items,
 .wrap-items-group {
   display: block !important;
@@ -27,51 +27,29 @@
   display: contents !important;
 }
 
-/* =============================================================================
-   ✅ ESTILO OVERVIEW aplicado al Product Preview (solo CSS)
-   - Mantiene tu markup intacto
-============================================================================= */
+/* ============================================================================
 
-/* Tokens OVERVIEW + mapeo a variables existentes del preview */
+  TU CSS ORIGINAL (sin cambios)
+
+============================================================================ */
+
 :root {
-  /* OVERVIEW tokens */
-  --ov-bg: #2F4560;
-  --ov-panel: rgba(255,255,255,.06);
-  --ov-panel2: rgba(0,0,0,.12);
-  --ov-border: rgba(255,255,255,.12);
-  --ov-text: rgba(255,255,255,.92);
-  --ov-muted: rgba(255,255,255,.72);
-
-  --ov-btn: #1F3551;
-  --ov-btnText: rgb(214,218,223);
-
-  --ov-radius: 18px;
-  --ov-shadow: 0 16px 40px rgba(0,0,0,.28);
-
-  /* Map a tu sistema actual del preview */
-  --page-bg: var(--ov-bg);
+  --page-bg: #e4f3ee;
   --bg: var(--page-bg);
-
-  --card: var(--ov-panel);
-  --text: var(--ov-text);
-  --muted: var(--ov-muted);
-  --border: var(--ov-border);
-
-  /* Acentos (para estados seleccionados, links, etc.) */
-  --brand: rgba(160, 225, 255, .95);
-  --brand-soft: rgba(255,255,255,.08);
-
-  --shadow-soft: var(--ov-shadow);
-  --radius: var(--ov-radius);
+  --card: #ffffff;
+  --text: #0b1110;
+  --muted: #5b6a65;
+  --border: #c6ddd4;
+  --brand: #00695c;
+  --brand-soft: #ecfdf5;
+  --shadow-soft: 0 10px 30px rgba(11, 17, 16, 0.08);
+  --radius: 18px;
   --radius-sm: 14px;
-
-  --price: rgba(255,255,255,.95);
-
-  --buy: var(--ov-btn);
-  --buy-hover: #192f49;
-
+  --price: var(--brand);
+  --buy: var(--brand);
+  --buy-hover: #005248;
   --accent: #ff8a3d;
-  --accent-soft: rgba(255, 138, 61, .16);
+  --accent-soft: #fff4ec;
   --accent-hover: #e86e1e;
 }
 
@@ -96,20 +74,15 @@ body {
   position: relative;
 }
 
-/* Shell como panel OVERVIEW */
 .sp-shell {
   max-width: 95%;
   margin: 0 auto;
-  padding: 18px 16px;
-  background: rgba(0,0,0,.10);
-  border: 1px solid var(--ov-border);
-  border-radius: var(--ov-radius);
-  box-shadow: var(--ov-shadow);
+  padding: 0 16px;
 }
 
 @media (max-width: 760px) {
   .sp-shell {
-    padding-inline: 10px;
+    padding-inline: 8px;
   }
 }
 
@@ -132,7 +105,7 @@ body {
 .crumbs li::after {
   content: "›";
   margin: 0 6px;
-  color: rgba(255,255,255,.45);
+  color: #9ca3af;
 }
 
 .crumbs li:last-child::after {
@@ -169,7 +142,7 @@ body {
   grid-row: 1;
 }
 
-/* Contenedor interno sticky */
+/* Contenedor interno que se vuelve sticky y apila todo en columna */
 .sp-gallery-inner {
   position: sticky;
   top: 90px;
@@ -192,7 +165,7 @@ body {
 
 /* Marco de imagen/video */
 .sp-main {
-  background: var(--ov-panel);
+  background: #fff;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   aspect-ratio: 4 / 3;
@@ -225,18 +198,16 @@ body {
   width: 34px;
   height: 50px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.22);
-  color: rgba(255,255,255,.92);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: rgba(255, 255, 255, 0.96);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(0,0,0,.22);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
   font-size: 22px;
   line-height: 1;
   padding: 0;
-  backdrop-filter: blur(10px);
 }
 
 .sp-nav-prev {
@@ -248,7 +219,7 @@ body {
 }
 
 .sp-nav:hover {
-  filter: brightness(1.08);
+  background: #ffffff;
 }
 
 /* Thumbs */
@@ -262,18 +233,17 @@ body {
 .sp-thumb {
   appearance: none;
   border: 1px solid var(--border);
-  background: rgba(0,0,0,.14);
+  background: #fff;
   padding: 0;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(0,0,0,.20);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
   transition:
     transform 0.2s ease,
     outline 0.2s ease,
     border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    filter 0.2s ease;
+    box-shadow 0.2s ease;
 }
 
 .sp-thumb img {
@@ -282,7 +252,6 @@ body {
   object-fit: cover;
   display: block;
   transition: transform 0.25s ease;
-  filter: saturate(1.02);
 }
 
 .sp-thumb:hover img {
@@ -291,12 +260,11 @@ body {
 
 .sp-thumb:hover {
   transform: translateY(-2px);
-  filter: brightness(1.08);
 }
 
 .sp-thumb.is-active {
-  border-color: rgba(160, 225, 255, .65);
-  outline: 2px solid rgba(160, 225, 255, .20);
+  border-color: var(--brand);
+  outline: 2px solid rgba(0, 105, 92, 0.25);
 }
 
 .sp-thumb-video {
@@ -308,7 +276,6 @@ body {
 .thumb-video-label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text);
 }
 
 .cp-empty {
@@ -343,7 +310,6 @@ body {
   text-align: left;
   line-height: 1.22;
   font-weight: 680;
-  color: var(--text);
 }
 
 .sp-meta {
@@ -359,7 +325,7 @@ body {
 .sp-meta .brand-link {
   color: var(--brand);
   text-decoration: none;
-  font-weight: 650;
+  font-weight: 580;
 }
 
 .sp-meta .brand-link:hover {
@@ -375,6 +341,7 @@ body {
 }
 
 /* Precio */
+
 .sp-price-main {
   display: flex;
   align-items: baseline;
@@ -386,21 +353,18 @@ body {
 .sp-price-symbol {
   font-size: 1.9rem;
   line-height: 1;
-  color: rgba(255,255,255,.92);
 }
 
 .sp-price {
   font-size: 2.5rem;
-  font-weight: 760;
+  font-weight: 700;
   line-height: 1;
-  color: rgba(255,255,255,.96);
 }
 
 .sp-price-minor {
   font-size: 1.5rem;
   vertical-align: top;
   margin-left: 1px;
-  color: rgba(255,255,255,.90);
 }
 
 .sp-unit-hint {
@@ -416,6 +380,7 @@ body {
 }
 
 /* Variaciones (arriba) */
+
 .sp-variations {
   display: grid;
   gap: 18px;
@@ -427,12 +392,10 @@ body {
   display: grid;
   gap: 8px;
 }
-
-.wrap-variations-group {
+.wrap-variations-group{
   display: grid;
   gap: 8px;
 }
-
 .var-label {
   display: flex;
   gap: 6px;
@@ -457,25 +420,23 @@ body {
 
 .var-option {
   appearance: none;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  background: #fff;
   padding: 10px 14px;
   border-radius: 999px;
   cursor: pointer;
   text-align: left;
   font-size: 1rem;
   min-width: 217px;
-  box-shadow: 0 10px 22px rgba(0,0,0,.18);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     transform 0.2s ease,
-    background 0.2s ease,
-    filter 0.2s ease;
+    background 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255,255,255,.90);
 }
 
 .var-option .var-thumb {
@@ -484,7 +445,6 @@ body {
   border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,.10);
 }
 
 .var-option .opt-main {
@@ -501,7 +461,7 @@ body {
 .sp-packsize .var-option .opt-main::before {
   content: "⊕";
   font-size: 0.8em;
-  opacity: 0.65;
+  opacity: 0.6;
 }
 
 .var-option .opt-sub {
@@ -512,17 +472,17 @@ body {
 
 .var-option:hover {
   transform: translateY(-2px);
-  filter: brightness(1.06);
-  box-shadow: 0 16px 34px rgba(0,0,0,.22);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
 }
 
 .var-option.is-selected {
-  border-color: rgba(160, 225, 255, .55);
-  background: rgba(0,0,0,.20);
-  box-shadow: 0 0 0 1px rgba(160, 225, 255, .35);
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  box-shadow: 0 0 0 1px rgba(0, 105, 92, 0.7);
 }
 
 /* BUY BOX (columna 3 sticky + parallax) */
+
 .sp-buybox {
   grid-column: 3;
   grid-row: 1;
@@ -532,7 +492,7 @@ body {
 }
 
 .sp-buybox .box {
-  background: rgba(0,0,0,.10);
+  background: #fdfefc;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-soft);
@@ -553,21 +513,16 @@ body {
   font-size: 0.98rem;
 }
 
-.price-line strong {
-  color: rgba(255,255,255,.92);
-}
-
 .stock.in {
-  color: rgba(255,255,255,.92);
-  font-weight: 650;
+  color: var(--brand);
+  font-weight: 600;
   font-size: 1rem;
 }
 
 .ship span {
-  font-weight: 680;
+  font-weight: 620;
   display: block;
   font-size: 0.98rem;
-  color: rgba(255,255,255,.90);
 }
 
 .ship small {
@@ -577,7 +532,7 @@ body {
 
 /* extras (si se usan) */
 .extras {
-  border-top: 1px solid rgba(255,255,255,.10);
+  border-top: 1px solid var(--border);
   margin-top: 4px;
   padding-top: 8px;
   display: grid;
@@ -596,40 +551,38 @@ body {
 }
 
 .extra-line .value {
-  font-weight: 560;
-  color: rgba(255,255,255,.92);
+  font-weight: 520;
 }
 
 /* Botones */
+
 .btn {
   appearance: none;
-  border-radius: 12px;
+  border-radius: 999px;
   padding: 11px 18px;
-  font-weight: 650;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  color: var(--ov-btnText);
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
   cursor: pointer;
   font-size: 0.98rem;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
-    filter 0.15s ease,
     background 0.15s ease,
     border-color 0.15s ease;
-  text-shadow: 1px 1px 0px rgba(28,48,74,.65);
 }
 
 .btn:hover {
   transform: translateY(-2px);
-  filter: brightness(1.08);
-  box-shadow: 0 16px 34px rgba(0,0,0,.24);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
 }
 
 .btn-primary {
   background: var(--buy);
-  color: rgba(255,255,255,.92);
-  border-color: rgba(255,255,255,.12);
+  color: #f0fdf9;
+  border-color: var(--buy);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
 }
 
 .btn-primary:hover {
@@ -637,16 +590,17 @@ body {
 }
 
 .btn-ghost {
-  background: rgba(255,255,255,.06);
+  background: #fff;
 }
 
 /* BANDA INFERIOR DE VARIACIONES – COLUMNAS 1 Y 2 */
+
 .sp-variations-bottom {
   grid-column: 1 / 3;
   grid-row: 2;
   margin-top: 8px;
   padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,.12);
+  border-top: 1px solid var(--border);
   display: grid;
   gap: 18px;
   justify-items: end;
@@ -663,6 +617,7 @@ body {
 }
 
 /* PACK SIZE – banda separada columnas 1 y 2 */
+
 .sp-packsize {
   grid-column: 1 / 3;
   grid-row: 3;
@@ -670,7 +625,7 @@ body {
   padding: 14px 18px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: rgba(0,0,0,.10);
+  background: #fdfefc;
   box-shadow: var(--shadow-soft);
   display: grid;
   gap: 10px;
@@ -699,15 +654,15 @@ body {
   font-size: 0.9rem;
 }
 
-/* ITEMS NOTE – panel tipo overview */
+/* ITEMS NOTE – cuadro verde independiente */
 .sp-items-note {
   grid-column: 1 / 3;
   grid-row: 5;
   margin-top: 8px;
   padding: 14px 18px;
   border-radius: var(--radius-sm);
-  border: 1px dashed rgba(160, 225, 255, .45);
-  background: rgba(255,255,255,.06);
+  border: 1px dashed var(--brand);
+  background: var(--brand-soft);
   color: var(--text);
   font-size: 0.98rem;
   display: grid;
@@ -716,33 +671,30 @@ body {
 
 .sp-items-list {
   margin: 0;
-  padding-left: 0;
+  padding-left: 18px;
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
-.sp-item {
-  background: rgba(0,0,0,.10);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 14px;
-  padding: 12px 12px;
+.sp-items-list li {
+  list-style: disc;
 }
 
 .sp-item-subtitle {
   display: block;
-  font-weight: 760;
-  font-size: 1.05rem;
-  color: rgba(255,255,255,.92);
-  margin-bottom: 6px;
+  font-weight: 650;
+  font-size: 1.2rem;
+  color: var(--text);
 }
 
-.sp-item span {
+.sp-items-list span {
   display: block;
   font-size: 0.96rem;
   color: var(--muted);
 }
 
 /* ===== ARTWORK PDF DOWNLOADS ===== */
+
 .sp-artwork-downloads {
   grid-column: 1 / 3;
   grid-row: 4;
@@ -750,7 +702,7 @@ body {
   padding: 14px 18px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: rgba(0,0,0,.10);
+  background: #fdfefc;
   box-shadow: var(--shadow-soft);
   display: grid;
   gap: 8px;
@@ -760,8 +712,8 @@ body {
 .sp-artwork-heading {
   margin: 0;
   font-size: 1.35rem;
-  font-weight: 760;
-  color: rgba(255,255,255,.92);
+  font-weight: 680;
+  color: var(--text);
 }
 
 .sp-artwork-intro,
@@ -782,28 +734,29 @@ body {
   margin-top: 6px;
 }
 
-/* Botón específico para PDFs (look overview) */
+/* Botón específico para PDFs */
 .btn-artwork {
-  border-color: rgba(255,255,255,.14);
-  color: rgba(255,255,255,.88);
-  background: rgba(255,255,255,.06);
+  border-color: var(--brand);
+  color: var(--brand);
+  background: #ffffff;
   font-size: 0.9rem;
   padding-block: 7px;
   padding-inline: 14px;
   white-space: nowrap;
-  border-radius: 12px;
 }
 
 .btn-artwork:hover {
-  filter: brightness(1.08);
-  text-decoration: none;
+  background: var(--brand);
+  color: #f0fdf9;
+  border-color: var(--brand);
 }
 
 /* ABOUT THIS ITEM */
+
 .sp-about {
   margin-top: 32px;
   padding: 24px 26px 26px;
-  background: rgba(0,0,0,.10);
+  background: #fdfefc;
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border);
@@ -813,8 +766,7 @@ body {
   margin: 0 0 10px;
   text-align: center;
   font-size: 1.8rem;
-  font-weight: 760;
-  color: rgba(255,255,255,.92);
+  font-weight: 680;
 }
 
 .sp-bullets {
@@ -823,7 +775,6 @@ body {
   display: grid;
   gap: 6px;
   font-size: 1rem;
-  color: rgba(255,255,255,.86);
 }
 
 /* DESCRIPCIÓN EN DOS COLUMNAS */
@@ -834,7 +785,6 @@ body {
   font-size: 1.02rem;
   column-count: 2;
   column-gap: 32px;
-  color: rgba(255,255,255,.86);
 }
 
 .sp-desc p,
@@ -852,7 +802,7 @@ body {
 .sp-desc-figure {
   margin: 6px auto 0;
   padding: 12px 0 0;
-  border-top: 1px solid rgba(255,255,255,.10);
+  border-top: 1px solid var(--border);
   display: grid;
   gap: 6px;
   max-width: 620px;
@@ -866,14 +816,12 @@ body {
   display: block;
   margin: 0 auto;
   object-fit: cover;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
-  border: 1px solid rgba(255,255,255,.10);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .sp-desc-figure img:hover {
   transform: scale(1.03);
-  box-shadow: 0 18px 40px rgba(0,0,0,.28);
-  filter: brightness(1.06);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
 }
 
 .sp-desc-figure figcaption {
@@ -882,6 +830,7 @@ body {
 }
 
 /* MÁS PRODUCTOS */
+
 .sp-related {
   margin-top: 32px;
   padding: 16px 0 32px;
@@ -890,8 +839,7 @@ body {
 .sp-related h2 {
   margin: 0 0 14px;
   font-size: 1.3rem;
-  font-weight: 760;
-  color: rgba(255,255,255,.92);
+  font-weight: 680;
 }
 
 .related-grid {
@@ -901,7 +849,7 @@ body {
 }
 
 .related-card {
-  background: rgba(0,0,0,.10);
+  background: #fdfefc;
   border-radius: 18px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-soft);
@@ -912,8 +860,8 @@ body {
 
 .related-media {
   height: 170px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.06);
+  border-bottom: 1px solid var(--border);
+  background: #f3faf7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -924,12 +872,11 @@ body {
   max-height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.25s ease, filter 0.25s ease;
+  transition: transform 0.25s ease;
 }
 
 .related-card:hover .related-media img {
   transform: scale(1.06);
-  filter: brightness(1.06);
 }
 
 .related-body {
@@ -940,7 +887,6 @@ body {
 .related-title {
   margin: 0 0 2px;
   font-size: 1.06rem;
-  color: rgba(255,255,255,.92);
 }
 
 .related-category {
@@ -952,22 +898,21 @@ body {
 .related-variant {
   margin: 4px 0;
   font-size: 0.94rem;
-  color: rgba(255,255,255,.86);
 }
 
 .related-price {
   margin: 0;
-  font-weight: 680;
-  color: rgba(255,255,255,.92);
+  font-weight: 620;
 }
 
 .related-btn {
   width: 100%;
   border-radius: 0 0 18px 18px;
-  border-top: 1px solid rgba(255,255,255,.10);
+  border-top: 1px solid var(--border);
 }
 
 /* ===== ANIMACIONES SCROLL / PARALLAX ===== */
+
 .js-fade-up {
   opacity: 0;
   transform: translateY(20px);
@@ -1006,22 +951,23 @@ body {
 
 /* Botón "Back to editing" */
 .btn-back-preview {
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.14);
-  color: rgba(255,255,255,.88);
+  background: #ffffff;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-/* Botón "Publish" (acento) */
+/* Botón "Publish" */
 .btn-publish-preview {
   background: var(--accent);
   border-color: var(--accent);
-  color: #111;
-  box-shadow: 0 12px 28px rgba(0,0,0,.22);
-  text-shadow: none;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(232, 106, 31, 0.3);
 }
 
 .btn-back-preview:hover {
-  filter: brightness(1.10);
+  background: var(--accent-soft);
+  border-color: var(--accent-hover);
+  color: var(--accent-hover);
 }
 
 .btn-publish-preview:hover {
