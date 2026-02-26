@@ -220,40 +220,40 @@ class PreviewPage {
   }
 
   changeMainMedia(mediaObj) {
-    const sp_main = document.getElementById("wrap-images-group");
-    if (!sp_main) return;
-
-    if (!mediaObj || !mediaObj.src) {
-      sp_main.innerHTML = '<div class="cp-empty">No media</div>';
-      return;
-    }
-
-    if (mediaObj.type === "video") {
-      sp_main.innerHTML = `
-        <video class="preview-media" controls preload="metadata">
-          <source src="${mediaObj.src}" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      `;
-    } else {
-      sp_main.innerHTML = `
-        <img class="preview-media" src="${mediaObj.src}" alt="Product image">
-      `;
-    }
+    // const sp_main = document.getElementById("wrap-images-group");
+    // if (!sp_main) return;
+    //
+    // if (!mediaObj || !mediaObj.src) {
+    //   sp_main.innerHTML = '<div class="cp-empty">No media</div>';
+    //   return;
+    // }
+    //
+    // if (mediaObj.type === "video") {
+    //   sp_main.innerHTML = `
+    //     <video class="preview-media" controls preload="metadata">
+    //       <source src="${mediaObj.src}" type="video/mp4">
+    //       Your browser does not support the video tag.
+    //     </video>
+    //   `;
+    // } else {
+    //   sp_main.innerHTML = `
+    //     <img class="preview-media" src="${mediaObj.src}" alt="Product image">
+    //   `;
+    // }
   }
 
   // ✅ Limpia DOM + memoria de la galería
   clearGallery() {
-    this.stopAutoRotate();
-
-    this.currentImages = [];
-    this.currentImageIndex = 0;
-
-    const main = document.getElementById("wrap-images-group");
-    if (main) main.innerHTML = "";
-
-    const thumbs = document.getElementById("sp_thumbs");
-    if (thumbs) thumbs.innerHTML = "";
+    // this.stopAutoRotate();
+    //
+    // this.currentImages = [];
+    // this.currentImageIndex = 0;
+    //
+    // const main = document.getElementById("wrap-images-group");
+    // if (main) main.innerHTML = "";
+    //
+    // const thumbs = document.getElementById("sp_thumbs");
+    // if (thumbs) thumbs.innerHTML = "";
   }
 
   /* ============================================================================
