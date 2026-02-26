@@ -377,7 +377,7 @@ class Variations {
       li.style.padding = '8px 10px';
       li.style.borderRadius = '10px';
       li.style.cursor = 'default';
-      li.innerHTML = `<strong>${name}</strong>${sku ? ` ` : ''}`;
+      li.innerHTML = `<strong>${name}</strong>${sku ? ` <small style="color:var(--muted)">— ${sku}</small>` : ''}`;
 
       frag.appendChild(li);
     }
