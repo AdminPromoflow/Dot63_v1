@@ -523,122 +523,114 @@ class Variation {
 
 
   public function getTypeVariationsChildByVariationIdForDelete(): array
-{
-  $parentVariationId = (int)($this->variation_id ?? 0);
+  {
+    $parentVariationId = (int)($this->variation_id ?? 0);
 
-  if ($parentVariationId <= 0) {
-    return ['success' => false, 'error' => 'variation_id required'];
-  }
-
-  try {
-    $pdo = $this->connection->getConnection();
-
-    /* =========================================================
-       1) Capturar type_id teniendo variation_id
-       ========================================================= */
-    $stmtType = $pdo->prepare("
-      SELECT type_id
-      FROM variations
-      WHERE variation_id = :variation_id
-      LIMIT 1
-    ");
-    $stmtType->execute([':variation_id' => $parentVariationId]);
-    $typeId = $stmtType->fetchColumn(); // puede ser NULL
-
-    /* =========================================================
-       2) Buscar todas las variaciones relacionadas con ese type_id
-          y retornar solo variation_id (array)
-          (incluye NULL-safe match)
-       ========================================================= */
-    $stmtVars = $pdo->prepare("
-      SELECT variation_id
-      FROM variations
-      WHERE type_id <=> :type_id
-    ");
-    $stmtVars->execute([':type_id' => $typeId]);
-    $variationIds = $stmtVars->fetchAll(PDO::FETCH_COLUMN);
-
-    if (!is_array($variationIds) || count($variationIds) === 0) {
-      // Si por alguna razón no hay variaciones, retorna al menos el propio parent
-      $variationIds = [$parentVariationId];
+    if ($parentVariationId <= 0) {
+      return ['success' => false, 'error' => 'variation_id required'];
     }
 
-    /* =========================================================
-       3) Recorrer variationIds y buscar descendencias con CTE
-          Unir resultados sin repetir type_variation
-       ========================================================= */
-    $unique = []; // key => ['type_id' => ..., 'type_name' => ...]
-    $cteSql = "
-      WITH RECURSIVE descendants AS (
-        SELECT v.variation_id, v.parent_id, v.type_id
-        FROM variations v
-        WHERE v.variation_id = :parent_id
+    try {
+      $pdo = $this->connection->getConnection();
 
-        UNION ALL
+      // 1) Capturar type_id del variation_id inicial
+      $stmtType = $pdo->prepare("
+        SELECT type_id
+        FROM variations
+        WHERE variation_id = :variation_id
+        LIMIT 1
+      ");
+      $stmtType->execute([':variation_id' => $parentVariationId]);
+      $typeId = $stmtType->fetchColumn(); // puede ser NULL
 
-        SELECT child.variation_id, child.parent_id, child.type_id
-        FROM variations child
-        INNER JOIN descendants d
-          ON child.parent_id = d.variation_id
-      )
-      SELECT DISTINCT
-        d.type_id,
-        tv.type_name
-      FROM descendants d
-      LEFT JOIN type_variations tv
-        ON tv.type_id = d.type_id
-      ORDER BY (d.type_id IS NOT NULL), d.type_id ASC
-    ";
+      // 2) Buscar todas las variaciones con ese type_id (NULL-safe)
+      $stmtVars = $pdo->prepare("
+        SELECT variation_id
+        FROM variations
+        WHERE type_id <=> :type_id
+      ");
+      $stmtVars->execute([':type_id' => $typeId]);
+      $variationIds = $stmtVars->fetchAll(PDO::FETCH_COLUMN);
 
-    $stmtCTE = $pdo->prepare($cteSql);
+      if (!is_array($variationIds) || count($variationIds) === 0) {
+        $variationIds = [$parentVariationId];
+      }
 
-    foreach ($variationIds as $vid) {
-      $vid = (int)$vid;
-      if ($vid <= 0) continue;
+      // 3) Por cada variation_id, traer descendencia con CTE y unir sin repetir
+      $unique = []; // key => ['type_id'=>..., 'type_name'=>...]
+      $cteSql = "
+        WITH RECURSIVE descendants AS (
+          SELECT v.variation_id, v.parent_id, v.type_id
+          FROM variations v
+          WHERE v.variation_id = :parent_id
 
-      $stmtCTE->execute([':parent_id' => $vid]);
-      $rows = $stmtCTE->fetchAll(PDO::FETCH_ASSOC);
+          UNION ALL
 
-      foreach ($rows as $r) {
-        // Normaliza para que el formato final sea como el tuyo:
-        // type_id: null o string
-        $tid = array_key_exists('type_id', $r) ? $r['type_id'] : null;
-        $tname = array_key_exists('type_name', $r) ? $r['type_name'] : null;
+          SELECT child.variation_id, child.parent_id, child.type_id
+          FROM variations child
+          INNER JOIN descendants d
+            ON child.parent_id = d.variation_id
+        )
+        SELECT DISTINCT
+          d.type_id,
+          tv.type_name
+        FROM descendants d
+        LEFT JOIN type_variations tv
+          ON tv.type_id = d.type_id
+        ORDER BY (d.type_id IS NOT NULL), d.type_id ASC
+      ";
 
-        $tidNorm = ($tid === null ? null : (string)$tid);
-        $tnameNorm = ($tname === null ? null : (string)$tname);
+      $stmtCTE = $pdo->prepare($cteSql);
 
-        // Unicidad por type_id (incluye null)
-        $key = ($tidNorm === null) ? 'NULL' : $tidNorm;
+      foreach ($variationIds as $vid) {
+        $vid = (int)$vid;
+        if ($vid <= 0) continue;
 
-        if (!isset($unique[$key])) {
-          $unique[$key] = [
-            'type_id'   => $tidNorm,
-            'type_name' => $tnameNorm,
-          ];
+        $stmtCTE->execute([':parent_id' => $vid]);
+        $rows = $stmtCTE->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as $r) {
+          $tid = array_key_exists('type_id', $r) ? $r['type_id'] : null;
+          $tname = array_key_exists('type_name', $r) ? $r['type_name'] : null;
+
+          $tidNorm = ($tid === null ? null : (string)$tid);
+          $tnameNorm = ($tname === null ? null : (string)$tname);
+
+          $key = ($tidNorm === null) ? 'NULL' : $tidNorm;
+
+          if (!isset($unique[$key])) {
+            $unique[$key] = [
+              'type_id'   => $tidNorm,
+              'type_name' => $tnameNorm,
+            ];
+          }
         }
       }
+
+      // ✅ 4) Remover del resultado el primer type_id capturado (incluye NULL)
+      $removeKey = ($typeId === null) ? 'NULL' : (string)$typeId;
+      if (isset($unique[$removeKey])) {
+        unset($unique[$removeKey]);
+      }
+
+      // Orden final: NULL primero, luego asc por número
+      $out = array_values($unique);
+      usort($out, function ($a, $b) {
+        if ($a['type_id'] === null && $b['type_id'] !== null) return -1;
+        if ($a['type_id'] !== null && $b['type_id'] === null) return 1;
+
+        $na = (int)$a['type_id'];
+        $nb = (int)$b['type_id'];
+        return $na <=> $nb;
+      });
+
+      return $out;
+
+    } catch (PDOException $e) {
+      error_log('getTypeVariationsChildByVariationIdForDelete error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
     }
-
-    // Orden final: NULL primero, luego asc por número
-    $out = array_values($unique);
-
-    usort($out, function ($a, $b) {
-      if ($a['type_id'] === null && $b['type_id'] !== null) return -1;
-      if ($a['type_id'] !== null && $b['type_id'] === null) return 1;
-
-      $na = (int)$a['type_id'];
-      $nb = (int)$b['type_id'];
-      return $na <=> $nb;
-    });
-
-    return $out;
-
-  } catch (PDOException $e) {
-    error_log('getTypeVariationsChildByVariationIdForDelete error: ' . $e->getMessage());
-    return ['success' => false, 'error' => 'DB error'];
   }
-}
   // En tu modelo Variation
 
   public function updateVariationDetails(): bool
