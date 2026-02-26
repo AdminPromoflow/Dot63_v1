@@ -217,8 +217,8 @@ body{
   background: #ffffff;
   cursor: pointer;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  justify-content: flex-start;
+  align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
   position: relative;
