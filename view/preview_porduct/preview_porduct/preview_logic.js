@@ -179,7 +179,7 @@ class PreviewLogic {
 
       this.deleteVariations(typeId);
       this.deleteItems(typeId);
-      this.deleteImages(typeId);
+    //  this.deleteImages(typeId);
       this.deletePrices(typeId);
       this.deleteArtwork(typeId);
     }
