@@ -480,7 +480,9 @@ class Variations {
   renderParentSelect(variationsRaw, current, parent, product) {
     if (!this.parentSelect) return;
 
+    // ✅ Respeta EXACTAMENTE el orden en que viene de la BD (no sort)
     const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
+
     const currentSku = String(current?.sku ?? current?.SKU ?? '').trim();
 
     // Reset select with placeholder
@@ -488,7 +490,7 @@ class Variations {
 
     const frag = document.createDocumentFragment();
 
-    // Add all variations except the current one
+    // ✅ Add all variations except the current one
     for (let i = 0; i < variations.length; i++) {
       const sku = String(variations[i]?.SKU ?? variations[i]?.sku ?? '').trim();
       if (!sku || sku === currentSku) continue;
@@ -498,7 +500,10 @@ class Variations {
       const opt = document.createElement('option');
       opt.value = sku;
       opt.dataset.sku = sku;
-      opt.textContent = `${name} — ${sku}`;
+
+      // ✅ NO mostrar SKU en el texto visible
+      opt.textContent = name;
+
       frag.appendChild(opt);
     }
 
@@ -522,7 +527,6 @@ class Variations {
       }
     }
   }
-
   renderTypeVariationsSelect(typeVariationsRaw, type_id_selected) {
     if (!this.typeSelect) return;
     if (!Array.isArray(typeVariationsRaw)) return;
