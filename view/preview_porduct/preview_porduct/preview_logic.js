@@ -591,11 +591,13 @@ class PreviewLogic {
   ============================================================================ */
 
   deleteVariations(id_type) {
-    // id_type puede ser number, string o null
     const typeId = (id_type === null || id_type === undefined) ? "null" : String(id_type);
 
     const el = document.getElementById(`var-options-${typeId}`);
-    if (el) el.remove();
+    if (!el) return;
+
+    // ✅ Elimina SOLO el contenido interno
+    el.innerHTML = "";
   }
 
 
