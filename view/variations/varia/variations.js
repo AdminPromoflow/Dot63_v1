@@ -337,7 +337,7 @@ class Variations {
 
       //  alert(JSON.stringify(json.type_variations) + "  " + JSON.stringify(json.current?.type_id));
 
-      alert(JSON.stringify(json.variations));
+    //  alert(JSON.stringify(json.variations));
         // Render page sections (each method does one job)
         this.renderTopMenu(json.variations, skuVariation);
         this.renderCurrentNameAndDefaultRules(json.current);
@@ -357,6 +357,8 @@ class Variations {
      ========================= */
 
   renderTopMenu(variationsRaw, skuVariation) {
+
+    alert(JSON.stringify(variationsRaw));
     if (!this.menuList) return;
 
     // Clear menu list
