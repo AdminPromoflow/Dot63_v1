@@ -37,30 +37,111 @@ class Prices {
   // -----------------------------------------------------
   // Variations by product SKU (for the dropdown)  ← DEJAR IGUAL
   // -----------------------------------------------------
-  public function getVariationsBySKUProduct(): array {
-    if (!$this->sku) return [];
-    try {
-      $pdo = $this->connection->getConnection();
-      $stmt = $pdo->prepare("SELECT product_id FROM products WHERE SKU = :sku LIMIT 1");
-      $stmt->execute([':sku' => $this->sku]);
-      $product = $stmt->fetch(\PDO::FETCH_ASSOC);
-      if (!$product) return [];
+  public function getVariationsBySKUProduct(): array
+  {
+      if (!$this->sku) return [];
 
-      $stmt = $pdo->prepare("
-        SELECT v.name, v.SKU
-        FROM variations v
-        WHERE v.product_id = :pid
-        ORDER BY v.name ASC, v.variation_id ASC
-      ");
-      $stmt->execute([':pid' => (int)$product['product_id']]);
-      return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+      try {
+          $pdo = $this->connection->getConnection();
 
-    } catch (\PDOException $e) {
-      error_log('getVariationsBySKUProduct: ' . $e->getMessage());
-      return [];
-    }
+          // 1) product_id por SKU (case-insensitive)
+          $stmt = $pdo->prepare("
+              SELECT product_id
+              FROM products
+              WHERE LOWER(SKU) = LOWER(:sku)
+              LIMIT 1
+          ");
+          $stmt->execute([':sku' => $this->sku]);
+          $product = $stmt->fetch(\PDO::FETCH_ASSOC);
+          if (!$product) return [];
+
+          $productId = (int)$product['product_id'];
+
+          // 2) Traer variaciones (una sola consulta) -> construir jerarquía en PHP
+          //    (esto funciona en MySQL 5.x/8.x y te devuelve level)
+          $stmt = $pdo->prepare("
+              SELECT variation_id, name, SKU, parent_id
+              FROM variations
+              WHERE product_id = :pid
+          ");
+          $stmt->execute([':pid' => $productId]);
+          $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+          if (!$rows) return [];
+
+          // Index por id (más rápido que buscar en arrays)
+          $nodes = [];
+          foreach ($rows as $r) {
+              $id = (int)($r['variation_id'] ?? 0);
+              if ($id <= 0) continue;
+
+              $pid = $r['parent_id'];
+              $pid = ($pid === null || $pid === '' || (int)$pid === 0) ? null : (int)$pid;
+
+              $nodes[$id] = [
+                  'variation_id' => $id,
+                  'name'         => (string)($r['name'] ?? ''),
+                  'SKU'          => (string)($r['SKU'] ?? ''),
+                  'parent_id'    => $pid,
+              ];
+          }
+          if (!$nodes) return [];
+
+          // children map + roots (incluye huérfanos como roots)
+          $children = [];
+          $roots = [];
+          foreach ($nodes as $id => $n) {
+              $pid = $n['parent_id'];
+              if ($pid !== null && isset($nodes[$pid])) {
+                  $children[$pid][] = $id;
+              } else {
+                  $roots[] = $id;
+              }
+          }
+
+          // Orden estable: name ASC, variation_id ASC (rápido y consistente)
+          $cmp = function ($a, $b) use ($nodes) {
+              $na = mb_strtolower(trim($nodes[$a]['name'] ?? ''), 'UTF-8');
+              $nb = mb_strtolower(trim($nodes[$b]['name'] ?? ''), 'UTF-8');
+              if ($na === $nb) return ($a <=> $b);
+              return ($na <=> $nb);
+          };
+
+          usort($roots, $cmp);
+          foreach ($children as &$ids) usort($ids, $cmp);
+          unset($ids);
+
+          // DFS: abuelo -> padre -> hijo... con level (y evita ciclos)
+          $out = [];
+          $visited = [];
+
+          $walk = function ($id, $level) use (&$walk, &$out, &$visited, $nodes, $children) {
+              if (isset($visited[$id])) return;
+              $visited[$id] = true;
+
+              $out[] = [
+                  'variation_id' => $nodes[$id]['variation_id'],
+                  'name'         => $nodes[$id]['name'],
+                  'SKU'          => $nodes[$id]['SKU'],
+                  'parent_id'    => $nodes[$id]['parent_id'],
+                  'level'        => (int)$level,
+              ];
+
+              if (!empty($children[$id])) {
+                  foreach ($children[$id] as $cid) {
+                      $walk($cid, $level + 1);
+                  }
+              }
+          };
+
+          foreach ($roots as $rid) $walk($rid, 0);
+
+          return $out;
+
+      } catch (\PDOException $e) {
+          error_log('getVariationsBySKUProduct: ' . $e->getMessage());
+          return [];
+      }
   }
-
   // -----------------------------------------------------
   // Get prices by variation SKU
   // -----------------------------------------------------
