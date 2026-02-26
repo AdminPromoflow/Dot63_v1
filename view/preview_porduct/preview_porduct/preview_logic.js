@@ -141,7 +141,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        //alert(text);
+        alert(text);
         const json = JSON.parse(text);
 
         const variationTypes  = json.variationTypes || [];
@@ -350,7 +350,7 @@ class PreviewLogic {
 
   renderItems(itemsOnlyOfType = [], typeVariation) {
 
-    alert(JSON.stringify(itemsOnlyOfType) + JSON.stringify(typeVariation));
+  //  alert(JSON.stringify(itemsOnlyOfType) + JSON.stringify(typeVariation));
     const parent = document.getElementById("wrap-items-group");
     if (!parent) return;
 
