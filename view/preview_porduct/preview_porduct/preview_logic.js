@@ -590,18 +590,12 @@ class PreviewLogic {
     DELETE helpers — remove the “wrapper by type”
   ============================================================================ */
 
-  deleteVariations(typeVariation) {
-    alert(JSON.stringify(typeVariation));
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
+  deleteVariations(id_type) {
+    // id_type puede ser number, string o null
+    const typeId = (id_type === null || id_type === undefined) ? "null" : String(id_type);
 
-    const typeId = typeVariation?.type_id ?? "null";
-
-    const parent = document.getElementById("wrap-variations-group");
-    if (!parent) return;
-
-    const wrap = parent.querySelector(`.var-options-[data-type-id="${typeId}"]`);
-    if (wrap) wrap.remove();
+    const el = document.getElementById(`var-options-${typeId}`);
+    if (el) el.remove();
   }
 
 
