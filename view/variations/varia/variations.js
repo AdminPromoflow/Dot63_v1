@@ -356,48 +356,117 @@ class Variations {
      Rendering
      ========================= */
 
-  renderTopMenu(variationsRaw, skuVariation) {
+     renderTopMenu(variationsRaw, skuVariation) {
+       if (!this.menuList) return;
 
-    
-    if (!this.menuList) return;
+       this.menuList.innerHTML = '';
 
-    // Clear menu list
-    this.menuList.innerHTML = '';
+       const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
+       const frag = document.createDocumentFragment();
 
-    // Normalize array input
-    const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
+       // 🎨 Colores por nivel (ajusta si quieres)
+       const levelColors = [
+         '#0f2140', // level 0
+         '#0b6b6b', // level 1
+         '#7a4d0f', // level 2
+         '#5a2d82', // level 3
+         '#1d6b2a', // level 4+
+       ];
 
-    // Use a fragment to reduce reflows (faster)
-    const frag = document.createDocumentFragment();
+       // SKU seleccionado
+       const wanted = String(skuVariation || '').trim().toUpperCase();
 
-    for (let i = 0; i < variations.length; i++) {
-      const name = String(variations[i]?.name ?? '(unnamed)');
-      const sku  = String(variations[i]?.SKU ?? variations[i]?.sku ?? '');
+       for (let i = 0; i < variations.length; i++) {
+         const v = variations[i] || {};
 
-      const li = document.createElement('li');
-      li.dataset.sku = sku;
-      li.style.padding = '8px 10px';
-      li.style.borderRadius = '10px';
-      li.style.cursor = 'default';
-      li.innerHTML = `<strong>${name}</strong>${sku ? ` ` : ''}`;
+         const name  = String(v.name ?? '(unnamed)');
+         const sku   = String(v.SKU ?? v.sku ?? '');
+         const level = Number(v.level ?? 0) || 0;
 
-      frag.appendChild(li);
-    }
+         const color = levelColors[level] || levelColors[levelColors.length - 1];
+         const indent = 28 + (level * 18); 
 
-    this.menuList.appendChild(frag);
+         const li = document.createElement('li');
+         li.dataset.sku = sku;
 
-    // Highlight current SKU variation
-    const wanted = String(skuVariation || '').trim().toUpperCase();
-    this.menuList.querySelectorAll('li').forEach(li => {
-      const candidate = String(li.dataset.sku || '').trim().toUpperCase();
-      if (candidate && candidate === wanted) li.classList.add('is-selected');
-    });
+         // Base
+         li.style.position = 'relative';
+         li.style.padding = '8px 10px';
+         li.style.paddingLeft = `${indent}px`;
+         li.style.borderRadius = '10px';
+         li.style.cursor = 'default';
+         li.style.marginBottom = '6px';
 
-    // Keep menu closed by default
-    this.menuList.hidden = true;
-    if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
-  }
+         // Jerarquía (color por nivel)
+         li.style.borderLeft = `4px solid ${color}`;
+         li.style.color = 'inherit';
+         li.style.background = 'rgba(255,255,255,0.03)';
 
+         // “Dot” a la izquierda para que se note el nivel visualmente
+         li.style.setProperty('--lvl', color);
+         li.insertAdjacentHTML(
+           'afterbegin',
+           `<span aria-hidden="true" style="
+             position:absolute;
+             left: 10px;
+             top: 50%;
+             transform: translateY(-50%);
+             width: 8px;
+             height: 8px;
+             border-radius: 999px;
+             background: ${color};
+             opacity: .85;
+           "></span>`
+         );
+
+         // Texto
+         li.innerHTML += `<strong>${name}</strong>`;
+
+         // ✅ Selección (muy visible)
+         const candidate = String(sku || '').trim().toUpperCase();
+         const isSelected = candidate && candidate === wanted;
+
+         if (isSelected) {
+           li.classList.add('is-selected');
+
+           // Acento fuerte
+           li.style.background = 'rgba(255,255,255,0.10)';
+           li.style.outline = '2px solid rgba(255,255,255,0.28)';
+           li.style.boxShadow = '0 10px 22px rgba(0,0,0,0.18)';
+           li.style.borderLeft = `6px solid ${color}`;
+
+           // Marca “check” discreta a la derecha
+           li.insertAdjacentHTML(
+             'beforeend',
+             `<span aria-hidden="true" style="
+               position:absolute;
+               right: 10px;
+               top: 50%;
+               transform: translateY(-50%);
+               width: 18px;
+               height: 18px;
+               border-radius: 999px;
+               border: 2px solid ${color};
+               display:flex;
+               align-items:center;
+               justify-content:center;
+               font-size:12px;
+               line-height:1;
+               color:${color};
+               background: rgba(255,255,255,0.06);
+             ">✓</span>`
+           );
+         }
+
+         frag.appendChild(li);
+       }
+
+       this.menuList.appendChild(frag);
+
+       // Keep menu closed by default
+       this.menuList.hidden = true;
+       if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
+     }
   renderCurrentNameAndDefaultRules(current) {
     const currentName = String(current?.name ?? '');
 

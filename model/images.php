@@ -122,17 +122,16 @@ class Images {
   public function getVariationsBySKUProduct()
   {
       if (!$this->sku) {
-          return []; // ← mantiene "variations": []
+          return []; // ← para mantener el shape: "variations": []
       }
 
       try {
           $pdo = $this->connection->getConnection();
 
-          // 1) Obtener product_id por SKU (case-insensitive, por si acaso)
           $stmt = $pdo->prepare("
               SELECT product_id
               FROM products
-              WHERE LOWER(SKU) = LOWER(:sku)
+              WHERE SKU = :sku
               LIMIT 1
           ");
           $stmt->execute([':sku' => $this->sku]);
@@ -142,64 +141,16 @@ class Images {
               return []; // ← shape consistente
           }
 
-          $productId = (int)$prod['product_id'];
+          $stmt = $pdo->prepare("
+              SELECT v.name, v.SKU
+              FROM variations v
+              WHERE v.product_id = :pid
+              ORDER BY v.name ASC, v.variation_id ASC
+          ");
+          $stmt->execute([':pid' => (int)$prod['product_id']]);
+          $variations = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
 
-          // 2) Variaciones en orden jerárquico (abuelo -> padre -> hijo) + level
-          $variations = [];
-
-          try {
-              // ✅ MySQL 8+ (CTE recursivo)
-              $stmt = $pdo->prepare("
-                  WITH RECURSIVE vtree AS (
-                    -- Abuelos (raíz)
-                    SELECT
-                      v.variation_id,
-                      v.name,
-                      v.SKU,
-                      v.parent_id,
-                      0 AS level,
-                      CONCAT(LOWER(v.name), '-', LPAD(v.variation_id, 10, '0')) AS sort_path
-                    FROM variations v
-                    WHERE v.product_id = :pid
-                      AND (v.parent_id IS NULL OR v.parent_id = 0)
-
-                    UNION ALL
-
-                    -- Hijos (recursivo)
-                    SELECT
-                      c.variation_id,
-                      c.name,
-                      c.SKU,
-                      c.parent_id,
-                      p.level + 1 AS level,
-                      CONCAT(p.sort_path, '>', LOWER(c.name), '-', LPAD(c.variation_id, 10, '0')) AS sort_path
-                    FROM variations c
-                    INNER JOIN vtree p
-                      ON c.parent_id = p.variation_id
-                    WHERE c.product_id = :pid
-                  )
-
-                  SELECT variation_id, name, SKU, parent_id, level
-                  FROM vtree
-                  ORDER BY sort_path ASC;
-              ");
-              $stmt->execute([':pid' => $productId]);
-              $variations = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
-
-          } catch (\PDOException $e) {
-              // 🔁 Fallback si tu BD no soporta WITH RECURSIVE
-              $stmt = $pdo->prepare("
-                  SELECT variation_id, name, SKU, parent_id, 0 AS level
-                  FROM variations
-                  WHERE product_id = :pid
-                  ORDER BY name ASC, variation_id ASC
-              ");
-              $stmt->execute([':pid' => $productId]);
-              $variations = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
-          }
-
-          return $variations;
-
+          return $variations; // ✅ ahora sí
       } catch (\PDOException $e) {
           error_log('getVariationsBySKUProduct: '.$e->getMessage());
           return []; // ← mantiene "variations": []
