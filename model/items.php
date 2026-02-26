@@ -92,28 +92,96 @@ class Items {
    }
 
   // Variations by product SKU (for the dropdown)
-  public function getVariationsBySKUProduct(): array {
-    if (!$this->sku) return [];
-    try {
-      $pdo = $this->connection->getConnection();
-      $stmt = $pdo->prepare("SELECT product_id FROM products WHERE SKU = :sku LIMIT 1");
-      $stmt->execute([':sku' => $this->sku]);
-      $product = $stmt->fetch(\PDO::FETCH_ASSOC);
-      if (!$product) return [];
+  public function getVariationsBySKUProduct(): array
+  {
+      if (!$this->sku) return [];
 
-      $stmt = $pdo->prepare("
-        SELECT v.name, v.SKU
-        FROM variations v
-        WHERE v.product_id = :pid
-        ORDER BY v.name ASC, v.variation_id ASC
-      ");
-      $stmt->execute([':pid' => (int)$product['product_id']]);
-      return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+      try {
+          $pdo = $this->connection->getConnection();
 
-    } catch (\PDOException $e) {
-      error_log('getVariationsBySKUProduct: ' . $e->getMessage());
-      return [];
-    }
+          // 1) Buscar product_id por SKU (case-insensitive)
+          $stmt = $pdo->prepare("
+              SELECT product_id
+              FROM products
+              WHERE LOWER(SKU) = LOWER(:sku)
+              LIMIT 1
+          ");
+          $stmt->execute([':sku' => $this->sku]);
+          $product = $stmt->fetch(\PDO::FETCH_ASSOC);
+          if (!$product) return [];
+
+          $pid = (int)$product['product_id'];
+
+          // 2) Variations en orden jerárquico (abuelo -> padre -> hijo -> nieto...) usando CTE recursivo (MySQL 8+)
+          //    Devuelve name y SKU (como antes) + parent_id y depth (útiles para UI)
+          $stmt = $pdo->prepare("
+              WITH RECURSIVE tree AS (
+                -- Raíces: parent_id NULL/0 o huérfanas (padre no existe en el mismo producto)
+                SELECT
+                  v.variation_id,
+                  v.name,
+                  v.SKU,
+                  v.parent_id,
+                  0 AS depth,
+                  CONCAT(
+                    RPAD(LOWER(COALESCE(v.name,'')), 80, ' '),
+                    '#',
+                    LPAD(v.variation_id, 10, '0')
+                  ) AS sort_path
+                FROM variations v
+                WHERE v.product_id = :pid1
+                  AND (
+                    v.parent_id IS NULL OR v.parent_id = 0
+                    OR NOT EXISTS (
+                      SELECT 1
+                      FROM variations p
+                      WHERE p.product_id = :pid2
+                        AND p.variation_id = v.parent_id
+                    )
+                  )
+
+                UNION ALL
+
+                -- Hijos
+                SELECT
+                  c.variation_id,
+                  c.name,
+                  c.SKU,
+                  c.parent_id,
+                  t.depth + 1 AS depth,
+                  CONCAT(
+                    t.sort_path,
+                    '/',
+                    RPAD(LOWER(COALESCE(c.name,'')), 80, ' '),
+                    '#',
+                    LPAD(c.variation_id, 10, '0')
+                  ) AS sort_path
+                FROM variations c
+                INNER JOIN tree t
+                  ON t.variation_id = c.parent_id
+                WHERE c.product_id = :pid3
+                  AND t.depth < 50
+              )
+              SELECT
+                name,
+                SKU,
+                parent_id,
+                depth
+              FROM tree
+              ORDER BY sort_path
+          ");
+          $stmt->execute([
+              ':pid1' => $pid,
+              ':pid2' => $pid,
+              ':pid3' => $pid,
+          ]);
+
+          return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+      } catch (\PDOException $e) {
+          error_log('getVariationsBySKUProduct: ' . $e->getMessage());
+          return [];
+      }
   }
 
   // Items by variation SKU
