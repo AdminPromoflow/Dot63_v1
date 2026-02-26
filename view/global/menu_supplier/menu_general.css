@@ -1,18 +1,31 @@
-:root {
-  --page-bg: #e4f3ee;        /* soft green background */
-  --bg: var(--page-bg);
-  --card: #ffffff;
-  --text: #0b1110;
-  --muted: #5b6a65;
-  --border: #c6ddd4;
-  --brand: #00695c;          /* main brand green */
-  --brand-soft: #ecfdf5;
-  --shadow-soft: 0 10px 30px rgba(11, 17, 16, 0.08);
+:root{
+  /* ===== THEME "OVERVIEW" (mismo look que tu preview) ===== */
+  --ov-bg: #2F4560;                       /* rgb(47,69,96) */
+  --ov-panel: rgba(255,255,255,.06);
+  --ov-border: rgba(255,255,255,.12);
+  --ov-text: rgba(255,255,255,.92);
+  --ov-muted: rgba(255,255,255,.72);
+
+  /* ✅ Color que combina perfecto con #2F4560 para header/nav */
+  --ov-header: #1F3551;                   /* más profundo, elegante */
+
+  --ov-shadow: 0 16px 40px rgba(0,0,0,.28);
   --radius: 18px;
   --radius-sm: 14px;
-  --price: var(--brand);
-  --buy: var(--brand);
-  --buy-hover: #005248;
+
+  /* ===== Mapeo a tus variables originales ===== */
+  --page-bg: var(--ov-bg);
+  --bg: var(--page-bg);
+  --card: var(--ov-panel);
+  --text: var(--ov-text);
+  --muted: var(--ov-muted);
+  --border: var(--ov-border);
+  --brand: var(--ov-header);              /* antes: verde */
+  --brand-soft: rgba(0,0,0,.14);
+  --shadow-soft: var(--ov-shadow);
+  --price: rgba(255,255,255,.95);
+  --buy: var(--ov-header);
+  --buy-hover: #192f49;
 
   /* altura aprox. del header para compensar el contenido */
   --header-height: 64px;
@@ -21,23 +34,20 @@
 /* ===== Reset mínimo + body ===== */
 *,
 *::before,
-*::after{
-  box-sizing: border-box;
-}
+*::after{ box-sizing: border-box; }
 
-ul { margin: 0; padding: 0; list-style: none; }
-a  { text-decoration: none; color: inherit; }
+ul{ margin: 0; padding: 0; list-style: none; }
+a{ text-decoration: none; color: inherit; }
 
 html, body{
   margin: 0;
   padding: 0;
-  z-index: 50;
 }
 
 body{
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* deja espacio para el header fijo, para que no se tape el contenido */
   padding-top: var(--header-height);
@@ -45,23 +55,26 @@ body{
 
 /* ===== Header ===== */
 .site-header{
-  position: fixed;               /* antes: sticky */
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
+
   z-index: 1000;
-  background: var(--brand);
-  border-bottom: none;
+  background: var(--brand);                 /* ✅ ahora azul */
+  border-bottom: 1px solid var(--border);   /* ✅ look overview */
   padding: 0.75rem 1.25rem;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   box-sizing: border-box;
   overflow: hidden;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,.12);
-  transition: transform .25s ease;   /* importante para animar */
-  z-index: 20;
+
+  color: var(--ov-text);
+  box-shadow: 0 14px 32px rgba(0,0,0,.26);
+  transition: transform .25s ease;
 }
 
 /* Ocultar header cuando se hace scroll hacia abajo */
@@ -79,7 +92,7 @@ body{
 }
 .brand-text{
   letter-spacing: .5px;
-  color: #fff;                           /* asegura que el logo-text sea blanco */
+  color: rgba(255,255,255,.92);
 }
 .brand-logo{
   width: 40px;
@@ -95,7 +108,7 @@ body{
   display: inline-block;
   position: relative;
   cursor: pointer;
-  z-index: 1010;  /* un poco por encima del header para seguridad */
+  z-index: 1010;
 }
 .burger::before,
 .burger::after{
@@ -105,14 +118,15 @@ body{
   right: 0;
   height: 3px;
   border-radius: 2px;
-  background: #fff;                      /* líneas blancas sobre fondo verde */
+  background: rgba(255,255,255,.92);        /* ✅ blanco suave */
   transition: transform .25s ease, top .25s ease, opacity .25s ease;
 }
 .burger::before{ top: 6px; }
 .burger::after{ top: 19px; }
+
 /* línea central */
 .burger{
-  background: linear-gradient(#fff 0 0) center 50%/100% 3px no-repeat;
+  background: linear-gradient(rgba(255,255,255,.92) 0 0) center 50%/100% 3px no-repeat;
 }
 
 /* Navegación: móvil -> panel deslizante */
@@ -121,15 +135,20 @@ body{
   top: 0;
   right: 0;
   bottom: 0;
+
   width: min(80vw, 300px);
   transform: translateX(100%);
   transition: transform .3s ease;
-  background: var(--brand);              /* panel también con verde de marca */
+
+  background: var(--brand);                /* ✅ mismo azul del header */
+  border-left: 1px solid var(--border);
   padding: 5rem 1.25rem 2rem;
+
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-  z-index: 1005;                         /* debajo del header, encima del contenido */
+
+  z-index: 1005;
 }
 
 .nav-list{
@@ -142,27 +161,30 @@ body{
 .nav-list a{
   display: block;
   padding: .9rem 1rem;
-  color: #fff;
-  border-radius: 8px;
-  transition: background .2s ease, transform .2s ease;
+  color: rgba(255,255,255,.92);
+  border-radius: 10px;
+  transition: background .2s ease, transform .2s ease, filter .2s ease;
 }
 .nav-list a:hover{
-  background: rgba(255,255,255,.10);
+  background: rgba(255,255,255,.08);
   transform: translateX(2px);
+  filter: brightness(1.06);
 }
+
 .nav-list .cta{
-  background: #fff;
-  color: var(--brand);                   /* botón Logout en verde de marca */
-  font-weight: 600;
+  background: rgba(255,255,255,.92);
+  color: var(--brand);
+  font-weight: 650;
 }
 .nav-list .cta:hover{
-  background: #f3f5f8;
+  background: #ffffff;
 }
 
 /* Abrir menú cuando el checkbox está marcado */
 .nav-toggle:checked ~ .nav{
   transform: translateX(0);
 }
+
 /* Animación hamburguesa -> X */
 .nav-toggle:checked + .burger{
   background: none;
@@ -178,7 +200,6 @@ body{
 
 /* ====== Tablet y Desktop ====== */
 @media (min-width: 768px){
-  /* el body puede tener un poquito menos de padding si quieres */
   body{
     padding-top: calc(var(--header-height) - 4px);
   }
@@ -194,7 +215,8 @@ body{
   .nav{
     position: static;
     transform: none;
-    background: transparent;             /* el header ya tiene var(--brand) */
+    background: transparent;
+    border-left: none;
     padding: 0;
     width: auto;
     height: auto;
@@ -207,22 +229,23 @@ body{
   }
 
   .nav-list a{
-    color: #fff;
+    color: rgba(255,255,255,.92);
     padding: .5rem .9rem;
+    border-radius: 999px;
   }
 
   .nav-list a:hover{
-    background: rgba(0,0,0,.18);
+    background: rgba(0,0,0,.22);           /* ✅ hover tipo overview */
     transform: none;
   }
 
   .nav-list .cta{
-    background: #fff;
+    background: rgba(255,255,255,.92);
     color: var(--brand);
     border-radius: 999px;
     padding-inline: 1.25rem;
   }
   .nav-list .cta:hover{
-    background: #f3f5f8;
+    background: #ffffff;
   }
 }
