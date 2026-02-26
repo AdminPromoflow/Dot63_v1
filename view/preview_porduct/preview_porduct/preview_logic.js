@@ -149,11 +149,11 @@ class PreviewLogic {
         const childVariations = json.childVariations || [];
         const variationTypesForDelete = json.variationTypesForDelete || [];
 
-          alert(JSON.stringify(variationTypesForDelete));
+        //  alert(JSON.stringify(variationTypesForDelete));
 
         // ✅ 1) BORRAR LO QUE YA EXISTE (por type) antes de volver a pintar
         if (variationTypes.length) {
-          this.organizeVariationsForDelete(variationTypes);
+          this.organizeVariationsForDelete(variationTypesForDelete);
         }
 
         // ✅ 2) PINTAR NUEVO
@@ -172,6 +172,8 @@ class PreviewLogic {
     - Recorre tipos y elimina wrappers por type_id
   ============================================================================ */
   organizeVariationsForDelete(variationTypes = []) {
+
+    alert(JSON.stringify(variationTypes));
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
     for (const typeVariation of variationTypes) {
