@@ -593,11 +593,14 @@ class PreviewLogic {
   deleteVariations(id_type) {
     const typeId = (id_type === null || id_type === undefined) ? "null" : String(id_type);
 
-    const el = document.getElementById(`var-options-${typeId}`);
-    if (!el) return;
+    // ✅ Selecciona TODOS los elementos con data-type-id = typeId
+    const nodes = document.querySelectorAll(`[data-type-id="${CSS.escape(typeId)}"]`);
+    if (!nodes || nodes.length === 0) return;
 
-    // ✅ Elimina SOLO el contenido interno
-    el.innerHTML = "";
+    // ✅ Vacía el contenido interno, sin borrar el contenedor
+    for (const el of nodes) {
+      el.innerHTML = "";
+    }
   }
 
 
