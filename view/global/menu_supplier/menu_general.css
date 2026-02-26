@@ -241,7 +241,7 @@ body{
 
   .nav-list .cta{
     background: rgba(255,255,255,.92);
-    color: var(--brand);
+    color: rgba(0,0,0,.7);
     border-radius: 999px;
     padding-inline: 1.25rem;
   }
