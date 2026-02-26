@@ -5,7 +5,7 @@ class PreviewLogic {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => this.getDataProduct());
     } else {
-      this.getDataProduct();
+      //this.getDataProduct();
     }
   }
 
