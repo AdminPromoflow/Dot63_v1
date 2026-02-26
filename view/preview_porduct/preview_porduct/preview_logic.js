@@ -152,12 +152,12 @@ class PreviewLogic {
 
         // ✅ 1) BORRAR LO QUE YA EXISTE (por type) antes de volver a pintar
         if (variationTypesForDelete.length) {
-          this.organizeVariationsForDelete(variationTypesForDelete);
+        //  this.organizeVariationsForDelete(variationTypesForDelete);
         }
 
         // ✅ 2) PINTAR NUEVO
         if (childVariations.length && variationTypes.length) {
-          this.organizeVariationsForRender(childVariations, variationTypes);
+        //  this.organizeVariationsForRender(childVariations, variationTypes);
         }
       })
       .catch((error) => {
