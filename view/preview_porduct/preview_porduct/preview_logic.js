@@ -232,7 +232,7 @@ class PreviewLogic {
 
       this.renderVariations(variationsOnlyOfType, typeVariation);
       this.renderItems(itemsOnlyOfType, typeVariation);
-      this.renderImages(imagesOnlyOfType, typeVariation);
+    //  this.renderImages(imagesOnlyOfType, typeVariation);
       this.renderPrices(pricesOnlyOfType, typeVariation);
       this.renderArtwork(artworksOnlyOfType, typeVariation);
     }
