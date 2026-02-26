@@ -535,26 +535,27 @@ class Variation {
 
       $stmt = $pdo->prepare("
         WITH RECURSIVE descendants AS (
-          -- Parent
+          -- 1) Parent (capturamos su type_id)
           SELECT v.variation_id, v.parent_id, v.type_id
           FROM variations v
           WHERE v.variation_id = :parent_id
 
           UNION ALL
 
-          -- Children / grandchildren / etc.
+          -- 2) Hijos / nietos / etc. (capturamos sus type_id)
           SELECT child.variation_id, child.parent_id, child.type_id
           FROM variations child
           INNER JOIN descendants d
             ON child.parent_id = d.variation_id
         )
+        -- 3) Con los type_id (incluye NULL), traemos type_name y no repetimos
         SELECT DISTINCT
           d.type_id,
           tv.type_name
         FROM descendants d
         LEFT JOIN type_variations tv
           ON tv.type_id = d.type_id
-        ORDER BY d.type_id ASC
+        ORDER BY (d.type_id IS NOT NULL), d.type_id ASC
       ");
 
       $stmt->execute([':parent_id' => $parentVariationId]);
