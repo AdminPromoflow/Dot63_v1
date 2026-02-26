@@ -151,7 +151,7 @@ class PreviewLogic {
         //  alert(JSON.stringify(variationTypesForDelete));
 
         // ✅ 1) BORRAR LO QUE YA EXISTE (por type) antes de volver a pintar
-        if (variationTypes.length) {
+        if (variationTypesForDelete.length) {
           this.organizeVariationsForDelete(variationTypesForDelete);
         }
 
