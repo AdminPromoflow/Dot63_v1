@@ -521,6 +521,50 @@ class Variation {
     }
   }
 
+
+  public function getTypeVariationsChildByVariationIdForDelete(): array
+  {
+    $parentVariationId = (int)($this->variation_id ?? 0);
+
+    if ($parentVariationId <= 0) {
+      return ['success' => false, 'error' => 'variation_id required'];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      $stmt = $pdo->prepare("
+        WITH RECURSIVE descendants AS (
+          -- Parent
+          SELECT v.variation_id, v.parent_id, v.type_id
+          FROM variations v
+          WHERE v.variation_id = :parent_id
+
+          UNION ALL
+
+          -- Children / grandchildren / etc.
+          SELECT child.variation_id, child.parent_id, child.type_id
+          FROM variations child
+          INNER JOIN descendants d
+            ON child.parent_id = d.variation_id
+        )
+        SELECT DISTINCT
+          d.type_id,
+          tv.type_name
+        FROM descendants d
+        LEFT JOIN type_variations tv
+          ON tv.type_id = d.type_id
+        ORDER BY d.type_id ASC
+      ");
+
+      $stmt->execute([':parent_id' => $parentVariationId]);
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+      error_log('getTypeVariationsChildByVariationIdForDelete error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
   // En tu modelo Variation
 
   public function updateVariationDetails(): bool

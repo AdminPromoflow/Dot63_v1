@@ -142,11 +142,14 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert(text);
+      //  alert(text);
         const json = JSON.parse(text);
 
         const variationTypes  = json.variationTypes || [];
         const childVariations = json.childVariations || [];
+        const variationTypesForDelete = json.variationTypesForDelete || [];
+
+          alert(JSON.stringify(variationTypesForDelete));
 
         // ✅ 1) BORRAR LO QUE YA EXISTE (por type) antes de volver a pintar
         if (variationTypes.length) {

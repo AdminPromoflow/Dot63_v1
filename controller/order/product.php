@@ -31,8 +31,17 @@ class Product {
     $variation->setVariationId($data['variation_id']);
     $variationTypes = $variation->getTypeVariationsChildByVariationId();
 
+    $connection = new Database();
+    $variation = new Variation($connection);
+    $variation->setVariationId($data['variation_id']);
+    $variationTypesForDelete = $variation->getTypeVariationsChildByVariationIdForDelete();
 
-    echo json_encode(['childVariations' => $childVariations, 'variationTypes' => $variationTypes]);
+    echo json_encode([
+      'childVariations' => $childVariations,
+      'variationTypes' => $variationTypes,
+      'variationTypesForDelete' => $variationTypesForDelete
+
+    ]);
   }
   private function getPreviewProductDetails($data){
     header('Content-Type: application/json; charset=utf-8');
