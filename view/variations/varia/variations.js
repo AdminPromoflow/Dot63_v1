@@ -384,7 +384,7 @@ class Variations {
          const level = Number(v.level ?? 0) || 0;
 
          const color = levelColors[level] || levelColors[levelColors.length - 1];
-         const indent = 10 + (level * 18);
+         const indent = 28 + (level * 18); 
 
          const li = document.createElement('li');
          li.dataset.sku = sku;
