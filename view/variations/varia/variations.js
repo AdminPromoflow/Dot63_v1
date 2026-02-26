@@ -335,9 +335,9 @@ class Variations {
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
-        alert(JSON.stringify(json.type_variations) + "  " + JSON.stringify(json.current?.type_id));
+      //  alert(JSON.stringify(json.type_variations) + "  " + JSON.stringify(json.current?.type_id));
 
-
+      alert(JSON.stringify(json.variations));
         // Render page sections (each method does one job)
         this.renderTopMenu(json.variations, skuVariation);
         this.renderCurrentNameAndDefaultRules(json.current);
