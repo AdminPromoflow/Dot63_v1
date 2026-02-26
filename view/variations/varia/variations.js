@@ -356,47 +356,81 @@ class Variations {
      Rendering
      ========================= */
 
-  renderTopMenu(variationsRaw, skuVariation) {
+     renderTopMenu(variationsRaw, skuVariation) {
+       // alert(JSON.stringify(variationsRaw));
+       if (!this.menuList) return;
 
-    alert(JSON.stringify(variationsRaw));
-    if (!this.menuList) return;
+       this.menuList.innerHTML = '';
 
-    // Clear menu list
-    this.menuList.innerHTML = '';
+       const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
+       const frag = document.createDocumentFragment();
 
-    // Normalize array input
-    const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
+       // 🎨 Colores por nivel (ajusta a tu gusto)
+       const levelColors = [
+         '#0f2140', // level 0
+         '#0b6b6b', // level 1
+         '#7a4d0f', // level 2
+         '#5a2d82', // level 3
+         '#1d6b2a', // level 4
+       ];
 
-    // Use a fragment to reduce reflows (faster)
-    const frag = document.createDocumentFragment();
+       for (let i = 0; i < variations.length; i++) {
+         const v = variations[i] || {};
 
-    for (let i = 0; i < variations.length; i++) {
-      const name = String(variations[i]?.name ?? '(unnamed)');
-      const sku  = String(variations[i]?.SKU ?? variations[i]?.sku ?? '');
+         const name  = String(v.name ?? '(unnamed)');
+         const sku   = String(v.SKU ?? v.sku ?? '');
+         const level = Number(v.level ?? 0) || 0; // ✅ aquí el nivel
+         const color = levelColors[level] || levelColors[levelColors.length - 1];
 
-      const li = document.createElement('li');
-      li.dataset.sku = sku;
-      li.style.padding = '8px 10px';
-      li.style.borderRadius = '10px';
-      li.style.cursor = 'default';
-      li.innerHTML = `<strong>${name}</strong>${sku ? ` ` : ''}`;
+         const li = document.createElement('li');
+         li.dataset.sku = sku;
 
-      frag.appendChild(li);
-    }
+         // ✅ sangría: cada nivel suma 16px
+         const indent = 10 + (level * 16);
 
-    this.menuList.appendChild(frag);
+         li.style.padding = '8px 10px';
+         li.style.paddingLeft = `${indent}px`;
+         li.style.borderRadius = '10px';
+         li.style.cursor = 'default';
 
-    // Highlight current SKU variation
-    const wanted = String(skuVariation || '').trim().toUpperCase();
-    this.menuList.querySelectorAll('li').forEach(li => {
-      const candidate = String(li.dataset.sku || '').trim().toUpperCase();
-      if (candidate && candidate === wanted) li.classList.add('is-selected');
-    });
+         // ✅ color por nivel + look “tree”
+         li.style.borderLeft = `4px solid ${color}`;
+         li.style.background = 'rgba(255,255,255,0.03)'; // suave (si tu fondo es oscuro)
+         li.style.marginBottom = '6px';
 
-    // Keep menu closed by default
-    this.menuList.hidden = true;
-    if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
-  }
+         // (opcional) cambia tono del texto por nivel
+         li.style.color = color;
+
+         // (opcional) badge del nivel
+         const levelBadge = `<span style="
+           font-size:12px;
+           opacity:.8;
+           margin-left:8px;
+           color:${color};
+         ">L${level}</span>`;
+
+         li.innerHTML = `<strong>${name}</strong>${sku ? ` ${levelBadge}` : ''}`;
+
+         frag.appendChild(li);
+       }
+
+       this.menuList.appendChild(frag);
+
+       // Highlight current SKU variation
+       const wanted = String(skuVariation || '').trim().toUpperCase();
+       this.menuList.querySelectorAll('li').forEach(li => {
+         const candidate = String(li.dataset.sku || '').trim().toUpperCase();
+         if (candidate && candidate === wanted) {
+           li.classList.add('is-selected');
+           li.style.outline = '2px solid rgba(255,255,255,0.25)';
+           li.style.background = 'rgba(255,255,255,0.08)';
+           li.style.fontWeight = '700';
+         }
+       });
+
+       this.menuList.hidden = true;
+       if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
+     }
 
   renderCurrentNameAndDefaultRules(current) {
     const currentName = String(current?.name ?? '');
