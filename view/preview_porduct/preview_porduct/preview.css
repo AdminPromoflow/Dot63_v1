@@ -19,6 +19,10 @@
 .wrap-price{
   display: contents;
 }
+.btn-buy{
+  background: rgba(255, 138, 61, 1)!important;
+  color: black!important;
+}
 
 /* Evitar que items-note se agrupe visualmente por wrappers */
 .wrap-items,
