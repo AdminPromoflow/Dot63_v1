@@ -357,7 +357,6 @@ class Variations {
      ========================= */
 
      renderTopMenu(variationsRaw, skuVariation) {
-       // alert(JSON.stringify(variationsRaw));
        if (!this.menuList) return;
 
        this.menuList.innerHTML = '';
@@ -365,73 +364,109 @@ class Variations {
        const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
        const frag = document.createDocumentFragment();
 
-       // 🎨 Colores por nivel (ajusta a tu gusto)
+       // 🎨 Colores por nivel (ajusta si quieres)
        const levelColors = [
          '#0f2140', // level 0
          '#0b6b6b', // level 1
          '#7a4d0f', // level 2
          '#5a2d82', // level 3
-         '#1d6b2a', // level 4
+         '#1d6b2a', // level 4+
        ];
+
+       // SKU seleccionado
+       const wanted = String(skuVariation || '').trim().toUpperCase();
 
        for (let i = 0; i < variations.length; i++) {
          const v = variations[i] || {};
 
          const name  = String(v.name ?? '(unnamed)');
          const sku   = String(v.SKU ?? v.sku ?? '');
-         const level = Number(v.level ?? 0) || 0; // ✅ aquí el nivel
+         const level = Number(v.level ?? 0) || 0;
+
          const color = levelColors[level] || levelColors[levelColors.length - 1];
+         const indent = 10 + (level * 18);
 
          const li = document.createElement('li');
          li.dataset.sku = sku;
 
-         // ✅ sangría: cada nivel suma 16px
-         const indent = 10 + (level * 16);
-
+         // Base
+         li.style.position = 'relative';
          li.style.padding = '8px 10px';
          li.style.paddingLeft = `${indent}px`;
          li.style.borderRadius = '10px';
          li.style.cursor = 'default';
-
-         // ✅ color por nivel + look “tree”
-         li.style.borderLeft = `4px solid ${color}`;
-         li.style.background = 'rgba(255,255,255,0.03)'; // suave (si tu fondo es oscuro)
          li.style.marginBottom = '6px';
 
-         // (opcional) cambia tono del texto por nivel
-         li.style.color = color;
+         // Jerarquía (color por nivel)
+         li.style.borderLeft = `4px solid ${color}`;
+         li.style.color = 'inherit';
+         li.style.background = 'rgba(255,255,255,0.03)';
 
-         // (opcional) badge del nivel
-         const levelBadge = `<span style="
-           font-size:12px;
-           opacity:.8;
-           margin-left:8px;
-           color:${color};
-         ">L${level}</span>`;
+         // “Dot” a la izquierda para que se note el nivel visualmente
+         li.style.setProperty('--lvl', color);
+         li.insertAdjacentHTML(
+           'afterbegin',
+           `<span aria-hidden="true" style="
+             position:absolute;
+             left: 10px;
+             top: 50%;
+             transform: translateY(-50%);
+             width: 8px;
+             height: 8px;
+             border-radius: 999px;
+             background: ${color};
+             opacity: .85;
+           "></span>`
+         );
 
-         li.innerHTML = `<strong>${name}</strong>${sku ? ` ${levelBadge}` : ''}`;
+         // Texto
+         li.innerHTML += `<strong>${name}</strong>`;
+
+         // ✅ Selección (muy visible)
+         const candidate = String(sku || '').trim().toUpperCase();
+         const isSelected = candidate && candidate === wanted;
+
+         if (isSelected) {
+           li.classList.add('is-selected');
+
+           // Acento fuerte
+           li.style.background = 'rgba(255,255,255,0.10)';
+           li.style.outline = '2px solid rgba(255,255,255,0.28)';
+           li.style.boxShadow = '0 10px 22px rgba(0,0,0,0.18)';
+           li.style.borderLeft = `6px solid ${color}`;
+
+           // Marca “check” discreta a la derecha
+           li.insertAdjacentHTML(
+             'beforeend',
+             `<span aria-hidden="true" style="
+               position:absolute;
+               right: 10px;
+               top: 50%;
+               transform: translateY(-50%);
+               width: 18px;
+               height: 18px;
+               border-radius: 999px;
+               border: 2px solid ${color};
+               display:flex;
+               align-items:center;
+               justify-content:center;
+               font-size:12px;
+               line-height:1;
+               color:${color};
+               background: rgba(255,255,255,0.06);
+             ">✓</span>`
+           );
+         }
 
          frag.appendChild(li);
        }
 
        this.menuList.appendChild(frag);
 
-       // Highlight current SKU variation
-       const wanted = String(skuVariation || '').trim().toUpperCase();
-       this.menuList.querySelectorAll('li').forEach(li => {
-         const candidate = String(li.dataset.sku || '').trim().toUpperCase();
-         if (candidate && candidate === wanted) {
-           li.classList.add('is-selected');
-           li.style.outline = '2px solid rgba(255,255,255,0.25)';
-           li.style.background = 'rgba(255,255,255,0.08)';
-           li.style.fontWeight = '700';
-         }
-       });
-
+       // Keep menu closed by default
        this.menuList.hidden = true;
        if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
      }
-
   renderCurrentNameAndDefaultRules(current) {
     const currentName = String(current?.name ?? '');
 
