@@ -42,8 +42,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
               <!-- ✅ 12-13: Aquí van imágenes y 1 video, agrupados con wrap-images -->
 
-                <!-- Grupo 1: 2 imágenes -->
-                <div class="wrap-images">
+                <!-- <div class="wrap-images">
                   <img
                     class="preview-media"
                     src="../../view/preview_porduct/img/5ecd4b8a-c3ad-4bd4-a2ed-155007cec1f1.png"
@@ -60,7 +59,6 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
                   >
                 </div>
 
-                <!-- Grupo 2: 1 video -->
                 <div class="wrap-images">
                   <video class="preview-media" controls preload="metadata">
                     <source src="" type="video/mp4">
@@ -83,7 +81,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
                     loading="lazy"
                     decoding="async"
                   >
-                </div>
+                </div> -->
             </div>
 
             <button
