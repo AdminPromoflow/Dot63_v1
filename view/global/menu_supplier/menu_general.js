@@ -6,7 +6,7 @@ class Menu_Supplier {
     this.ticking = false;
 
     // Verificar login al iniciar
-    this.verifyLogin();
+    //this.verifyLogin();
 
     // Botón logout (si existe)
     if (logout) {
