@@ -30,9 +30,7 @@
 .wrap-price{
   display: contents !important;
 }
-body{
-  background: black;
-}
+
 
 /* =============================================================================
    ✅ TOKENS OVERVIEW + mapeo a variables existentes del preview
