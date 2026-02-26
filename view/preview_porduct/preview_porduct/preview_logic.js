@@ -176,7 +176,7 @@ class PreviewLogic {
 
     for (const tv of variationTypes) {
       const typeName = tv?.type_name ?? null; // conserva null
-      alert(typeName);
+    //  alert(typeName);
       this.deleteVariations(typeName);
       this.deleteItems(typeName);
       this.deleteImages(typeName);
