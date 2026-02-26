@@ -205,19 +205,16 @@ class ItemsLogic {
   }
 
   renderMenuTop(items) {
-
     const ul = document.getElementById('menu_list');
     if (!ul) return;
 
-    // ✅ Soporta: array plano, { variations: [...] }, o árbol (con children)
-    const list = Array.isArray(items)
-      ? items
+    const list = Array.isArray(items) ? items
       : (items && Array.isArray(items.variations) ? items.variations : []);
 
     ul.innerHTML = '';
     ul.setAttribute('role', 'menu');
 
-    if (!list || list.length === 0) {
+    if (list.length === 0) {
       const li = document.createElement('li');
       li.textContent = 'No items to show';
       li.setAttribute('role', 'menuitem');
@@ -230,38 +227,22 @@ class ItemsLogic {
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])
     );
 
-    // ✅ Recorre jerarquía (abuelo -> padre -> hijo...) y crea <li> en ese orden
     const frag = document.createDocumentFragment();
 
-    const walk = (arr, depth = 0) => {
-      if (!Array.isArray(arr)) return;
+    list.forEach((it) => {
+      const name = (it?.name ?? '(unnamed)').trim() || '(unnamed)';
+      const sku = (it?.SKU ?? it?.sku ?? '').trim();
 
-      arr.forEach((it) => {
-        const name = String((it?.name ?? '(unnamed)')).trim() || '(unnamed)';
-        const sku  = String((it?.SKU ?? it?.sku ?? '')).trim(); // ✅ se conserva, NO se muestra
+      const li = document.createElement('li');
+      li.setAttribute('role', 'menuitem');
+      li.setAttribute('tabindex', '-1');
+      li.dataset.name = name;
+      li.dataset.sku = sku;
 
-        const li = document.createElement('li');
-        li.setAttribute('role', 'menuitem');
-        li.setAttribute('tabindex', '-1');
+      li.innerHTML = `<strong>${escape(name)}</strong>${sku ? ` <small style="color:var(--muted)">— ${escape(sku)}</small>` : ''}`;
+      frag.appendChild(li);
+    });
 
-        li.dataset.name = name;
-        li.dataset.sku  = sku;
-
-        // ✅ SIN dibujar SKU (solo el nombre)
-        // ✅ Indent visual por jerarquía (puedes ajustar el 14)
-        li.style.paddingLeft = `${10 + (depth * 14)}px`;
-
-        li.innerHTML = `<strong>${escape(name)}</strong>`;
-        frag.appendChild(li);
-
-        // children
-        if (Array.isArray(it?.children) && it.children.length > 0) {
-          walk(it.children, depth + 1);
-        }
-      });
-    };
-
-    walk(list, 0);
     ul.appendChild(frag);
   }
 
