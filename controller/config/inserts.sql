@@ -426,14 +426,14 @@ SELECT x.type_name, NULL, c.category_id
 FROM `categories` c
 JOIN (
   SELECT 'Width (mm)' AS type_name
-  UNION ALL SELECT 'Material (Polyester/RPET/Nylon/etc.)'
-  UNION ALL SELECT 'Print method (Dye-sub/Screen/Woven)'
+  UNION ALL SELECT 'Material'
+  UNION ALL SELECT 'Print method'
   UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Length / style (Single/Double-ended)'
-  UNION ALL SELECT 'Attachment type (Hook/Clip/etc.)'
-  UNION ALL SELECT 'Safety breakaway (Yes/No)'
-  UNION ALL SELECT 'Accessory add-ons (Buckle/Phone loop/etc.)'
-  UNION ALL SELECT 'ID holder type (if applicable)'
+  UNION ALL SELECT 'Length / style '
+  UNION ALL SELECT 'Attachment type '
+  UNION ALL SELECT 'Safety breakaway '
+  UNION ALL SELECT 'Accessory add-ons '
+  UNION ALL SELECT 'ID holder type '
 ) x
 LEFT JOIN `type_variations` tv
   ON tv.category_id = c.category_id AND tv.type_name = x.type_name
