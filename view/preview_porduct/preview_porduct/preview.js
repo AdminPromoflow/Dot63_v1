@@ -17,8 +17,8 @@ class PreviewPage {
   init() {
     if (!this.main) return;
 
-    this.initGalleryFromDom();
-    this.bindZoomEvents();
+  //  this.initGalleryFromDom();
+  //  this.bindZoomEvents();
 
     // ✅ Prev button (la flecha izquierda no tenía click)
     this.bindPrevButton();
