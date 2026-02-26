@@ -19,10 +19,7 @@
 .wrap-price{
   display: contents;
 }
-.btn-buy{
-  background: rgba(255, 138, 61, 1)!important;
-  color: black!important;
-}
+
 
 /* Evitar que items-note se agrupe visualmente por wrappers */
 .wrap-items,
@@ -592,7 +589,8 @@ body{
 .btn-primary:hover{ background: var(--buy-hover); }
 
 .btn-ghost{
-  background: rgba(255,255,255,.06);
+    background: rgba(255, 138, 61, 1)!important;
+    color: black!important;
 }
 
 /* =============================================================================
