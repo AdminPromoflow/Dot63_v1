@@ -42,7 +42,6 @@ class ItemsLogic {
       }
     });
 
-    // ✅ CLICK: usa dataset.sku (no parsea texto)
     menuList.addEventListener('click', (e) => {
       const li = e.target.closest('li');
       if (!li || !menuList.contains(li)) return;
@@ -55,8 +54,7 @@ class ItemsLogic {
       li.classList.add('is-selected');
       li.setAttribute('aria-selected', 'true');
 
-      const sku = String(li.dataset.sku || '').trim();
-      if (!sku) return;
+      const { sku } = this.items.parseNameSkuFromText(li.textContent);
 
       menuList.hidden = true;
       menuBtn.setAttribute('aria-expanded', 'false');
@@ -85,28 +83,28 @@ class ItemsLogic {
   }
 
   saveItems({ goNext = false } = {}) {
-    const labelInput = document.querySelectorAll(".label-input");
-    const textInput = document.querySelectorAll(".text-input");
-
-    if (!labelInput.length || !textInput.length) {
+    const state = Array.isArray(this.items.itemsState) ? this.items.itemsState : [];
+    if (state.length === 0) {
       alert('Please add at least one item.');
       return Promise.resolve(false);
     }
+
+    for (const it of state) {
+      if (!String(it?.text ?? '').trim()) {
+        alert('Item text cannot be empty.');
+        return Promise.resolve(false);
+      }
+    }
+
+    const labelInput = document.querySelectorAll(".label-input");
+    const textInput = document.querySelectorAll(".text-input");
 
     const labels = [];
     const texts = [];
 
     for (let i = 0; i < labelInput.length; i++) {
-      const labelVal = String(labelInput[i].value ?? '').trim();
-      const textVal  = String(textInput[i].value ?? '').trim();
-
-      if (!textVal) {
-        alert('Item text cannot be empty.');
-        return Promise.resolve(false);
-      }
-
-      labels.push(labelVal);
-      texts.push(textVal);
+      labels.push(labelInput[i].value);
+      texts.push(textInput[i].value);
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -138,12 +136,13 @@ class ItemsLogic {
       })
       .then(data => {
         if (data?.success) {
-          // ✅ data.variations viene plano con { level, parent_id }
           this.renderMenuTop(data.variations);
           this.selectMenuCurrentItemBySku();
         }
       })
-      .catch(error => console.error("Error:", error));
+      .catch(error => {
+        console.error("Error:", error);
+      });
   }
 
   getItemsDetails() {
@@ -170,7 +169,9 @@ class ItemsLogic {
           this.items.drawItems(data.items);
         }
       })
-      .catch(error => console.error("Error:", error));
+      .catch(error => {
+        console.error("Error:", error);
+      });
   }
 
   selectMenuCurrentItemBySku() {
@@ -188,7 +189,10 @@ class ItemsLogic {
     const wanted = norm(skuv);
 
     for (const li of ul.querySelectorAll('li')) {
-      const candidate = norm(li.dataset?.sku);
+      const skuData = li.dataset?.sku;
+      const skuText = li.querySelector('small')?.textContent?.replace(/^—\s*/, '');
+      const candidate = norm(skuData || skuText);
+
       if (candidate && candidate === wanted) {
         li.classList.add('is-selected');
         li.setAttribute('aria-selected', 'true');
@@ -200,11 +204,12 @@ class ItemsLogic {
     return false;
   }
 
-  // ✅ MENU: sangría por level + color por nivel + seleccionado visible
   renderMenuTop(items) {
+
     const ul = document.getElementById('menu_list');
     if (!ul) return;
 
+    // ✅ Soporta: array plano, { variations: [...] }, o árbol (con children)
     const list = Array.isArray(items)
       ? items
       : (items && Array.isArray(items.variations) ? items.variations : []);
@@ -225,103 +230,46 @@ class ItemsLogic {
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])
     );
 
-    const levelColors = ['#0f2140', '#0b6b6b', '#7a4d0f', '#5a2d82', '#1d6b2a'];
-
-    const params = new URLSearchParams(window.location.search);
-    const wanted = String(params.get('sku_variation') || '').trim().toUpperCase();
-
+    // ✅ Recorre jerarquía (abuelo -> padre -> hijo...) y crea <li> en ese orden
     const frag = document.createDocumentFragment();
 
-    list.forEach((it) => {
-      const name  = String((it?.name ?? '(unnamed)')).trim() || '(unnamed)';
-      const sku   = String((it?.SKU ?? it?.sku ?? '')).trim(); // NO se muestra
-      const level = Number(it?.level ?? 0) || 0;
+    const walk = (arr, depth = 0) => {
+      if (!Array.isArray(arr)) return;
 
-      const color = levelColors[level] || levelColors[levelColors.length - 1];
-      const indent = 28 + (level * 18); // ✅ sangría extra global
+      arr.forEach((it) => {
+        const name = String((it?.name ?? '(unnamed)')).trim() || '(unnamed)';
+        const sku  = String((it?.SKU ?? it?.sku ?? '')).trim(); // ✅ se conserva, NO se muestra
 
-      const li = document.createElement('li');
-      li.setAttribute('role', 'menuitem');
-      li.setAttribute('tabindex', '-1');
-      li.setAttribute('aria-selected', 'false');
-      li.dataset.name = name;
-      li.dataset.sku  = sku;
+        const li = document.createElement('li');
+        li.setAttribute('role', 'menuitem');
+        li.setAttribute('tabindex', '-1');
 
-      li.style.position = 'relative';
-      li.style.padding = '8px 10px';
-      li.style.paddingLeft = `${indent}px`;
-      li.style.borderRadius = '10px';
-      li.style.marginBottom = '6px';
-      li.style.cursor = 'default';
-      li.style.borderLeft = `4px solid ${color}`;
-      li.style.background = 'rgba(0,0,0,0.03)';
+        li.dataset.name = name;
+        li.dataset.sku  = sku;
 
-      // Dot alineado a la sangría
-      li.insertAdjacentHTML(
-        'afterbegin',
-        `<span aria-hidden="true" style="
-          position:absolute;
-          left:${Math.max(8, indent - 14)}px;
-          top:50%;
-          transform:translateY(-50%);
-          width:8px;height:8px;border-radius:999px;
-          background:${color};opacity:.85;
-        "></span>`
-      );
+        // ✅ SIN dibujar SKU (solo el nombre)
+        // ✅ Indent visual por jerarquía (puedes ajustar el 14)
+        li.style.paddingLeft = `${10 + (depth * 14)}px`;
 
-      // ✅ Solo nombre
-      li.innerHTML += `<strong>${escape(name)}</strong>`;
+        li.innerHTML = `<strong>${escape(name)}</strong>`;
+        frag.appendChild(li);
 
-      const candidate = String(sku).trim().toUpperCase();
-      if (wanted && candidate && candidate === wanted) {
-        li.classList.add('is-selected');
-        li.setAttribute('aria-selected', 'true');
-        li.style.background = 'rgba(0,0,0,0.06)';
-        li.style.outline = `2px solid ${color}33`;
-        li.style.borderLeft = `6px solid ${color}`;
+        // children
+        if (Array.isArray(it?.children) && it.children.length > 0) {
+          walk(it.children, depth + 1);
+        }
+      });
+    };
 
-        li.insertAdjacentHTML(
-          'beforeend',
-          `<span aria-hidden="true" style="
-            position:absolute;
-            right:10px;top:50%;
-            transform:translateY(-50%);
-            width:18px;height:18px;border-radius:999px;
-            border:2px solid ${color};
-            display:flex;align-items:center;justify-content:center;
-            font-size:12px;line-height:1;color:${color};
-            background:rgba(255,255,255,0.4);
-          ">✓</span>`
-        );
-      }
-
-      frag.appendChild(li);
-    });
-
+    walk(list, 0);
     ul.appendChild(frag);
   }
 
   deleteItem(id_item) {
     const url = "../../controller/products/item.php";
-    const data = { action: "delete_item", id_item };
-
-    return fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    }).then(response => {
-      if (response.ok) return response.json();
-      throw new Error("Network error.");
-    });
-  }
-
-  createItems({ sku_variation, labels, texts, goNext = false } = {}) {
-    const url = "../../controller/products/item.php";
     const data = {
-      action: "create_items",
-      sku_variation,
-      labels,
-      texts
+      action: "delete_item",
+      id_item: id_item
     };
 
     return fetch(url, {
@@ -330,13 +278,38 @@ class ItemsLogic {
       body: JSON.stringify(data)
     })
       .then(response => {
-        if (response.ok) return response.text();
+        if (response.ok) return response.json();
+        throw new Error("Network error.");
+      });
+  }
+
+  createItems({ sku_variation, labels, texts, goNext = false } = {}) {
+    const url = "../../controller/products/item.php";
+    const data = {
+      action: "create_items",
+      sku_variation: sku_variation,
+      labels: labels,
+      texts: texts
+    };
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+      .then(response => {
+        if (response.ok) {
+          return response.text();
+        }
         throw new Error("Network error.");
       })
-      .then(raw => {
-        const parsed = JSON.parse(raw);
+      .then(data => {
+      //  alert(data);
+        var parsed = JSON.parse(data);
 
-        if (parsed?.success) {
+        if (parsed["success"]) {
           alert("The items have been saved successfully.");
           if (goNext && window.headerAddProduct) {
             headerAddProduct.goNext('../../view/prices/index.php');
