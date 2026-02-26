@@ -332,9 +332,11 @@ class Variations {
         return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
-      //  alert(text);
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
+
+        alert(JSON.stringify(json.type_variations) + "  " + JSON.stringify(json.current?.type_id);
+
 
         // Render page sections (each method does one job)
         this.renderTopMenu(json.variations, skuVariation);
