@@ -168,7 +168,7 @@ class ClassGroup {
       group_list.innerHTML +=
         '<div class="cp-group" role="listitem" id="' + id + '" onclick="classGroup.selectGroup(' + id + ')">' +
           '<span class="cp-group-name">' + name + '</span>' +
-          '<small class="cp-group-meta">' + count + ' products</small>' +
+          // '<small class="cp-group-meta">' + count + ' products</small>' +
         '</div>';
     }
   }

@@ -1,9 +1,14 @@
 /* =========================================================
-   FULL SQL SCRIPT
+   FULL SQL SCRIPT (UPDATED)
    - Inserts categories (including Unassigned Category)
    - Creates "Unassigned Group" for EVERY category
    - Inserts all product groups by category name
    - approved = 1
+
+   ✅ Update applied:
+   - Removed: "Lanyards & ID"
+   - Added:   "Identification / Credentials"
+   - Groups for this category: ONLY "Lanyards (ID Card)"
    ========================================================= */
 
 
@@ -21,7 +26,7 @@ INSERT INTO `categories`(`name`, `approved`) VALUES
 ('Packaging & Presentation', 1),
 ('Tech & USBs', 1),
 ('Badges & Accessories', 1),
-('Lanyards & ID', 1),
+('Identification / Credentials', 1),
 ('Clothing & Wearables', 1),
 ('Office & Stationery', 1),
 ('Gift & Seasonal', 1),
@@ -187,36 +192,18 @@ WHERE c.name = 'Badges & Accessories' AND g.group_id IS NULL;
 
 
 /* =========================
-   3.5) Lanyards & ID
+   3.5) Identification / Credentials
+   (ONLY one main group)
    ========================= */
 INSERT INTO `groups` (`name`, `approved`, `category_id`)
 SELECT x.name, 1, c.category_id
 FROM `categories` c
 JOIN (
-  SELECT 'Eco RPET Lanyards' AS name
-  UNION ALL SELECT 'Polyester Lanyards'
-  UNION ALL SELECT 'Ribbed Polyester Lanyards'
-  UNION ALL SELECT 'Nylon Lanyards'
-  UNION ALL SELECT 'Cotton Lanyards'
-  UNION ALL SELECT 'Bamboo Lanyards'
-  UNION ALL SELECT 'Full Colour Printed Lanyards'
-  UNION ALL SELECT 'Woven Lanyards'
-  UNION ALL SELECT 'Tube Lanyards'
-  UNION ALL SELECT 'Breakaway Safety Lanyards'
-  UNION ALL SELECT 'Detachable Buckle Lanyards'
-  UNION ALL SELECT 'Reflective Lanyards'
-  UNION ALL SELECT 'Wrist Lanyards'
-  UNION ALL SELECT 'Phone Lanyards'
-  UNION ALL SELECT 'Lanyard Card Holders'
-  UNION ALL SELECT 'ID Card Holders (Landscape)'
-  UNION ALL SELECT 'ID Card Holders (Portrait)'
-  UNION ALL SELECT 'Waterproof ID Holders'
-  UNION ALL SELECT 'Retractable Badge Reels'
-  UNION ALL SELECT 'Lanyard Attachments (Hooks / Clips / Buckles)'
+  SELECT 'Lanyards (ID Card)' AS name
 ) x
 LEFT JOIN `groups` g
   ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Lanyards & ID' AND g.group_id IS NULL;
+WHERE c.name = 'Identification / Credentials' AND g.group_id IS NULL;
 
 
 /* =========================
@@ -337,12 +324,6 @@ WHERE c.name = 'Custom / Bespoke Projects' AND g.group_id IS NULL;
 
 
 
-
-
-
-
-
-
 /* =========================================================
    4) TYPE VARIATIONS by Category name
    - Uses existing categories (already inserted)
@@ -438,7 +419,7 @@ WHERE c.name = 'Badges & Accessories' AND tv.type_id IS NULL;
 
 
 /* =========================
-   4.5) Lanyards & ID
+   4.5) Identification / Credentials
    ========================= */
 INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
 SELECT x.type_name, NULL, c.category_id
@@ -456,7 +437,7 @@ JOIN (
 ) x
 LEFT JOIN `type_variations` tv
   ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Lanyards & ID' AND tv.type_id IS NULL;
+WHERE c.name = 'Identification / Credentials' AND tv.type_id IS NULL;
 
 
 /* =========================
@@ -545,3 +526,13 @@ JOIN (
 LEFT JOIN `type_variations` tv
   ON tv.category_id = c.category_id AND tv.type_name = x.type_name
 WHERE c.name = 'Custom / Bespoke Projects' AND tv.type_id IS NULL;
+
+
+INSERT INTO `suppliers`
+(`contact_name`, `email`, `phone`, `company_name`, `country`, `city`, `address_line1`, `address_line2`, `postal_code`, `password`)
+VALUES
+('Ian Sourthworth', 'ian@kan-do-it.com', '44 786555899', '.63', 'UK', 'Hampshire', 'Hampshire Marine ....', NULL, '00000', '32skiff32!CI');
+
+
+
+/**/
