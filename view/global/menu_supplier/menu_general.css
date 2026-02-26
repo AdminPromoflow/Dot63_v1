@@ -173,7 +173,7 @@ body{
 
 .nav-list .cta{
   background: rgba(255,255,255,.92);
-  color: var(--brand);
+  color: rgba(0,0,0,.7);
   font-weight: 650;
 }
 .nav-list .cta:hover{
