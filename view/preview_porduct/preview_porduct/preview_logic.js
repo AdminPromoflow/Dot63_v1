@@ -172,16 +172,17 @@ class PreviewLogic {
     - Recorre tipos y elimina wrappers por type_id
   ============================================================================ */
   organizeVariationsForDelete(variationTypes = []) {
-
     alert(JSON.stringify(variationTypes));
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
-    for (const typeVariation of variationTypes) {
-      this.deleteVariations(typeVariation);
-      this.deleteItems(typeVariation);
-      this.deleteImages(typeVariation);
-      this.deletePrices(typeVariation);
-      this.deleteArtwork(typeVariation);
+    for (const tv of variationTypes) {
+      const typeName = tv?.type_name ?? null; // conserva null
+
+      this.deleteVariations(typeName);
+      this.deleteItems(typeName);
+      this.deleteImages(typeName);
+      this.deletePrices(typeName);
+      this.deleteArtwork(typeName);
     }
   }
 
