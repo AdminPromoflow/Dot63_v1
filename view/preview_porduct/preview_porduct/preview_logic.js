@@ -349,6 +349,8 @@ class PreviewLogic {
 
 
   renderItems(itemsOnlyOfType = [], typeVariation) {
+
+    alert(JSON.stringify(itemsOnlyOfType) + JSON.stringify(typeVariation));
     const parent = document.getElementById("wrap-items-group");
     if (!parent) return;
 
