@@ -221,8 +221,7 @@ body{
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
-  min-height: 95px;
-  max-height: 104px;
+  height: 65px;
 }
 .cp-group::before {
   content: '';
