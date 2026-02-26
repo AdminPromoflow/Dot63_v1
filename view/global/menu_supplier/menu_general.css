@@ -61,7 +61,7 @@ body{
   right: 0;
 
   z-index: 1000;
-  background: var(--brand)!important;                 /* ✅ ahora azul */
+  background: #1F3551!important;                 /* ✅ ahora azul */
   border-bottom: 1px solid var(--border);   /* ✅ look overview */
   padding: 0.75rem 1.25rem;
 
