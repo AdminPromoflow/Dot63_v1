@@ -125,49 +125,49 @@ class PreviewPage {
   // ✅ NEW: reconstruye currentImages leyendo el DOM
   // force=true => reconstruye aunque ahora el DOM tenga solo 1 item (por changeMainMedia)
   rebuildGalleryFromDom(startIndex = 0, force = false) {
-    const root = document.getElementById("wrap-images-group");
-    if (!root) return;
-
-    const mediaEls = root.querySelectorAll(".preview-media");
-
-    // Si NO force y el DOM tiene 1 (porque ya está mostrando una sola),
-    // pero la memoria tiene más, NO dañamos la galería en memoria.
-    if (!force && mediaEls.length <= 1 && this.currentImages.length > 1) {
-      return;
-    }
-
-    // parar auto-rotate antes de reconstruir
-    this.stopAutoRotate();
-
-    this.currentImages = Array.from(mediaEls)
-      .map((el) => {
-        if (el.tagName === "IMG") {
-          const src = el.getAttribute("src") || "";
-          return src ? { type: "img", src } : null;
-        }
-
-        if (el.tagName === "VIDEO") {
-          const source = el.querySelector("source");
-          const src = source?.getAttribute("src") || "";
-          return src ? { type: "video", src } : null;
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-
-    if (!this.currentImages.length) {
-      root.innerHTML = '<div class="cp-empty">No media</div>';
-      this.currentImageIndex = 0;
-      return;
-    }
-
-    const safeIndex = Math.max(0, Math.min(startIndex, this.currentImages.length - 1));
-    this.currentImageIndex = safeIndex;
-    this.changeMainMedia(this.currentImages[this.currentImageIndex]);
-
-    // ✅ auto-rotate cada 5s
-    this.startAutoRotate();
+    // const root = document.getElementById("wrap-images-group");
+    // if (!root) return;
+    //
+    // const mediaEls = root.querySelectorAll(".preview-media");
+    //
+    // // Si NO force y el DOM tiene 1 (porque ya está mostrando una sola),
+    // // pero la memoria tiene más, NO dañamos la galería en memoria.
+    // if (!force && mediaEls.length <= 1 && this.currentImages.length > 1) {
+    //   return;
+    // }
+    //
+    // // parar auto-rotate antes de reconstruir
+    // this.stopAutoRotate();
+    //
+    // this.currentImages = Array.from(mediaEls)
+    //   .map((el) => {
+    //     if (el.tagName === "IMG") {
+    //       const src = el.getAttribute("src") || "";
+    //       return src ? { type: "img", src } : null;
+    //     }
+    //
+    //     if (el.tagName === "VIDEO") {
+    //       const source = el.querySelector("source");
+    //       const src = source?.getAttribute("src") || "";
+    //       return src ? { type: "video", src } : null;
+    //     }
+    //
+    //     return null;
+    //   })
+    //   .filter(Boolean);
+    //
+    // if (!this.currentImages.length) {
+    //   root.innerHTML = '<div class="cp-empty">No media</div>';
+    //   this.currentImageIndex = 0;
+    //   return;
+    // }
+    //
+    // const safeIndex = Math.max(0, Math.min(startIndex, this.currentImages.length - 1));
+    // this.currentImageIndex = safeIndex;
+    // this.changeMainMedia(this.currentImages[this.currentImageIndex]);
+    //
+    // // ✅ auto-rotate cada 5s
+    // this.startAutoRotate();
   }
 
   // ✅ Auto rotate control
