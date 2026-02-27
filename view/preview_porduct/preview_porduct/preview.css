@@ -1,7 +1,7 @@
 /* =============================================================================
-   Product Preview — THEME "OVERVIEW" + tonos de blanco (solo CSS)
+   Product Preview — THEME "OVERVIEW" (solo CSS)
    - Mantiene tu markup intacto
-   - Mismo layout, pero con más “white glass” (brillos, paneles y bordes)
+   - Misma lógica de layout, pero con el look del dashboard (.section-overview)
 ============================================================================= */
 
 /* =============================================================================
@@ -9,13 +9,17 @@
 ============================================================================= */
 .wrap-images,
 .wrap-images-group,
+.wrap-items,
+.wrap-items-group,
 .wrap-prices,
 .wrap-prices-group,
 .wrap-artworks,
 .wrap-artworks-group,
+.wrap-prices-group,
 .wrap-price{
   display: contents;
 }
+
 
 /* Evitar que items-note se agrupe visualmente por wrappers */
 .wrap-items,
@@ -23,46 +27,29 @@
   display: block !important;
 }
 
+/* wrap-price visible pero sin afectar layout */
+.wrap-price{
+  display: contents !important;
+}
+
+
 /* =============================================================================
-   ✅ TOKENS OVERVIEW + escala de blancos (white glass)
+   ✅ TOKENS OVERVIEW + mapeo a variables existentes del preview
 ============================================================================= */
 :root{
-  /* OVERVIEW base */
+  /* OVERVIEW tokens */
   --ov-bg: #2F4560;
+  --ov-panel: rgba(255,255,255,.06);
   --ov-panel2: rgba(0,0,0,.12);
-
-  /* ✅ Escala de blancos (tonos de blanco) */
-  --w-0: rgba(255,255,255,.98);
-  --w-1: rgba(255,255,255,.92);
-  --w-2: rgba(255,255,255,.78);
-  --w-3: rgba(255,255,255,.60);
-  --w-4: rgba(255,255,255,.42);
-
-  /* ✅ “Glass” (más blanco, sin perder el look oscuro) */
-  --glass-1: rgba(255,255,255,.12);
-  --glass-2: rgba(255,255,255,.09);
-  --glass-3: rgba(255,255,255,.07);
-  --glass-4: rgba(255,255,255,.05);
-
-  /* Bordes (más blancos) */
-  --stroke-1: rgba(255,255,255,.22);
-  --stroke-2: rgba(255,255,255,.16);
-  --stroke-3: rgba(255,255,255,.12);
-
-  /* Texto */
-  --ov-text: var(--w-1);
+  --ov-border: rgba(255,255,255,.12);
+  --ov-text: rgba(255,255,255,.92);
   --ov-muted: rgba(255,255,255,.72);
 
-  /* Botón base */
   --ov-btn: #1F3551;
   --ov-btnText: rgb(214,218,223);
 
   --ov-radius: 18px;
   --ov-shadow: 0 16px 40px rgba(0,0,0,.28);
-
-  /* ✅ Panel principal ahora más “white glass” */
-  --ov-panel: var(--glass-4);
-  --ov-panel-bright: var(--glass-2);
 
   /* Mapeo (para que tu CSS existente "entienda" el tema) */
   --page-bg: var(--ov-bg);
@@ -71,17 +58,17 @@
   --card: var(--ov-panel);
   --text: var(--ov-text);
   --muted: var(--ov-muted);
-  --border: var(--stroke-2);
+  --border: var(--ov-border);
 
-  /* Acentos */
-  --brand: var(--w-1);
+  /* Acentos (selección / estados) */
+  --brand: rgba(255,255,255,.92);
   --brand-soft: rgba(0,0,0,.14);
 
   --shadow-soft: var(--ov-shadow);
   --radius: var(--ov-radius);
   --radius-sm: 14px;
 
-  --price: var(--w-0);
+  --price: rgba(255,255,255,.95);
 
   --buy: var(--ov-btn);
   --buy-hover: #192f49;
@@ -104,57 +91,32 @@ body{
 }
 
 /* =============================================================================
-   Estructura principal (fondo tipo dashboard + brillos blancos)
+   Estructura principal (fondo tipo dashboard)
 ============================================================================= */
+
+/* MAIN: contenedor centrado */
 .sp-amz{
   width: 100%;
   position: relative;
 
+  /* mantenemos tu espacio superior, pero con "fondo overview" */
   padding: 120px 18px 40px;
-
-  /* ✅ Brillos blancos suaves (tonos de blanco) */
-  background:
-    radial-gradient(1200px 620px at 18% -10%, rgba(255,255,255,.12), transparent 60%),
-    radial-gradient(900px 520px at 92% 0%, rgba(255,255,255,.10), transparent 55%),
-    radial-gradient(900px 620px at 50% 120%, rgba(255,255,255,.06), transparent 55%),
-    var(--ov-bg);
-
+  background: var(--ov-bg);
   border-radius: 5px;
 }
 
-/* ✅ HEADER / SHELL con panel más blanco (sin perder el azul) */
+/* ✅ HEADER (SOLO CAMBIÉ ESTO): sp-shell ahora usa el tono #1F3551 */
 .sp-shell{
   max-width: 95%;
   margin: 0 auto;
+
+  /* panel interior como el header/details del overview */
   padding: 18px 16px;
 
-  position: relative;
-  overflow: hidden;
-
-  /* ✅ base + glass */
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)),
-    #1F3551;
-
-  border: 1px solid var(--stroke-2);
+  background: #1F3551;               /* ✅ antes: rgba(0,0,0,.10) */
+  border: 1px solid var(--ov-border);
   border-radius: var(--ov-radius);
   box-shadow: var(--ov-shadow);
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-/* Brillo interno blanco */
-.sp-shell::before{
-  content: "";
-  position: absolute;
-  inset: -2px;
-  pointer-events: none;
-
-  background:
-    radial-gradient(900px 420px at 20% 0%, rgba(255,255,255,.16), transparent 55%),
-    radial-gradient(780px 420px at 100% 10%, rgba(255,255,255,.10), transparent 55%);
-  opacity: .45;
 }
 
 @media (max-width: 760px){
@@ -177,7 +139,7 @@ body{
 .crumbs li::after{
   content: "›";
   margin: 0 6px;
-  color: rgba(255,255,255,.55);
+  color: rgba(255,255,255,.45);
 }
 .crumbs li:last-child::after{ content: ""; }
 
@@ -228,12 +190,11 @@ body{
   will-change: transform;
 }
 
-/* Marco de imagen/video (más blanco) */
+/* Marco de imagen/video (panel tipo overview) */
 .sp-main{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+  background: var(--ov-panel);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--stroke-2);
+  border: 1px solid var(--border);
   aspect-ratio: 4 / 3;
   width: 100%;
   max-height: 520px;
@@ -243,9 +204,6 @@ body{
   position: relative;
   box-shadow: var(--shadow-soft);
   cursor: zoom-in;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .sp-main img,
@@ -267,9 +225,9 @@ body{
   width: 34px;
   height: 50px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.22);
-  background: rgba(255,255,255,.10);
-  color: rgba(255,255,255,.94);
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.22);
+  color: rgba(255,255,255,.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,8 +236,7 @@ body{
   font-size: 22px;
   line-height: 1;
   padding: 0;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
 }
 .sp-nav-prev{ left: 10px; }
 .sp-nav-next{ right: 10px; }
@@ -295,18 +252,14 @@ body{
 
 .sp-thumb{
   appearance: none;
-  border: 1px solid var(--stroke-3);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,.14);
   padding: 0;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0,0,0,.20);
   transition: transform 0.2s ease, outline 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .sp-thumb img{
@@ -327,8 +280,8 @@ body{
 }
 
 .sp-thumb.is-active{
-  border-color: rgba(255,255,255,.30);
-  outline: 2px solid rgba(255,255,255,.16);
+  border-color: rgba(255,255,255,.22);
+  outline: 2px solid rgba(255,255,255,.14);
 }
 
 .sp-thumb-video{
@@ -348,7 +301,7 @@ body{
 }
 .cp-hint{
   font-size: 0.85rem;
-  color: rgba(255,255,255,.76);
+  color: var(--muted);
   margin-top: 6px;
 }
 
@@ -364,7 +317,7 @@ body{
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(255,255,255,.78);
+  color: var(--muted);
   margin-bottom: 4px;
 }
 
@@ -388,7 +341,7 @@ body{
 }
 
 .sp-meta .brand-link{
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
   text-decoration: none;
   font-weight: 650;
 }
@@ -397,7 +350,7 @@ body{
 /* subtítulo */
 .sp-subtitle{
   margin: 0.8rem 0 1rem;
-  color: rgba(255,255,255,.76);
+  color: var(--muted);
   max-width: 60ch;
   font-size: 1.2rem;
 }
@@ -413,29 +366,29 @@ body{
 .sp-price-symbol{
   font-size: 1.9rem;
   line-height: 1;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 .sp-price{
   font-size: 2.5rem;
   font-weight: 820;
   line-height: 1;
-  color: rgba(255,255,255,.98);
+  color: rgba(255,255,255,.96);
 }
 .sp-price-minor{
   font-size: 1.5rem;
   vertical-align: top;
   margin-left: 1px;
-  color: rgba(255,255,255,.92);
+  color: rgba(255,255,255,.90);
 }
 .sp-unit-hint{
   margin-left: 8px;
   font-size: 1rem;
-  color: rgba(255,255,255,.76);
+  color: var(--muted);
 }
 .sp-price-note{
   margin: 0 0 0.8rem;
   font-size: 1.01rem;
-  color: rgba(255,255,255,.76);
+  color: var(--muted);
 }
 
 /* Variaciones (arriba) */
@@ -463,7 +416,7 @@ body{
   font-weight: 560;
 }
 .var-name{
-  color: rgba(255,255,255,.76);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 1rem;
@@ -478,30 +431,20 @@ body{
 
 .var-option{
   appearance: none;
-  border: 1px solid var(--stroke-2);
-
-  /* ✅ más blanco “glass” */
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
   padding: 10px 14px;
   border-radius: 999px;
   cursor: pointer;
   text-align: left;
   font-size: 1rem;
   min-width: 217px;
-
   box-shadow: 0 10px 22px rgba(0,0,0,.18);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, filter 0.2s ease, background 0.2s ease;
-
   display: flex;
   align-items: center;
   gap: 8px;
-
-  color: rgba(255,255,255,.92);
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255,255,255,.90);
 }
 
 .var-option .var-thumb{
@@ -510,14 +453,14 @@ body{
   border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.10);
 }
 
 .var-option .opt-main{ display: block; }
 .var-option .opt-sub{
   display: block;
   font-size: 1rem;
-  color: rgba(255,255,255,.74);
+  color: var(--muted);
 }
 
 .sp-packsize .var-option .opt-main{
@@ -529,7 +472,7 @@ body{
 .sp-packsize .var-option .opt-main::before{
   content: "⊕";
   font-size: 0.8em;
-  opacity: 0.70;
+  opacity: 0.65;
 }
 
 .var-option:hover{
@@ -538,14 +481,10 @@ body{
   box-shadow: 0 16px 34px rgba(0,0,0,.22);
 }
 
-/* ✅ Selección con más blanco (pero sin “quemar” el fondo) */
 .var-option.is-selected{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.09));
-  border-color: rgba(255,255,255,.32);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.14),
-    0 16px 34px rgba(0,0,0,.22);
+  background: rgba(0,0,0,.22);
+  border-color: rgba(255,255,255,.22);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12);
 }
 
 /* =============================================================================
@@ -560,18 +499,14 @@ body{
 }
 
 .sp-buybox .box{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  background: rgba(0,0,0,.10);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--stroke-2);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-soft);
   padding: 16px 14px 18px;
   display: grid;
   gap: 10px;
   will-change: transform;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .price-line{
@@ -580,15 +515,15 @@ body{
   align-items: baseline;
 }
 .price-line .label{
-  color: rgba(255,255,255,.76);
+  color: var(--muted);
   font-size: 0.98rem;
 }
 .price-line strong{
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 
 .stock.in{
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
   font-weight: 650;
   font-size: 1rem;
 }
@@ -597,16 +532,16 @@ body{
   font-weight: 680;
   display: block;
   font-size: 0.98rem;
-  color: rgba(255,255,255,.92);
+  color: rgba(255,255,255,.90);
 }
 .ship small{
-  color: rgba(255,255,255,.74);
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
 /* extras */
 .extras{
-  border-top: 1px solid rgba(255,255,255,.14);
+  border-top: 1px solid rgba(255,255,255,.10);
   margin-top: 4px;
   padding-top: 8px;
   display: grid;
@@ -618,33 +553,25 @@ body{
   justify-content: space-between;
   align-items: baseline;
 }
-.extra-line .label{ color: rgba(255,255,255,.74); }
+.extra-line .label{ color: var(--muted); }
 .extra-line .value{
   font-weight: 560;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 
-/* Botones (más blancos) */
+/* Botones (look overview) */
 .btn{
   appearance: none;
-  border: 1px solid var(--stroke-2);
-
-  /* ✅ blanco suave */
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
   color: var(--ov-btnText);
   padding: 9px 12px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 650;
   font-size: 0.98rem;
-
   text-shadow: 1px 1px 0px rgba(28,48,74,.65);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .btn:hover{
@@ -653,34 +580,18 @@ body{
   box-shadow: 0 16px 34px rgba(0,0,0,.24);
 }
 
-.btn:focus-visible,
-.var-option:focus-visible,
-.sp-thumb:focus-visible,
-.sp-nav:focus-visible{
-  outline: 2px solid rgba(255,255,255,.28);
-  outline-offset: 2px;
-}
-
 .btn-primary{
-  /* ✅ azul + “shine” blanco */
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0)),
-    var(--buy);
-  border-color: rgba(255,255,255,.16);
-  color: rgba(255,255,255,.94);
+  background: var(--buy);
+  border-color: rgba(255,255,255,.14);
+  color: rgba(255,255,255,.92);
   text-shadow: 1px 1px 0px rgba(28,48,74,.65);
 }
-.btn-primary:hover{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0)),
-    var(--buy-hover);
-}
+.btn-primary:hover{ background: var(--buy-hover); }
 
 .btn-ghost{
-  background: rgba(255, 138, 61, 1)!important;
-  color: black!important;
-  font-weight: 200;
-  border-color: rgba(255,255,255,.20);
+    background: rgba(255, 138, 61, 1)!important;
+    color: black!important;
+    font-weight: 200;
 }
 
 /* =============================================================================
@@ -691,7 +602,7 @@ body{
   grid-row: 2;
   margin-top: 8px;
   padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,.16);
+  border-top: 1px solid rgba(255,255,255,.12);
   display: grid;
   gap: 18px;
   justify-items: end;
@@ -710,19 +621,12 @@ body{
   margin-top: 8px;
   padding: 14px 18px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--stroke-2);
-
-  /* ✅ más blanco */
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,.10);
   box-shadow: var(--shadow-soft);
   display: grid;
   gap: 10px;
   font-size: 0.98rem;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .sp-packsize .var-group-pack{
   display: grid;
@@ -743,30 +647,23 @@ body{
   margin-top: 8px;
   padding: 14px 18px 16px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--stroke-2);
-
-  /* ✅ más blanco */
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,.10);
   box-shadow: var(--shadow-soft);
   display: grid;
   gap: 8px;
   font-size: 0.98rem;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .sp-artwork-heading{
   margin: 0;
   font-size: 1.35rem;
   font-weight: 760;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 .sp-artwork-intro,
 .sp-artwork-note{
   margin: 0;
-  color: rgba(255,255,255,.74);
+  color: var(--muted);
   max-width: 70ch;
 }
 .sp-artwork-note{ font-size: 0.9rem; }
@@ -778,12 +675,11 @@ body{
   margin-top: 6px;
 }
 
-/* Botón PDFs */
+/* Botón PDFs (look overview) */
 .btn-artwork{
-  border-color: rgba(255,255,255,.18);
-  color: rgba(255,255,255,.90);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+  border-color: rgba(255,255,255,.14);
+  color: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.06);
   font-size: 0.9rem;
   padding-block: 7px;
   padding-inline: 14px;
@@ -799,19 +695,12 @@ body{
   margin-top: 8px;
   padding: 14px 18px;
   border-radius: var(--radius-sm);
-  border: 1px dashed rgba(255,255,255,.26);
-
-  /* ✅ blanco suave */
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-
+  border: 1px dashed rgba(255,255,255,.20);
+  background: rgba(255,255,255,.06);
   color: var(--text);
   font-size: 0.98rem;
   display: grid;
   gap: 10px;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .sp-items-list{
@@ -822,28 +711,24 @@ body{
 }
 
 .sp-item{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
-  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.10);
+  border: 1px solid rgba(255,255,255,.10);
   border-radius: 14px;
   padding: 12px 12px;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .sp-item-subtitle{
   display: block;
   font-weight: 760;
   font-size: 1.05rem;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
   margin-bottom: 6px;
 }
 
 .sp-item span{
   display: block;
   font-size: 0.96rem;
-  color: rgba(255,255,255,.74);
+  color: var(--muted);
 }
 
 /* =============================================================================
@@ -852,23 +737,17 @@ body{
 .sp-about{
   margin-top: 32px;
   padding: 24px 26px 26px;
-
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-
+  background: rgba(0,0,0,.10);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
-  border: 1px solid var(--stroke-2);
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
 }
 .sp-about h2{
   margin: 0 0 10px;
   text-align: center;
   font-size: 1.8rem;
   font-weight: 760;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 
 .sp-bullets{
@@ -877,7 +756,7 @@ body{
   display: grid;
   gap: 6px;
   font-size: 1rem;
-  color: rgba(255,255,255,.88);
+  color: rgba(255,255,255,.86);
 }
 
 /* DESCRIPCIÓN EN DOS COLUMNAS */
@@ -888,7 +767,7 @@ body{
   font-size: 1.02rem;
   column-count: 2;
   column-gap: 32px;
-  color: rgba(255,255,255,.88);
+  color: rgba(255,255,255,.86);
 }
 .sp-desc p,
 .sp-desc-figure{ break-inside: avoid; }
@@ -901,7 +780,7 @@ body{
 .sp-desc-figure{
   margin: 6px auto 0;
   padding: 12px 0 0;
-  border-top: 1px solid rgba(255,255,255,.14);
+  border-top: 1px solid rgba(255,255,255,.10);
   display: grid;
   gap: 6px;
   max-width: 620px;
@@ -915,7 +794,7 @@ body{
   margin: 0 auto;
   object-fit: cover;
   transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
-  border: 1px solid rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.10);
 }
 .sp-desc-figure img:hover{
   transform: scale(1.03);
@@ -924,7 +803,7 @@ body{
 }
 .sp-desc-figure figcaption{
   font-size: 0.9rem;
-  color: rgba(255,255,255,.74);
+  color: var(--muted);
 }
 
 /* MÁS PRODUCTOS */
@@ -936,7 +815,7 @@ body{
   margin: 0 0 14px;
   font-size: 1.3rem;
   font-weight: 760;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 
 .related-grid{
@@ -946,24 +825,19 @@ body{
 }
 
 .related-card{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  background: rgba(0,0,0,.10);
   border-radius: 18px;
-  border: 1px solid var(--stroke-2);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .related-media{
   height: 170px;
-  border-bottom: 1px solid rgba(255,255,255,.14);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -989,27 +863,27 @@ body{
 .related-title{
   margin: 0 0 2px;
   font-size: 1.06rem;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 .related-category{
   margin: 0;
   font-size: 0.92rem;
-  color: rgba(255,255,255,.74);
+  color: var(--muted);
 }
 .related-variant{
   margin: 4px 0;
   font-size: 0.94rem;
-  color: rgba(255,255,255,.88);
+  color: rgba(255,255,255,.86);
 }
 .related-price{
   margin: 0;
   font-weight: 680;
-  color: rgba(255,255,255,.94);
+  color: rgba(255,255,255,.92);
 }
 .related-btn{
   width: 100%;
   border-radius: 0 0 18px 18px;
-  border-top: 1px solid rgba(255,255,255,.14);
+  border-top: 1px solid rgba(255,255,255,.10);
 }
 
 /* =============================================================================
@@ -1048,10 +922,9 @@ body{
 }
 
 .btn-back-preview{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-  border-color: rgba(255,255,255,.18);
-  color: rgba(255,255,255,.90);
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.14);
+  color: rgba(255,255,255,.88);
 }
 .btn-publish-preview{
   background: var(--accent);
