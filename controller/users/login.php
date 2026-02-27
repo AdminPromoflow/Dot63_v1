@@ -50,7 +50,6 @@ class Login {
 
 
   private function loginSupplier(array $data) {
-  //  echo json_encode("haha");exit;
     header('Content-Type: application/json; charset=utf-8');
 
     // ===== Input (validation is handled in JS, as you indicated) =====

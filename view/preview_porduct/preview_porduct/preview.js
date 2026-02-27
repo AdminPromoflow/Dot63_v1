@@ -17,8 +17,8 @@ class PreviewPage {
   init() {
     if (!this.main) return;
 
-  //  this.initGalleryFromDom();
-  //  this.bindZoomEvents();
+    this.initGalleryFromDom();
+    this.bindZoomEvents();
 
     // ✅ Prev button (la flecha izquierda no tenía click)
     this.bindPrevButton();
@@ -119,55 +119,55 @@ class PreviewPage {
 
   initGalleryFromDom() {
     // primera lectura del DOM (si hay media hardcode)
-    //this.rebuildGalleryFromDom(0, true);
+    this.rebuildGalleryFromDom(0, true);
   }
 
   // ✅ NEW: reconstruye currentImages leyendo el DOM
   // force=true => reconstruye aunque ahora el DOM tenga solo 1 item (por changeMainMedia)
   rebuildGalleryFromDom(startIndex = 0, force = false) {
-    // const root = document.getElementById("wrap-images-group");
-    // if (!root) return;
-    //
-    // const mediaEls = root.querySelectorAll(".preview-media");
-    //
-    // // Si NO force y el DOM tiene 1 (porque ya está mostrando una sola),
-    // // pero la memoria tiene más, NO dañamos la galería en memoria.
-    // if (!force && mediaEls.length <= 1 && this.currentImages.length > 1) {
-    //   return;
-    // }
-    //
-    // // parar auto-rotate antes de reconstruir
-    // this.stopAutoRotate();
-    //
-    // this.currentImages = Array.from(mediaEls)
-    //   .map((el) => {
-    //     if (el.tagName === "IMG") {
-    //       const src = el.getAttribute("src") || "";
-    //       return src ? { type: "img", src } : null;
-    //     }
-    //
-    //     if (el.tagName === "VIDEO") {
-    //       const source = el.querySelector("source");
-    //       const src = source?.getAttribute("src") || "";
-    //       return src ? { type: "video", src } : null;
-    //     }
-    //
-    //     return null;
-    //   })
-    //   .filter(Boolean);
-    //
-    // if (!this.currentImages.length) {
-    //   root.innerHTML = '<div class="cp-empty">No media</div>';
-    //   this.currentImageIndex = 0;
-    //   return;
-    // }
-    //
-    // const safeIndex = Math.max(0, Math.min(startIndex, this.currentImages.length - 1));
-    // this.currentImageIndex = safeIndex;
-    // this.changeMainMedia(this.currentImages[this.currentImageIndex]);
-    //
-    // // ✅ auto-rotate cada 5s
-    // this.startAutoRotate();
+    const root = document.getElementById("wrap-images-group");
+    if (!root) return;
+
+    const mediaEls = root.querySelectorAll(".preview-media");
+
+    // Si NO force y el DOM tiene 1 (porque ya está mostrando una sola),
+    // pero la memoria tiene más, NO dañamos la galería en memoria.
+    if (!force && mediaEls.length <= 1 && this.currentImages.length > 1) {
+      return;
+    }
+
+    // parar auto-rotate antes de reconstruir
+    this.stopAutoRotate();
+
+    this.currentImages = Array.from(mediaEls)
+      .map((el) => {
+        if (el.tagName === "IMG") {
+          const src = el.getAttribute("src") || "";
+          return src ? { type: "img", src } : null;
+        }
+
+        if (el.tagName === "VIDEO") {
+          const source = el.querySelector("source");
+          const src = source?.getAttribute("src") || "";
+          return src ? { type: "video", src } : null;
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+
+    if (!this.currentImages.length) {
+      root.innerHTML = '<div class="cp-empty">No media</div>';
+      this.currentImageIndex = 0;
+      return;
+    }
+
+    const safeIndex = Math.max(0, Math.min(startIndex, this.currentImages.length - 1));
+    this.currentImageIndex = safeIndex;
+    this.changeMainMedia(this.currentImages[this.currentImageIndex]);
+
+    // ✅ auto-rotate cada 5s
+    this.startAutoRotate();
   }
 
   // ✅ Auto rotate control
@@ -220,40 +220,40 @@ class PreviewPage {
   }
 
   changeMainMedia(mediaObj) {
-    // const sp_main = document.getElementById("wrap-images-group");
-    // if (!sp_main) return;
-    //
-    // if (!mediaObj || !mediaObj.src) {
-    //   sp_main.innerHTML = '<div class="cp-empty">No media</div>';
-    //   return;
-    // }
-    //
-    // if (mediaObj.type === "video") {
-    //   sp_main.innerHTML = `
-    //     <video class="preview-media" controls preload="metadata">
-    //       <source src="${mediaObj.src}" type="video/mp4">
-    //       Your browser does not support the video tag.
-    //     </video>
-    //   `;
-    // } else {
-    //   sp_main.innerHTML = `
-    //     <img class="preview-media" src="${mediaObj.src}" alt="Product image">
-    //   `;
-    // }
+    const sp_main = document.getElementById("wrap-images-group");
+    if (!sp_main) return;
+
+    if (!mediaObj || !mediaObj.src) {
+      sp_main.innerHTML = '<div class="cp-empty">No media</div>';
+      return;
+    }
+
+    if (mediaObj.type === "video") {
+      sp_main.innerHTML = `
+        <video class="preview-media" controls preload="metadata">
+          <source src="${mediaObj.src}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      `;
+    } else {
+      sp_main.innerHTML = `
+        <img class="preview-media" src="${mediaObj.src}" alt="Product image">
+      `;
+    }
   }
 
   // ✅ Limpia DOM + memoria de la galería
   clearGallery() {
-    // this.stopAutoRotate();
-    //
-    // this.currentImages = [];
-    // this.currentImageIndex = 0;
-    //
-    // const main = document.getElementById("wrap-images-group");
-    // if (main) main.innerHTML = "";
-    //
-    // const thumbs = document.getElementById("sp_thumbs");
-    // if (thumbs) thumbs.innerHTML = "";
+    this.stopAutoRotate();
+
+    this.currentImages = [];
+    this.currentImageIndex = 0;
+
+    const main = document.getElementById("wrap-images-group");
+    if (main) main.innerHTML = "";
+
+    const thumbs = document.getElementById("sp_thumbs");
+    if (thumbs) thumbs.innerHTML = "";
   }
 
   /* ============================================================================
