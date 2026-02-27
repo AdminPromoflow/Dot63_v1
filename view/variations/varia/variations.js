@@ -131,7 +131,9 @@ class Variations {
           return;
         }
         this.saveVariationDetails(false);
+
         alert('The variation details have been saved successfully.');
+        alert(this.getDefaultVariation());
 
       });
     }
@@ -303,6 +305,56 @@ class Variations {
         this.pdfPreview.innerHTML = '';
         this.attachPDF = false;
       });
+    }
+  }
+
+  async getDefaultVariation() {
+    const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
+    if (!skuProduct) return null;
+
+    try {
+      const res = await fetch("../../controller/products/variations.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get_sku_default_variation",
+          sku: String(skuProduct).trim()
+        })
+      });
+
+      if (!res.ok) throw new Error(`Network error (${res.status})`);
+
+      // Intenta JSON; si el backend responde texto, intenta parsearlo
+      let data;
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { success: false, message: text };
+        }
+      }
+
+      if (data?.success) {
+        return data.sku_variation ?? null;
+      }
+
+      // Si quieres redirigir (cuando venga sku_variation), descomenta:
+      // const skuVar = data?.sku_variation;
+      // if (skuVar) {
+      //   window.location.href =
+      //     `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVar)}`;
+      // }
+
+      console.warn("getDefaultVariation: unexpected response", data);
+      return null;
+
+    } catch (err) {
+      console.error("getDefaultVariation Error:", err);
+      return null;
     }
   }
 

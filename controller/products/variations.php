@@ -44,6 +44,10 @@ class Variations {
               // Aquí sí esperas archivos image/pdf desde FormData
               $this->updateGroupName($data);
               break;
+          case 'get_sku_default_variation':
+              // Aquí sí esperas archivos image/pdf desde FormData
+              $this->getSKUDefaultVariation($data);
+              break;
           default:
               header('Content-Type: application/json; charset=utf-8');
               echo json_encode(['success' => false, 'error' => 'Unsupported action']);
@@ -75,7 +79,7 @@ class Variations {
       $imageFile = $_FILES['imageFile'] ?? null;
       $pdfFile   = $_FILES['pdfFile']   ?? null;
 
-  
+
       // Supplier fallback (kept from your logic)
       $supplier = ['supplier_id' => null, 'supplier_name' => null];
       if ($sku_product) {
@@ -435,6 +439,15 @@ class Variations {
     echo json_encode ($variation->createEmptyVariationByProductSku());
 
   }
+  private function getSKUDefaultVariation($data){
+
+    $connection = new Database();
+    $variation = new Variation($connection);
+    $variation->setSKU($data['sku']);
+    echo json_encode ($variation->getSKUDefaultVariation());
+
+  }
+
   private function updateGroupName($data){
 
     $connection = new Database();

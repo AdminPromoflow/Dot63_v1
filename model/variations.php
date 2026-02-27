@@ -920,6 +920,59 @@ class Variation {
     }
   }
 
+  public function getSKUDefaultVariation(): array
+  {
+    // Usa $this->sku como SKU del producto
+    $productSku = trim((string)($this->sku ?? ''));
+    if ($productSku === '') {
+      return ['success' => false, 'error' => 'Product SKU requerido'];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      // 1) Obtener product_id por SKU del producto
+      $stmt = $pdo->prepare("
+        SELECT product_id
+        FROM products
+        WHERE LOWER(SKU) = LOWER(:sku)
+        LIMIT 1
+      ");
+      $stmt->execute([':sku' => $productSku]);
+      $pid = (int)$stmt->fetchColumn();
+
+      if (!$pid) {
+        return ['success' => false, 'error' => 'Producto no encontrado por SKU'];
+      }
+
+      // 2) Buscar la variación 'Default' y devolver su SKU
+      $stmt = $pdo->prepare("
+        SELECT SKU
+        FROM variations
+        WHERE product_id = :pid
+          AND LOWER(name) = 'default'
+        ORDER BY variation_id ASC
+        LIMIT 1
+      ");
+      $stmt->execute([':pid' => $pid]);
+      $defaultSku = $stmt->fetchColumn();
+
+      $defaultSku = trim((string)($defaultSku ?? ''));
+      if ($defaultSku === '') {
+        return ['success' => false, 'error' => "No se encontró la variación 'Default' para este producto"];
+      }
+
+      return [
+        'success' => true,
+        'sku_default_variation' => $defaultSku
+      ];
+
+    } catch (PDOException $e) {
+      error_log('getSKUDefaultVariation: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
+
 
 }
 
