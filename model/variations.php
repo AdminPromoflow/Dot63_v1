@@ -307,7 +307,7 @@ class Variation {
           return (bool)$variation;
 
       } catch (PDOException $e) {
-          error_log('getVariationDetailsBySkus error: ' . $e->getMessage());
+          error_log('checkProductAndVariationExistenceBySkus error: ' . $e->getMessage());
           return false;
       }
   }
@@ -315,58 +315,79 @@ class Variation {
   public function getVariationDetailsBySkus(): array
   {
       // 0) Validaciones mínimas
-      if (!$this->sku) {
+      $productSku   = trim((string)($this->sku ?? ''));
+      $variationSku = trim((string)($this->sku_variation ?? ''));
+
+      if ($productSku === '') {
           return ['success' => false, 'error' => 'Product SKU requerido'];
       }
-      if (!$this->sku_variation) {
+      if ($variationSku === '') {
           return ['success' => false, 'error' => 'Variation SKU (sku_variation) requerido'];
       }
 
       try {
           $pdo = $this->connection->getConnection();
 
-          // 1) Obtener product_id, name, SKU y group_id desde products por SKU de producto
-          $stmt = $pdo->prepare("
-              SELECT product_id, name AS product_name, SKU AS product_sku, group_id
-              FROM products
-              WHERE LOWER(SKU) = LOWER(:sku)
+          // 1) Producto por SKU (trae más columnas por si las necesitas en front)
+          $sqlProduct = "
+              SELECT
+                p.product_id,
+                p.SKU               AS product_sku,
+                p.name              AS product_name,
+                p.description       AS product_description,
+                p.descriptive_tagline,
+                p.status,
+                p.date_status,
+                p.is_approved,
+                p.supplier_id,
+                p.group_id
+              FROM products p
+              WHERE LOWER(p.SKU) = LOWER(:sku)
               LIMIT 1
-          ");
-          $stmt->execute([':sku' => $this->sku]);
+          ";
+          $stmt = $pdo->prepare($sqlProduct);
+          $stmt->execute([':sku' => $productSku]);
           $prod = $stmt->fetch(PDO::FETCH_ASSOC);
 
           if (!$prod) {
               return ['success' => false, 'error' => 'Producto no encontrado por SKU'];
           }
 
-          $productId   = (int)$prod['product_id'];
-          $productName = $prod['product_name'];
-          $productSku  = $prod['product_sku'];
-          $groupId     = !empty($prod['group_id']) ? (int)$prod['group_id'] : null;
+          $productId = (int)$prod['product_id'];
+          $groupId   = ($prod['group_id'] !== null && $prod['group_id'] !== '') ? (int)$prod['group_id'] : null;
 
-          // 2) Variación actual + datos del padre (name/sku) en una sola consulta
-          $stmt = $pdo->prepare("
+          // 2) Variación actual + padre + (opcional) info del tipo
+          $sqlCurrent = "
               SELECT
                 v.variation_id,
+                v.product_id,
                 v.name,
-                v.image,
                 v.SKU,
+                v.image,
                 v.pdf_artwork,
                 v.name_pdf_artwork,
                 v.parent_id,
                 v.type_id,
+
                 vp.name AS parent_name,
-                vp.SKU  AS parent_sku
+                vp.SKU  AS parent_sku,
+
+                tv.type_name        AS current_type_name,
+                tv.description      AS current_type_description,
+                tv.category_id      AS current_type_category_id
               FROM variations v
               LEFT JOIN variations vp
                 ON vp.variation_id = v.parent_id
+              LEFT JOIN type_variations tv
+                ON tv.type_id = v.type_id
               WHERE v.product_id = :pid
                 AND LOWER(v.SKU) = LOWER(:vsku)
               LIMIT 1
-          ");
+          ";
+          $stmt = $pdo->prepare($sqlCurrent);
           $stmt->execute([
               ':pid'  => $productId,
-              ':vsku' => $this->sku_variation
+              ':vsku' => $variationSku,
           ]);
           $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -374,65 +395,89 @@ class Variation {
               return ['success' => false, 'error' => 'Variation SKU no pertenece al producto dado o no existe'];
           }
 
-          // 3) Listar todas las variaciones del producto (name, SKU)
-          // 3) Listar todas las variaciones del producto en orden jerárquico + level
+          // 3) Todas las variaciones del producto en orden jerárquico (incluye HUÉRFANAS)
+          //    ✅ Esto evita que se “pierdan” variaciones con parent_id inválido/no encontrado.
           $variations = [];
 
           try {
-              $stmt = $pdo->prepare("
+              $sqlTree = "
                   WITH RECURSIVE vtree AS (
-                    -- Abuelos (raíz)
+                    -- Raíces + Huérfanas (si el padre no existe dentro del mismo producto)
                     SELECT
                       v.variation_id,
+                      v.product_id,
                       v.name,
                       v.SKU,
                       v.parent_id,
+                      v.type_id,
+                      v.image,
                       0 AS level,
-                      CONCAT(LOWER(v.name), '-', LPAD(v.variation_id, 10, '0')) AS sort_path
+                      LPAD(v.variation_id, 10, '0') AS sort_path
                     FROM variations v
                     WHERE v.product_id = :pid
-                      AND (v.parent_id IS NULL OR v.parent_id = 0)
+                      AND (
+                        v.parent_id IS NULL
+                        OR v.parent_id = 0
+                        OR NOT EXISTS (
+                          SELECT 1
+                          FROM variations px
+                          WHERE px.variation_id = v.parent_id
+                            AND px.product_id = :pid
+                        )
+                      )
 
                     UNION ALL
 
-                    -- Hijos (recursivo)
+                    -- Hijos
                     SELECT
                       c.variation_id,
+                      c.product_id,
                       c.name,
                       c.SKU,
                       c.parent_id,
+                      c.type_id,
+                      c.image,
                       p.level + 1 AS level,
-                      CONCAT(p.sort_path, '>', LOWER(c.name), '-', LPAD(c.variation_id, 10, '0')) AS sort_path
+                      CONCAT(p.sort_path, '>', LPAD(c.variation_id, 10, '0')) AS sort_path
                     FROM variations c
                     INNER JOIN vtree p
                       ON c.parent_id = p.variation_id
                     WHERE c.product_id = :pid
                   )
-
-                  SELECT variation_id, name, SKU, parent_id, level
+                  SELECT
+                    variation_id, product_id, name, SKU, parent_id, type_id, image, level
                   FROM vtree
-                  ORDER BY sort_path ASC;
-              ");
+                  ORDER BY sort_path ASC
+              ";
 
+              $stmt = $pdo->prepare($sqlTree);
               $stmt->execute([':pid' => $productId]);
               $variations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
           } catch (PDOException $e) {
-              // Fallback si no hay CTE recursivo
-              $stmt = $pdo->prepare("
-                  SELECT variation_id, name, SKU, parent_id, 0 AS level
+              // Fallback (MySQL < 8 o CTE deshabilitado)
+              $sqlFallback = "
+                  SELECT
+                    variation_id,
+                    product_id,
+                    name,
+                    SKU,
+                    parent_id,
+                    type_id,
+                    image,
+                    0 AS level
                   FROM variations
                   WHERE product_id = :pid
-                  ORDER BY name ASC
-              ");
+                  ORDER BY variation_id ASC
+              ";
+              $stmt = $pdo->prepare($sqlFallback);
               $stmt->execute([':pid' => $productId]);
               $variations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
           }
-          // 4) Con product_id (vía group->category) traer type_variations asociados a la categoría del producto
-          //    (si el producto no tiene group_id, devolverá lista vacía)
+
+          // 4) Type variations por categoría del producto (vía group -> category)
           $typeVariations = [];
           if ($groupId !== null) {
-              $stmt = $pdo->prepare("
+              $sqlTypes = "
                   SELECT
                     tv.type_id,
                     tv.type_name,
@@ -445,37 +490,53 @@ class Variation {
                     ON tv.category_id = g.category_id
                   WHERE p.product_id = :pid
                   ORDER BY tv.type_name ASC
-              ");
+              ";
+              $stmt = $pdo->prepare($sqlTypes);
               $stmt->execute([':pid' => $productId]);
               $typeVariations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
           }
 
-          // 5) Respuesta final (sin json_encode)
+          // 5) Respuesta final
           return [
               'success' => true,
-              'product' => [
-                  'product_id'   => $productId,
-                  'product_name' => $productName,
-                  'product_sku'  => $productSku,
-                  'group_id'     => $groupId,
-              ],
-              'variations' => $variations,
-              'current' => [
-                  'variation_id'     => (int)$row['variation_id'],
-                  'name'             => $row['name'],
-                  'image'            => $row['image'] ?? null,
-                  'sku'              => $row['SKU'],
-                  'pdf_artwork'      => $row['pdf_artwork'] ?? null,
-                  'name_pdf_artwork' => $row['name_pdf_artwork'] ?? null,
-                  'parent_id'        => !empty($row['parent_id']) ? (int)$row['parent_id'] : null,
 
-                  // ✅ NUEVO: type_id agregado al return
-                  'type_id'          => !empty($row['type_id']) ? (int)$row['type_id'] : null,
+              'product' => [
+                  'product_id'          => (int)$prod['product_id'],
+                  'product_name'        => $prod['product_name'] ?? null,
+                  'product_sku'         => $prod['product_sku'] ?? null,
+                  'group_id'            => $groupId,
+                  'supplier_id'         => ($prod['supplier_id'] !== null && $prod['supplier_id'] !== '') ? (int)$prod['supplier_id'] : null,
+                  'status'              => $prod['status'] ?? null,
+                  'is_approved'         => isset($prod['is_approved']) ? (int)$prod['is_approved'] : 0,
+                  'description'         => $prod['product_description'] ?? null,
+                  'descriptive_tagline' => $prod['descriptive_tagline'] ?? null,
               ],
+
+              'variations' => $variations,
+
+              'current' => [
+                  'variation_id'       => (int)$row['variation_id'],
+                  'product_id'         => (int)$row['product_id'], // ✅ NUEVO (lo pediste aquí)
+                  'name'               => $row['name'] ?? null,
+                  'sku'                => $row['SKU'] ?? null,
+                  'image'              => $row['image'] ?? null,
+                  'pdf_artwork'        => $row['pdf_artwork'] ?? null,
+                  'name_pdf_artwork'   => $row['name_pdf_artwork'] ?? null,
+                  'parent_id'          => ($row['parent_id'] !== null && $row['parent_id'] !== '') ? (int)$row['parent_id'] : null,
+                  'type_id'            => ($row['type_id'] !== null && $row['type_id'] !== '') ? (int)$row['type_id'] : null,
+
+                  // (Opcional) info del tipo actual
+                  'type_name'          => $row['current_type_name'] ?? null,
+                  'type_description'   => $row['current_type_description'] ?? null,
+                  'type_category_id'   => ($row['current_type_category_id'] !== null && $row['current_type_category_id'] !== '')
+                                          ? (int)$row['current_type_category_id'] : null,
+              ],
+
               'parent' => [
                   'name' => $row['parent_name'] ?? null,
-                  'sku'  => $row['parent_sku']  ?? null,
+                  'sku'  => $row['parent_sku'] ?? null,
               ],
+
               'type_variations' => $typeVariations,
           ];
 
