@@ -922,6 +922,7 @@ class Variation {
 
   public function getSKUDefaultVariation(): array
   {
+      echo json_encode($this->sku);exit;
     // Usa $this->sku como SKU del producto
     $productSku = trim((string)($this->sku ?? ''));
     if ($productSku === '') {
