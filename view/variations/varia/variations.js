@@ -136,12 +136,15 @@ class Variations {
 
         const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
         const skuDefVar = this.getDefaultVariation();
-        alert("Ya casi" + skuDefVar);
+
+        setTimeout(() => {
+          alert("Ya casi casi.." + skuDefVar);
 
           if (skuDefVar) {
             window.location.href =
               `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuDefVar)}`;
           }
+        }, 3000);
       });
     }
 
