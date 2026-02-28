@@ -86,8 +86,8 @@ $jsTime = filemtime('../../view/sign_up_supplier/sign_up_supplier/sign_up_suppli
         <button id="signup_enter" class="btn" type="submit">Sign Up</button>
       </div>
 
-      <p class="footer">
-        <a style="color: black;" class="link" href="../../view/log_inSupplier/index.php">Already have an account? Login</a>
+      <p style="color: black;"  class="footer">
+        <a class="link" href="../../view/log_inSupplier/index.php">Already have an account? Login</a>
       </p>
     </seccion>
   </main>
