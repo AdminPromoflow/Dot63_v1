@@ -350,7 +350,7 @@ class Variations {
       }
     //  alert(JSON.stringify(data));
       if (data?.success) {
-        return data.sku_variation ?? null;
+        return data.sku_default_variation ?? null;
       }
 
       // Si quieres redirigir (cuando venga sku_variation), descomenta:
