@@ -105,7 +105,6 @@ body{
   border-radius: 5px;
 }
 
-/* ✅ HEADER (SOLO CAMBIÉ ESTO): sp-shell ahora usa el tono #1F3551 */
 .sp-shell{
   max-width: 95%;
   margin: 0 auto;
