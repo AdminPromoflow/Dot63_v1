@@ -133,7 +133,7 @@ class Variations {
         this.saveVariationDetails(false);
 
         alert('The variation details have been saved successfully.');
-        alert(JSON.stringify(this.getDefaultVariation()));
+        this.getDefaultVariation();
 
       });
     }
