@@ -349,6 +349,7 @@ class Variations {
       if (data?.success) {
         const skuVar = data?.sku_default_variation;
         if (skuVar) {
+          alert('The variation details have been saved successfully.');
           window.location.href =
             `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVar)}`;
         }
