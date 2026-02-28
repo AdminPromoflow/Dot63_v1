@@ -339,6 +339,7 @@ class Variations {
       }
 
       if (data?.success) {
+        alert(data.sku_variation);
         return data.sku_variation ?? null;
       }
 
