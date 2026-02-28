@@ -87,7 +87,7 @@ $jsTime = filemtime('../../view/sign_up_supplier/sign_up_supplier/sign_up_suppli
       </div>
 
       <p class="footer">
-        <a class="link" href="../../view/log_inSupplier/index.php">Already have an account? Login</a>
+        <a style="color: black;" class="link" href="../../view/log_inSupplier/index.php">Already have an account? Login</a>
       </p>
     </seccion>
   </main>
