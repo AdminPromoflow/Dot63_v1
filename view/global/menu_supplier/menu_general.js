@@ -97,7 +97,7 @@ class Menu_Supplier {
     })
       .then(res => res.json())
       .then(data => {
-        alert(JSON.stringify(data));
+      //  alert(JSON.stringify(data));
 
         // Más claro: si NO está logueado
         if (data['response'] !== true) {
