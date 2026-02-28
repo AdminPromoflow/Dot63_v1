@@ -337,7 +337,7 @@ class Variations {
           data = { success: false, message: text };
         }
       }
-      alert(data.sku_variation);
+      alert(JSON.stringify(data));
       if (data?.success) {
 
         return data.sku_variation ?? null;
