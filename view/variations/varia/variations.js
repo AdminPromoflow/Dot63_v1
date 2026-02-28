@@ -130,22 +130,20 @@ class Variations {
           alert('Please add a name to the variation.');
           return;
         }
-        this.saveVariationDetails(false);
 
+        this.saveVariationDetails(false);
         alert('The variation details have been saved successfully.');
 
         const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
         const skuDefVar = this.getDefaultVariation();
         alert(skuDefVar);
+
+        setTimeout(() => {
           if (skuDefVar) {
             window.location.href =
               `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuDefVar)}`;
           }
-
-
-
-
-
+        }, 1000);
       });
     }
 
