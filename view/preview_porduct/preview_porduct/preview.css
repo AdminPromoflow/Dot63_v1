@@ -101,7 +101,7 @@ body{
 
   /* mantenemos tu espacio superior, pero con "fondo overview" */
   padding: 120px 18px 40px;
-  background: var(--ov-bg);
+  background: #485A71;
   border-radius: 5px;
 }
 
@@ -496,6 +496,7 @@ body{
   align-self: start;
   position: sticky;
   top: 90px;
+  background: rgba(0,0,0,.2);
 }
 
 .sp-buybox .box{
