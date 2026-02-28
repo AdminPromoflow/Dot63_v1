@@ -325,7 +325,7 @@ class Variation {
       // ✅ Antes de 1: calcular product_id a partir del SKU
       $stmtPid = $pdo->prepare("
         SELECT product_id
-        FROM variations
+        FROM products
         WHERE SKU = :sku
         LIMIT 1
       ");
