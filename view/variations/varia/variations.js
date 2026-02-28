@@ -136,6 +136,7 @@ class Variations {
 
         const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
         const skuDefVar = this.getDefaultVariation();
+        alert(skuDefVar);
           if (skuDefVar) {
             window.location.href =
               `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuDefVar)}`;
