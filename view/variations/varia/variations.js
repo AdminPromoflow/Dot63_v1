@@ -337,9 +337,9 @@ class Variations {
           data = { success: false, message: text };
         }
       }
-
+      alert(data.sku_variation);
       if (data?.success) {
-        alert(data.sku_variation);
+
         return data.sku_variation ?? null;
       }
 

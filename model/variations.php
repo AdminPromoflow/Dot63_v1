@@ -930,7 +930,7 @@ class Variation {
 
     try {
       $pdo = $this->connection->getConnection();
-
+      echo json_encode($data['sku']);exit;
       // 1) Obtener product_id por SKU del producto
       $stmt = $pdo->prepare("
         SELECT product_id
