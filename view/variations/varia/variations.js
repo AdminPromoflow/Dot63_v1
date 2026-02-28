@@ -132,19 +132,18 @@ class Variations {
         }
 
         this.saveVariationDetails(false);
-        alert('The variation details have been saved successfully.');
-
-        const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
-        const skuDefVar = this.getDefaultVariation();
-
-        setTimeout(() => {
-          alert("Ya casi casi.." + skuDefVar);
-
-          if (skuDefVar) {
-            window.location.href =
-              `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuDefVar)}`;
-          }
-        }, 3000);
+        this.getDefaultVariation();
+        // const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
+        // const skuDefVar =
+        //
+        // setTimeout(() => {
+        //   alert("Ya casi casi.." + skuDefVar);
+        //
+        //   if (skuDefVar) {
+        //     window.location.href =
+        //       `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuDefVar)}`;
+        //   }
+        // }, 3000);
       });
     }
 
@@ -320,7 +319,6 @@ class Variations {
 
   async getDefaultVariation() {
     const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
-    if (!skuProduct) return null;
 
     try {
       const res = await fetch("../../controller/products/variations.php", {
@@ -347,24 +345,21 @@ class Variations {
           data = { success: false, message: text };
         }
       }
-      alert(data.sku_default_variation);
+    //  alert(data.sku_default_variation);
       if (data?.success) {
-        return data.sku_default_variation ?? null;
+        const skuVar = data?.sku_default_variation;
+        if (skuVar) {
+          window.location.href =
+            `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVar)}`;
+        }
       }
 
-      // Si quieres redirigir (cuando venga sku_variation), descomenta:
-      // const skuVar = data?.sku_variation;
-      // if (skuVar) {
-      //   window.location.href =
-      //     `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVar)}`;
-      // }
+
 
       console.warn("getDefaultVariation: unexpected response", data);
-      return null;
 
     } catch (err) {
       console.error("getDefaultVariation Error:", err);
-      return null;
     }
   }
 
