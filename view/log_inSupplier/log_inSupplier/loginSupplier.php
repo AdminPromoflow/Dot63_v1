@@ -26,7 +26,7 @@ $jsTime = filemtime('../../view/log_inSupplier/log_inSupplier/loginSupplier.js')
                minlength="6" placeholder="••••••••" aria-describedby="pass-help"/>
         <button type="button" class="toggle-pass" aria-label="Show password" aria-pressed="false" data-show="false">Show</button>
       </div>
-      <a class="muted-link" href="#forgot">Forgot your password?</a>
+      <!-- <a class="muted-link" href="#forgot">Forgot your password?</a> -->
       <div id="pass-help" class="help" aria-live="polite"></div>
     </div>
 
