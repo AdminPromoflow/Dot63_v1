@@ -465,6 +465,8 @@ class Variations {
     $variation = new Variation($connection);
     $variation->setSKUVariation($data['sku_variation']);
     $variation->setSKU($data['sku']);
+    echo json_encode ("haha");exit;
+
     echo json_encode ($variation->getVariationDetailsBySkus());
   }
 
