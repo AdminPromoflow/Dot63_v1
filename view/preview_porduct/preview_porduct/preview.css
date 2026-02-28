@@ -2,7 +2,6 @@
    Product Preview — THEME "OVERVIEW" (solo CSS)
    - Mantiene tu markup intacto
    - Misma lógica de layout, pero con el look del dashboard (.section-overview)
-   - MEJORAS: fondo claro en .sp-amz + buybox oscuro + mejor contraste + focus-visible
 ============================================================================= */
 
 /* =============================================================================
@@ -21,6 +20,7 @@
   display: contents;
 }
 
+
 /* Evitar que items-note se agrupe visualmente por wrappers */
 .wrap-items,
 .wrap-items-group{
@@ -31,6 +31,7 @@
 .wrap-price{
   display: contents !important;
 }
+
 
 /* =============================================================================
    ✅ TOKENS OVERVIEW + mapeo a variables existentes del preview
@@ -50,22 +51,6 @@
   --ov-radius: 18px;
   --ov-shadow: 0 16px 40px rgba(0,0,0,.28);
 
-  /* ✅ NUEVO: fondo claro “premium” */
-  --lp-bg1: #f3f7ff;
-  --lp-bg2: #e7effc;
-  --lp-ink: #0f2140;
-  --lp-muted: rgba(15,33,64,.68);
-  --lp-border: rgba(15,33,64,.12);
-  --lp-shadow: 0 20px 55px rgba(8,18,34,.16);
-
-  /* ✅ Buybox oscuro */
-  --bb-bg1: #0f2236;
-  --bb-bg2: #0b1a2a;
-  --bb-border: rgba(255,255,255,.14);
-  --bb-text: rgba(255,255,255,.94);
-  --bb-muted: rgba(255,255,255,.72);
-  --bb-shadow: 0 18px 55px rgba(0,0,0,.42);
-
   /* Mapeo (para que tu CSS existente "entienda" el tema) */
   --page-bg: var(--ov-bg);
   --bg: var(--page-bg);
@@ -75,7 +60,7 @@
   --muted: var(--ov-muted);
   --border: var(--ov-border);
 
-  /* Acentos */
+  /* Acentos (selección / estados) */
   --brand: rgba(255,255,255,.92);
   --brand-soft: rgba(0,0,0,.14);
 
@@ -106,62 +91,32 @@ body{
 }
 
 /* =============================================================================
-   ✅ MEJORA 1: Fondo claro premium en el MAIN (.sp-amz)
+   Estructura principal (fondo tipo dashboard)
 ============================================================================= */
+
+/* MAIN: contenedor centrado */
 .sp-amz{
   width: 100%;
   position: relative;
 
+  /* mantenemos tu espacio superior, pero con "fondo overview" */
   padding: 120px 18px 40px;
-
-  /* ✅ Fondo claro */
-  background: linear-gradient(180deg, var(--lp-bg1) 0%, var(--lp-bg2) 100%);
-  border: 1px solid var(--lp-border);
-  border-radius: 14px;
-  box-shadow: var(--lp-shadow);
-  overflow: hidden; /* para glow */
+  background: var(--ov-bg);
+  border-radius: 5px;
 }
 
-/* Glow suave premium */
-.sp-amz::before{
-  content:"";
-  position:absolute;
-  inset: -120px -60px auto -60px;
-  height: 280px;
-  background:
-    radial-gradient(closest-side, rgba(255,138,61,.22), rgba(255,138,61,0) 70%),
-    radial-gradient(closest-side, rgba(15,33,64,.18), rgba(15,33,64,0) 72%);
-  filter: blur(8px);
-  pointer-events:none;
-  opacity: .9;
-}
-.sp-amz::after{
-  content:"";
-  position:absolute;
-  inset:auto -80px -160px -80px;
-  height: 320px;
-  background:
-    radial-gradient(closest-side, rgba(0,85,152,.14), rgba(0,85,152,0) 72%),
-    radial-gradient(closest-side, rgba(255,255,255,.55), rgba(255,255,255,0) 70%);
-  filter: blur(10px);
-  pointer-events:none;
-  opacity: .8;
-}
-
-/* MAIN: contenedor centrado */
+/* ✅ HEADER (SOLO CAMBIÉ ESTO): sp-shell ahora usa el tono #1F3551 */
 .sp-shell{
   max-width: 95%;
   margin: 0 auto;
 
+  /* panel interior como el header/details del overview */
   padding: 18px 16px;
 
-  /* Panel interior oscuro como tu overview */
-  background: #1F3551;
-  border: 1px solid rgba(255,255,255,.14);
+  background: #1F3551;               /* ✅ antes: rgba(0,0,0,.10) */
+  border: 1px solid var(--ov-border);
   border-radius: var(--ov-radius);
   box-shadow: var(--ov-shadow);
-  position: relative; /* arriba del glow */
-  z-index: 2;
 }
 
 @media (max-width: 760px){
@@ -176,7 +131,7 @@ body{
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  color: var(--ov-muted);
+  color: var(--muted);
   padding: 0;
   margin: 0;
   font-size: 0.95rem;
@@ -189,7 +144,7 @@ body{
 .crumbs li:last-child::after{ content: ""; }
 
 .crumbs a{
-  color: var(--ov-muted);
+  color: var(--muted);
   text-decoration: none;
 }
 .crumbs a:hover{ text-decoration: underline; }
@@ -346,7 +301,7 @@ body{
 }
 .cp-hint{
   font-size: 0.85rem;
-  color: var(--ov-muted);
+  color: var(--muted);
   margin-top: 6px;
 }
 
@@ -362,7 +317,7 @@ body{
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: var(--ov-muted);
+  color: var(--muted);
   margin-bottom: 4px;
 }
 
@@ -379,7 +334,7 @@ body{
   display: flex;
   gap: 12px;
   align-items: center;
-  color: var(--ov-muted);
+  color: var(--muted);
   flex-wrap: wrap;
   font-size: 1rem;
   margin-top: 8px;
@@ -395,7 +350,7 @@ body{
 /* subtítulo */
 .sp-subtitle{
   margin: 0.8rem 0 1rem;
-  color: var(--ov-muted);
+  color: var(--muted);
   max-width: 60ch;
   font-size: 1.2rem;
 }
@@ -428,7 +383,12 @@ body{
 .sp-unit-hint{
   margin-left: 8px;
   font-size: 1rem;
-  color: var(--ov-muted);
+  color: var(--muted);
+}
+.sp-price-note{
+  margin: 0 0 0.8rem;
+  font-size: 1.01rem;
+  color: var(--muted);
 }
 
 /* Variaciones (arriba) */
@@ -456,7 +416,7 @@ body{
   font-weight: 560;
 }
 .var-name{
-  color: var(--ov-muted);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 1rem;
@@ -500,7 +460,7 @@ body{
 .var-option .opt-sub{
   display: block;
   font-size: 1rem;
-  color: var(--ov-muted);
+  color: var(--muted);
 }
 
 .sp-packsize .var-option .opt-main{
@@ -528,7 +488,7 @@ body{
 }
 
 /* =============================================================================
-   ✅ MEJORA 2: BUY BOX oscuro (solo CSS)
+   BUY BOX
 ============================================================================= */
 .sp-buybox{
   grid-column: 3;
@@ -538,27 +498,15 @@ body{
   top: 90px;
 }
 
-/* Caja del buybox más oscura + premium */
 .sp-buybox .box{
-  background: linear-gradient(180deg, var(--bb-bg1) 0%, var(--bb-bg2) 100%);
+  background: rgba(0,0,0,.10);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--bb-border);
-  box-shadow: var(--bb-shadow);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
   padding: 16px 14px 18px;
   display: grid;
   gap: 10px;
   will-change: transform;
-}
-
-/* Textos del buybox */
-.sp-buybox .price-line .label,
-.sp-buybox .ship small{
-  color: var(--bb-muted);
-}
-.sp-buybox .price-line strong,
-.sp-buybox .ship span,
-.sp-buybox .stock.in{
-  color: var(--bb-text);
 }
 
 .price-line{
@@ -566,22 +514,52 @@ body{
   justify-content: space-between;
   align-items: baseline;
 }
+.price-line .label{
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+.price-line strong{
+  color: rgba(255,255,255,.92);
+}
+
 .stock.in{
+  color: rgba(255,255,255,.92);
   font-weight: 650;
   font-size: 1rem;
 }
+
 .ship span{
   font-weight: 680;
   display: block;
   font-size: 0.98rem;
+  color: rgba(255,255,255,.90);
 }
 .ship small{
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
-/* =============================================================================
-   Botones (look overview) + mejora de contraste
-============================================================================= */
+/* extras */
+.extras{
+  border-top: 1px solid rgba(255,255,255,.10);
+  margin-top: 4px;
+  padding-top: 8px;
+  display: grid;
+  gap: 4px;
+  font-size: 0.98rem;
+}
+.extra-line{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.extra-line .label{ color: var(--muted); }
+.extra-line .value{
+  font-weight: 560;
+  color: rgba(255,255,255,.92);
+}
+
+/* Botones (look overview) */
 .btn{
   appearance: none;
   border: 1px solid rgba(255,255,255,.14);
@@ -611,24 +589,9 @@ body{
 .btn-primary:hover{ background: var(--buy-hover); }
 
 .btn-ghost{
-  background: rgba(255, 138, 61, 1)!important;
-  color: #0b1110!important;
-  font-weight: 650;
-}
-
-/* =============================================================================
-   ✅ MEJORA 3: Focus visible (accesibilidad)
-============================================================================= */
-a, button, [role="button"], input, select, textarea{
-  outline: none;
-}
-a:focus-visible,
-button:focus-visible,
-[role="button"]:focus-visible{
-  box-shadow:
-    0 0 0 3px rgba(255,138,61,.35),
-    0 0 0 1px rgba(255,255,255,.22);
-  border-radius: 12px;
+    background: rgba(255, 138, 61, 1)!important;
+    color: black!important;
+    font-weight: 200;
 }
 
 /* =============================================================================
@@ -675,6 +638,7 @@ button:focus-visible,
   min-width: 150px;
   display: block;
 }
+.sp-packsize .opt-sub{ font-size: 0.9rem; }
 
 /* ARTWORK DOWNLOADS */
 .sp-artwork-downloads{
@@ -696,12 +660,13 @@ button:focus-visible,
   font-weight: 760;
   color: rgba(255,255,255,.92);
 }
+.sp-artwork-intro,
 .sp-artwork-note{
   margin: 0;
-  color: var(--ov-muted);
+  color: var(--muted);
   max-width: 70ch;
-  font-size: 0.9rem;
 }
+.sp-artwork-note{ font-size: 0.9rem; }
 
 .sp-artwork-grid{
   display: flex;
@@ -710,7 +675,7 @@ button:focus-visible,
   margin-top: 6px;
 }
 
-/* Botón PDFs */
+/* Botón PDFs (look overview) */
 .btn-artwork{
   border-color: rgba(255,255,255,.14);
   color: rgba(255,255,255,.88);
@@ -763,7 +728,7 @@ button:focus-visible,
 .sp-item span{
   display: block;
   font-size: 0.96rem;
-  color: var(--ov-muted);
+  color: var(--muted);
 }
 
 /* =============================================================================
@@ -785,6 +750,15 @@ button:focus-visible,
   color: rgba(255,255,255,.92);
 }
 
+.sp-bullets{
+  margin: 4px 0 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+  font-size: 1rem;
+  color: rgba(255,255,255,.86);
+}
+
 /* DESCRIPCIÓN EN DOS COLUMNAS */
 .sp-desc{
   margin-top: 16px;
@@ -800,6 +774,36 @@ button:focus-visible,
 
 @media (max-width: 760px){
   .sp-desc{ column-count: 1; }
+}
+
+/* Figuras dentro de la descripción */
+.sp-desc-figure{
+  margin: 6px auto 0;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(255,255,255,.10);
+  display: grid;
+  gap: 6px;
+  max-width: 620px;
+  text-align: center;
+}
+.sp-desc-figure img{
+  width: 100%;
+  max-width: 520px;
+  border-radius: var(--radius-sm);
+  display: block;
+  margin: 0 auto;
+  object-fit: cover;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+  border: 1px solid rgba(255,255,255,.10);
+}
+.sp-desc-figure img:hover{
+  transform: scale(1.03);
+  box-shadow: 0 18px 40px rgba(0,0,0,.28);
+  filter: brightness(1.06);
+}
+.sp-desc-figure figcaption{
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
 /* MÁS PRODUCTOS */
@@ -818,6 +822,68 @@ button:focus-visible,
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 18px;
+}
+
+.related-card{
+  background: rgba(0,0,0,.10);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.related-media{
+  height: 170px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.related-media img{
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+.related-card:hover .related-media img{
+  transform: scale(1.06);
+  filter: brightness(1.06);
+}
+
+.related-body{
+  padding: 12px 16px 8px;
+  flex: 1;
+}
+
+.related-title{
+  margin: 0 0 2px;
+  font-size: 1.06rem;
+  color: rgba(255,255,255,.92);
+}
+.related-category{
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.related-variant{
+  margin: 4px 0;
+  font-size: 0.94rem;
+  color: rgba(255,255,255,.86);
+}
+.related-price{
+  margin: 0;
+  font-weight: 680;
+  color: rgba(255,255,255,.92);
+}
+.related-btn{
+  width: 100%;
+  border-radius: 0 0 18px 18px;
+  border-top: 1px solid rgba(255,255,255,.10);
 }
 
 /* =============================================================================
@@ -856,9 +922,9 @@ button:focus-visible,
 }
 
 .btn-back-preview{
-  background: rgba(15,33,64,.86);
-  border-color: rgba(255,255,255,.16);
-  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.14);
+  color: rgba(255,255,255,.88);
 }
 .btn-publish-preview{
   background: var(--accent);
@@ -954,13 +1020,4 @@ button:focus-visible,
 
   .sp-about{ padding-inline: 14px; }
   .sp-title{ font-size: 2rem; }
-}
-
-/* =============================================================================
-   ✅ Mejora extra: si quieres que el texto “afuera” sea oscuro en el fondo claro
-   (solo afecta cosas fuera de .sp-shell, si en el futuro las agregas)
-============================================================================= */
-.sp-amz, .sp-amz *{
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
