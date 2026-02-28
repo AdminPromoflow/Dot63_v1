@@ -14,7 +14,7 @@ h1 {
 
 .field {
 	margin: 0;
-  color: #111827;
+  color: rgba(0,0,0,.4);
 }
 
 label {
