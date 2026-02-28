@@ -440,14 +440,11 @@ class Variations {
 
   }
   private function getSKUDefaultVariation($data){
-
     $connection = new Database();
     $variation = new Variation($connection);
     $variation->setSKU($data['sku']);
 
-  
     echo json_encode ($variation->getSKUDefaultVariation());
-
   }
 
   private function updateGroupName($data){
