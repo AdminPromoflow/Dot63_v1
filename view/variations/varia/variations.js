@@ -345,7 +345,6 @@ class Variations {
           data = { success: false, message: text };
         }
       }
-    //  alert(data.sku_default_variation);
       if (data?.success) {
         const skuVar = data?.sku_default_variation;
         if (skuVar) {
@@ -354,8 +353,6 @@ class Variations {
             `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVar)}`;
         }
       }
-
-
 
       console.warn("getDefaultVariation: unexpected response", data);
 
