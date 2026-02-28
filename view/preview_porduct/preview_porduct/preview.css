@@ -100,7 +100,7 @@ body{
   position: relative;
 
   /* mantenemos tu espacio superior, pero con "fondo overview" */
-  padding: 3vw 4vw;
+  padding: calc(76px + 3vw) 4vw;
   background: #485A71;
   border-radius: 5px;
 }
