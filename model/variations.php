@@ -314,7 +314,7 @@ class Variation {
 
   public function getVariationDetailsBySkus(): ?array
   {
-    // Necesitas tener SKU seteado antes (por ejemplo con setSku($sku))
+    // 0) Validación mínima
     if (empty($this->sku)) {
       return null;
     }
@@ -322,93 +322,113 @@ class Variation {
     try {
       $pdo = $this->connection->getConnection();
 
-      // ✅ Antes de 1: calcular product_id a partir del SKU
+      // 1) Obtener product_id a partir del SKU del producto
       $stmtPid = $pdo->prepare("
         SELECT product_id
         FROM products
-        WHERE SKU = :sku
+        WHERE LOWER(SKU) = LOWER(:sku)
         LIMIT 1
       ");
       $stmtPid->bindValue(':sku', (string)$this->sku, PDO::PARAM_STR);
       $stmtPid->execute();
-      $rowPid = $stmtPid->fetch(PDO::FETCH_ASSOC);
 
+      $rowPid = $stmtPid->fetch(PDO::FETCH_ASSOC);
       if (!$rowPid || empty($rowPid['product_id'])) {
-        return null; // No se encontró product_id para ese SKU
+        return null;
       }
 
       $productId = (int)$rowPid['product_id'];
-      $this->product_id = $productId; // opcional, por si lo usas después
+      $this->product_id = $productId; // opcional
 
-      // 1) Obtener la raíz (name = 'default')
+      // 2) Obtener la raíz (name = 'default')
       $stmtRoot = $pdo->prepare("
         SELECT variation_id, product_id, name, SKU, parent_id, type_id, image
         FROM variations
-        WHERE product_id = :pid AND LOWER(name) = 'default'
+        WHERE product_id = :pid
+          AND LOWER(name) = 'default'
         LIMIT 1
       ");
-      $stmtRoot->bindParam(':pid', $productId, PDO::PARAM_INT);
+      $stmtRoot->bindValue(':pid', $productId, PDO::PARAM_INT);
       $stmtRoot->execute();
-      $root = $stmtRoot->fetch(PDO::FETCH_ASSOC);
 
+      $root = $stmtRoot->fetch(PDO::FETCH_ASSOC);
       if (!$root) {
-        return null; // Si no existe default, no podemos anclar el árbol
+        return null; // no hay ancla
       }
 
       $rootId = (int)$root['variation_id'];
 
-      // 2) Traer TODAS las variaciones del producto (solo una consulta)
-      $stmtAll = $pdo->prepare("
+      // 3) Prepared statement para traer SOLO hijos directos de un parent_id
+      //    (esto reemplaza la consulta masiva)
+      $stmtChildren = $pdo->prepare("
         SELECT variation_id, product_id, name, SKU, parent_id, type_id, image
         FROM variations
         WHERE product_id = :pid
+          AND parent_id = :parent_id
         ORDER BY variation_id ASC
       ");
-      $stmtAll->bindParam(':pid', $productId, PDO::PARAM_INT);
-      $stmtAll->execute();
-      $all = $stmtAll->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-      // 3) Indexar por parent_id => [hijos...]
-      $children = [];
-      $byId = [];
-
-      foreach ($all as $v) {
-        $vid = (int)$v['variation_id'];
-        $pid = ($v['parent_id'] === null || $v['parent_id'] === '' || (int)$v['parent_id'] === 0)
-          ? null
-          : (int)$v['parent_id'];
-
-        $v['variation_id'] = $vid;
-        $v['product_id']   = (int)$v['product_id'];
-        $v['parent_id']    = $pid;
-        $v['type_id']      = ($v['type_id'] === null || $v['type_id'] === '') ? null : (int)$v['type_id'];
-
-        $byId[$vid] = $v;
-        $children[$pid][] = $v; // null = raíces (si existieran)
-      }
-
-      // 4) Recorrido DFS: padre -> hijos -> nietos...
+      // 4) Recorrido DFS (profundidad) consultando hijos por cada nodo
       $flat = [];
       $visited = [];
 
-      $walk = function(int $nodeId, int $level) use (&$walk, &$flat, &$children, &$byId, &$visited) {
+      $walk = function(int $nodeId, int $level) use (
+        &$walk, &$flat, &$visited, $stmtChildren, $productId
+      ) {
         if (isset($visited[$nodeId])) return; // evita ciclos
         $visited[$nodeId] = true;
 
-        if (!isset($byId[$nodeId])) return;
+        // Traer el nodo actual (si quieres incluirlo siempre, lo buscamos por ID)
+        // Para ahorrar una consulta extra, solo “inyectamos” la raíz fuera,
+        // y para los demás nodos, vienen desde el fetch de hijos.
+        // (Este bloque se llena desde afuera para la raíz)
+      };
 
-        $node = $byId[$nodeId];
-        $node['level'] = $level;
-        $flat[] = $node;
+      // 4.1) Insertar raíz primero con level 0
+      $root['variation_id'] = (int)$root['variation_id'];
+      $root['product_id']   = (int)$root['product_id'];
+      $root['parent_id']    = ($root['parent_id'] === null || $root['parent_id'] === '' || (int)$root['parent_id'] === 0)
+        ? null
+        : (int)$root['parent_id'];
+      $root['type_id']      = ($root['type_id'] === null || $root['type_id'] === '') ? null : (int)$root['type_id'];
+      $root['level']        = 0;
 
-        $kids = $children[$nodeId] ?? [];
+      $flat[] = $root;
+      $visited[$rootId] = true;
+
+      // 4.2) Función real: dada una lista de hijos, procesarlos en orden y bajar
+      $walkChildren = function(int $parentId, int $level) use (
+        &$walkChildren, &$flat, &$visited, $stmtChildren, $productId
+      ) {
+        $stmtChildren->execute([
+          ':pid' => $productId,
+          ':parent_id' => $parentId
+        ]);
+
+        $kids = $stmtChildren->fetchAll(PDO::FETCH_ASSOC) ?: [];
         foreach ($kids as $kid) {
-          $walk((int)$kid['variation_id'], $level + 1);
+          $kidId = (int)$kid['variation_id'];
+          if (isset($visited[$kidId])) continue;
+          $visited[$kidId] = true;
+
+          $kid['variation_id'] = $kidId;
+          $kid['product_id']   = (int)$kid['product_id'];
+          $kid['parent_id']    = ($kid['parent_id'] === null || $kid['parent_id'] === '' || (int)$kid['parent_id'] === 0)
+            ? null
+            : (int)$kid['parent_id'];
+          $kid['type_id']      = ($kid['type_id'] === null || $kid['type_id'] === '') ? null : (int)$kid['type_id'];
+          $kid['level']        = $level;
+
+          // ✅ Orden correcto: primero el hijo…
+          $flat[] = $kid;
+
+          // …luego TODOS sus descendientes
+          $walkChildren($kidId, $level + 1);
         }
       };
 
-      // 5) Empezar por default (level 0)
-      $walk($rootId, 0);
+      // 5) Empezar desde default y bajar
+      $walkChildren($rootId, 1);
 
       // 6) Retornar plano + root
       return [
