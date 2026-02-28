@@ -133,7 +133,17 @@ class Variations {
         this.saveVariationDetails(false);
 
         alert('The variation details have been saved successfully.');
-        this.getDefaultVariation();
+
+        const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
+        const skuDefVar = this.getDefaultVariation();
+          if (skuDefVar) {
+            window.location.href =
+              `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuDefVar)}`;
+          }
+
+
+
+
 
       });
     }
@@ -337,9 +347,8 @@ class Variations {
           data = { success: false, message: text };
         }
       }
-      alert(JSON.stringify(data));
+    //  alert(JSON.stringify(data));
       if (data?.success) {
-
         return data.sku_variation ?? null;
       }
 
