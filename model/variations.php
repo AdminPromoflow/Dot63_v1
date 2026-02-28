@@ -314,15 +314,31 @@ class Variation {
 
   public function getVariationDetailsBySkus(): ?array
   {
-    echo json_encode ("haha");exit;
-
-    if (empty($this->product_id)) {
-      return null; // Asegúrate de llamar antes a setProductId($productId)
+    // Necesitas tener SKU seteado antes (por ejemplo con setSku($sku))
+    if (empty($this->sku)) {
+      return null;
     }
 
     try {
       $pdo = $this->connection->getConnection();
-      $productId = (int)$this->product_id;
+
+      // ✅ Antes de 1: calcular product_id a partir del SKU
+      $stmtPid = $pdo->prepare("
+        SELECT product_id
+        FROM variations
+        WHERE SKU = :sku
+        LIMIT 1
+      ");
+      $stmtPid->bindValue(':sku', (string)$this->sku, PDO::PARAM_STR);
+      $stmtPid->execute();
+      $rowPid = $stmtPid->fetch(PDO::FETCH_ASSOC);
+
+      if (!$rowPid || empty($rowPid['product_id'])) {
+        return null; // No se encontró product_id para ese SKU
+      }
+
+      $productId = (int)$rowPid['product_id'];
+      $this->product_id = $productId; // opcional, por si lo usas después
 
       // 1) Obtener la raíz (name = 'default')
       $stmtRoot = $pdo->prepare("
@@ -342,7 +358,6 @@ class Variation {
       $rootId = (int)$root['variation_id'];
 
       // 2) Traer TODAS las variaciones del producto (solo una consulta)
-      //    (Ordena hermanos por variation_id; si prefieres por name, cámbialo)
       $stmtAll = $pdo->prepare("
         SELECT variation_id, product_id, name, SKU, parent_id, type_id, image
         FROM variations
@@ -372,15 +387,12 @@ class Variation {
         $children[$pid][] = $v; // null = raíces (si existieran)
       }
 
-      // 4) Recorrido DFS: padre -> hijos (uno por uno) -> nietos...
+      // 4) Recorrido DFS: padre -> hijos -> nietos...
       $flat = [];
       $visited = [];
 
       $walk = function(int $nodeId, int $level) use (&$walk, &$flat, &$children, &$byId, &$visited) {
-        if (isset($visited[$nodeId])) {
-          // Evita loops si hay ciclos por error de datos
-          return;
-        }
+        if (isset($visited[$nodeId])) return; // evita ciclos
         $visited[$nodeId] = true;
 
         if (!isset($byId[$nodeId])) return;
@@ -398,14 +410,14 @@ class Variation {
       // 5) Empezar por default (level 0)
       $walk($rootId, 0);
 
-      // 6) Retornar plano (ordenado como pediste) + root por si lo necesitas
+      // 6) Retornar plano + root
       return [
         'root' => $root,
         'variations' => $flat
       ];
 
     } catch (PDOException $e) {
-      error_log('getVariationsFlatDfsByProductId error (' . $this->product_id . '): ' . $e->getMessage());
+      error_log('getVariationDetailsBySkus error (' . ($this->sku ?? 'no-sku') . '): ' . $e->getMessage());
       return null;
     }
   }
