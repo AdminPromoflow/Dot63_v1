@@ -314,6 +314,8 @@ class Variation {
 
   public function getVariationDetailsBySkus(): ?array
   {
+    echo json_encode ("haha");exit;
+
     if (empty($this->product_id)) {
       return null; // Asegúrate de llamar antes a setProductId($productId)
     }
