@@ -444,6 +444,8 @@ class Variations {
     $connection = new Database();
     $variation = new Variation($connection);
     $variation->setSKU($data['sku']);
+
+    echo json_encode($data['sku']);exit;
     echo json_encode ($variation->getSKUDefaultVariation());
 
   }
