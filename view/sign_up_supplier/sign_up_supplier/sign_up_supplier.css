@@ -79,6 +79,7 @@ input:focus {
 .muted-link {
 	text-decoration: none;
 	font-size: .9rem;
+	color: rgba(0,0,0,.8);
 }
 
 .muted-link {
