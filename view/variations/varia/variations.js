@@ -387,6 +387,7 @@ class Variations {
         return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
+        console.log(text);
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
@@ -412,7 +413,7 @@ class Variations {
      ========================= */
 
      renderTopMenu(variationsRaw, skuVariation) {
-       console.log(JSON.stringify(variationsRaw));
+       //console.log(JSON.stringify(variationsRaw));
        if (!this.menuList) return;
 
        // Clear menu list
