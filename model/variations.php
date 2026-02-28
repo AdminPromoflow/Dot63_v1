@@ -922,8 +922,6 @@ class Variation {
 
   public function getSKUDefaultVariation(): array
   {
-      echo json_encode($this->sku);exit;
-    // Usa $this->sku como SKU del producto
     $productSku = trim((string)($this->sku ?? ''));
     if ($productSku === '') {
       return ['success' => false, 'error' => 'Product SKU requerido'];
@@ -931,28 +929,30 @@ class Variation {
 
     try {
       $pdo = $this->connection->getConnection();
-      echo json_encode($data['sku']);exit;
+
       // 1) Obtener product_id por SKU del producto
       $stmt = $pdo->prepare("
         SELECT product_id
         FROM products
-        WHERE LOWER(SKU) = LOWER(:sku)
+        WHERE SKU IS NOT NULL
+          AND LOWER(SKU) = LOWER(:sku)
         LIMIT 1
       ");
       $stmt->execute([':sku' => $productSku]);
       $pid = (int)$stmt->fetchColumn();
 
-      if (!$pid) {
+      if ($pid <= 0) {
         return ['success' => false, 'error' => 'Producto no encontrado por SKU'];
       }
 
       // 2) Buscar la variación 'Default' y devolver su SKU
       $stmt = $pdo->prepare("
-        SELECT SKU
-        FROM variations
-        WHERE product_id = :pid
-          AND LOWER(name) = 'default'
-        ORDER BY variation_id ASC
+        SELECT v.SKU
+        FROM variations v
+        WHERE v.product_id = :pid
+          AND v.name IS NOT NULL
+          AND LOWER(v.name) = 'default'
+        ORDER BY v.variation_id ASC
         LIMIT 1
       ");
       $stmt->execute([':pid' => $pid]);
@@ -965,10 +965,11 @@ class Variation {
 
       return [
         'success' => true,
-        'sku_default_variation' => $defaultSku
+        'sku_default_variation' => $defaultSku,
+        'product_id' => $pid
       ];
 
-    } catch (PDOException $e) {
+    } catch (\PDOException $e) {
       error_log('getSKUDefaultVariation: ' . $e->getMessage());
       return ['success' => false, 'error' => 'DB error'];
     }
