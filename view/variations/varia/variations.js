@@ -387,7 +387,6 @@ class Variations {
         return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
-        alert(text);
         console.log(text);
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
@@ -395,16 +394,16 @@ class Variations {
       //  alert(JSON.stringify(json.type_variations) + "  " + JSON.stringify(json.current?.type_id));
 
     //  alert(JSON.stringify(json.variations));
-        // Render page sections (each method does one job)
-        // this.renderTopMenu(json.variations, skuVariation);
-        // this.renderCurrentNameAndDefaultRules(json.current);
-        // this.renderParentSelect(json.variations, json.current, json.parent, json.product);
-        // this.renderTypeVariationsSelect(json.type_variations, json.current?.type_id);
-        // this.renderServerPreviews(json.current);
-        //
-        // // IMPORTANT: On initial load, user has not attached new files yet
-        // this.attachImage = false;
-        // this.attachPDF   = false;
+      //  Render page sections (each method does one job)
+        this.renderTopMenu(json.variations, skuVariation);
+        this.renderCurrentNameAndDefaultRules(json.current);
+        this.renderParentSelect(json.variations, json.current, json.parent, json.product);
+        this.renderTypeVariationsSelect(json.type_variations, json.current?.type_id);
+        this.renderServerPreviews(json.current);
+
+        // IMPORTANT: On initial load, user has not attached new files yet
+        this.attachImage = false;
+        this.attachPDF   = false;
       })
       .catch(err => console.error("Error:", err));
   }
