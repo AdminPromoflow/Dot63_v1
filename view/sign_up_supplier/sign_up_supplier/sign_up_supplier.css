@@ -103,9 +103,7 @@ input:focus {
 	color: rgb(0, 0, 0);
 	font-size: .95rem;
 }
-.footer  a{
-	color: rgb(0, 0, 0);
-}
+
 .toggle-pass {
 	position: absolute;
 	right: .6rem;

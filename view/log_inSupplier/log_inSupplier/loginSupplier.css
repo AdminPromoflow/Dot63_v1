@@ -98,7 +98,7 @@ input:focus {
 .footer {
 	margin-top: 1rem;
 	text-align: center;
-	color: var(--muted);
+	color: rgba(0, 0, 0, .8);
 	font-size: .95rem;
 }
 
