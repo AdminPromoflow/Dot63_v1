@@ -20,6 +20,8 @@
 </head>
 
 <body style="background: black!important" class="body_product_details">
+  <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
+
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/preview_porduct/preview_porduct/preview.php";?>
 </body>

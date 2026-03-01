@@ -333,6 +333,9 @@ class PreviewLogic {
     - Aquí decides qué hacer: por ahora alerta + ejemplo de llamada
   ============================================================================ */
   SelectVariation(domId = "") {
+    loader.show();
+
+
     const id = String(domId || "").trim();
     if (!id) return;
 
@@ -344,6 +347,8 @@ class PreviewLogic {
     setTimeout(() => {
       this.fetchChildVariationsById(variationId);
     }, 1000);
+    loader.hide();
+
   }
 
 
