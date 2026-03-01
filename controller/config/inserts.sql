@@ -528,11 +528,6 @@ LEFT JOIN `type_variations` tv
 WHERE c.name = 'Custom / Bespoke Projects' AND tv.type_id IS NULL;
 
 
-INSERT INTO `suppliers`
-(`contact_name`, `email`, `phone`, `company_name`, `country`, `city`, `address_line1`, `address_line2`, `postal_code`, `password`)
-VALUES
-('Ian Sourthworth', 'ian@kan-do-it.com', '44 786555899', '.63', 'UK', 'Hampshire', 'Hampshire Marine ....', NULL, '00000', '32skiff32!CI');
-
 
 
 /**/
