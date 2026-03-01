@@ -159,6 +159,7 @@ class PreviewLogic {
         if (childVariations.length && variationTypes.length) {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
+          loader.hide();
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
@@ -347,7 +348,7 @@ class PreviewLogic {
     setTimeout(() => {
       this.fetchChildVariationsById(variationId);
     }, 1000);
-    loader.hide();
+
 
   }
 
