@@ -347,7 +347,7 @@ class PreviewLogic {
     setTimeout(() => {
       this.fetchChildVariationsById(variationId);
     }, 1000);
-    loader.hide();
+    //loader.hide();
 
   }
 
