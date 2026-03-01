@@ -413,7 +413,7 @@ class Variations {
      ========================= */
 
      renderTopMenu(variationsRaw, skuVariation) {
-       alert(JSON.stringify(variationsRaw));
+      // alert(JSON.stringify(variationsRaw));
        //console.log(JSON.stringify(variationsRaw));
        if (!this.menuList) return;
 
