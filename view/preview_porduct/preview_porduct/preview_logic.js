@@ -394,27 +394,25 @@ class PreviewLogic {
   }
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
-
-    alert(JSON.stringify(imagesOnlyOfType) + 'Bueno ' + JSON.stringify(typeVariation));
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
 
-    const typeId = typeVariation?.type_id ?? "null";
-    const wrapId = `wrap-images-${typeId}`;
-
-    const existing = parent.querySelector(`.wrap-images[data-type-id="${typeId}"]`);
-    if (existing) existing.remove();
-
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
-
+    // 1) Si no hay imágenes, no hacemos nada
     if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
 
+    const typeId = String(typeVariation?.type_id ?? "null");
+    const wrapId = `wrap-images-${typeId}`;
+
+    // 2) Borrar el bloque anterior de ESTE typeId (si existe)
+    document.getElementById(wrapId)?.remove();
+
+    // 3) Construir las imágenes
     let imagesHtml = "";
 
-    for (const img of imagesOnlyOfType) {
-      const rawLink = String(img?.link ?? "").trim().replace(/^\/+/, "");
+    for (let i = 0; i < imagesOnlyOfType.length; i++) {
+      const img = imagesOnlyOfType[i];
 
+      const rawLink = String(img?.link ?? "").trim().replace(/^\/+/, "");
       const src = rawLink
         ? (
             rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
@@ -431,7 +429,7 @@ class PreviewLogic {
         <img
           class="preview-media"
           src="${src}"
-          alt="Preview image"
+          alt="Preview image ${i + 1}"
           loading="lazy"
           decoding="async"
         >
@@ -440,13 +438,15 @@ class PreviewLogic {
 
     if (!imagesHtml.trim()) return;
 
-    const blockHtml = `
-      <div class="wrap-images" id="${wrapId}" data-type-id="${typeId}">
-        ${imagesHtml}
-      </div>
-    `;
-
-    parent.insertAdjacentHTML("beforeend", blockHtml);
+    // 4) Insertar el wrapper + imgs dentro
+    parent.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div class="wrap-images" id="${wrapId}" data-type-id="${typeId}">
+          ${imagesHtml}
+        </div>
+      `
+    );
   }
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
@@ -600,6 +600,7 @@ class PreviewLogic {
     DELETE helpers — remove the “wrapper by type”
   ============================================================================ */
 
+
   deleteVariations(id_type) {
     const typeId = (id_type === null || id_type === undefined) ? "null" : String(id_type);
 
@@ -614,38 +615,24 @@ class PreviewLogic {
   }
 
 
-
-  deleteItems(typeVariation) {
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
-
-    const typeId = typeVariation?.type_id ?? "null";
-    const el = document.getElementById(`wrap-items-${typeId}`);
-    if (el) el.remove();
+  deleteItems(typeId) {
+    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    document.getElementById(`wrap-items-${id}`)?.remove();
   }
 
-  deleteImages(typeVariation) {
-    const id = `wrap-images-${typeVariation}`;
-    const el = document.getElementById(id);
-    if (el) el.remove();
+  deleteImages(typeId) {
+    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    document.getElementById(`wrap-images-${id}`)?.remove();
   }
 
-  deletePrices(typeVariation) {
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
-
-    const typeId = typeVariation?.type_id ?? "null";
-    const el = document.getElementById(`wrap-price-${typeId}`);
-    if (el) el.remove();
+  deletePrices(typeId) {
+    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    document.getElementById(`wrap-price-${id}`)?.remove();
   }
 
-  deleteArtwork(typeVariation) {
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
-
-    const typeId = typeVariation?.type_id ?? "null";
-    const el = document.getElementById(`wrap-artworks-${typeId}`);
-    if (el) el.remove();
+  deleteArtwork(typeId) {
+    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    document.getElementById(`wrap-artworks-${id}`)?.remove();
   }
 }
 
