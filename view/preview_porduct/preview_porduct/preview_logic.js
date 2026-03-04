@@ -628,7 +628,7 @@ class PreviewLogic {
 
     const typeId = typeVariation?.type_id ?? "null";
     const el = document.getElementById(`wrap-images-${typeId}`);
-    alert(`wrap-images-` + typeId);
+    alert("wrap-images-" + typeId);
 
     if (el) el.remove();
   }
