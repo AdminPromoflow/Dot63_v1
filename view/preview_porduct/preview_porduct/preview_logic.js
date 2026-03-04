@@ -623,17 +623,13 @@ class PreviewLogic {
   }
 
   deleteImages(typeVariation) {
-  //  alert(JSON.stringify(typeVariation));
-
-    // const typeName = String(typeVariation?.type_name ?? "").trim();
-    // if (!typeName) return;
-    //
-    // const typeId = typeVariation?.type_id ?? "null";
     alert(`wrap-images-${typeVariation}`);
     const el = document.getElementById(`wrap-images-${typeVariation}`);
   //  alert("wrap-images-" + typeId);
 
-    if (el) el.remove();
+  el.innerHTML = "";
+
+    //if (el) el.remove();
   }
 
   deletePrices(typeVariation) {
