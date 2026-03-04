@@ -394,6 +394,8 @@ class PreviewLogic {
   }
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
+
+    alert(JSON.stringify(imagesOnlyOfType) + 'Bueno ' + JSON.stringify(typeVariation));
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
 
@@ -623,16 +625,8 @@ class PreviewLogic {
   }
 
   deleteImages(typeVariation) {
-  //  alert(JSON.stringify(typeVariation));
-
-    // const typeName = String(typeVariation?.type_name ?? "").trim();
-    // if (!typeName) return;
-    //
-    // const typeId = typeVariation?.type_id ?? "null";
-    alert(`wrap-images-${typeVariation}`);
-    const el = document.getElementById(`wrap-images-${typeVariation}`);
-  //  alert("wrap-images-" + typeId);
-
+    const id = `wrap-images-${typeVariation}`;
+    const el = document.getElementById(id);
     if (el) el.remove();
   }
 
