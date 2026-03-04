@@ -629,6 +629,7 @@ class PreviewLogic {
     // if (!typeName) return;
     //
     // const typeId = typeVariation?.type_id ?? "null";
+    alert(`wrap-images-${typeVariation}`);
     const el = document.getElementById(`wrap-images-${typeVariation}`);
   //  alert("wrap-images-" + typeId);
 
