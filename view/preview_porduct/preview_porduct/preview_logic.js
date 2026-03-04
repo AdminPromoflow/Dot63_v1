@@ -627,9 +627,9 @@ class PreviewLogic {
     const el = document.getElementById(`wrap-images-${typeVariation}`);
   //  alert("wrap-images-" + typeId);
 
-  el.innerHTML = "";
+//  el.innerHTML = "";
 
-    //if (el) el.remove();
+    if (el) el.remove();
   }
 
   deletePrices(typeVariation) {
