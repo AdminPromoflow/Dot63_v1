@@ -624,7 +624,7 @@ class PreviewLogic {
   }
 
   deleteImages(typeId) {
-    alert(typeId);
+    //alert(typeId);
     const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
     document.getElementById(`wrap-images-${id}`)?.remove();
   }
