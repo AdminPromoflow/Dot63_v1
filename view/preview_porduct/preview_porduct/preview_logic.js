@@ -623,6 +623,7 @@ class PreviewLogic {
   }
 
   deleteImages(typeVariation) {
+    alert("entramos");
     const typeName = String(typeVariation?.type_name ?? "").trim();
     if (!typeName) return;
 
