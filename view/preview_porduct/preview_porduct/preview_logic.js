@@ -401,7 +401,7 @@ class PreviewLogic {
     if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
     if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
 
-    alert(typeVariation.type_id  + "  " + JSON.stringify(imagesOnlyOfType) + "   "  + imagesOnlyOfType.length);
+    alert(Array.isArray(imagesOnlyOfType));
 
     // const typeId = String(typeVariation?.type_id ?? "null");
     // const wrapId = `wrap-images-${typeId}`;
