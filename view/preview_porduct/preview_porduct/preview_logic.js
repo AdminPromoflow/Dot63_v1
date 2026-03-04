@@ -623,14 +623,14 @@ class PreviewLogic {
   }
 
   deleteImages(typeVariation) {
-    alert(JSON.stringify(typeVariation));
+  //  alert(JSON.stringify(typeVariation));
 
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
-
-    const typeId = typeVariation?.type_id ?? "null";
-    const el = document.getElementById(`wrap-images-${typeId}`);
-    alert("wrap-images-" + typeId);
+    // const typeName = String(typeVariation?.type_name ?? "").trim();
+    // if (!typeName) return;
+    //
+    // const typeId = typeVariation?.type_id ?? "null";
+    const el = document.getElementById(`wrap-images-${typeVariation}`);
+  //  alert("wrap-images-" + typeId);
 
     if (el) el.remove();
   }
