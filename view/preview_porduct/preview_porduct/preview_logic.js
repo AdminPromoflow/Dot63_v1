@@ -400,53 +400,55 @@ class PreviewLogic {
     // 1) Si no hay imágenes, no hacemos nada
     if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
 
-    const typeId = String(typeVariation?.type_id ?? "null");
-    const wrapId = `wrap-images-${typeId}`;
+    alert(typeVariation.type_id);
 
-    // 2) Borrar el bloque anterior de ESTE typeId (si existe)
-    document.getElementById(wrapId)?.remove();
-
-    // 3) Construir las imágenes
-    let imagesHtml = "";
-
-    for (let i = 0; i < imagesOnlyOfType.length; i++) {
-      const img = imagesOnlyOfType[i];
-
-      const rawLink = String(img?.link ?? "").trim().replace(/^\/+/, "");
-      const src = rawLink
-        ? (
-            rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
-              ? rawLink
-              : (rawLink.startsWith("controller/")
-                  ? "../../" + rawLink
-                  : "../../controller/" + rawLink)
-          )
-        : "";
-
-      if (!src) continue;
-
-      imagesHtml += `
-        <img
-          class="preview-media"
-          src="${src}"
-          alt="Preview image ${i + 1}"
-          loading="lazy"
-          decoding="async"
-        >
-      `;
-    }
-
-    if (!imagesHtml.trim()) return;
-
-    // 4) Insertar el wrapper + imgs dentro
-    parent.insertAdjacentHTML(
-      "beforeend",
-      `
-        <div class="wrap-images" id="${wrapId}" data-type-id="${typeId}">
-          ${imagesHtml}
-        </div>
-      `
-    );
+    // const typeId = String(typeVariation?.type_id ?? "null");
+    // const wrapId = `wrap-images-${typeId}`;
+    //
+    // // 2) Borrar el bloque anterior de ESTE typeId (si existe)
+    // document.getElementById(wrapId)?.remove();
+    //
+    // // 3) Construir las imágenes
+    // let imagesHtml = "";
+    //
+    // for (let i = 0; i < imagesOnlyOfType.length; i++) {
+    //   const img = imagesOnlyOfType[i];
+    //
+    //   const rawLink = String(img?.link ?? "").trim().replace(/^\/+/, "");
+    //   const src = rawLink
+    //     ? (
+    //         rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
+    //           ? rawLink
+    //           : (rawLink.startsWith("controller/")
+    //               ? "../../" + rawLink
+    //               : "../../controller/" + rawLink)
+    //       )
+    //     : "";
+    //
+    //   if (!src) continue;
+    //
+    //   imagesHtml += `
+    //     <img
+    //       class="preview-media"
+    //       src="${src}"
+    //       alt="Preview image ${i + 1}"
+    //       loading="lazy"
+    //       decoding="async"
+    //     >
+    //   `;
+    // }
+    //
+    // if (!imagesHtml.trim()) return;
+    //
+    // // 4) Insertar el wrapper + imgs dentro
+    // parent.insertAdjacentHTML(
+    //   "beforeend",
+    //   `
+    //     <div class="wrap-images" id="${wrapId}" data-type-id="${typeId}">
+    //       ${imagesHtml}
+    //     </div>
+    //   `
+    // );
   }
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
@@ -621,6 +623,7 @@ class PreviewLogic {
   }
 
   deleteImages(typeId) {
+    alert(typeId);
     const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
     document.getElementById(`wrap-images-${id}`)?.remove();
   }
