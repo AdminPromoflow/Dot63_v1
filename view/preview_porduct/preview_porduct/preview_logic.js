@@ -172,7 +172,7 @@ class PreviewLogic {
     - Recorre tipos y elimina wrappers por type_id
   ============================================================================ */
   organizeVariationsForDelete(variationTypes = []) {
-    //alert(JSON.stringify(variationTypes));
+    alert(JSON.stringify(variationTypes));
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
     for (const tv of variationTypes) {
@@ -613,7 +613,7 @@ class PreviewLogic {
   }
 
   deleteImages(typeId) {
-    alert(typeId);
+    //alert(typeId);
     const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
     document.getElementById(`wrap-images-${id}`)?.remove();
   }
