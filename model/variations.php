@@ -533,10 +533,7 @@ class Variation {
     try {
       $pdo = $this->connection->getConnection();
 
-      /* ============================================================================
-        1) Capturar type_id del variation_id inicial
-        - IMPORTANTE: si type_id viene NULL, NO vamos a incluir NULL en el resultado.
-      ============================================================================ */
+      // 1) Capturar type_id del variation_id inicial
       $stmtType = $pdo->prepare("
         SELECT type_id
         FROM variations
@@ -546,22 +543,11 @@ class Variation {
       $stmtType->execute([':variation_id' => $parentVariationId]);
       $typeId = $stmtType->fetchColumn(); // puede ser NULL
 
-      // ✅ Si el producto/variación no tiene type_id, no hay "type wrappers" válidos para borrar.
-      //    Retornamos vacío (sin NULL) para que el frontend no intente borrar wrap-images-null, etc.
-      if ($typeId === null || $typeId === '') {
-        return [];
-      }
-
-      $typeId = (int)$typeId; // normalizamos
-
-      /* ============================================================================
-        2) Buscar todas las variaciones con ese type_id (SIN NULL)
-        - Ya NO usamos <=>, porque ya validamos que typeId no es NULL.
-      ============================================================================ */
+      // 2) Buscar todas las variaciones con ese type_id (NULL-safe)
       $stmtVars = $pdo->prepare("
         SELECT variation_id
         FROM variations
-        WHERE type_id = :type_id
+        WHERE type_id <=> :type_id
       ");
       $stmtVars->execute([':type_id' => $typeId]);
       $variationIds = $stmtVars->fetchAll(PDO::FETCH_COLUMN);
@@ -570,12 +556,7 @@ class Variation {
         $variationIds = [$parentVariationId];
       }
 
-      /* ============================================================================
-        3) Por cada variation_id, traer descendencia con CTE y unir sin repetir
-        - FILTRAMOS para NO incluir d.type_id NULL.
-        - Así nunca entra NULL al arreglo final.
-        - Además: incluimos el type_id inicial (NO lo removemos).
-      ============================================================================ */
+      // 3) Por cada variation_id, traer descendencia con CTE y unir sin repetir
       $unique = []; // key => ['type_id'=>..., 'type_name'=>...]
       $cteSql = "
         WITH RECURSIVE descendants AS (
@@ -596,8 +577,7 @@ class Variation {
         FROM descendants d
         LEFT JOIN type_variations tv
           ON tv.type_id = d.type_id
-        WHERE d.type_id IS NOT NULL              -- ✅ NO incluir NULL
-        ORDER BY d.type_id ASC
+        ORDER BY (d.type_id IS NOT NULL), d.type_id ASC
       ";
 
       $stmtCTE = $pdo->prepare($cteSql);
@@ -610,15 +590,16 @@ class Variation {
         $rows = $stmtCTE->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
-          // Como filtramos NULL en SQL, aquí type_id debería venir siempre válido
-          $tid = $r['type_id'] ?? null;
-          if ($tid === null || $tid === '') continue; // doble seguro
+          $tid = array_key_exists('type_id', $r) ? $r['type_id'] : null;
+          $tname = array_key_exists('type_name', $r) ? $r['type_name'] : null;
 
-          $tidNorm = (string)$tid;
-          $tnameNorm = isset($r['type_name']) ? (string)$r['type_name'] : '';
+          $tidNorm = ($tid === null ? null : (string)$tid);
+          $tnameNorm = ($tname === null ? null : (string)$tname);
 
-          if (!isset($unique[$tidNorm])) {
-            $unique[$tidNorm] = [
+          $key = ($tidNorm === null) ? 'NULL' : $tidNorm;
+
+          if (!isset($unique[$key])) {
+            $unique[$key] = [
               'type_id'   => $tidNorm,
               'type_name' => $tnameNorm,
             ];
@@ -626,21 +607,21 @@ class Variation {
         }
       }
 
-      /* ============================================================================
-        4) CAMBIO CLAVE (frente a tu versión anterior)
-        - ANTES: removías el type_id inicial con unset(...) y por eso el frontend no borraba
-                wrappers como wrap-images-61 al cambiar de 10mm a 20mm.
-        - AHORA: NO removemos el type_id inicial. Lo necesitamos para borrar el bloque anterior.
-        - Además: como ya NO permitimos NULL, tampoco hay removeKey 'NULL'.
-      ============================================================================ */
-      // (No se hace unset del typeId)
+      // ✅ 4) Remover del resultado el primer type_id capturado (incluye NULL)
+      $removeKey = ($typeId === null) ? 'NULL' : (string)$typeId;
+      if (isset($unique[$removeKey])) {
+        unset($unique[$removeKey]);
+      }
 
-      /* ============================================================================
-        5) Orden final ascendente por type_id (numérico)
-      ============================================================================ */
+      // Orden final: NULL primero, luego asc por número
       $out = array_values($unique);
       usort($out, function ($a, $b) {
-        return (int)$a['type_id'] <=> (int)$b['type_id'];
+        if ($a['type_id'] === null && $b['type_id'] !== null) return -1;
+        if ($a['type_id'] !== null && $b['type_id'] === null) return 1;
+
+        $na = (int)$a['type_id'];
+        $nb = (int)$b['type_id'];
+        return $na <=> $nb;
       });
 
       return $out;
