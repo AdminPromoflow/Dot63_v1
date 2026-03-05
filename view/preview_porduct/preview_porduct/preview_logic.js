@@ -409,7 +409,7 @@ class PreviewLogic {
 
     // Agrega varias imágenes dentro del contenedor
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
-      child.insertAdjacentHTML("beforeend", `
+      child.innerHTML += `
         <img
           class="preview-media"
           src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
@@ -417,7 +417,7 @@ class PreviewLogic {
           loading="lazy"
           decoding="async"
         >
-      `);
+      `;
     }
   }
 
