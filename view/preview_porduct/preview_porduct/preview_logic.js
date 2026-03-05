@@ -397,76 +397,28 @@ class PreviewLogic {
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
 
-    // 1) Si no hay imágenes, no hacemos nada
     if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
-    alert("ahi vamos");
 
     const typeId = String(typeVariation?.type_id ?? "null");
-     const wrapId = `wrap-images-${typeId}`;
+    const wrapId = `wrap-images-${typeId}`;
 
-     parent.innerHTML = `<div class="wrap-images" id="${wrapId}"></div>`;
+    // Crea el contenedor
+    parent.innerHTML = `<div class="wrap-images" id="${wrapId}"></div>`;
+    const child = document.getElementById(wrapId);
+    if (!child) return;
 
-     const child = document.getElementById(wrapId);
-
-     for (var i = 0; i < child.length; i++) {
-       child[i].innerHTML = `<img
-         class="preview-media"
-         src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
-         alt="Preview image 2"
-         loading="lazy"
-         decoding="async"
-       >`;
-     }
-
-
-     // for (var i = 0; i < imagesOnlyOfType.length; i++) {
-     //
-     // }
-    //
-    // // 2) Borrar el bloque anterior de ESTE typeId (si existe)
-    // document.getElementById(wrapId)?.remove();
-    //
-    // // 3) Construir las imágenes
-    // let imagesHtml = "";
-    //
-    // for (let i = 0; i < imagesOnlyOfType.length; i++) {
-    //   const img = imagesOnlyOfType[i];
-    //
-    //   const rawLink = String(img?.link ?? "").trim().replace(/^\/+/, "");
-    //   const src = rawLink
-    //     ? (
-    //         rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
-    //           ? rawLink
-    //           : (rawLink.startsWith("controller/")
-    //               ? "../../" + rawLink
-    //               : "../../controller/" + rawLink)
-    //       )
-    //     : "";
-    //
-    //   if (!src) continue;
-    //
-    //   imagesHtml += `
-    //     <img
-    //       class="preview-media"
-    //       src="${src}"
-    //       alt="Preview image ${i + 1}"
-    //       loading="lazy"
-    //       decoding="async"
-    //     >
-    //   `;
-    // }
-    //
-    // if (!imagesHtml.trim()) return;
-    //
-    // // 4) Insertar el wrapper + imgs dentro
-    // parent.insertAdjacentHTML(
-    //   "beforeend",
-    //   `
-    //     <div class="wrap-images" id="${wrapId}" data-type-id="${typeId}">
-    //       ${imagesHtml}
-    //     </div>
-    //   `
-    // );
+    // Agrega varias imágenes dentro del contenedor
+    for (let i = 0; i < imagesOnlyOfType.length; i++) {
+      child.insertAdjacentHTML("beforeend", `
+        <img
+          class="preview-media"
+          src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
+          alt="Preview image ${i + 1}"
+          loading="lazy"
+          decoding="async"
+        >
+      `);
+    }
   }
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
