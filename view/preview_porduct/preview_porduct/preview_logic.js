@@ -141,7 +141,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert(text);
+        //alert(text);
         const json = JSON.parse(text);
 
         const variationTypes  = json.variationTypes || [];
@@ -594,7 +594,7 @@ class PreviewLogic {
 
 
   deleteVariations(id_type) {
-    alert(JSON.stringify(id_type));
+  //  alert(JSON.stringify(id_type));
     const typeId = (id_type === null || id_type === undefined) ? "null" : String(id_type);
 
     // ✅ Selecciona TODOS los elementos con data-type-id = typeId
