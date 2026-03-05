@@ -533,7 +533,10 @@ class Variation {
     try {
       $pdo = $this->connection->getConnection();
 
-      // 1) Capturar type_id del variation_id inicial
+      /* ============================================================================
+        1) Capturar type_id del variation_id inicial
+        - NO permitimos NULL en salida.
+      ============================================================================ */
       $stmtType = $pdo->prepare("
         SELECT type_id
         FROM variations
@@ -543,11 +546,21 @@ class Variation {
       $stmtType->execute([':variation_id' => $parentVariationId]);
       $typeId = $stmtType->fetchColumn(); // puede ser NULL
 
-      // 2) Buscar todas las variaciones con ese type_id (NULL-safe)
+      // Si no hay type_id, no hay wrappers por type_id que borrar (y NO devolvemos NULL).
+      if ($typeId === null || $typeId === '') {
+        return [];
+      }
+
+      $typeId = (int)$typeId;            // normalizamos numérico
+      $typeIdKey = (string)$typeId;      // key estable para el array
+
+      /* ============================================================================
+        2) Variations raíz de ese type_id (SIN NULL)
+      ============================================================================ */
       $stmtVars = $pdo->prepare("
         SELECT variation_id
         FROM variations
-        WHERE type_id <=> :type_id
+        WHERE type_id = :type_id
       ");
       $stmtVars->execute([':type_id' => $typeId]);
       $variationIds = $stmtVars->fetchAll(PDO::FETCH_COLUMN);
@@ -556,8 +569,11 @@ class Variation {
         $variationIds = [$parentVariationId];
       }
 
-      // 3) Por cada variation_id, traer descendencia con CTE y unir sin repetir
-      $unique = []; // key => ['type_id'=>..., 'type_name'=>...]
+      /* ============================================================================
+        3) CTE descendientes (SIN NULL en type_id)
+        - Aquí armamos la lista de type_id a borrar (incluye el type_id inicial).
+      ============================================================================ */
+      $unique = []; // key(type_id string) => ['type_id'=>..., 'type_name'=>...]
       $cteSql = "
         WITH RECURSIVE descendants AS (
           SELECT v.variation_id, v.parent_id, v.type_id
@@ -577,7 +593,8 @@ class Variation {
         FROM descendants d
         LEFT JOIN type_variations tv
           ON tv.type_id = d.type_id
-        ORDER BY (d.type_id IS NOT NULL), d.type_id ASC
+        WHERE d.type_id IS NOT NULL
+        ORDER BY d.type_id ASC
       ";
 
       $stmtCTE = $pdo->prepare($cteSql);
@@ -590,39 +607,50 @@ class Variation {
         $rows = $stmtCTE->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
-          $tid = array_key_exists('type_id', $r) ? $r['type_id'] : null;
-          $tname = array_key_exists('type_name', $r) ? $r['type_name'] : null;
+          $tid = $r['type_id'] ?? null;
+          if ($tid === null || $tid === '') continue;
 
-          $tidNorm = ($tid === null ? null : (string)$tid);
-          $tnameNorm = ($tname === null ? null : (string)$tname);
+          $tidKey = (string)$tid;
+          $tname  = isset($r['type_name']) ? (string)$r['type_name'] : '';
 
-          $key = ($tidNorm === null) ? 'NULL' : $tidNorm;
-
-          if (!isset($unique[$key])) {
-            $unique[$key] = [
-              'type_id'   => $tidNorm,
-              'type_name' => $tnameNorm,
+          if (!isset($unique[$tidKey])) {
+            $unique[$tidKey] = [
+              'type_id'   => $tidKey,
+              'type_name' => $tname,
             ];
           }
         }
       }
 
-      // ✅ 4) Remover del resultado el primer type_id capturado (incluye NULL)
-      $removeKey = ($typeId === null) ? 'NULL' : (string)$typeId;
-      if (isset($unique[$removeKey])) {
-        unset($unique[$removeKey]);
+      /* ============================================================================
+        4) ORDEN FINAL con REGLA NUEVA:
+        ✅ El type_id de la variación inicial SIEMPRE primero en el array.
+        - Luego, el resto se ordena ascendente como antes.
+      ============================================================================ */
+
+      $out = [];
+
+      // 4.1) Poner primero el type_id inicial (si existe en unique)
+      if (isset($unique[$typeIdKey])) {
+        $out[] = $unique[$typeIdKey];
+        unset($unique[$typeIdKey]); // lo quitamos para no duplicarlo en el resto
+      } else {
+        // Si por alguna razón no quedó en $unique, lo agregamos manualmente
+        // (type_name quedará vacío si no tenemos join)
+        $out[] = [
+          'type_id' => $typeIdKey,
+          'type_name' => '',
+        ];
       }
 
-      // Orden final: NULL primero, luego asc por número
-      $out = array_values($unique);
-      usort($out, function ($a, $b) {
-        if ($a['type_id'] === null && $b['type_id'] !== null) return -1;
-        if ($a['type_id'] !== null && $b['type_id'] === null) return 1;
-
-        $na = (int)$a['type_id'];
-        $nb = (int)$b['type_id'];
-        return $na <=> $nb;
+      // 4.2) Ordenar el resto (asc numérico)
+      $rest = array_values($unique);
+      usort($rest, function ($a, $b) {
+        return (int)$a['type_id'] <=> (int)$b['type_id'];
       });
+
+      // 4.3) Unir: primero inicial + resto
+      array_push($out, ...$rest);
 
       return $out;
 
