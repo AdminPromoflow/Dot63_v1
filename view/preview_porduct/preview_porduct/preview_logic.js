@@ -141,25 +141,26 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        //alert(text);
         const json = JSON.parse(text);
 
         const variationTypes  = json.variationTypes || [];
         const childVariations = json.childVariations || [];
         const variationTypesForDelete = json.variationTypesForDelete || [];
 
-        //  alert(JSON.stringify(variationTypesForDelete));
+        // ✅ Current type (backend lo manda primero)
+        const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
-        // ✅ 1) BORRAR LO QUE YA EXISTE (por type) antes de volver a pintar
+        // ✅ 1) BORRAR lo viejo
         if (variationTypesForDelete.length) {
-          this.organizeVariationsForDelete(variationTypesForDelete);
+          this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         }
 
-        // ✅ 2) PINTAR NUEVO
+        // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length) {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
-          loader.hide();
+
+        loader.hide();
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
@@ -168,21 +169,28 @@ class PreviewLogic {
   }
 
   /* ============================================================================
-    ✅ organizeVariationsForDelete(variationTypes)
-    - Recorre tipos y elimina wrappers por type_id
+    ✅ organizeVariationsForDelete(variationTypes, currentTypeId)
+    - BORRA images/items/prices/artworks SIEMPRE
+    - BORRA variations SOLO si NO es el type actual
   ============================================================================ */
-  organizeVariationsForDelete(variationTypes = []) {
-    //alert(JSON.stringify(variationTypes));
+  organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
-    for (const tv of variationTypes) {
-      const typeId = tv?.type_id ?? null; // conserva null
+    const current = String(currentTypeId ?? "");
 
-      //this.deleteVariations(typeId);
+    for (let i = 0; i < variationTypes.length; i++) {
+      const typeId = String(variationTypes[i]?.type_id ?? "");
+
+      // ✅ Siempre borrar estos (incluyendo el actual)
       this.deleteItems(typeId);
       this.deleteImages(typeId);
       this.deletePrices(typeId);
       this.deleteArtwork(typeId);
+
+      // ✅ Solo borrar variations si NO es el type actual
+      if (typeId !== current) {
+        this.deleteVariations(typeId);
+      }
     }
   }
 
@@ -237,12 +245,6 @@ class PreviewLogic {
       this.renderPrices(pricesOnlyOfType, typeVariation);
       this.renderArtwork(artworksOnlyOfType, typeVariation);
     }
-
-    // ✅ PACK SIZE: dejar SOLO 1 seleccionado, el primero en general
-  //  window.previewGallery?.selectFirstPackSize?.();
-
-    // ✅ Gallery: reconstruir desde el DOM recién inyectado (force=true)
-    //window.previewGallery?.rebuildGalleryFromDom?.(0, true);
   }
 
   renderVariations(childVariationsOfType = [], typeVariation) {
@@ -262,7 +264,7 @@ class PreviewLogic {
     const firstLabel = String(childVariationsOfType?.[0]?.name ?? "").trim();
 
     let buttonsHtml = "";
-    let firstDomId = ""; // primer botón
+    let firstDomId = "";
 
     for (let i = 0; i < childVariationsOfType.length; i++) {
       const v = childVariationsOfType[i];
@@ -282,10 +284,8 @@ class PreviewLogic {
 
       const label = String(v?.name ?? "");
       const selectedClass = (i === 0) ? " is-selected" : "";
-
       const domId = variationId ? `variation_id_${variationId}` : "";
 
-      // Guardar el primero (aunque esté vacío, lo guardamos igual)
       if (i === 0) firstDomId = domId;
 
       buttonsHtml += `
@@ -316,7 +316,6 @@ class PreviewLogic {
 
     parent.insertAdjacentHTML("beforeend", blockHtml);
 
-    // ✅ SIN IF: llamar sí o sí
     setTimeout(() => {
       previewLogic.SelectVariation(firstDomId);
     }, 0);
@@ -324,39 +323,21 @@ class PreviewLogic {
     window.previewGallery?.updatePrice?.();
   }
 
-
-
-
-  /* ============================================================================
-    ✅ NEW: SelectVariation(domId)
-    - domId llega como: "variation_id_6"
-    - Extrae el variation_id (ej: 6)
-    - Aquí decides qué hacer: por ahora alerta + ejemplo de llamada
-  ============================================================================ */
   SelectVariation(domId = "") {
     loader.show();
-
 
     const id = String(domId || "").trim();
     if (!id) return;
 
-    // Esperado: "variation_id_6"
     const variationId = id.replace(/^variation_id_/, "").trim();
     if (!variationId) return;
 
-    // ✅ correr fetch después de 1 segundo
     setTimeout(() => {
       this.fetchChildVariationsById(variationId);
     }, 1000);
-
-
   }
 
-
-
   renderItems(itemsOnlyOfType = [], typeVariation) {
-
-  //  alert(JSON.stringify(itemsOnlyOfType) + JSON.stringify(typeVariation));
     const parent = document.getElementById("wrap-items-group");
     if (!parent) return;
 
@@ -402,10 +383,8 @@ class PreviewLogic {
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-images-${typeId}`;
 
-    // ✅ Buscar el wrapper SOLO dentro del parent (para evitar que coja otro igual en otra parte)
     let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
 
-    // ✅ Si no existe, lo creamos sin borrar nada del parent
     if (!wrapper) {
       wrapper = document.createElement("div");
       wrapper.className = "wrap-images";
@@ -414,10 +393,8 @@ class PreviewLogic {
       parent.appendChild(wrapper);
     }
 
-    // ✅ Limpia solo este wrapper (no borra otros types)
     wrapper.innerHTML = "";
 
-    // ✅ Agregar imágenes dentro del wrapper
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
       const imgObj = imagesOnlyOfType[i];
 
@@ -442,8 +419,6 @@ class PreviewLogic {
   }
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-  //  alert(JSON.stringify(pricesOnlyOfType));
-
     const parent = document.getElementById("wrap-prices-group");
     if (!parent) return;
 
@@ -463,10 +438,8 @@ class PreviewLogic {
       const maxQty  = String(p?.max_quantity ?? "").trim();
       const price   = String(p?.price ?? "").trim();
 
-      if (maxQty === "") continue; // solo renderizamos si hay max_quantity
+      if (maxQty === "") continue;
 
-      // Botón: texto = max_quantity | value = price
-      // También guardamos todo en data-* para enviarlo en el click
       buttonsHtml += `
         <button
           type="button"
@@ -492,13 +465,9 @@ class PreviewLogic {
 
     parent.insertAdjacentHTML("beforeend", blockHtml);
 
-    // Activar clicks (solo dentro de este wrap)
     this.bindPriceButtons(`#${wrapId}`);
   }
 
-  /* ============================================================================
-    bindPriceButtons(scopeSelector)
-  ============================================================================ */
   bindPriceButtons(scopeSelector) {
     const scope = document.querySelector(scopeSelector);
     if (!scope) return;
@@ -513,7 +482,7 @@ class PreviewLogic {
           min_quantity: String(el.dataset.minQuantity ?? ""),
           max_quantity: String(el.dataset.maxQuantity ?? ""),
           price: String(el.dataset.price ?? ""),
-          value: String(el.value ?? ""), // value del botón = price
+          value: String(el.value ?? ""),
         };
 
         this.onPriceSelected(payload);
@@ -521,9 +490,6 @@ class PreviewLogic {
     }
   }
 
-  /* ============================================================================
-    onPriceSelected(payload)
-  ============================================================================ */
   onPriceSelected(payload) {
     alert(
       "PRICE SELECTED:\n" +
@@ -534,7 +500,6 @@ class PreviewLogic {
       "button value: " + payload.value
     );
   }
-
 
   renderArtwork(artworksOnlyOfType = [], typeVariation) {
     const parent = document.getElementById("wrap-artworks-group");
@@ -589,43 +554,40 @@ class PreviewLogic {
   }
 
   /* ============================================================================
-    DELETE helpers — remove the “wrapper by type”
+    DELETE helpers
   ============================================================================ */
 
+  deleteVariations(typeId) {
+    const id = String(typeId ?? "");
+    if (!id) return;
 
-  deleteVariations(id_type) {
-  //  alert(JSON.stringify(id_type));
-    const typeId = (id_type === null || id_type === undefined) ? "null" : String(id_type);
+    // ✅ SOLO variations (no toca items/images/prices/artworks)
+    const nodes = document.querySelectorAll(
+      `#wrap-variations-group .wrap-variations[data-type-id="${CSS.escape(id)}"]`
+    );
 
-    // ✅ Selecciona TODOS los elementos con data-type-id = typeId
-    const nodes = document.querySelectorAll(`[data-type-id="${CSS.escape(typeId)}"]`);
-    if (!nodes || nodes.length === 0) return;
-
-    // ✅ Vacía el contenido interno, sin borrar el contenedor
     for (const el of nodes) {
       el.innerHTML = "";
     }
   }
 
-
   deleteItems(typeId) {
-    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    const id = String(typeId ?? "");
     document.getElementById(`wrap-items-${id}`)?.remove();
   }
 
   deleteImages(typeId) {
-    //alert(typeId);
-    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    const id = String(typeId ?? "");
     document.getElementById(`wrap-images-${id}`)?.remove();
   }
 
   deletePrices(typeId) {
-    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    const id = String(typeId ?? "");
     document.getElementById(`wrap-price-${id}`)?.remove();
   }
 
   deleteArtwork(typeId) {
-    const id = (typeId === null || typeId === undefined) ? "null" : String(typeId);
+    const id = String(typeId ?? "");
     document.getElementById(`wrap-artworks-${id}`)?.remove();
   }
 }
