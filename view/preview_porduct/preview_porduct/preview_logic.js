@@ -402,25 +402,42 @@ class PreviewLogic {
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-images-${typeId}`;
 
-    // crear o reutilizar wrapper
-    let child = document.getElementById(wrapId);
-    if (!child) {
-      parent.insertAdjacentHTML("beforeend", `<div class="wrap-images" id="${wrapId}"></div>`);
-      child = document.getElementById(wrapId);
+    // ✅ Buscar el wrapper SOLO dentro del parent (para evitar que coja otro igual en otra parte)
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
+
+    // ✅ Si no existe, lo creamos sin borrar nada del parent
+    if (!wrapper) {
+      wrapper = document.createElement("div");
+      wrapper.className = "wrap-images";
+      wrapper.id = wrapId;
+      wrapper.dataset.typeId = typeId;
+      parent.appendChild(wrapper);
     }
 
-    // limpiar solo ese wrapper
-    child.innerHTML = "";
+    // ✅ Limpia solo este wrapper (no borra otros types)
+    wrapper.innerHTML = "";
 
-    // insertar imgs dentro del wrapper
+    // ✅ Agregar imágenes dentro del wrapper
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
-      child.insertAdjacentHTML("beforeend", `
-        <img class="preview-media"
-             src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
-             alt="Preview image ${i + 1}"
-             loading="lazy"
-             decoding="async">
-      `);
+      const imgObj = imagesOnlyOfType[i];
+
+      const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
+      const src = rawLink
+        ? (rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
+            ? rawLink
+            : (rawLink.startsWith("controller/") ? "../../" + rawLink : "../../controller/" + rawLink))
+        : "";
+
+      if (!src) continue;
+
+      const img = document.createElement("img");
+      img.className = "preview-media";
+      img.src = src;
+      img.alt = `Preview image ${i + 1}`;
+      img.loading = "lazy";
+      img.decoding = "async";
+
+      wrapper.appendChild(img);
     }
   }
 
