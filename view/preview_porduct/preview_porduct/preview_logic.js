@@ -239,7 +239,7 @@ class PreviewLogic {
     }
 
     // ✅ PACK SIZE: dejar SOLO 1 seleccionado, el primero en general
-    window.previewGallery?.selectFirstPackSize?.();
+  //  window.previewGallery?.selectFirstPackSize?.();
 
     // ✅ Gallery: reconstruir desde el DOM recién inyectado (force=true)
     //window.previewGallery?.rebuildGalleryFromDom?.(0, true);
