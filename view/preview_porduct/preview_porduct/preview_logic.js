@@ -242,7 +242,7 @@ class PreviewLogic {
     window.previewGallery?.selectFirstPackSize?.();
 
     // ✅ Gallery: reconstruir desde el DOM recién inyectado (force=true)
-    window.previewGallery?.rebuildGalleryFromDom?.(0, true);
+    //window.previewGallery?.rebuildGalleryFromDom?.(0, true);
   }
 
   renderVariations(childVariationsOfType = [], typeVariation) {
