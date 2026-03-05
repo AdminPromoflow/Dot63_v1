@@ -534,6 +534,7 @@ class Variation {
       $pdo = $this->connection->getConnection();
 
       // 1) Capturar type_id del variation_id inicial
+      //    Ej: si seleccionas 10mm (variation_id X) aquí obtenemos su type_id (ej: 61).
       $stmtType = $pdo->prepare("
         SELECT type_id
         FROM variations
@@ -543,7 +544,9 @@ class Variation {
       $stmtType->execute([':variation_id' => $parentVariationId]);
       $typeId = $stmtType->fetchColumn(); // puede ser NULL
 
-      // 2) Buscar todas las variaciones con ese type_id (NULL-safe)
+      // 2) Buscar todas las variaciones que pertenezcan a ese mismo type_id (NULL-safe con <=>)
+      //    Esto te da un set de "raíces" de ese tipo, por si hay varias variaciones “equivalentes”
+      //    dentro del mismo type_id.
       $stmtVars = $pdo->prepare("
         SELECT variation_id
         FROM variations
@@ -552,11 +555,14 @@ class Variation {
       $stmtVars->execute([':type_id' => $typeId]);
       $variationIds = $stmtVars->fetchAll(PDO::FETCH_COLUMN);
 
+      // Si por alguna razón no hay resultados, usamos al menos el variation_id inicial
       if (!is_array($variationIds) || count($variationIds) === 0) {
         $variationIds = [$parentVariationId];
       }
 
-      // 3) Por cada variation_id, traer descendencia con CTE y unir sin repetir
+      // 3) Por cada variation_id “raíz”, traer su descendencia con CTE y unir sin repetir (unique por type_id)
+      //    El objetivo final es devolver TODOS los type_id que aparecen en el árbol, incluyendo el type_id inicial,
+      //    para que el frontend pueda borrar wrappers como #wrap-images-61 cuando cambias de 10mm a 20mm.
       $unique = []; // key => ['type_id'=>..., 'type_name'=>...]
       $cteSql = "
         WITH RECURSIVE descendants AS (
@@ -590,12 +596,14 @@ class Variation {
         $rows = $stmtCTE->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
-          $tid = array_key_exists('type_id', $r) ? $r['type_id'] : null;
+          $tid   = array_key_exists('type_id', $r) ? $r['type_id'] : null;
           $tname = array_key_exists('type_name', $r) ? $r['type_name'] : null;
 
-          $tidNorm = ($tid === null ? null : (string)$tid);
+          // Normalizamos a string o null para mantener consistencia
+          $tidNorm   = ($tid === null ? null : (string)$tid);
           $tnameNorm = ($tname === null ? null : (string)$tname);
 
+          // Key estable para no duplicar (NULL se guarda como 'NULL')
           $key = ($tidNorm === null) ? 'NULL' : $tidNorm;
 
           if (!isset($unique[$key])) {
@@ -607,11 +615,19 @@ class Variation {
         }
       }
 
-      // ✅ 4) Remover del resultado el primer type_id capturado (incluye NULL)
-      $removeKey = ($typeId === null) ? 'NULL' : (string)$typeId;
-      if (isset($unique[$removeKey])) {
-        unset($unique[$removeKey]);
-      }
+      // ✅ 4) CAMBIO CLAVE:
+      //    ANTES: quitabas el type_id inicial ($typeId) del resultado final con unset(...).
+      //    PROBLEMA: el frontend borra por type_id (ej: #wrap-images-61).
+      //              Si tú NO devuelves 61, cuando cambias de 10mm a 20mm,
+      //              el frontend nunca recibe el type_id del bloque anterior y NO lo borra.
+      //
+      //    AHORA: NO removemos el type_id inicial.
+      //    Así el frontend recibe también el type_id principal y puede borrar el wrapper correcto.
+      //
+      // $removeKey = ($typeId === null) ? 'NULL' : (string)$typeId;
+      // if (isset($unique[$removeKey])) {
+      //   unset($unique[$removeKey]);
+      // }
 
       // Orden final: NULL primero, luego asc por número
       $out = array_values($unique);
@@ -624,6 +640,10 @@ class Variation {
         return $na <=> $nb;
       });
 
+      // ✅ Resultado:
+      // - Ahora $out incluye el type_id inicial (ej: 61) + los type_id descendientes.
+      // - Tu "variationTypesForDelete" sí incluirá 61 y el frontend podrá borrar
+      //   #wrap-images-61, #wrap-items-61, #wrap-price-61, etc., al cambiar de opción.
       return $out;
 
     } catch (PDOException $e) {
