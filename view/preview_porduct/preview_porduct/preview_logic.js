@@ -400,12 +400,22 @@ class PreviewLogic {
     // 1) Si no hay imágenes, no hacemos nada
     if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
 
-    const typeId = String(typeVariation?.type_id ?? "null"); 
+    const typeId = String(typeVariation?.type_id ?? "null");
      const wrapId = `wrap-images-${typeId}`;
-     alert(`<div class="wrap-images" id="${wrapId}"></div>`);
 
-    // parent.innerHTML = `<div class="wrap-images" id="${wrapId}"></div>`;
+     parent.innerHTML = `<div class="wrap-images" id="${wrapId}"></div>`;
 
+     const child = document.getElementById(wrapId);
+
+     for (var i = 0; i < child.length; i++) {
+       child[i].innerHTML = `<img
+         class="preview-media"
+         src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
+         alt="Preview image 2"
+         loading="lazy"
+         decoding="async"
+       >`;
+     }
 
 
      // for (var i = 0; i < imagesOnlyOfType.length; i++) {
