@@ -399,6 +399,7 @@ class PreviewLogic {
 
     // 1) Si no hay imágenes, no hacemos nada
     if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
+    alert("ahi vamos");
 
     const typeId = String(typeVariation?.type_id ?? "null");
      const wrapId = `wrap-images-${typeId}`;
