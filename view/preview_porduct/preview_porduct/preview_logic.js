@@ -402,22 +402,25 @@ class PreviewLogic {
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-images-${typeId}`;
 
-    // Crea el contenedor
-    parent.innerHTML = `<div class="wrap-images" id="${wrapId}"></div>`;
-    const child = document.getElementById(wrapId);
-    if (!child) return;
+    // crear o reutilizar wrapper
+    let child = document.getElementById(wrapId);
+    if (!child) {
+      parent.insertAdjacentHTML("beforeend", `<div class="wrap-images" id="${wrapId}"></div>`);
+      child = document.getElementById(wrapId);
+    }
 
-    // Agrega varias imágenes dentro del contenedor
+    // limpiar solo ese wrapper
+    child.innerHTML = "";
+
+    // insertar imgs dentro del wrapper
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
-      child.innerHTML += `
-        <img
-          class="preview-media"
-          src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
-          alt="Preview image ${i + 1}"
-          loading="lazy"
-          decoding="async"
-        >
-      `;
+      child.insertAdjacentHTML("beforeend", `
+        <img class="preview-media"
+             src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
+             alt="Preview image ${i + 1}"
+             loading="lazy"
+             decoding="async">
+      `);
     }
   }
 
