@@ -138,7 +138,7 @@ class PreviewLogic {
       body: JSON.stringify(data)
     })
       .then((response) => {
-        alert(response);
+        alert(JSON.stringify(response));
         if (!response.ok) throw new Error("Network error.");
         return response.text();
       })
