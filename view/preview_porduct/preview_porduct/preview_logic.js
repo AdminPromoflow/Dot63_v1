@@ -138,11 +138,12 @@ class PreviewLogic {
       body: JSON.stringify(data)
     })
       .then((response) => {
-        alert(JSON.stringify(response));
         if (!response.ok) throw new Error("Network error.");
         return response.text();
       })
       .then((text) => {
+        alert(text);
+
         const json = JSON.parse(text);
 
         const variationTypes  = json.variationTypes || [];
