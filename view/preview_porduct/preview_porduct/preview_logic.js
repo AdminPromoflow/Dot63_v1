@@ -34,7 +34,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert(text);
+        //alert(text);
         const json = JSON.parse(text);
 
         const company_name  = (json.find(x => x.company_name)?.company_name) ?? "";
@@ -121,6 +121,7 @@ class PreviewLogic {
   }
 
   fetchChildVariationsById(variation_id) {
+    alert(variation_id);
     if (!variation_id) {
       console.warn("No variation_id provided");
       return;
