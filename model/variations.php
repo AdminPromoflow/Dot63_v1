@@ -64,16 +64,22 @@ class Variation {
 
   public function getVariationChildrenById(): array
   {
+    // 1) Obtener el variation_id actual del objeto y convertirlo a entero.
+    //    Si no existe, se usa 0 por defecto.
     $parentVariationId = (int)($this->variation_id ?? 0);
 
+    // 2) Validar que el variation_id sea válido.
+    //    Si es 0 o menor, significa que no llegó un id correcto.
     if ($parentVariationId <= 0) {
       return ['success' => false, 'error' => 'variation_id requerido'];
     }
 
     try {
+      // 3) Obtener la conexión PDO a la base de datos.
       $pdo = $this->connection->getConnection();
 
-      // (Opcional) validar que exista el padre
+      // 4) Validar que la variación padre realmente exista en la tabla variations.
+      //    Esto evita hacer consultas sobre un parent_id inexistente.
       $stmt = $pdo->prepare("
         SELECT variations.variation_id
         FROM variations
@@ -81,13 +87,19 @@ class Variation {
         LIMIT 1
       ");
       $stmt->execute([':id' => $parentVariationId]);
+
+      // 5) fetchColumn() devuelve el valor de la primera columna encontrada.
+      //    Si no existe, devolverá false y al convertirlo a int será 0.
       $exists = (int)$stmt->fetchColumn();
 
+      // 6) Si no existe la variación padre, devolver error.
       if (!$exists) {
         return ['success' => false, 'error' => 'Variación padre no encontrada por variation_id'];
       }
 
-      // 1) Obtener variaciones hijas (SIN pdf_artwork / name_pdf_artwork)
+      // 7) Consultar todas las variaciones hijas cuyo parent_id sea igual
+      //    al variation_id del padre.
+      //    OJO: aquí NO se traen pdf_artwork ni name_pdf_artwork todavía.
       $stmt = $pdo->prepare("
         SELECT
           variations.variation_id,
@@ -102,17 +114,28 @@ class Variation {
         ORDER BY variations.variation_id ASC
       ");
       $stmt->execute([':parent_id' => $parentVariationId]);
+
+      // 8) Obtener todas las hijas como arreglo asociativo.
       $children = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+      // 9) Si no hay hijas, devolver un arreglo vacío.
       if (!$children) {
         return ['success' => true, 'data' => []];
       }
 
-      // IDs de las hijas para consultas IN (...)
+      // 10) Sacar todos los variation_id de las hijas.
+      //     Esto se usa para hacer consultas en bloque con IN (...).
       $childIds = array_map(fn($r) => (int)$r['variation_id'], $children);
+
+      // 11) Crear placeholders ?,?,?... según la cantidad de IDs.
+      //     Ejemplo: si hay 3 ids, queda "?,?,?"
       $placeholders = implode(',', array_fill(0, count($childIds), '?'));
 
-      // 2) Traer ARTWORK en bloque (pdf_artwork + name_pdf_artwork)
+      // =========================================================
+      // 12) TRAER ARTWORK EN BLOQUE
+      // =========================================================
+      // Se consulta pdf_artwork y name_pdf_artwork para todas las hijas
+      // en una sola consulta.
       $stmt = $pdo->prepare("
         SELECT
           variations.variation_id,
@@ -124,16 +147,21 @@ class Variation {
       $stmt->execute($childIds);
       $artworkRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+      // 13) Organizar el artwork por variation_id para acceder rápido después.
       $artworkByVariation = [];
       foreach ($artworkRows as $row) {
         $vid = (int)$row['variation_id'];
+
         $artworkByVariation[$vid] = [
           'pdf_artwork' => $row['pdf_artwork'] ?? null,
           'name_pdf_artwork' => $row['name_pdf_artwork'] ?? null,
         ];
       }
 
-      // 3) Traer IMAGES en bloque
+      // =========================================================
+      // 14) TRAER IMÁGENES EN BLOQUE
+      // =========================================================
+      // Se consultan todas las imágenes relacionadas con las variaciones hijas.
       $stmt = $pdo->prepare("
         SELECT
           images.image_id,
@@ -147,14 +175,22 @@ class Variation {
       $stmt->execute($childIds);
       $imagesRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+      // 15) Agrupar imágenes por variation_id.
       $imagesByVariation = [];
       foreach ($imagesRows as $row) {
         $vid = (int)$row['variation_id'];
-        if (!isset($imagesByVariation[$vid])) $imagesByVariation[$vid] = [];
+
+        if (!isset($imagesByVariation[$vid])) {
+          $imagesByVariation[$vid] = [];
+        }
+
         $imagesByVariation[$vid][] = $row;
       }
 
-      // 4) Traer ITEMS en bloque
+      // =========================================================
+      // 16) TRAER ITEMS EN BLOQUE
+      // =========================================================
+      // Se consultan todos los items asociados a las variaciones hijas.
       $stmt = $pdo->prepare("
         SELECT
           items.item_id,
@@ -168,14 +204,22 @@ class Variation {
       $stmt->execute($childIds);
       $itemsRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+      // 17) Agrupar items por variation_id.
       $itemsByVariation = [];
       foreach ($itemsRows as $row) {
         $vid = (int)$row['variation_id'];
-        if (!isset($itemsByVariation[$vid])) $itemsByVariation[$vid] = [];
+
+        if (!isset($itemsByVariation[$vid])) {
+          $itemsByVariation[$vid] = [];
+        }
+
         $itemsByVariation[$vid][] = $row;
       }
 
-      // 5) Traer PRICES en bloque
+      // =========================================================
+      // 18) TRAER PRECIOS EN BLOQUE
+      // =========================================================
+      // Se consultan todos los precios asociados a las variaciones hijas.
       $stmt = $pdo->prepare("
         SELECT
           prices.price_id,
@@ -190,21 +234,36 @@ class Variation {
       $stmt->execute($childIds);
       $pricesRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+      // 19) Agrupar precios por variation_id.
       $pricesByVariation = [];
       foreach ($pricesRows as $row) {
         $vid = (int)$row['variation_id'];
-        if (!isset($pricesByVariation[$vid])) $pricesByVariation[$vid] = [];
+
+        if (!isset($pricesByVariation[$vid])) {
+          $pricesByVariation[$vid] = [];
+        }
+
         $pricesByVariation[$vid][] = $row;
       }
 
-      // 6) EXTRA: type_name por type_id
+      // =========================================================
+      // 20) TRAER type_name DESDE type_variations
+      // =========================================================
+      // Primero sacar todos los type_id únicos de las hijas.
       $typeIds = [];
       foreach ($children as $ch) {
-        if (!empty($ch['type_id'])) $typeIds[] = (int)$ch['type_id'];
+        if (!empty($ch['type_id'])) {
+          $typeIds[] = (int)$ch['type_id'];
+        }
       }
+
+      // 21) Eliminar duplicados y reindexar.
       $typeIds = array_values(array_unique($typeIds));
 
+      // 22) Crear arreglo para mapear type_id => type_name.
       $typeNameById = [];
+
+      // 23) Solo consultar si realmente hay type_id.
       if (!empty($typeIds)) {
         $typePlaceholders = implode(',', array_fill(0, count($typeIds), '?'));
 
@@ -216,35 +275,47 @@ class Variation {
         $stmt->execute($typeIds);
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 24) Guardar type_name por cada type_id.
         foreach ($rows as $r) {
           $typeNameById[(int)$r['type_id']] = $r['type_name'];
         }
       }
 
-      // 7) Armar estructura final
+      // =========================================================
+      // 25) ARMAR LA ESTRUCTURA FINAL
+      // =========================================================
       $result = [];
+
       foreach ($children as $child) {
         $vid = (int)$child['variation_id'];
 
-        // Agregar type_name dentro de "variation"
+        // 26) Obtener el type_id actual de la hija.
         $tid = !empty($child['type_id']) ? (int)$child['type_id'] : 0;
+
+        // 27) Agregar type_name dentro de la información de la variación.
+        //     Si no existe, dejar null.
         $child['type_name'] = $tid ? ($typeNameById[$tid] ?? null) : null;
 
+        // 28) Construir el bloque final para esta variación hija.
         $result[] = [
-          'variation' => $child, // ✅ SIN pdf_artwork / name_pdf_artwork
-          'images'  => $imagesByVariation[$vid] ?? [],
-          'items'   => $itemsByVariation[$vid] ?? [],
-          'prices'  => $pricesByVariation[$vid] ?? [],
-          'artwork' => $artworkByVariation[$vid] ?? [
+          'variation' => $child, // Datos principales de la variación hija
+          'images'  => $imagesByVariation[$vid] ?? [], // Imágenes relacionadas
+          'items'   => $itemsByVariation[$vid] ?? [],  // Items relacionados
+          'prices'  => $pricesByVariation[$vid] ?? [], // Precios relacionados
+          'artwork' => $artworkByVariation[$vid] ?? [  // Artwork relacionado
             'pdf_artwork' => null,
             'name_pdf_artwork' => null
           ],
         ];
       }
 
+      // 29) Retornar el resultado final.
       return $result;
 
     } catch (PDOException $e) {
+      // 30) Si ocurre un error en base de datos, registrarlo en logs
+      //     y devolver un mensaje genérico.
       error_log('getVariationChildrenById: ' . $e->getMessage());
       return ['success' => false, 'error' => 'DB error'];
     }
