@@ -54,7 +54,7 @@ class PreviewLogic {
         this.renderTagline(descriptive_tagline);
         this.renderDescription(description);
 
-        this.deleteGroupsContent();
+      //  this.deleteGroupsContent();
 
         this.fetchChildVariationsById(default_variation_id);
       })
@@ -64,21 +64,21 @@ class PreviewLogic {
       });
   }
 
-  deleteGroupsContent() {
-    const wrapVariationsGroup = document.querySelector("#wrap-variations-group");
-    const wrapImagesGroup     = document.querySelector("#wrap-images-group");
-    const wrapItemsGroup      = document.querySelector("#wrap-items-group");
-    const wrapPricesGroup     = document.querySelector("#wrap-prices-group");
-    const wrapArtworksGroup   = document.querySelector("#wrap-artworks-group");
-
-    if (wrapVariationsGroup) wrapVariationsGroup.innerHTML = "";
-    if (wrapImagesGroup)     wrapImagesGroup.innerHTML = "";
-    if (wrapItemsGroup)      wrapItemsGroup.innerHTML = "";
-    if (wrapPricesGroup)     wrapPricesGroup.innerHTML = "";
-    if (wrapArtworksGroup)   wrapArtworksGroup.innerHTML = "";
-
-    window.previewGallery?.clearGallery?.();
-  }
+  // deleteGroupsContent() {
+  //   const wrapVariationsGroup = document.querySelector("#wrap-variations-group");
+  //   const wrapImagesGroup     = document.querySelector("#wrap-images-group");
+  //   const wrapItemsGroup      = document.querySelector("#wrap-items-group");
+  //   const wrapPricesGroup     = document.querySelector("#wrap-prices-group");
+  //   const wrapArtworksGroup   = document.querySelector("#wrap-artworks-group");
+  //
+  //   if (wrapVariationsGroup) wrapVariationsGroup.innerHTML = "";
+  //   if (wrapImagesGroup)     wrapImagesGroup.innerHTML = "";
+  //   if (wrapItemsGroup)      wrapItemsGroup.innerHTML = "";
+  //   if (wrapPricesGroup)     wrapPricesGroup.innerHTML = "";
+  //   if (wrapArtworksGroup)   wrapArtworksGroup.innerHTML = "";
+  //
+  //   window.previewGallery?.clearGallery?.();
+  // }
 
   renderBreadcrumb(category_name, group_name) {
     const sp_breadcrumbs = document.getElementById("sp_breadcrumbs");
