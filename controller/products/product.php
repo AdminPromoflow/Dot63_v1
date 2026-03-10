@@ -199,7 +199,7 @@ class Product {
       $response2 = $variation->createDefaultVariation($response['id']);
 
       if ($response2['success']) {
-        $result =  ['success' => true, 'sku' => $response['sku'], 'sku_variation' => $response2['sku_variation']];
+        $result =  ['success' => true, 'sku' => $response['sku'], 'all_variation' => $response2];
 
         echo json_encode($result);
       }

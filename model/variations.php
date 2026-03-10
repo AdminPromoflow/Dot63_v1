@@ -567,10 +567,11 @@ class Variation {
       $pdo = $this->connection->getConnection();
 
       $name = $this->name ?? 'Default';
-      $sku  = $this->sku ?? null;       // si no seteaste SKU, quedará null
+      $sku  = $this->sku ?? null;
       $img  = $this->image ?? null;
       $pdf  = $this->pdf_artwork ?? null;
 
+      // 1) Insertar la variación
       $stmt = $pdo->prepare("
         INSERT INTO variations (name, SKU, image, pdf_artwork, product_id)
         VALUES (:name, :sku, :image, :pdf, :pid)
@@ -583,8 +584,41 @@ class Variation {
         ':pid'   => $this->product_id,
       ]);
 
-      // Éxito: retorna el SKU insertado
-      return ['success' => true, 'sku_variation' => $sku];
+      // 2) Obtener el ID de la variación recién creada
+      $variationId = (int)$pdo->lastInsertId();
+
+      // 3) Consultar la variación recién insertada
+      $stmt = $pdo->prepare("
+        SELECT
+          variation_id,
+          name,
+          SKU,
+          image,
+          pdf_artwork,
+          name_pdf_artwork,
+          parent_id,
+          product_id,
+          type_id
+        FROM variations
+        WHERE variation_id = :variation_id
+        LIMIT 1
+      ");
+      $stmt->execute([
+        ':variation_id' => $variationId
+      ]);
+
+      $variation = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      // 4) Validar que sí se haya encontrado
+      if (!$variation) {
+        return ['success' => false, 'error' => 'Variation created but not found'];
+      }
+
+      // 5) Retornar todos los datos de la variación creada
+      return [
+        'success' => true,
+        'variation' => $variation
+      ];
 
     } catch (PDOException $e) {
       error_log('createDefaultVariation error (product_id '.$this->product_id.'): '.$e->getMessage());

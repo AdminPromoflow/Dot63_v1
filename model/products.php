@@ -155,11 +155,14 @@ class Products {
              return ['success' => false, 'error' => 'Supplier not found for email'];
            }
            $this->supplier_id = (int)$sid;
+
+
          }
 
          // Verificar duplicado (asegúrate que existsBySkuForSupplier use la columna `SKU`)
          if ($this->existsBySkuForSupplier($this->sku, $this->supplier_id)) {
            return ['success' => false, 'error' => 'Product already exists for this supplier'];
+
          }
 
 

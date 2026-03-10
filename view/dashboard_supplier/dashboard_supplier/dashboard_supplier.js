@@ -42,7 +42,7 @@ class ClassDashboardSupplier{
        var data = JSON.parse(data);
 
        const sku = data["sku"];
-       const sku_variation = data["sku_variation"];
+       const sku_variation = data["all_variation"]["variation"]["SKU"];
 
 
         if (data["success"]) {
