@@ -54,7 +54,7 @@ class PreviewLogic {
         this.renderTagline(descriptive_tagline);
         this.renderDescription(description);
 
-      this.deleteGroupsContent();
+        this.deleteGroupsContent();
 
         this.fetchChildVariationsById(default_variation_id);
       })
