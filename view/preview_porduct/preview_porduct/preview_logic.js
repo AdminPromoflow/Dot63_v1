@@ -241,7 +241,8 @@ class PreviewLogic {
           }
         }
       }
-
+      alert("3. Este alert es dentro de organizeVariationsForRender y /n antes de
+      renderVariations" + JSON.stringify(variationsOnlyOfType) + "   " + JSON.stringify(typeVariation));
       this.renderVariations(variationsOnlyOfType, typeVariation);
       this.renderItems(itemsOnlyOfType, typeVariation);
       this.renderImages(imagesOnlyOfType, typeVariation);
