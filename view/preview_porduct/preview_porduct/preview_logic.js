@@ -34,6 +34,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
+        alert("No se porque no funciona");
         alert("1. " + text);
         const json = JSON.parse(text);
 
