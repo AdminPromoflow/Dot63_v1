@@ -34,7 +34,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert(text);
+        alert("1. " + text);
         const json = JSON.parse(text);
 
         const company_name  = (json.find(x => x.company_name)?.company_name) ?? "";
@@ -142,7 +142,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert(text);
+        alert("2. " + text);
 
         const json = JSON.parse(text);
 
