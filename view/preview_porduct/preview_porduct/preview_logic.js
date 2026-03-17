@@ -177,6 +177,8 @@ class PreviewLogic {
     - BORRA variations SOLO si NO es el type actual
   ============================================================================ */
   organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
+
+    alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
     const current = String(currentTypeId ?? "");
@@ -241,7 +243,7 @@ class PreviewLogic {
           }
         }
       }
-      alert("3. Este alert es dentro de organizeVariationsForRender y /n antes de renderVariations" + JSON.stringify(variationsOnlyOfType) + "   " + JSON.stringify(typeVariation));
+      alert("4. Este alert es dentro de organizeVariationsForRender y /n antes de renderVariations" + JSON.stringify(variationsOnlyOfType) + "   " + JSON.stringify(typeVariation));
       this.renderVariations(variationsOnlyOfType, typeVariation);
       this.renderItems(itemsOnlyOfType, typeVariation);
       this.renderImages(imagesOnlyOfType, typeVariation);
