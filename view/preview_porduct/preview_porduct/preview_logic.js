@@ -121,7 +121,6 @@ class PreviewLogic {
   }
 
   fetchChildVariationsById(variation_id) {
-    alert("1 variation_id" + variation_id );
     if (!variation_id) {
       console.warn("No variation_id provided");
       return;
