@@ -7,6 +7,7 @@ class PreviewLogic {
     } else {
       this.getDataProduct();
     }
+    this.variationSelected;
   }
 
   getDataProduct() {
@@ -243,7 +244,9 @@ class PreviewLogic {
           }
         }
       }
-
+      if (Array.isArray(variationsOnlyOfType) && variationsOnlyOfType.length > 0) {
+        this.renderVariations(variationsOnlyOfType, typeVariation);
+      }
       if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0) {
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
@@ -251,7 +254,6 @@ class PreviewLogic {
       this.renderItems(itemsOnlyOfType, typeVariation);
       this.renderPrices(pricesOnlyOfType, typeVariation);
       this.renderArtwork(artworksOnlyOfType, typeVariation);
-      this.renderVariations(variationsOnlyOfType, typeVariation);
 
     }
   }
@@ -343,12 +345,18 @@ class PreviewLogic {
 
     const variationId = id.replace(/^variation_id_/, "").trim();
     if (!variationId) return;
-
+    this.setSelectVariation(domId);
     setTimeout(() => {
-      this.fetchChildVariationsById(variationId);
-    }, 1000);
+    //  this.fetchChildVariationsById(variationId);
+    }, 600);
   }
 
+  setSelectVariation(domId){
+    this.variationSelected = domId;
+  }
+  getSelectVariation(){
+    return this.variationSelected;
+  }
   renderItems(itemsOnlyOfType = [], typeVariation) {
     const parent = document.getElementById("wrap-items-group");
     if (!parent) return;
@@ -390,7 +398,7 @@ class PreviewLogic {
 
     alert("4. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
 
-
+    alert("auxilio" + this.getSelectVariation());
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
 
