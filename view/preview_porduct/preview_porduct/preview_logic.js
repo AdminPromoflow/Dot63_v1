@@ -156,12 +156,14 @@ class PreviewLogic {
 
         // ✅ 1) BORRAR lo viejo
         if (variationTypesForDelete.length) {
-          this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+          var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         }
 
         // ✅ 2) PINTAR lo nuevo
-        if (childVariations.length && variationTypes.length) {
-          this.organizeVariationsForRender(childVariations, variationTypes);
+        if (childVariations.length && variationTypes.length ) {
+          if (organizeVariationsForDelete) {
+            this.organizeVariationsForRender(childVariations, variationTypes);
+          }
         }
 
         loader.hide();
@@ -189,7 +191,7 @@ class PreviewLogic {
 
       // ✅ Siempre borrar estos (incluyendo el actual)
       this.deleteItems(typeId);
-      this.deleteImages(typeId);
+      var deleteImages = this.deleteImages(typeId);
       this.deletePrices(typeId);
       this.deleteArtwork(typeId);
 
@@ -197,6 +199,10 @@ class PreviewLogic {
       if (typeId !== current) {
         this.deleteVariations(typeId);
       }
+    }
+
+    if (deleteImages) {
+      return true;
     }
   }
 
@@ -615,8 +621,8 @@ class PreviewLogic {
   }
 
   deleteImages(typeId) {
-    const id = String(typeId ?? "");
-    document.getElementById(`wrap-images-${id}`)?.remove();
+  const el = document.getElementById(`wrap-images-${String(typeId ?? "")}`);
+  return el ? (el.remove(), true) : false;
   }
 
   deletePrices(typeId) {
