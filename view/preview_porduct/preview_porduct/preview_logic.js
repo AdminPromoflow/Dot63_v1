@@ -344,7 +344,7 @@ class PreviewLogic {
   }
 
   SelectVariation(domId = "") {
-      //loader.show();
+      loader.show();
     //  alert("b SelectVariation");
       this.setSelectVariation(domId);
 
