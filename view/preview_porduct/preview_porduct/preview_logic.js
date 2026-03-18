@@ -61,7 +61,7 @@ class PreviewLogic {
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
-        alert("Error loading preview data.");
+        //alert("Error loading preview data.");
       });
   }
 
@@ -170,7 +170,7 @@ class PreviewLogic {
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
-        alert("Error loading preview data.");
+        //alert("Error loading preview data.");
       });
   }
 
