@@ -445,59 +445,20 @@ class Variation {
               return ['success' => false, 'error' => 'Variation SKU no pertenece al producto dado o no existe'];
           }
 
-          // 3) Listar TODAS las variaciones del producto en orden jerárquico + level
-          $variations = [];
-
-          try {
-              $stmt = $pdo->prepare("
-                  WITH RECURSIVE vtree AS (
-                      -- Raíz (parent_id IS NULL o = 0)
-                      SELECT
-                        v.variation_id,
-                        v.name,
-                        v.SKU,
-                        v.parent_id,
-                        0 AS level,
-                        CONCAT(LOWER(v.name), '-', LPAD(v.variation_id, 10, '0')) AS sort_path
-                      FROM variations v
-                      WHERE v.product_id = :pid
-                        AND (v.parent_id IS NULL OR v.parent_id = 0)
-
-                      UNION ALL
-
-                      -- Hijos (recursivo)
-                      SELECT
-                        c.variation_id,
-                        c.name,
-                        c.SKU,
-                        c.parent_id,
-                        p.level + 1 AS level,
-                        CONCAT(p.sort_path, '>', LOWER(c.name), '-', LPAD(c.variation_id, 10, '0')) AS sort_path
-                      FROM variations c
-                      INNER JOIN vtree p
-                        ON c.parent_id = p.variation_id
-                      WHERE c.product_id = :pid
-                  )
-
-                  SELECT variation_id, name, SKU, parent_id, level
-                  FROM vtree
-                  ORDER BY sort_path ASC;
-              ");
-
-              $stmt->execute([':pid' => $productId]);
-              $variations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-          } catch (PDOException $e) {
-              // Fallback si no hay CTE recursivo
-              $stmt = $pdo->prepare("
-                  SELECT variation_id, name, SKU, parent_id, 0 AS level
-                  FROM variations
-                  WHERE product_id = :pid
-                  ORDER BY name ASC
-              ");
-              $stmt->execute([':pid' => $productId]);
-              $variations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-          }
+          // 3) Versión simple: Traer TODAS las variaciones del producto
+          $stmt = $pdo->prepare("
+              SELECT variation_id, name, SKU, parent_id, 0 AS level
+              FROM variations
+              WHERE product_id = :pid
+              ORDER BY
+                  CASE
+                      WHEN parent_id IS NULL OR parent_id = 0 THEN 0
+                      ELSE 1
+                  END,
+                  name ASC
+          ");
+          $stmt->execute([':pid' => $productId]);
+          $variations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
           // 4) Con product_id (vía group->category) traer type_variations asociados a la categoría del producto
           //    (si el producto no tiene group_id, devolverá lista vacía)
           $typeVariations = [];
