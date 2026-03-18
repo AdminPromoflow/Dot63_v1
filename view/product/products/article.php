@@ -8,7 +8,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
 
   <div class="products">
     <input type="checkbox" id="filters-open" class="filters-toggle" hidden>
-    <label for="filters-open" class="filters-btn"></label>
+    <!-- <label for="filters-open" class="filters-btn"></label> -->
 
     <div class="filter_products">
       <h1>Filters</h1>
