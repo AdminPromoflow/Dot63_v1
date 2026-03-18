@@ -158,7 +158,6 @@ class PreviewLogic {
         if (variationTypesForDelete.length) {
           var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         }
-        alert("delete" + organizeVariationsForDelete);
 
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
@@ -181,33 +180,33 @@ class PreviewLogic {
     - BORRA variations SOLO si NO es el type actual
   ============================================================================ */
   organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
-      alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
-      if (!Array.isArray(variationTypes) || variationTypes.length === 0) return false;
 
-      const current = String(currentTypeId ?? "");
-      let deletedSomething = false;
+    alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
+    if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
-      for (let i = 0; i < variationTypes.length; i++) {
-        const typeId = String(variationTypes[i]?.type_id ?? "");
+    const current = String(currentTypeId ?? "");
 
-        // ✅ Siempre borrar estos (incluyendo el actual)
-        this.deleteItems(typeId);
-        const imagesDeleted = this.deleteImages(typeId);
-        this.deletePrices(typeId);
-        this.deleteArtwork(typeId);
+    for (let i = 0; i < variationTypes.length; i++) {
+      const typeId = String(variationTypes[i]?.type_id ?? "");
 
-        // ✅ Solo borrar variations si NO es el type actual
-        if (typeId !== current) {
-          this.deleteVariations(typeId);
-        }
+      // ✅ Siempre borrar estos (incluyendo el actual)
+      this.deleteItems(typeId);
+      var deleteImages = this.deleteImages(typeId);
+      this.deletePrices(typeId);
+      this.deleteArtwork(typeId);
 
-        // Si algo se borró, marcamos como éxito
-        if (imagesDeleted) {
-          deletedSomething = true;
-        }
+      // ✅ Solo borrar variations si NO es el type actual
+      if (typeId !== current) {
+        this.deleteVariations(typeId);
       }
+    }
 
-      return deletedSomething;
+    if (deleteImages) {
+      return true;
+    }
+    else {
+      return false;
+    }
   }
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
