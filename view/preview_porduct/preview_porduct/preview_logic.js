@@ -245,7 +245,6 @@ class PreviewLogic {
       }
 
       if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0) {
-        alert("ahora si no deferia entrar");
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
@@ -389,7 +388,7 @@ class PreviewLogic {
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
 
-    alert("4. Este alert es dentro de render Images " + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
+    alert("4. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
 
 
     const parent = document.getElementById("wrap-images-group");
