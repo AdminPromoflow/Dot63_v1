@@ -445,10 +445,10 @@ class Variation {
               return ['success' => false, 'error' => 'Variation SKU no pertenece al producto dado o no existe'];
           }
 
-          // 3) Versión jerárquica: Padre → Hijos → Nietos
+          // 3) Versión jerárquica CORREGIDA: Padre → Hijos → Nietos
           $stmt = $pdo->prepare("
               WITH RECURSIVE vtree AS (
-                  -- Nivel 0: Raíz (parent_id IS NULL o = 0)
+                  -- Nivel 0: Raíz (parent_id IS NULL o = 0 o se referencia a sí misma)
                   SELECT
                       v.variation_id,
                       v.name,
@@ -458,7 +458,7 @@ class Variation {
                       CAST(v.variation_id AS CHAR(1000)) AS sort_path
                   FROM variations v
                   WHERE v.product_id = :pid
-                      AND (v.parent_id IS NULL OR v.parent_id = 0)
+                      AND (v.parent_id IS NULL OR v.parent_id = 0 OR v.parent_id = v.variation_id)
 
                   UNION ALL
 
@@ -473,6 +473,7 @@ class Variation {
                   FROM variations c
                   INNER JOIN vtree p ON c.parent_id = p.variation_id
                   WHERE c.product_id = :pid
+                      AND c.parent_id != c.variation_id  -- Evitar bucles infinitos
               )
               SELECT variation_id, name, SKU, parent_id, level
               FROM vtree
