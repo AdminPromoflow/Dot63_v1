@@ -231,11 +231,10 @@ class Product {
 
     $connection = new Database();
     $products   = new Products($connection);
-    echo json_encode("buenas2");exit;
 
-    $response   = $products->getAllNames();
+    $response   = $products->getProducts();
 
-    echo ($response);
+    echo json_encode($response);
   }
 
   private function getUpdate(){

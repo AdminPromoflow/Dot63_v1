@@ -455,6 +455,31 @@ class Products {
     }
   }
 
+  public function getProducts(): array
+  {
+      try {
+          $pdo = $this->connection->getConnection();
+
+          $sql = "SELECT * FROM products ORDER BY product_id DESC";
+          $stmt = $pdo->prepare($sql);
+          $stmt->execute();
+
+          $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+          return [
+              'success' => true,
+              'result'  => $rows
+          ];
+
+      } catch (PDOException $e) {
+          error_log('getProducts error: ' . $e->getMessage());
+          return [
+              'success' => false,
+              'error'   => 'DB error'
+          ];
+      }
+  }
+
   public function updateDescription($id, $description) {
     $description = is_string($description) ? trim($description) : null;
     try {
