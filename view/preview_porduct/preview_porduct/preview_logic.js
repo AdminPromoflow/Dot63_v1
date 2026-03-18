@@ -35,7 +35,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert("1. " + text);
+        // alert("1. " + text);
         const json = JSON.parse(text);
 
         const company_name  = (json.find(x => x.company_name)?.company_name) ?? "";
@@ -61,7 +61,7 @@ class PreviewLogic {
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
-        alert("Error loading preview data.");
+        // alert("Error loading preview data.");
       });
   }
 
@@ -143,7 +143,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert("2. " + text);
+        // alert("2. " + text);
 
         const json = JSON.parse(text);
 
@@ -168,7 +168,7 @@ class PreviewLogic {
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
-        alert("Error loading preview data.");
+        // alert("Error loading preview data.");
       });
   }
 
@@ -179,7 +179,7 @@ class PreviewLogic {
   ============================================================================ */
   organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
 
-    alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
+    // alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
     const current = String(currentTypeId ?? "");
@@ -260,7 +260,7 @@ class PreviewLogic {
 
   renderVariations(childVariationsOfType = [], typeVariation) {
 
-    alert("5. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
+    // alert("5. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
     //alert("a renderVariations");
     const parent = document.getElementById("wrap-variations-group");
     if (!parent) return;
@@ -406,7 +406,7 @@ class PreviewLogic {
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
 
-    alert("4. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
+    // alert("4. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
     //alert("c render images");
   //  alert("auxilio" + this.getSelectVariation());
     const parent = document.getElementById("wrap-images-group");
@@ -434,7 +434,7 @@ class PreviewLogic {
       const imgObj = imagesOnlyOfType[i];
       //
       if ( imgObj.variation_id == Number(this.getSelectVariation().replace("variation_id_", "")) ){
-        alert( "Entramos con "  + imgObj.variation_id);
+        //alert( "Entramos con "  + imgObj.variation_id);
       const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
       const src = rawLink
         ? (rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
@@ -529,14 +529,14 @@ class PreviewLogic {
   }
 
   onPriceSelected(payload) {
-    alert(
-      "PRICE SELECTED:\n" +
-      "price_id: " + payload.price_id + "\n" +
-      "min_quantity: " + payload.min_quantity + "\n" +
-      "max_quantity: " + payload.max_quantity + "\n" +
-      "price: " + payload.price + "\n" +
-      "button value: " + payload.value
-    );
+    // alert(
+    //   "PRICE SELECTED:\n" +
+    //   "price_id: " + payload.price_id + "\n" +
+    //   "min_quantity: " + payload.min_quantity + "\n" +
+    //   "max_quantity: " + payload.max_quantity + "\n" +
+    //   "price: " + payload.price + "\n" +
+    //   "button value: " + payload.value
+    // );
   }
 
   renderArtwork(artworksOnlyOfType = [], typeVariation) {
