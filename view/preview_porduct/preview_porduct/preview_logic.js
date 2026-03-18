@@ -245,9 +245,9 @@ class PreviewLogic {
         }
       }
       if (Array.isArray(variationsOnlyOfType) && variationsOnlyOfType.length > 0) {
-        this.renderVariations(variationsOnlyOfType, typeVariation);
+        var renderVariations = this.renderVariations(variationsOnlyOfType, typeVariation);
       }
-      if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0) {
+      if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 && renderVariations) {
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
@@ -330,27 +330,35 @@ class PreviewLogic {
 
     parent.insertAdjacentHTML("beforeend", blockHtml);
 
-    setTimeout(() => {
-      previewLogic.SelectVariation(firstDomId);
-    }, 0);
-
     window.previewGallery?.updatePrice?.();
+
+  //setTimeout(() => {
+      var selectVariaton = previewLogic.SelectVariation(firstDomId);
+  //  }, 0);
+
+    if (selectVariaton) {
+      return true;
+    }
+
+
   }
 
   SelectVariation(domId = "") {
-    //loader.show();
-    alert("mejorando" +domId);
+      //loader.show();
 
-    this.setSelectVariation( domId);
+      this.setSelectVariation(domId);
 
-    const id = String(domId || "").trim();
-    if (!id) return;
+      const id = String(domId || "").trim();
+      if (!id) return;
 
-    const variationId = id.replace(/^variation_id_/, "").trim();
-    if (!variationId) return;
-    setTimeout(() => {
-    //  this.fetchChildVariationsById(variationId);
-    }, 600);
+      const variationId = id.replace(/^variation_id_/, "").trim();
+      if (!variationId) return;
+
+
+    //   setTimeout(() => {
+    //   //  this.fetchChildVariationsById(variationId);
+    // }, 1000);
+      return true;
   }
 
   setSelectVariation(domId){
