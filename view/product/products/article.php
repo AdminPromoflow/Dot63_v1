@@ -146,7 +146,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
       </div>
     </div>
 
-    <div class="articles">
+    <div class="articles" id="articles">
       <h1>All Products</h1>
 
       <div class="box_article">

@@ -25,12 +25,18 @@ class ProductsClass {
         throw new Error("Network error.");
       })
       .then(data => {
+        JSON.parse(data);
         alert(data);
       })
       .catch(error => {
         // Log any errors to the console.
         console.error("Error:", error);
       });
+  }
+  drawProducts(data){
+    for (var i = 0; i < data.length; i++) {
+      alert(data.result[i].name);
+    }
   }
 }
 
