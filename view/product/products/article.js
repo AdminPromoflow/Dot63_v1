@@ -39,7 +39,7 @@ class ProductsClass {
       articles.innerHTML += `
       <div class="box_article">
         <img src="../../view/login/main/img/bags.png" alt="">
-        <h1>Classic Coose</h1>
+        <h1>${data.result[i].name}</h1>
         <p>Paper Bags</p>
         <p>Large</p>
         <p>£ 0.6</p>
