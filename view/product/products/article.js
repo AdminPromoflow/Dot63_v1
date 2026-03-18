@@ -34,11 +34,23 @@ class ProductsClass {
       });
   }
   drawProducts(data){
+    articles.innerHTML = "";
     for (var i = 0; i < data.result.length; i++) {
-      alert(data.result[i].name);
+      articles.innerHTML = `
+      <div class="box_article">
+        <img src="../../view/login/main/img/bags.png" alt="">
+        <h1>Classic Coose</h1>
+        <p>Paper Bags</p>
+        <p>Large</p>
+        <p>£ 0.6</p>
+        <button class="buttom_products" type="button" name="button">Buy</button>
+      </div>
+      `
+
+    //  alert(data.result[i].name);
     }
   }
 }
 
-
+const articles = document.getElementById("articles");
 const productsClass = new ProductsClass();
