@@ -378,7 +378,7 @@ class Variation {
           return (bool)$variation;
 
       } catch (PDOException $e) {
-          error_log('getVariationDetailsBySkus error: ' . $e->getMessage());
+          error_log('checkProductAndVariationExistenceBySkus error: ' . $e->getMessage());
           return false;
       }
   }
@@ -445,39 +445,38 @@ class Variation {
               return ['success' => false, 'error' => 'Variation SKU no pertenece al producto dado o no existe'];
           }
 
-          // 3) Listar todas las variaciones del producto (name, SKU)
-          // 3) Listar todas las variaciones del producto en orden jerárquico + level
+          // 3) Listar TODAS las variaciones del producto en orden jerárquico + level
           $variations = [];
 
           try {
               $stmt = $pdo->prepare("
                   WITH RECURSIVE vtree AS (
-                    -- Abuelos (raíz)
-                    SELECT
-                      v.variation_id,
-                      v.name,
-                      v.SKU,
-                      v.parent_id,
-                      0 AS level,
-                      CONCAT(LOWER(v.name), '-', LPAD(v.variation_id, 10, '0')) AS sort_path
-                    FROM variations v
-                    WHERE v.product_id = :pid
-                      AND (v.parent_id IS NULL OR v.parent_id = 0)
+                      -- Raíz (parent_id IS NULL o = 0)
+                      SELECT
+                        v.variation_id,
+                        v.name,
+                        v.SKU,
+                        v.parent_id,
+                        0 AS level,
+                        CONCAT(LOWER(v.name), '-', LPAD(v.variation_id, 10, '0')) AS sort_path
+                      FROM variations v
+                      WHERE v.product_id = :pid
+                        AND (v.parent_id IS NULL OR v.parent_id = 0)
 
-                    UNION ALL
+                      UNION ALL
 
-                    -- Hijos (recursivo)
-                    SELECT
-                      c.variation_id,
-                      c.name,
-                      c.SKU,
-                      c.parent_id,
-                      p.level + 1 AS level,
-                      CONCAT(p.sort_path, '>', LOWER(c.name), '-', LPAD(c.variation_id, 10, '0')) AS sort_path
-                    FROM variations c
-                    INNER JOIN vtree p
-                      ON c.parent_id = p.variation_id
-                    WHERE c.product_id = :pid
+                      -- Hijos (recursivo)
+                      SELECT
+                        c.variation_id,
+                        c.name,
+                        c.SKU,
+                        c.parent_id,
+                        p.level + 1 AS level,
+                        CONCAT(p.sort_path, '>', LOWER(c.name), '-', LPAD(c.variation_id, 10, '0')) AS sort_path
+                      FROM variations c
+                      INNER JOIN vtree p
+                        ON c.parent_id = p.variation_id
+                      WHERE c.product_id = :pid
                   )
 
                   SELECT variation_id, name, SKU, parent_id, level
