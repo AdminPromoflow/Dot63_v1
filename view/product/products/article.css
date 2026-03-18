@@ -1,12 +1,9 @@
 /* =============================================================================
    ARTICLE / PRODUCTS — THEME "OVERVIEW"
-   - Mantiene tu estructura intacta
-   - Aplica el look del dashboard OVERVIEW al listado de productos
+   - Keeps your structure intact
+   - Uses the same visual language as Product Preview — THEME OVERVIEW
 ============================================================================= */
 
-/* =============================================================================
-   TOKENS OVERVIEW
-============================================================================= */
 :root{
   --ov-bg: #2F4560;
   --ov-panel: rgba(255,255,255,.06);
@@ -38,9 +35,6 @@ body{
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* =============================================================================
-   WRAPPER GENERAL
-============================================================================= */
 .all_product{
   width: 100%;
   padding: calc(76px + 2vw) 0;
@@ -56,7 +50,6 @@ body{
   gap: 1rem;
   position: relative;
   color: var(--ov-text);
-
   background: #1F3551;
   border: 1px solid var(--ov-border);
   border-radius: var(--ov-radius);
@@ -64,29 +57,32 @@ body{
 }
 
 /* =============================================================================
-   SIDEBAR / FILTROS
+   FILTER PANEL
 ============================================================================= */
+
 .filter_products{
   position: sticky;
-  background: var(--ov-panel);
+  background: rgba(0,0,0,.10);
   border: 1px solid var(--ov-border);
-  border-radius: 18px;
+  border-radius: var(--ov-radius);
   box-shadow: var(--ov-shadow);
   padding: 1rem;
   backdrop-filter: blur(8px);
 }
 
 .filter_products > h1{
+  margin: 0 0 1rem 0;
+  padding: 0 0 .85rem 0;
   font-size: 1rem;
-  letter-spacing: .08em;
+  letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--ov-text);
-  margin: 0 0 .75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.10);
 }
 
 .filter-group{
-  margin-bottom: 1.15rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1.2rem;
+  padding: 0 0 1rem 0;
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
@@ -97,23 +93,25 @@ body{
 }
 
 .filter-group h1{
-  font-size: 1rem;
-  letter-spacing: .08em;
+  font-size: .95rem;
+  letter-spacing: .14em;
   text-transform: uppercase;
   margin: 0 0 .8rem 0;
-  color: var(--ov-text);
+  color: var(--ov-muted);
 }
 
 .filter-group h3{
-  font-size: 1rem;
-  letter-spacing: .08em;
-  margin: 0 0 .6rem;
-  color: var(--ov-text);
+  font-size: .95rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin: 0 0 .8rem;
+  color: var(--ov-muted);
 }
 
 .filter-group a{
-  color: var(--ov-muted);
+  color: var(--accent);
   text-decoration: none;
+  font-weight: 600;
 }
 
 .filter-group a:hover{
@@ -127,7 +125,7 @@ body{
 .checklist{
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: .45rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -138,14 +136,17 @@ body{
   align-items: center;
   gap: .6rem;
   cursor: pointer;
-  padding: .5rem .65rem;
+  padding: .55rem .7rem;
   border-radius: 12px;
   transition: background .15s ease, transform .15s ease, filter .15s ease;
   color: var(--ov-text);
+  background: rgba(255,255,255,.03);
+  border: 1px solid transparent;
 }
 
 .checklist label:hover{
   background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.08);
   transform: translateY(-1px);
   filter: brightness(1.05);
 }
@@ -157,8 +158,9 @@ body{
 }
 
 /* =============================================================================
-   COLOR SWATCHES
+   COLOUR SWATCHES
 ============================================================================= */
+
 .color-list{
   display: flex;
   flex-wrap: wrap;
@@ -209,7 +211,6 @@ body{
   box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent);
 }
 
-/* solo lectores */
 .sr-only{
   position: absolute;
   width: 1px;
@@ -225,6 +226,7 @@ body{
 /* =============================================================================
    PRICE RANGE
 ============================================================================= */
+
 .price-range{
   position: relative;
   padding: 12px 2px 28px;
@@ -314,8 +316,9 @@ body{
 }
 
 /* =============================================================================
-   GRID DE PRODUCTOS
+   PRODUCTS AREA
 ============================================================================= */
+
 .articles{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -325,16 +328,19 @@ body{
 
 .articles > h1{
   grid-column: 1 / -1;
+  margin: 0 0 .25rem 0;
+  padding: 0 0 1rem 0;
   font-size: clamp(1.4rem, 3vw, 2.2rem);
   font-weight: 800;
   letter-spacing: .02em;
-  margin: 0;
   color: var(--ov-text);
+  border-bottom: 1px solid rgba(255,255,255,.10);
 }
 
 /* =============================================================================
-   CARDS
+   PRODUCT CARDS
 ============================================================================= */
+
 .box_article{
   background: var(--ov-panel);
   border: 1px solid var(--ov-border);
@@ -386,8 +392,9 @@ body{
 }
 
 /* =============================================================================
-   BOTÓN PRODUCTO
+   BUTTON
 ============================================================================= */
+
 .buttom_products{
   margin-top: .55rem;
   padding: 10px 12px;
@@ -410,8 +417,9 @@ body{
 }
 
 /* =============================================================================
-   PANEL DESKTOP / TABLET
+   DESKTOP / TABLET LAYOUT
 ============================================================================= */
+
 @media (min-width: 900px){
   .products{
     display: grid;
@@ -435,8 +443,9 @@ body{
 }
 
 /* =============================================================================
-   PANEL MÓVIL OFF-CANVAS
+   MOBILE OFF-CANVAS FILTER PANEL
 ============================================================================= */
+
 @media (max-width: 899px){
   .filter_products{
     position: fixed;
@@ -456,8 +465,9 @@ body{
 }
 
 /* =============================================================================
-   BOTÓN FILTROS
+   FILTER BUTTON
 ============================================================================= */
+
 .filters-btn{
   position: fixed;
   z-index: 101;
@@ -498,6 +508,7 @@ body{
 /* =============================================================================
    RESPONSIVE GRID
 ============================================================================= */
+
 @media (max-width: 1100px){
   .articles{
     grid-template-columns: repeat(3, 1fr);
@@ -517,8 +528,9 @@ body{
 }
 
 /* =============================================================================
-   AJUSTES MÓVILES
+   MOBILE SPACING
 ============================================================================= */
+
 @media (max-width: 760px){
   .products{
     padding-inline: 10px;

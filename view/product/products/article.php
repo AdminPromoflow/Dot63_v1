@@ -31,7 +31,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
           <li>
             <label for="acepto">
               <input type="checkbox" id="acepto" name="acepto">
-              Badges & Accesories
+              Badges & Accessories
             </label>
           </li>
           <li>
@@ -49,7 +49,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
           <li>
             <label for="acepto">
               <input type="checkbox" id="acepto" name="acepto">
-              Smail
+              Small
             </label>
           </li>
           <li>
@@ -74,49 +74,49 @@ $jsTime = filemtime('../../view/product/products/article.js');
             <label class="swatch">
               <input type="radio" name="color[]" value="sand">
               <span class="dot" style="--c:#E1C9A1"></span>
-              <span class="sr-only">Arena</span>
+              <span class="sr-only">Sand</span>
             </label>
           </li>
           <li>
             <label class="swatch">
               <input type="radio" name="color[]" value="brown">
               <span class="dot" style="--c:#7A4A21"></span>
-              <span class="sr-only">Café</span>
+              <span class="sr-only">Brown</span>
             </label>
           </li>
           <li>
             <label class="swatch">
               <input type="radio" name="color[]" value="olive">
               <span class="dot" style="--c:#7A8647"></span>
-              <span class="sr-only">Oliva</span>
+              <span class="sr-only">Olive</span>
             </label>
           </li>
           <li>
             <label class="swatch">
               <input type="radio" name="color[]" value="teal">
               <span class="dot" style="--c:#1F8A89"></span>
-              <span class="sr-only">Turquesa</span>
+              <span class="sr-only">Teal</span>
             </label>
           </li>
           <li>
             <label class="swatch">
               <input type="radio" name="color[]" value="black">
               <span class="dot" style="--c:#111111"></span>
-              <span class="sr-only">Negro</span>
+              <span class="sr-only">Black</span>
             </label>
           </li>
           <li>
             <label class="swatch">
               <input type="radio" name="color[]" value="warm-scale">
               <span class="dot" style="--c:linear-gradient(135deg,#F3E1C4,#B98045)"></span>
-              <span class="sr-only">Escala cálida</span>
+              <span class="sr-only">Warm scale</span>
             </label>
           </li>
           <li>
             <label class="swatch">
               <input type="radio" name="color[]" value="gray-scale">
               <span class="dot" style="--c:linear-gradient(135deg,#ffffff,#111111)"></span>
-              <span class="sr-only">Escala de grises</span>
+              <span class="sr-only">Greyscale</span>
             </label>
           </li>
         </ul>
@@ -142,12 +142,12 @@ $jsTime = filemtime('../../view/product/products/article.js');
       </div>
 
       <div class="filter-group">
-        <a href="#"><p>Clear Filter</p></a>
+        <a href="#"><p>Clear Filters</p></a>
       </div>
     </div>
 
     <div class="articles">
-      <h1>All PRODUCTS</h1>
+      <h1>All Products</h1>
 
       <div class="box_article">
         <img src="../../view/login/main/img/bags.png" alt="">
@@ -155,7 +155,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
         <p>Paper Bags</p>
         <p>Large</p>
         <p>£ 0.6</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
@@ -164,7 +164,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
         <p>USB</p>
         <p>16GB</p>
         <p>£ 0.63</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
@@ -173,70 +173,70 @@ $jsTime = filemtime('../../view/product/products/article.js');
         <p>Circle</p>
         <p>25mm</p>
         <p>£ 0.3</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
         <img src="../../view/login/main/img/gift.png" alt="">
         <h1>Shoelaces</h1>
-        <p>Accesories</p>
-        <p>Full color</p>
+        <p>Accessories</p>
+        <p>Full colour</p>
         <p>£ 0.4</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
         <img src="../../view/login/main/img/gift.png" alt="">
         <h1>Shoelaces</h1>
-        <p>Accesories</p>
-        <p>Full color</p>
+        <p>Accessories</p>
+        <p>Full colour</p>
         <p>£ 0.4</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
         <img src="../../view/login/main/img/gift.png" alt="">
         <h1>Shoelaces</h1>
-        <p>Accesories</p>
-        <p>Full color</p>
+        <p>Accessories</p>
+        <p>Full colour</p>
         <p>£ 0.4</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
         <img src="../../view/login/main/img/gift.png" alt="">
         <h1>Shoelaces</h1>
-        <p>Accesories</p>
-        <p>Full color</p>
+        <p>Accessories</p>
+        <p>Full colour</p>
         <p>£ 0.4</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
         <img src="../../view/login/main/img/gift.png" alt="">
         <h1>Shoelaces</h1>
-        <p>Accesories</p>
-        <p>Full color</p>
+        <p>Accessories</p>
+        <p>Full colour</p>
         <p>£ 0.4</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
         <img src="../../view/login/main/img/gift.png" alt="">
         <h1>Shoelaces</h1>
-        <p>Accesories</p>
-        <p>Full color</p>
+        <p>Accessories</p>
+        <p>Full colour</p>
         <p>£ 0.4</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
 
       <div class="box_article">
         <img src="../../view/login/main/img/gift.png" alt="">
         <h1>Shoelaces</h1>
-        <p>Accesories</p>
-        <p>Full color</p>
+        <p>Accessories</p>
+        <p>Full colour</p>
         <p>£ 0.4</p>
-        <button class="buttom_products" type="button" name="button">Comprar</button>
+        <button class="buttom_products" type="button" name="button">Buy</button>
       </div>
     </div>
   </div>
