@@ -356,7 +356,7 @@ class PreviewLogic {
 
 
     //   setTimeout(() => {
-    //   //  this.fetchChildVariationsById(variationId);
+      this.fetchChildVariationsById(variationId);
     // }, 1000);
       return true;
   }
