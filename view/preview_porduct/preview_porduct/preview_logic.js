@@ -244,7 +244,9 @@ class PreviewLogic {
         }
       }
 
-      this.renderImages(imagesOnlyOfType, typeVariation);
+      if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0 ) {
+        this.renderImages(imagesOnlyOfType, typeVariation);
+      }
 
       this.renderItems(itemsOnlyOfType, typeVariation);
       this.renderPrices(pricesOnlyOfType, typeVariation);
@@ -392,7 +394,7 @@ class PreviewLogic {
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
 
-    if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
+    //if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
 
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-images-${typeId}`;
