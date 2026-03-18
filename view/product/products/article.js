@@ -36,7 +36,7 @@ class ProductsClass {
   drawProducts(data){
     articles.innerHTML = "";
     for (var i = 0; i < data.result.length; i++) {
-      articles.innerHTML = `
+      articles.innerHTML += `
       <div class="box_article">
         <img src="../../view/login/main/img/bags.png" alt="">
         <h1>Classic Coose</h1>
