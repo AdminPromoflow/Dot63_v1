@@ -432,10 +432,10 @@ class PreviewLogic {
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
 
       const imgObj = imagesOnlyOfType[i];
-      //imgObj.link == variation_id ==
-      alert("ayyyy " + this.getSelectVariation());
-      if (true) {
-
+      //
+    //  alert("ayyyy " + this.getSelectVariation());
+      if (imgObj.variation_id ==  Number(this.getSelectVariation()) ){
+        alert( imgObj.variation_id + " bueno " +  Number(this.getSelectVariation()) );
       const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
       const src = rawLink
         ? (rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
