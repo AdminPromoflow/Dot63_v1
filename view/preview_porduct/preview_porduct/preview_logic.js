@@ -244,8 +244,8 @@ class PreviewLogic {
         }
       }
 
-      if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length == 0 ) {
-        alert(imagesOnlyOfType.length);
+      if (Array.isArray(imagesOnlyOfType) || !imagesOnlyOfType.length === 0 ) {
+        alert("Creo que ya esta bien y esto no se deberia ver");
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
