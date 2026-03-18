@@ -1,89 +1,166 @@
-/* ===== CONTENEDOR MAIN (Hero + Grid) ===== */
-.main_main{
-  /* fondo claro tipo ecommerce */
-  margin: 0 auto;
-  padding: 1rem;
-  box-sizing: border-box;
+/* =============================================================================
+   MAIN / HERO — THEME "OVERVIEW"
+   - Same structure
+   - Styled to match the dark dashboard look
+============================================================================= */
 
-  /* Grid del layout: título arriba, grid abajo */
+:root{
+  --ov-bg: #2F4560;
+  --ov-panel: rgba(255,255,255,.06);
+  --ov-panel2: rgba(0,0,0,.12);
+  --ov-border: rgba(255,255,255,.12);
+  --ov-text: rgba(255,255,255,.92);
+  --ov-muted: rgba(255,255,255,.72);
+
+  --ov-btn: #1F3551;
+  --ov-btnText: rgb(214,218,223);
+
+  --ov-radius: 18px;
+  --ov-shadow: 0 16px 40px rgba(0,0,0,.28);
+
+  --accent: #ff8a3d;
+  --accent-hover: #e86e1e;
+}
+
+*,
+*::before,
+*::after{
+  box-sizing: border-box;
+}
+
+/* ===== MAIN WRAPPER ===== */
+.main_main{
+  margin: 0 auto;
+  padding: calc(42px + 1vw) 1rem 2rem;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: clamp(1rem, 2vw, 2rem);
   justify-items: center;
 
-  /* hace que cubra la pantalla sin pelear con el header */
+  background: #485A71;
 }
 
-/* ===== HERO / TÍTULO ===== */
+/* ===== HERO / TITLE BLOCK ===== */
 .title_main{
   width: min(1200px, 92%);
   text-align: center;
-}
-.title_main h1{
-  margin: 1rem 0;
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -.02em;
-  font-size: clamp(1.75rem, 3.8vw, 4rem); /* grande como en el mock */
-  color: #111827;
+  padding: 22px 18px;
+
+  background: #1F3551;
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  box-shadow: var(--ov-shadow);
 }
 
-/* (Opcional) si agregas un botón bajo el título */
+.title_main h1{
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  font-size: clamp(1.9rem, 3.8vw, 4rem);
+  color: var(--ov-text);
+}
+
+/* CTA */
 .title_main .cta{
   margin-top: 1.25rem;
   display: inline-block;
   padding: .9rem 1.25rem;
-  border-radius: 10px;
-  background: #111827;
-  color: #fff;
-  font-weight: 600;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #111;
+  font-weight: 700;
   text-decoration: none;
-  transition: transform .15s ease, opacity .15s ease;
+  border: 1px solid var(--accent);
+  box-shadow: 0 12px 28px rgba(0,0,0,.22);
+  transition: transform .15s ease, filter .15s ease, background .15s ease;
 }
-.title_main .cta:hover{ transform: translateY(-1px); opacity: .95; }
 
-/* ===== GRID DE PRODUCTOS ===== */
+.title_main .cta:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+  background: var(--accent-hover);
+}
+
+/* ===== PRODUCTS GRID ===== */
 .container_main{
   width: min(1200px, 92%);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(1rem, 2vw, 2rem);
   align-items: start;
+
+  padding: 18px 16px;
+  background: #1F3551;
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  box-shadow: var(--ov-shadow);
 }
 
-/* ===== CARD DE PRODUCTO ===== */
+/* ===== PRODUCT CARD ===== */
 .product_main{
   display: grid;
   grid-template-rows: auto auto;
   justify-items: center;
-  gap: .75rem;
+  gap: .9rem;
   text-align: center;
+
+  padding: 1rem;
+  background: var(--ov-panel);
+  border: 1px solid var(--ov-border);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.18);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.product_main:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 18px 38px rgba(0,0,0,.28);
+  filter: brightness(1.03);
 }
 
 .product_main img{
   width: 100%;
-  max-width: 220px;              /* tamaño visual similar al mock */
-  aspect-ratio: 1 / 1;           /* cuadrado; ajusta si tus imágenes no lo son */
+  max-width: 220px;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
   border-radius: 14px;
+  padding: .6rem;
+
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
 }
 
 .product_main h1{
   margin: 0;
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
-  font-weight: 600;
-  color: #111827;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  font-weight: 650;
+  color: var(--ov-text);
 }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px){
-  .container_main{ grid-template-columns: repeat(3, 1fr); }
+  .container_main{
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
+
 @media (max-width: 768px){
-  .container_main{ grid-template-columns: repeat(2, 1fr); }
-  .title_main h1{ font-size: clamp(1.5rem, 5.5vw, 2.6rem); }
+  .container_main{
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .title_main h1{
+    font-size: clamp(1.5rem, 5.5vw, 2.6rem);
+  }
 }
+
 @media (max-width: 480px){
-  .container_main{ grid-template-columns: 1fr; }
-  .title_main{ width: 94%; }
+  .container_main{
+    grid-template-columns: 1fr;
+  }
+
+  .title_main{
+    width: 94%;
+  }
 }
