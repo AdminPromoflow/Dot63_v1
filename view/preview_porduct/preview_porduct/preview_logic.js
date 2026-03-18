@@ -245,7 +245,7 @@ class PreviewLogic {
       }
 
       if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0 ) {
-        alert("No entiendo porque rayos entra acá!");
+        alert(imagesOnlyOfType.length);
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
