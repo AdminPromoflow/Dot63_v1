@@ -386,7 +386,7 @@ class Variations {
         return r.text(); // backend returns text; we parse JSON manually
       })
       .then(text => {
-        console.log(text);
+        console.log("Response text: " + text);
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
@@ -535,9 +535,7 @@ class Variations {
   }
 
   renderParentSelect(variationsRaw, current, parent, product) {
-    alert("renderParentSelect" + JSON.stringify(variationsRaw));
     if (!this.parentSelect) return;
-    alert("parentSelect found");
     // ✅ Respeta EXACTAMENTE el orden en que viene de la BD (no sort)
     const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
 
