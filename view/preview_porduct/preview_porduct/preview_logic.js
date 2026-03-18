@@ -433,7 +433,7 @@ class PreviewLogic {
 
       const imgObj = imagesOnlyOfType[i];
       //
-    //  alert("ayyyy " + this.getSelectVariation());
+      alert( imgObj.variation_id + " bueno " +  Number(this.getSelectVariation()) );
       if (imgObj.variation_id ==  Number(this.getSelectVariation()) ){
         alert( imgObj.variation_id + " bueno " +  Number(this.getSelectVariation()) );
       const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
