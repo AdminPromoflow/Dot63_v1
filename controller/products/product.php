@@ -227,6 +227,7 @@ class Product {
 
 
   private function getProducts(){
+    echo json_encode("buenas");exit;
     header('Content-Type: application/json; charset=utf-8');
 
     $connection = new Database();
