@@ -338,13 +338,14 @@ class PreviewLogic {
   }
 
   SelectVariation(domId = "") {
-    loader.show();
+    //loader.show();
 
     const id = String(domId || "").trim();
     if (!id) return;
 
     const variationId = id.replace(/^variation_id_/, "").trim();
     if (!variationId) return;
+    alert(domId);
     this.setSelectVariation(domId);
     setTimeout(() => {
     //  this.fetchChildVariationsById(variationId);
