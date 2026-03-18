@@ -44,7 +44,7 @@ class Prices {
       try {
           $pdo = $this->connection->getConnection();
 
-          // 1) product_id por SKU (case-insensitive)
+          // 1) Obtener product_id por SKU (case-insensitive)
           $stmt = $pdo->prepare("
               SELECT product_id
               FROM products
@@ -53,89 +53,62 @@ class Prices {
           ");
           $stmt->execute([':sku' => $this->sku]);
           $product = $stmt->fetch(\PDO::FETCH_ASSOC);
+
           if (!$product) return [];
 
           $productId = (int)$product['product_id'];
 
-          // 2) Traer variaciones (una sola consulta) -> construir jerarquía en PHP
-          //    (esto funciona en MySQL 5.x/8.x y te devuelve level)
-          $stmt = $pdo->prepare("
-              SELECT variation_id, name, SKU, parent_id
-              FROM variations
-              WHERE product_id = :pid
-          ");
-          $stmt->execute([':pid' => $productId]);
-          $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
-          if (!$rows) return [];
+          // 2) Variaciones jerárquicas (abuelo -> padre -> hijo) + level
+          try {
+              // ✅ MySQL 8+ (CTE recursivo)
+              $stmt = $pdo->prepare("
+                  WITH RECURSIVE vtree AS (
+                    -- Abuelos (raíz)
+                    SELECT
+                      v.variation_id,
+                      v.name,
+                      v.SKU,
+                      v.parent_id,
+                      0 AS level,
+                      CONCAT(LOWER(v.name), '-', LPAD(v.variation_id, 10, '0')) AS sort_path
+                    FROM variations v
+                    WHERE v.product_id = :pid
+                      AND (v.parent_id IS NULL OR v.parent_id = 0)
 
-          // Index por id (más rápido que buscar en arrays)
-          $nodes = [];
-          foreach ($rows as $r) {
-              $id = (int)($r['variation_id'] ?? 0);
-              if ($id <= 0) continue;
+                    UNION ALL
 
-              $pid = $r['parent_id'];
-              $pid = ($pid === null || $pid === '' || (int)$pid === 0) ? null : (int)$pid;
+                    -- Hijos
+                    SELECT
+                      c.variation_id,
+                      c.name,
+                      c.SKU,
+                      c.parent_id,
+                      p.level + 1 AS level,
+                      CONCAT(p.sort_path, '>', LOWER(c.name), '-', LPAD(c.variation_id, 10, '0')) AS sort_path
+                    FROM variations c
+                    INNER JOIN vtree p
+                      ON c.parent_id = p.variation_id
+                    WHERE c.product_id = :pid
+                  )
 
-              $nodes[$id] = [
-                  'variation_id' => $id,
-                  'name'         => (string)($r['name'] ?? ''),
-                  'SKU'          => (string)($r['SKU'] ?? ''),
-                  'parent_id'    => $pid,
-              ];
+                  SELECT variation_id, name, SKU, parent_id, level
+                  FROM vtree
+                  ORDER BY sort_path ASC
+              ");
+              $stmt->execute([':pid' => $productId]);
+              return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+          } catch (\PDOException $e) {
+              // 🔁 Fallback si tu BD no soporta WITH RECURSIVE
+              $stmt = $pdo->prepare("
+                  SELECT variation_id, name, SKU, parent_id, 0 AS level
+                  FROM variations
+                  WHERE product_id = :pid
+                  ORDER BY name ASC, variation_id ASC
+              ");
+              $stmt->execute([':pid' => $productId]);
+              return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
           }
-          if (!$nodes) return [];
-
-          // children map + roots (incluye huérfanos como roots)
-          $children = [];
-          $roots = [];
-          foreach ($nodes as $id => $n) {
-              $pid = $n['parent_id'];
-              if ($pid !== null && isset($nodes[$pid])) {
-                  $children[$pid][] = $id;
-              } else {
-                  $roots[] = $id;
-              }
-          }
-
-          // Orden estable: name ASC, variation_id ASC (rápido y consistente)
-          $cmp = function ($a, $b) use ($nodes) {
-              $na = mb_strtolower(trim($nodes[$a]['name'] ?? ''), 'UTF-8');
-              $nb = mb_strtolower(trim($nodes[$b]['name'] ?? ''), 'UTF-8');
-              if ($na === $nb) return ($a <=> $b);
-              return ($na <=> $nb);
-          };
-
-          usort($roots, $cmp);
-          foreach ($children as &$ids) usort($ids, $cmp);
-          unset($ids);
-
-          // DFS: abuelo -> padre -> hijo... con level (y evita ciclos)
-          $out = [];
-          $visited = [];
-
-          $walk = function ($id, $level) use (&$walk, &$out, &$visited, $nodes, $children) {
-              if (isset($visited[$id])) return;
-              $visited[$id] = true;
-
-              $out[] = [
-                  'variation_id' => $nodes[$id]['variation_id'],
-                  'name'         => $nodes[$id]['name'],
-                  'SKU'          => $nodes[$id]['SKU'],
-                  'parent_id'    => $nodes[$id]['parent_id'],
-                  'level'        => (int)$level,
-              ];
-
-              if (!empty($children[$id])) {
-                  foreach ($children[$id] as $cid) {
-                      $walk($cid, $level + 1);
-                  }
-              }
-          };
-
-          foreach ($roots as $rid) $walk($rid, 0);
-
-          return $out;
 
       } catch (\PDOException $e) {
           error_log('getVariationsBySKUProduct: ' . $e->getMessage());
