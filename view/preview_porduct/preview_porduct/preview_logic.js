@@ -243,16 +243,19 @@ class PreviewLogic {
           }
         }
       }
-      alert("4. Este alert es dentro de organizeVariationsForRender y /n antes de renderVariations" + JSON.stringify(variationsOnlyOfType) + "   " + JSON.stringify(typeVariation));
-      this.renderVariations(variationsOnlyOfType, typeVariation);
       this.renderItems(itemsOnlyOfType, typeVariation);
       this.renderImages(imagesOnlyOfType, typeVariation);
       this.renderPrices(pricesOnlyOfType, typeVariation);
       this.renderArtwork(artworksOnlyOfType, typeVariation);
+      this.renderVariations(variationsOnlyOfType, typeVariation);
+
     }
   }
 
   renderVariations(childVariationsOfType = [], typeVariation) {
+
+    alert("4. Este alert es dentro de organizeVariationsForRender y /n antes de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
+
     const parent = document.getElementById("wrap-variations-group");
     if (!parent) return;
 
