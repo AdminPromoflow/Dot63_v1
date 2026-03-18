@@ -24,9 +24,9 @@ class ProductsClass {
         // If the response is not okay, throw an error.
         throw new Error("Network error.");
       })
-      .then(data => {
-        JSON.parse(data);
-        alert(data);
+      .then(result => {
+        const data = JSON.parse(result);
+        this.drawProducts(data);
       })
       .catch(error => {
         // Log any errors to the console.
