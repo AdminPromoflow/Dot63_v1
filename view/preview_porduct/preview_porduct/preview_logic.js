@@ -158,6 +158,7 @@ class PreviewLogic {
         if (variationTypesForDelete.length) {
           var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         }
+        alert("delete" + organizeVariationsForDelete);
 
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
