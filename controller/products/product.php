@@ -227,12 +227,12 @@ class Product {
 
 
   private function getProducts(){
-    echo json_encode("buenas");exit;
     header('Content-Type: application/json; charset=utf-8');
 
     $connection = new Database();
     $products   = new Products($connection);
     $response   = $products->getAllNames();
+    echo json_encode("buenas2");exit;
 
     echo ($response);
   }
