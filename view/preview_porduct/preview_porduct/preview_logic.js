@@ -408,7 +408,7 @@ class PreviewLogic {
 
     alert("4. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
     //alert("c render images");
-    alert("auxilio" + this.getSelectVariation());
+  //  alert("auxilio" + this.getSelectVariation());
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
 
