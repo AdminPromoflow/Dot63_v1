@@ -339,6 +339,7 @@ class PreviewLogic {
 
   SelectVariation(domId = "") {
     //loader.show();
+    this.setSelectVariation("mejorando" + domId);
 
     const id = String(domId || "").trim();
     if (!id) return;
@@ -346,7 +347,6 @@ class PreviewLogic {
     const variationId = id.replace(/^variation_id_/, "").trim();
     if (!variationId) return;
     alert(domId);
-    this.setSelectVariation(domId);
     setTimeout(() => {
     //  this.fetchChildVariationsById(variationId);
     }, 600);
