@@ -231,8 +231,9 @@ class Product {
 
     $connection = new Database();
     $products   = new Products($connection);
-    $response   = $products->getAllNames();
     echo json_encode("buenas2");exit;
+
+    $response   = $products->getAllNames();
 
     echo ($response);
   }
