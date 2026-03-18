@@ -34,7 +34,7 @@ class ProductsClass {
       });
   }
   drawProducts(data){
-    for (var i = 0; i < data.length; i++) {
+    for (var i = 0; i < data.result.length; i++) {
       alert(data.result[i].name);
     }
   }
