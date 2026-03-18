@@ -191,7 +191,7 @@ class PreviewLogic {
 
       // ✅ Siempre borrar estos (incluyendo el actual)
       this.deleteItems(typeId);
-      var deleteImages = this.deleteImages(typeId);
+      //var deleteImages = this.deleteImages(typeId);
       this.deletePrices(typeId);
       this.deleteArtwork(typeId);
 
@@ -201,12 +201,12 @@ class PreviewLogic {
       }
     }
 
-    if (deleteImages) {// acá poner o ó ||
+    // if (deleteImages) {// acá poner o ó ||
       return true;
-    }
-    else {
-      return false;
-    }
+    // }
+    // else {
+    //   return false;
+    // }
   }
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
