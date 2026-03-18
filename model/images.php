@@ -121,7 +121,10 @@ class Images {
 
   public function getVariationsBySKUProduct(): array
   {
+    return $this->sku;exit;
       if (!$this->sku) return [];
+
+
 
       try {
           $pdo = $this->connection->getConnection();
