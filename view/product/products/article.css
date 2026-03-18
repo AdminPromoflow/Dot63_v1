@@ -504,6 +504,10 @@ body{
 .filters-toggle:checked ~ .filters-btn::before{
   content: "✕ Close";
 }
+.filter_products{
+  will-change: transform;
+  transition: transform 0.18s ease-out;
+}
 
 /* =============================================================================
    RESPONSIVE GRID
