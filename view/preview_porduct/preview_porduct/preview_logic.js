@@ -243,8 +243,10 @@ class PreviewLogic {
           }
         }
       }
-      this.renderItems(itemsOnlyOfType, typeVariation);
+
       this.renderImages(imagesOnlyOfType, typeVariation);
+
+      this.renderItems(itemsOnlyOfType, typeVariation);
       this.renderPrices(pricesOnlyOfType, typeVariation);
       this.renderArtwork(artworksOnlyOfType, typeVariation);
       this.renderVariations(variationsOnlyOfType, typeVariation);
@@ -254,7 +256,7 @@ class PreviewLogic {
 
   renderVariations(childVariationsOfType = [], typeVariation) {
 
-    alert("4. Este alert es dentro de organizeVariationsForRender y /n antes de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
+    alert("5. Este alert es dentro de organize Variations For Render y /n antes de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
 
     const parent = document.getElementById("wrap-variations-group");
     if (!parent) return;
@@ -383,6 +385,10 @@ class PreviewLogic {
   }
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
+
+    alert("4. Este alert es dentro de render Images " + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
+
+
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
 
