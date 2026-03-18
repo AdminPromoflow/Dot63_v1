@@ -244,8 +244,8 @@ class PreviewLogic {
         }
       }
 
-      if (Array.isArray(imagesOnlyOfType) || !imagesOnlyOfType.length === 0 ) {
-        alert(JSON.stringify(imagesOnlyOfType));
+      if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0) {
+        alert("ahora si no deferia entrar");
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
