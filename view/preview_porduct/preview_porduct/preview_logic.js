@@ -430,7 +430,11 @@ class PreviewLogic {
     wrapper.innerHTML = "";
 
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
+
       const imgObj = imagesOnlyOfType[i];
+      //imgObj.link == variation_id ==
+      alert("ayyyy " + this.getSelectVariation());
+      if (true) {
 
       const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
       const src = rawLink
@@ -449,6 +453,7 @@ class PreviewLogic {
       img.decoding = "async";
 
       wrapper.appendChild(img);
+      }
     }
   }
 
