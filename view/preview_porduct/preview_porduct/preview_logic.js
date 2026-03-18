@@ -201,7 +201,7 @@ class PreviewLogic {
       }
     }
 
-    if (deleteImages) {
+    if (deleteImages) {// acá poner o ó ||
       return true;
     }
     else {
