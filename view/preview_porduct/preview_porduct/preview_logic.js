@@ -161,9 +161,9 @@ class PreviewLogic {
 
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
-          if (organizeVariationsForDelete) {
+        //  if (organizeVariationsForDelete) {
             this.organizeVariationsForRender(childVariations, variationTypes);
-          }
+        //  }
         }
 
         loader.hide();
@@ -201,12 +201,12 @@ class PreviewLogic {
       }
     }
 
-    // if (deleteImages) {// acá poner o ó ||
+    if (deleteImages) {// acá poner o ó ||
       return true;
-    // }
-    // else {
-    //   return false;
-    // }
+    }
+    else {
+      return false;
+    }
   }
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
