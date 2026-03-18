@@ -181,30 +181,33 @@ class PreviewLogic {
     - BORRA variations SOLO si NO es el type actual
   ============================================================================ */
   organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
+      alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
+      if (!Array.isArray(variationTypes) || variationTypes.length === 0) return false;
 
-    alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
-    if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
+      const current = String(currentTypeId ?? "");
+      let deletedSomething = false;
 
-    const current = String(currentTypeId ?? "");
+      for (let i = 0; i < variationTypes.length; i++) {
+        const typeId = String(variationTypes[i]?.type_id ?? "");
 
-    for (let i = 0; i < variationTypes.length; i++) {
-      const typeId = String(variationTypes[i]?.type_id ?? "");
+        // ✅ Siempre borrar estos (incluyendo el actual)
+        this.deleteItems(typeId);
+        const imagesDeleted = this.deleteImages(typeId);
+        this.deletePrices(typeId);
+        this.deleteArtwork(typeId);
 
-      // ✅ Siempre borrar estos (incluyendo el actual)
-      this.deleteItems(typeId);
-      var deleteImages = this.deleteImages(typeId);
-      this.deletePrices(typeId);
-      this.deleteArtwork(typeId);
+        // ✅ Solo borrar variations si NO es el type actual
+        if (typeId !== current) {
+          this.deleteVariations(typeId);
+        }
 
-      // ✅ Solo borrar variations si NO es el type actual
-      if (typeId !== current) {
-        this.deleteVariations(typeId);
+        // Si algo se borró, marcamos como éxito
+        if (imagesDeleted) {
+          deletedSomething = true;
+        }
       }
-    }
 
-    if (deleteImages) {
-      return true;
-    }
+      return deletedSomething;
   }
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
