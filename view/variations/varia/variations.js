@@ -1,5 +1,4 @@
 // Variations page controller (no globals, no "create new group" logic).
-// The <select id="group"> is treated as "Type variation" select (type_id).
 class Variations {
   constructor() {
     // --- Cache DOM references (single source of truth) ---
@@ -536,8 +535,9 @@ class Variations {
   }
 
   renderParentSelect(variationsRaw, current, parent, product) {
+    alert("renderParentSelect" + JSON.stringify(variationsRaw));
     if (!this.parentSelect) return;
-
+    alert("parentSelect found");
     // ✅ Respeta EXACTAMENTE el orden en que viene de la BD (no sort)
     const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
 
