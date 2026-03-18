@@ -254,9 +254,9 @@ class PreviewLogic {
         }
       }
       if (Array.isArray(variationsOnlyOfType) && variationsOnlyOfType.length > 0) {
-        var renderVariations = this.renderVariations(variationsOnlyOfType, typeVariation);
+         this.renderVariations(variationsOnlyOfType, typeVariation);
       }
-      if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 && renderVariations) {
+      if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 ) {
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
