@@ -245,7 +245,7 @@ class PreviewLogic {
       }
 
       if (Array.isArray(imagesOnlyOfType) || !imagesOnlyOfType.length === 0 ) {
-        alert("Creo que ya esta bien y esto no se deberia ver");
+        alert(JSON.stringify(imagesOnlyOfType));
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
