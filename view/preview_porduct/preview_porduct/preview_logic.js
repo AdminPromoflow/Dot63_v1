@@ -260,7 +260,7 @@ class PreviewLogic {
 
   renderVariations(childVariationsOfType = [], typeVariation) {
 
-    alert("5. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
+    alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
     //alert("a renderVariations");
     const parent = document.getElementById("wrap-variations-group");
     if (!parent) return;
@@ -406,7 +406,7 @@ class PreviewLogic {
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
 
-    alert("4. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
+    alert("5. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
     //alert("c render images");
   //  alert("auxilio" + this.getSelectVariation());
     const parent = document.getElementById("wrap-images-group");
