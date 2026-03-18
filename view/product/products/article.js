@@ -6,9 +6,7 @@ class ProductsClass {
     // alert(email.value + password.value);
     const url = "../../controller/products/product.php";
     const data = {
-      action: "get_products",
-      email: email.value,
-      password: password.value
+      action: "get_products"
     };
     // Make a fetch request to the given URL with the specified data.
     fetch(url, {
