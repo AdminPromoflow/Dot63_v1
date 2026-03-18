@@ -189,7 +189,7 @@ class PreviewLogic {
 
       // ✅ Siempre borrar estos (incluyendo el actual)
       this.deleteItems(typeId);
-      //this.deleteImages(typeId);
+      this.deleteImages(typeId);
       this.deletePrices(typeId);
       this.deleteArtwork(typeId);
 
