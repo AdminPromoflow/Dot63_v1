@@ -270,7 +270,7 @@ class PreviewLogic {
   renderVariations(childVariationsOfType = [], typeVariation) {
 
     alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
-    //alert("a renderVariations");
+    alert("haha lo estamos logrando" + this.getSelectVariation());
     const parent = document.getElementById("wrap-variations-group");
     if (!parent) return;
 
