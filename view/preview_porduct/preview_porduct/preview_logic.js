@@ -257,7 +257,6 @@ class PreviewLogic {
 
         var variationsFinished =  this.renderVariations(variationsOnlyOfType, typeVariation);
         if (variationsFinished) {
-          alert(variationsFinished + " quiero llorar");
           if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 ) {
             this.renderImages(imagesOnlyOfType, typeVariation);
           }
@@ -275,7 +274,6 @@ class PreviewLogic {
   renderVariations(childVariationsOfType = [], typeVariation) {
     try {
       alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
-      alert("haha lo estamos logrando" + this.getSelectVariation());
 
       const parent = document.getElementById("wrap-variations-group");
       if (!parent) return false;
@@ -427,6 +425,9 @@ class PreviewLogic {
   }
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
+
+    alert("haha lo estamos logrando de verdad" + this.getSelectVariation());
+
 
     alert("5. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
     //alert("c render images");
