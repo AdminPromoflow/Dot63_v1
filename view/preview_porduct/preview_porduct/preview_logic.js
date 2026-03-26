@@ -254,11 +254,16 @@ class PreviewLogic {
         }
       }
       if (Array.isArray(variationsOnlyOfType) && variationsOnlyOfType.length > 0) {
-         this.renderVariations(variationsOnlyOfType, typeVariation);
+
+        var variationsFinished =  this.renderVariations(variationsOnlyOfType, typeVariation);
+        if (variationsFinished) {
+          alert(variationsFinished + " quiero llorar");
+          if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 ) {
+            this.renderImages(imagesOnlyOfType, typeVariation);
+          }
+        }
       }
-      if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 ) {
-        this.renderImages(imagesOnlyOfType, typeVariation);
-      }
+
 
       this.renderItems(itemsOnlyOfType, typeVariation);
       this.renderPrices(pricesOnlyOfType, typeVariation);
@@ -268,88 +273,97 @@ class PreviewLogic {
   }
 
   renderVariations(childVariationsOfType = [], typeVariation) {
+    try {
+      alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
+      alert("haha lo estamos logrando" + this.getSelectVariation());
 
-    alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
-    alert("haha lo estamos logrando" + this.getSelectVariation());
-    const parent = document.getElementById("wrap-variations-group");
-    if (!parent) return;
+      const parent = document.getElementById("wrap-variations-group");
+      if (!parent) return false;
 
-    const typeId    = typeVariation?.type_id ?? "null";
-    const labelId   = `var_label_size_${typeId}`;
-    const optionsId = `var-options-${typeId}`;
+      const typeId    = typeVariation?.type_id ?? "null";
+      const labelId   = `var_label_size_${typeId}`;
+      const optionsId = `var-options-${typeId}`;
 
-    const existing = parent.querySelector(`.wrap-variations[data-type-id="${typeId}"]`);
-    if (existing) existing.remove();
+      const existing = parent.querySelector(`.wrap-variations[data-type-id="${typeId}"]`);
+      if (existing) existing.remove();
 
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
+      const typeName = String(typeVariation?.type_name ?? "").trim();
+      if (!typeName) return false;
 
-    const firstLabel = String(childVariationsOfType?.[0]?.name ?? "").trim();
+      if (!Array.isArray(childVariationsOfType) || childVariationsOfType.length === 0) {
+        return false;
+      }
 
-    let buttonsHtml = "";
-    let firstDomId = "";
+      const firstLabel = String(childVariationsOfType?.[0]?.name ?? "").trim();
 
-    for (let i = 0; i < childVariationsOfType.length; i++) {
-      const v = childVariationsOfType[i];
+      let buttonsHtml = "";
+      let firstDomId = "";
 
-      const variationId = String(v?.variation_id ?? "").trim();
-      const rawImg = String(v?.image ?? "").trim().replace(/^\/+/, "");
+      for (let i = 0; i < childVariationsOfType.length; i++) {
+        const v = childVariationsOfType[i];
 
-      const imgSrc = rawImg
-        ? (
-            rawImg.startsWith("http") || rawImg.startsWith("data:") || rawImg.startsWith("blob:")
-              ? rawImg
-              : (rawImg.startsWith("controller/")
-                  ? "../../" + rawImg
-                  : "../../controller/" + rawImg)
-          )
-        : "https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg";
+        const variationId = String(v?.variation_id ?? "").trim();
+        const rawImg = String(v?.image ?? "").trim().replace(/^\/+/, "");
 
-      const label = String(v?.name ?? "");
-      const selectedClass = (i === 0) ? " is-selected" : "";
-      const domId = variationId ? `variation_id_${variationId}` : "";
+        const imgSrc = rawImg
+          ? (
+              rawImg.startsWith("http") || rawImg.startsWith("data:") || rawImg.startsWith("blob:")
+                ? rawImg
+                : (rawImg.startsWith("controller/")
+                    ? "../../" + rawImg
+                    : "../../controller/" + rawImg)
+            )
+          : "https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg";
 
-      if (i === 0) firstDomId = domId;
+        const label = String(v?.name ?? "");
+        const selectedClass = (i === 0) ? " is-selected" : "";
+        const domId = variationId ? `variation_id_${variationId}` : "";
 
-      buttonsHtml += `
-        <button
-          type="button"
-          class="var-option js-scale-in${selectedClass}"
-          ${domId ? `id="${domId}"` : ""}
-          ${domId ? `onclick="previewLogic.SelectVariation('${domId}')"` : ""}
-        >
-          <img class="var-thumb" src="${imgSrc}" alt="Option sample">
-          <span class="opt-main">${label}</span>
-        </button>
+        if (i === 0) firstDomId = domId;
+
+        buttonsHtml += `
+          <button
+            type="button"
+            class="var-option js-scale-in${selectedClass}"
+            ${domId ? `id="${domId}"` : ""}
+            ${domId ? `onclick="previewLogic.SelectVariation('${domId}')"` : ""}
+          >
+            <img class="var-thumb" src="${imgSrc}" alt="Option sample">
+            <span class="opt-main">${label}</span>
+          </button>
+        `;
+      }
+
+      const blockHtml = `
+        <div class="wrap-variations" aria-labelledby="${labelId}" data-type-id="${typeId}">
+          <div class="var-label">
+            <span class="var-name">${typeName}</span>
+            <strong id="${labelId}">${firstLabel || ""}</strong>
+          </div>
+
+          <div class="var-options" id="${optionsId}">
+            ${buttonsHtml}
+          </div>
+        </div>
       `;
-    }
 
-    const blockHtml = `
-      <div class="wrap-variations" aria-labelledby="${labelId}" data-type-id="${typeId}">
-        <div class="var-label">
-          <span class="var-name">${typeName}</span>
-          <strong id="${labelId}">${firstLabel || ""}</strong>
-        </div>
+      parent.insertAdjacentHTML("beforeend", blockHtml);
 
-        <div class="var-options" id="${optionsId}">
-          ${buttonsHtml}
-        </div>
-      </div>
-    `;
+      window.previewGallery?.updatePrice?.();
 
-    parent.insertAdjacentHTML("beforeend", blockHtml);
+      if (firstDomId) {
+        const selectVariationResult = previewLogic.SelectVariation(firstDomId);
 
-    window.previewGallery?.updatePrice?.();
+        if (selectVariationResult === false) {
+          return false;
+        }
+      }
 
-  //setTimeout(() => {
-      var selectVariaton = previewLogic.SelectVariation(firstDomId);
-  //  }, 0);
-
-    if (selectVariaton) {
       return true;
+    } catch (error) {
+      console.error("Error in renderVariations:", error);
+      return false;
     }
-
-
   }
 
   SelectVariation(domId = "") {
@@ -367,7 +381,6 @@ class PreviewLogic {
     //   setTimeout(() => {
       this.fetchChildVariationsById(variationId);
     // }, 1000);
-      return true;
   }
 
   setSelectVariation(domId){
