@@ -426,7 +426,9 @@ class PreviewLogic {
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
 
-    alert("haha lo estamos logrando de verdad" + this.getSelectVariation());
+    alert("ay" + JSON.stringify(imagesOnlyOfType));
+
+   var id_variation = this.getSelectVariation();
 
 
     alert("5. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
