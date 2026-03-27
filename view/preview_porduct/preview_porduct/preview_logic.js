@@ -425,19 +425,21 @@ class PreviewLogic {
   }
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
+  //  alert("ay" + JSON.stringify(imagesOnlyOfType));
 
-    alert("ay" + JSON.stringify(imagesOnlyOfType));
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
+    );
 
-   var id_variation = this.getSelectVariation();
+    alert(
+      "5. Este alert es dentro de render Images y vamos bien " +
+      JSON.stringify(imagesOnlyOfType) +
+      "   " +
+      JSON.stringify(typeVariation)
+    );
 
-
-    alert("5. Este alert es dentro de render Images y vamos bien" + JSON.stringify(imagesOnlyOfType) + "   " + JSON.stringify(typeVariation));
-    //alert("c render images");
-  //  alert("auxilio" + this.getSelectVariation());
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
-
-    //if (!Array.isArray(imagesOnlyOfType) || imagesOnlyOfType.length === 0) return;
 
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-images-${typeId}`;
@@ -455,16 +457,21 @@ class PreviewLogic {
     wrapper.innerHTML = "";
 
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
-
       const imgObj = imagesOnlyOfType[i];
-      //
-      if ( imgObj.variation_id == Number(this.getSelectVariation().replace("variation_id_", "")) ){
-        //alert( "Entramos con "  + imgObj.variation_id);
+
+      if (Number(imgObj.variation_id) !== id_variation) continue;
+
       const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
       const src = rawLink
-        ? (rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
-            ? rawLink
-            : (rawLink.startsWith("controller/") ? "../../" + rawLink : "../../controller/" + rawLink))
+        ? (
+            rawLink.startsWith("http") ||
+            rawLink.startsWith("data:") ||
+            rawLink.startsWith("blob:")
+              ? rawLink
+              : (rawLink.startsWith("controller/")
+                  ? "../../" + rawLink
+                  : "../../controller/" + rawLink)
+          )
         : "";
 
       if (!src) continue;
@@ -477,7 +484,6 @@ class PreviewLogic {
       img.decoding = "async";
 
       wrapper.appendChild(img);
-      }
     }
   }
 
