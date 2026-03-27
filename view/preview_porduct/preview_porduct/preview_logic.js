@@ -475,7 +475,7 @@ class PreviewLogic {
         : "";
 
 
-        alert("se dibujaron " i);
+        alert("se dibujaron " + i);
 
       if (!src) continue;
 
