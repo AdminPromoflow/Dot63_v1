@@ -8,6 +8,15 @@ class PreviewLogic {
       this.getDataProduct();
     }
     this.variationSelected;
+
+
+    const preview_media = document.getElementById("preview-media");
+
+    const sp_nav_next = document.getElementById("sp-nav-next");
+
+    sp_nav_next.addEventListener("click", function(){
+      alert("ahy juemadre");
+    })
   }
 
   getDataProduct() {
@@ -473,9 +482,6 @@ class PreviewLogic {
                   : "../../controller/" + rawLink)
           )
         : "";
-
-
-        alert("se dibujaron " + i);
 
       if (!src) continue;
 
