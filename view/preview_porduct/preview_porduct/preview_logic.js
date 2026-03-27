@@ -474,6 +474,9 @@ class PreviewLogic {
           )
         : "";
 
+
+        alert("se dibujaron " i);
+
       if (!src) continue;
 
       const img = document.createElement("img");
