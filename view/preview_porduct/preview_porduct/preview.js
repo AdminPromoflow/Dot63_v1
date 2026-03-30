@@ -67,18 +67,18 @@ class PreviewPage {
   /* ============================================================================
      Previous button
   ============================================================================ */
-  bindPrevButton() {
-    const prevBtn = document.querySelector(".sp-nav-prev");
-    if (!prevBtn) return;
-
-    // Prevents binding the same event more than once
-    if (prevBtn.dataset.bound === "1") return;
-    prevBtn.dataset.bound = "1";
-
-    prevBtn.addEventListener("click", () => {
-      this.prevImage(false);
-    });
-  }
+  // bindPrevButton() {
+  //   const prevBtn = document.querySelector(".sp-nav-prev");
+  //   if (!prevBtn) return;
+  //
+  //   // Prevents binding the same event more than once
+  //   if (prevBtn.dataset.bound === "1") return;
+  //   prevBtn.dataset.bound = "1";
+  //
+  //   prevBtn.addEventListener("click", () => {
+  //     this.prevImage(false);
+  //   });
+  // }
 
   /* ============================================================================
      Pack size selection (global)
@@ -146,62 +146,62 @@ class PreviewPage {
      Gallery
   ============================================================================ */
 
-  initGalleryFromDom() {
-    // Reads media already present in the HTML at first load
-    this.rebuildGalleryFromDom(0, true);
-  }
+  // initGalleryFromDom() {
+  //   // Reads media already present in the HTML at first load
+  //   this.rebuildGalleryFromDom(0, true);
+  // }
 
   // Rebuilds the gallery array by reading the DOM
-  rebuildGalleryFromDom(startIndex = 0, force = false) {
-    const root = document.getElementById("wrap-images-group");
-    if (!root) return;
-
-    const mediaEls = root.querySelectorAll(".preview-media");
-
-    // If force is false and only one media item is visible in the DOM,
-    // but memory already has more than one item, do not overwrite memory
-    if (!force && mediaEls.length <= 1 && this.currentImages.length > 1) {
-      return;
-    }
-
-    // Stops auto-rotation before rebuilding
-    this.stopAutoRotate();
-
-    // Reads images and videos into currentImages
-    this.currentImages = Array.from(mediaEls)
-      .map((el) => {
-        if (el.tagName === "IMG") {
-          const src = el.getAttribute("src") || "";
-          return src ? { type: "img", src } : null;
-        }
-
-        if (el.tagName === "VIDEO") {
-          const source = el.querySelector("source");
-          const src = source?.getAttribute("src") || "";
-          return src ? { type: "video", src } : null;
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-
-    // If no media exists, show empty message
-    if (!this.currentImages.length) {
-      root.innerHTML = '<div class="cp-empty">No media</div>';
-      this.currentImageIndex = 0;
-      return;
-    }
-
-    // Ensures the index is valid
-    const safeIndex = Math.max(0, Math.min(startIndex, this.currentImages.length - 1));
-    this.currentImageIndex = safeIndex;
-
-    // Shows the selected media
-    this.changeMainMedia(this.currentImages[this.currentImageIndex]);
-
-    // Starts automatic gallery rotation
-    this.startAutoRotate();
-  }
+  // rebuildGalleryFromDom(startIndex = 0, force = false) {
+  //   const root = document.getElementById("wrap-images-group");
+  //   if (!root) return;
+  //
+  //   const mediaEls = root.querySelectorAll(".preview-media");
+  //
+  //   // If force is false and only one media item is visible in the DOM,
+  //   // but memory already has more than one item, do not overwrite memory
+  //   if (!force && mediaEls.length <= 1 && this.currentImages.length > 1) {
+  //     return;
+  //   }
+  //
+  //   // Stops auto-rotation before rebuilding
+  //   this.stopAutoRotate();
+  //
+  //   // Reads images and videos into currentImages
+  //   this.currentImages = Array.from(mediaEls)
+  //     .map((el) => {
+  //       if (el.tagName === "IMG") {
+  //         const src = el.getAttribute("src") || "";
+  //         return src ? { type: "img", src } : null;
+  //       }
+  //
+  //       if (el.tagName === "VIDEO") {
+  //         const source = el.querySelector("source");
+  //         const src = source?.getAttribute("src") || "";
+  //         return src ? { type: "video", src } : null;
+  //       }
+  //
+  //       return null;
+  //     })
+  //     .filter(Boolean);
+  //
+  //   // If no media exists, show empty message
+  //   if (!this.currentImages.length) {
+  //     root.innerHTML = '<div class="cp-empty">No media</div>';
+  //     this.currentImageIndex = 0;
+  //     return;
+  //   }
+  //
+  //   // Ensures the index is valid
+  //   const safeIndex = Math.max(0, Math.min(startIndex, this.currentImages.length - 1));
+  //   this.currentImageIndex = safeIndex;
+  //
+  //   // Shows the selected media
+  //   this.changeMainMedia(this.currentImages[this.currentImageIndex]);
+  //
+  //   // Starts automatic gallery rotation
+  //   this.startAutoRotate();
+  // }
 
   // Starts auto-rotation every 5 seconds
   startAutoRotate() {
@@ -299,42 +299,42 @@ class PreviewPage {
      Zoom
   ============================================================================ */
 
-  bindZoomEvents() {
-    if (!this.main) return;
-
-    // Resets image transform on mouse enter
-    this.main.addEventListener("mouseenter", () => {
-      const img = this.main.querySelector("img");
-      if (img instanceof HTMLImageElement) {
-        img.style.transformOrigin = "center center";
-        img.style.transform = "scale(1)";
-      }
-    });
-
-    // Resets image transform on mouse leave
-    this.main.addEventListener("mouseleave", () => {
-      const img = this.main.querySelector("img");
-      if (img instanceof HTMLImageElement) {
-        img.style.transformOrigin = "center center";
-        img.style.transform = "scale(1)";
-      }
-    });
-
-    // Zooms towards the mouse position
-    this.main.addEventListener("mousemove", (event) => {
-      if (window.innerWidth <= 760) return;
-
-      const img = this.main.querySelector("img");
-      if (!(img instanceof HTMLImageElement)) return;
-
-      const rect = this.main.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 100;
-      const y = ((event.clientY - rect.top) / rect.height) * 100;
-
-      img.style.transformOrigin = `${x}% ${y}%`;
-      img.style.transform = "scale(2.1)";
-    });
-  }
+  // bindZoomEvents() {
+  //   if (!this.main) return;
+  //
+  //   // Resets image transform on mouse enter
+  //   this.main.addEventListener("mouseenter", () => {
+  //     const img = this.main.querySelector("img");
+  //     if (img instanceof HTMLImageElement) {
+  //       img.style.transformOrigin = "center center";
+  //       img.style.transform = "scale(1)";
+  //     }
+  //   });
+  //
+  //   // Resets image transform on mouse leave
+  //   this.main.addEventListener("mouseleave", () => {
+  //     const img = this.main.querySelector("img");
+  //     if (img instanceof HTMLImageElement) {
+  //       img.style.transformOrigin = "center center";
+  //       img.style.transform = "scale(1)";
+  //     }
+  //   });
+  //
+  //   // Zooms towards the mouse position
+  //   this.main.addEventListener("mousemove", (event) => {
+  //     if (window.innerWidth <= 760) return;
+  //
+  //     const img = this.main.querySelector("img");
+  //     if (!(img instanceof HTMLImageElement)) return;
+  //
+  //     const rect = this.main.getBoundingClientRect();
+  //     const x = ((event.clientX - rect.left) / rect.width) * 100;
+  //     const y = ((event.clientY - rect.top) / rect.height) * 100;
+  //
+  //     img.style.transformOrigin = `${x}% ${y}%`;
+  //     img.style.transform = "scale(2.1)";
+  //   });
+  // }
 
   /* ============================================================================
      Variations split
