@@ -111,7 +111,7 @@ class PreviewPage {
       }
 
       // Recalculates price after selection change
-      this.updatePrice();
+      //this.updatePrice();
     });
   }
 
@@ -139,7 +139,7 @@ class PreviewPage {
     }
 
     // Recalculates price
-    this.updatePrice();
+    //this.updatePrice();
   }
 
   /* ============================================================================
@@ -476,7 +476,7 @@ class PreviewPage {
       }
 
       // Recalculates price after change
-      this.updatePrice();
+    //  this.updatePrice();
     });
   }
 
@@ -484,96 +484,96 @@ class PreviewPage {
      Price
   ============================================================================ */
 
-  updatePrice() {
-    const unitEl  = document.getElementById("bb_unit");
-    const totalEl = document.getElementById("bb_total");
-    if (!unitEl || !totalEl) return;
+  // updatePrice() {
+  //   const unitEl  = document.getElementById("bb_unit");
+  //   const totalEl = document.getElementById("bb_total");
+  //   if (!unitEl || !totalEl) return;
+  //
+  //   // Base price per 100 units, taken from the DOM
+  //   let basePer100 = 8.0;
+  //   const spPriceEl = document.getElementById("sp_price");
+  //   if (spPriceEl) {
+  //     const raw = spPriceEl.textContent || "";
+  //     const num = parseFloat(raw.replace(/[^\d.]/g, ""));
+  //     if (!Number.isNaN(num) && num > 0) basePer100 = num;
+  //   }
+  //
+  //   // Selected pack quantity or first available option
+  //   let packQty = 500;
+  //   const packGroup = document.getElementById("wrap-prices-group");
+  //   if (packGroup) {
+  //     const selected =
+  //       packGroup.querySelector(".var-option.is-selected") ||
+  //       packGroup.querySelector(".var-option");
+  //
+  //     if (selected) {
+  //       const span = selected.querySelector(".opt-main");
+  //       if (span) {
+  //         const txt = span.textContent.replace(/,/g, "").trim();
+  //         const n = parseInt(txt, 10);
+  //         if (!Number.isNaN(n) && n > 0) packQty = n;
+  //       }
+  //     }
+  //   }
+  //
+  //   // Quantity discount or increase table
+  //   const PACK_ADJUST = {
+  //     50: 0.05,
+  //     100: 0.0,
+  //     200: -0.03,
+  //     500: -0.08,
+  //     1000: -0.12,
+  //     2000: -0.16,
+  //     3000: -0.18,
+  //     5000: -0.22,
+  //   };
+  //
+  //   const adjust = PACK_ADJUST[packQty] ?? 0;
+  //   const packFactor = 1 + adjust;
+  //
+  //   // Base subtotal calculation
+  //   let subtotal = basePer100 * (packQty / 100) * packFactor;
+  //
+  //   // Adds delivery adjustment if selected
+  //   const deliveryRadio = document.querySelector('input[name="delivery_speed"]:checked');
+  //   if (deliveryRadio) {
+  //     const mode = deliveryRadio.dataset.mode;
+  //     const val = parseFloat(deliveryRadio.dataset.value || "0") || 0;
+  //
+  //     if (mode === "percent") {
+  //       subtotal = subtotal * (1 + val);
+  //     } else if (mode === "absolute") {
+  //       subtotal = subtotal + val;
+  //     }
+  //   }
+  //
+  //   // VAT estimation
+  //   const VAT_RATE = 0.2;
+  //   const taxEl = document.getElementById("bb_tax");
+  //   const taxAmount = subtotal * VAT_RATE;
+  //   if (taxEl) {
+  //     taxEl.textContent = `Estimated £${taxAmount.toFixed(2)}`;
+  //   }
+  //
+  //   // Final total and unit price
+  //   const total = subtotal;
+  //   const packQtySafe = packQty || 1;
+  //   const unitPrice = total / packQtySafe;
+  //
+  //   unitEl.textContent  = `£${unitPrice.toFixed(2)}`;
+  //   totalEl.textContent = `£${total.toFixed(2)}`;
+  // }
 
-    // Base price per 100 units, taken from the DOM
-    let basePer100 = 8.0;
-    const spPriceEl = document.getElementById("sp_price");
-    if (spPriceEl) {
-      const raw = spPriceEl.textContent || "";
-      const num = parseFloat(raw.replace(/[^\d.]/g, ""));
-      if (!Number.isNaN(num) && num > 0) basePer100 = num;
-    }
-
-    // Selected pack quantity or first available option
-    let packQty = 500;
-    const packGroup = document.getElementById("wrap-prices-group");
-    if (packGroup) {
-      const selected =
-        packGroup.querySelector(".var-option.is-selected") ||
-        packGroup.querySelector(".var-option");
-
-      if (selected) {
-        const span = selected.querySelector(".opt-main");
-        if (span) {
-          const txt = span.textContent.replace(/,/g, "").trim();
-          const n = parseInt(txt, 10);
-          if (!Number.isNaN(n) && n > 0) packQty = n;
-        }
-      }
-    }
-
-    // Quantity discount or increase table
-    const PACK_ADJUST = {
-      50: 0.05,
-      100: 0.0,
-      200: -0.03,
-      500: -0.08,
-      1000: -0.12,
-      2000: -0.16,
-      3000: -0.18,
-      5000: -0.22,
-    };
-
-    const adjust = PACK_ADJUST[packQty] ?? 0;
-    const packFactor = 1 + adjust;
-
-    // Base subtotal calculation
-    let subtotal = basePer100 * (packQty / 100) * packFactor;
-
-    // Adds delivery adjustment if selected
-    const deliveryRadio = document.querySelector('input[name="delivery_speed"]:checked');
-    if (deliveryRadio) {
-      const mode = deliveryRadio.dataset.mode;
-      const val = parseFloat(deliveryRadio.dataset.value || "0") || 0;
-
-      if (mode === "percent") {
-        subtotal = subtotal * (1 + val);
-      } else if (mode === "absolute") {
-        subtotal = subtotal + val;
-      }
-    }
-
-    // VAT estimation
-    const VAT_RATE = 0.2;
-    const taxEl = document.getElementById("bb_tax");
-    const taxAmount = subtotal * VAT_RATE;
-    if (taxEl) {
-      taxEl.textContent = `Estimated £${taxAmount.toFixed(2)}`;
-    }
-
-    // Final total and unit price
-    const total = subtotal;
-    const packQtySafe = packQty || 1;
-    const unitPrice = total / packQtySafe;
-
-    unitEl.textContent  = `£${unitPrice.toFixed(2)}`;
-    totalEl.textContent = `£${total.toFixed(2)}`;
-  }
-
-  setupDeliveryOptions() {
-    const radios = document.querySelectorAll('input[name="delivery_speed"]');
-    if (!radios.length) return;
-
-    radios.forEach((radio) => {
-      radio.addEventListener("change", () => {
-        this.updatePrice();
-      });
-    });
-  }
+  // setupDeliveryOptions() {
+  //   const radios = document.querySelectorAll('input[name="delivery_speed"]');
+  //   if (!radios.length) return;
+  //
+  //   radios.forEach((radio) => {
+  //     radio.addEventListener("change", () => {
+  //       //this.updatePrice();
+  //     });
+  //   });
+  // }
 
   /* ============================================================================
      Back and Publish buttons
