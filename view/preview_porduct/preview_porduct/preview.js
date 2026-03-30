@@ -67,18 +67,18 @@ class PreviewPage {
   /* ============================================================================
      Previous button
   ============================================================================ */
-  // bindPrevButton() {
-  //   const prevBtn = document.querySelector(".sp-nav-prev");
-  //   if (!prevBtn) return;
-  //
-  //   // Prevents binding the same event more than once
-  //   if (prevBtn.dataset.bound === "1") return;
-  //   prevBtn.dataset.bound = "1";
-  //
-  //   prevBtn.addEventListener("click", () => {
-  //     this.prevImage(false);
-  //   });
-  // }
+  bindPrevButton() {
+    const prevBtn = document.querySelector(".sp-nav-prev");
+    if (!prevBtn) return;
+
+    // Prevents binding the same event more than once
+    if (prevBtn.dataset.bound === "1") return;
+    prevBtn.dataset.bound = "1";
+
+    prevBtn.addEventListener("click", () => {
+      this.prevImage(false);
+    });
+  }
 
   /* ============================================================================
      Pack size selection (global)
