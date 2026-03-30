@@ -42,7 +42,7 @@ class PreviewPage {
     this.setupParallaxScroll();
 
     // Handles variation button selection, including dynamically injected buttons
-    this.setupVariationSelection();
+    //this.setupVariationSelection();
 
     // Handles delivery option changes
     this.setupDeliveryOptions();
@@ -52,7 +52,7 @@ class PreviewPage {
 
     // On full page load, splits variation groups between top and bottom containers
     window.addEventListener("load", () => {
-      this.setupVariationsSplit();
+    //  this.setupVariationsSplit();
     });
 
     // Recalculates the split on resize
