@@ -24,16 +24,16 @@ class PreviewPage {
     if (!this.main) return;
 
     // Reads the initial media from the DOM
-    this.initGalleryFromDom();
+    //this.initGalleryFromDom();
 
     // Enables zoom effect on the main image
     this.bindZoomEvents();
 
     // Enables the previous arrow button
-    this.bindPrevButton();
+    //this.bindPrevButton();
 
     // Allows only one pack size to be selected globally
-    this.setupPackSizeSelection();
+    //this.setupPackSizeSelection();
 
     // Activates scroll reveal animations
     this.setupScrollAnimations();
@@ -48,7 +48,7 @@ class PreviewPage {
     this.setupDeliveryOptions();
 
     // Calculates the initial price
-    this.updatePrice();
+    //this.updatePrice();
 
     // On full page load, splits variation groups between top and bottom containers
     window.addEventListener("load", () => {
