@@ -2,54 +2,76 @@
 
 class PreviewPage {
   constructor() {
+    // Main container where the current image/video is shown
     this.main = document.getElementById("wrap-images-group");
 
+    // Array that stores the gallery media currently available
     this.currentImages = [];
+
+    // Index of the media currently being displayed
     this.currentImageIndex = 0;
 
-    // ✅ Auto-rotate
+    // Auto-rotate control
     this.rotateTimer = null;
     this.rotateDelay = 5000;
 
+    // Starts the whole page behaviour
     this.init();
   }
 
   init() {
+    // If the main gallery container does not exist, stop everything
     if (!this.main) return;
 
+    // Reads the initial media from the DOM
     this.initGalleryFromDom();
+
+    // Enables zoom effect on the main image
     this.bindZoomEvents();
 
-    // ✅ Prev button (la flecha izquierda no tenía click)
+    // Enables the previous arrow button
     this.bindPrevButton();
 
-    // ✅ Pack size: selección global (solo 1 en total)
+    // Allows only one pack size to be selected globally
     this.setupPackSizeSelection();
 
+    // Activates scroll reveal animations
     this.setupScrollAnimations();
+
+    // Activates parallax movement on specific elements
     this.setupParallaxScroll();
-    this.setupVariationSelection(); // ✅ delegación (sirve para botones inyectados)
+
+    // Handles variation button selection, including dynamically injected buttons
+    this.setupVariationSelection();
+
+    // Handles delivery option changes
     this.setupDeliveryOptions();
+
+    // Calculates the initial price
     this.updatePrice();
 
+    // On full page load, splits variation groups between top and bottom containers
     window.addEventListener("load", () => {
       this.setupVariationsSplit();
     });
 
+    // Recalculates the split on resize
     window.addEventListener("resize", () => {
       this.setupVariationsSplit();
     });
 
+    // Activates Back and Publish buttons
     this.setupBackPublishButtons();
   }
 
   /* ============================================================================
-     ✅ Prev button
+     Previous button
   ============================================================================ */
   bindPrevButton() {
     const prevBtn = document.querySelector(".sp-nav-prev");
     if (!prevBtn) return;
 
+    // Prevents binding the same event more than once
     if (prevBtn.dataset.bound === "1") return;
     prevBtn.dataset.bound = "1";
 
@@ -59,12 +81,13 @@ class PreviewPage {
   }
 
   /* ============================================================================
-     ✅ Pack size selection (GLOBAL) — solo 1 seleccionado en total
+     Pack size selection (global)
   ============================================================================ */
   setupPackSizeSelection() {
     const parent = document.getElementById("wrap-prices-group");
     if (!parent) return;
 
+    // Prevents duplicate binding
     if (parent.dataset.bound === "1") return;
     parent.dataset.bound = "1";
 
@@ -72,25 +95,27 @@ class PreviewPage {
       const btn = e.target.closest(".var-option");
       if (!btn || !parent.contains(btn)) return;
 
-      // quitar selección a TODOS (no por wrap)
+      // Removes selection from all options globally
       parent.querySelectorAll(".var-option.is-selected").forEach((x) => {
         x.classList.remove("is-selected");
       });
 
+      // Marks the clicked option as selected
       btn.classList.add("is-selected");
 
-      // actualizar label de Pack size
+      // Updates the visible pack size label
       const labelStrong = document.getElementById("var_label_items");
       const span = btn.querySelector(".opt-main");
       if (labelStrong && span) {
         labelStrong.textContent = span.textContent.trim();
       }
 
+      // Recalculates price after selection change
       this.updatePrice();
     });
   }
 
-  // ✅ NEW: seleccionar el primero en general (un solo seleccionado total)
+  // Selects the first pack size option by default
   selectFirstPackSize() {
     const parent = document.getElementById("wrap-prices-group");
     if (!parent) return;
@@ -98,18 +123,22 @@ class PreviewPage {
     const all = Array.from(parent.querySelectorAll(".var-option"));
     if (!all.length) return;
 
+    // Clears previous selections
     parent.querySelectorAll(".var-option.is-selected").forEach((x) => {
       x.classList.remove("is-selected");
     });
 
+    // Selects the first option
     all[0].classList.add("is-selected");
 
+    // Updates visible label
     const labelStrong = document.getElementById("var_label_items");
     const span = all[0].querySelector(".opt-main");
     if (labelStrong && span) {
       labelStrong.textContent = span.textContent.trim();
     }
 
+    // Recalculates price
     this.updatePrice();
   }
 
@@ -118,27 +147,27 @@ class PreviewPage {
   ============================================================================ */
 
   initGalleryFromDom() {
-    // primera lectura del DOM (si hay media hardcode)
+    // Reads media already present in the HTML at first load
     this.rebuildGalleryFromDom(0, true);
   }
 
-  // ✅ NEW: reconstruye currentImages leyendo el DOM
-  // force=true => reconstruye aunque ahora el DOM tenga solo 1 item (por changeMainMedia)
+  // Rebuilds the gallery array by reading the DOM
   rebuildGalleryFromDom(startIndex = 0, force = false) {
     const root = document.getElementById("wrap-images-group");
     if (!root) return;
 
     const mediaEls = root.querySelectorAll(".preview-media");
 
-    // Si NO force y el DOM tiene 1 (porque ya está mostrando una sola),
-    // pero la memoria tiene más, NO dañamos la galería en memoria.
+    // If force is false and only one media item is visible in the DOM,
+    // but memory already has more than one item, do not overwrite memory
     if (!force && mediaEls.length <= 1 && this.currentImages.length > 1) {
       return;
     }
 
-    // parar auto-rotate antes de reconstruir
+    // Stops auto-rotation before rebuilding
     this.stopAutoRotate();
 
+    // Reads images and videos into currentImages
     this.currentImages = Array.from(mediaEls)
       .map((el) => {
         if (el.tagName === "IMG") {
@@ -156,35 +185,41 @@ class PreviewPage {
       })
       .filter(Boolean);
 
+    // If no media exists, show empty message
     if (!this.currentImages.length) {
       root.innerHTML = '<div class="cp-empty">No media</div>';
       this.currentImageIndex = 0;
       return;
     }
 
+    // Ensures the index is valid
     const safeIndex = Math.max(0, Math.min(startIndex, this.currentImages.length - 1));
     this.currentImageIndex = safeIndex;
+
+    // Shows the selected media
     this.changeMainMedia(this.currentImages[this.currentImageIndex]);
 
-    // ✅ auto-rotate cada 5s
+    // Starts automatic gallery rotation
     this.startAutoRotate();
   }
 
-  // ✅ Auto rotate control
+  // Starts auto-rotation every 5 seconds
   startAutoRotate() {
     this.stopAutoRotate();
 
+    // No rotation if there is only one media item
     if (!Array.isArray(this.currentImages) || this.currentImages.length <= 1) return;
 
-    // opcional: respeta reduce motion
+    // Respects reduced motion preference
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     if (reduceMotion) return;
 
     this.rotateTimer = window.setInterval(() => {
-      this.nextImage(true); // fromTimer=true
+      this.nextImage(true);
     }, this.rotateDelay);
   }
 
+  // Stops the auto-rotation timer
   stopAutoRotate() {
     if (this.rotateTimer) {
       window.clearInterval(this.rotateTimer);
@@ -192,6 +227,7 @@ class PreviewPage {
     }
   }
 
+  // Moves to the next image/video
   nextImage(fromTimer = false) {
     const items = this.currentImages || [];
     if (!Array.isArray(items) || items.length === 0) return;
@@ -200,12 +236,13 @@ class PreviewPage {
     const mediaObj = items[this.currentImageIndex];
     this.changeMainMedia(mediaObj);
 
-    // si fue manual, reinicia el timer
+    // If the change was manual, restart the timer
     if (!fromTimer) {
       this.startAutoRotate();
     }
   }
 
+  // Moves to the previous image/video
   prevImage(fromTimer = false) {
     const items = this.currentImages || [];
     if (!Array.isArray(items) || items.length === 0) return;
@@ -214,11 +251,13 @@ class PreviewPage {
     const mediaObj = items[this.currentImageIndex];
     this.changeMainMedia(mediaObj);
 
+    // If the change was manual, restart the timer
     if (!fromTimer) {
       this.startAutoRotate();
     }
   }
 
+  // Replaces the main displayed media
   changeMainMedia(mediaObj) {
     const sp_main = document.getElementById("wrap-images-group");
     if (!sp_main) return;
@@ -242,7 +281,7 @@ class PreviewPage {
     }
   }
 
-  // ✅ Limpia DOM + memoria de la galería
+  // Clears the gallery from both memory and DOM
   clearGallery() {
     this.stopAutoRotate();
 
@@ -263,6 +302,7 @@ class PreviewPage {
   bindZoomEvents() {
     if (!this.main) return;
 
+    // Resets image transform on mouse enter
     this.main.addEventListener("mouseenter", () => {
       const img = this.main.querySelector("img");
       if (img instanceof HTMLImageElement) {
@@ -271,6 +311,7 @@ class PreviewPage {
       }
     });
 
+    // Resets image transform on mouse leave
     this.main.addEventListener("mouseleave", () => {
       const img = this.main.querySelector("img");
       if (img instanceof HTMLImageElement) {
@@ -279,6 +320,7 @@ class PreviewPage {
       }
     });
 
+    // Zooms towards the mouse position
     this.main.addEventListener("mousemove", (event) => {
       if (window.innerWidth <= 760) return;
 
@@ -304,12 +346,14 @@ class PreviewPage {
     const bottomContainer = document.querySelector(".sp-variations-bottom");
     if (!main || !topContainer || !bottomContainer) return;
 
+    // First move all groups back to the top container
     const allGroups = [
       ...topContainer.querySelectorAll(".wrap-variations"),
       ...bottomContainer.querySelectorAll(".wrap-variations"),
     ];
     allGroups.forEach((group) => topContainer.appendChild(group));
 
+    // On mobile, do not use bottom container
     if (window.innerWidth <= 760) {
       bottomContainer.style.display = "none";
       return;
@@ -317,6 +361,7 @@ class PreviewPage {
       bottomContainer.style.display = "grid";
     }
 
+    // Calculates available vertical space
     const mainRect = main.getBoundingClientRect();
     const thumbsEl = document.querySelector(".sp-thumbs");
     const thumbsRect = thumbsEl ? thumbsEl.getBoundingClientRect() : { height: 0 };
@@ -328,6 +373,7 @@ class PreviewPage {
     let accumulated = 0;
     let splitIndex = allGroups.length;
 
+    // Finds where to split the variation groups
     allGroups.forEach((group, index) => {
       const rect = group.getBoundingClientRect();
       const h = rect.height;
@@ -340,6 +386,7 @@ class PreviewPage {
       }
     });
 
+    // Moves overflow groups to the bottom container
     if (splitIndex < allGroups.length) {
       const toMove = allGroups.slice(splitIndex);
       toMove.forEach((group) => bottomContainer.appendChild(group));
@@ -395,13 +442,14 @@ class PreviewPage {
   }
 
   /* ============================================================================
-     ✅ Selection (variations)
+     Variation selection
   ============================================================================ */
 
   setupVariationSelection() {
     const parent = document.getElementById("wrap-variations-group");
     if (!parent) return;
 
+    // Prevents duplicate binding
     if (parent.dataset.bound === "1") return;
     parent.dataset.bound = "1";
 
@@ -412,24 +460,28 @@ class PreviewPage {
       const group = option.closest(".wrap-variations");
       if (!group) return;
 
+      // Removes selected class only within the same variation group
       group.querySelectorAll(".var-option.is-selected").forEach((btn) => {
         btn.classList.remove("is-selected");
       });
 
+      // Selects the clicked option
       option.classList.add("is-selected");
 
+      // Updates the visible selected label
       const labelStrong = group.querySelector(".var-label strong");
       const mainSpan = option.querySelector(".opt-main");
       if (labelStrong && mainSpan) {
         labelStrong.textContent = mainSpan.textContent.trim();
       }
 
+      // Recalculates price after change
       this.updatePrice();
     });
   }
 
   /* ============================================================================
-     ✅ Price
+     Price
   ============================================================================ */
 
   updatePrice() {
@@ -437,7 +489,7 @@ class PreviewPage {
     const totalEl = document.getElementById("bb_total");
     if (!unitEl || !totalEl) return;
 
-    // Base per 100 desde el DOM
+    // Base price per 100 units, taken from the DOM
     let basePer100 = 8.0;
     const spPriceEl = document.getElementById("sp_price");
     if (spPriceEl) {
@@ -446,7 +498,7 @@ class PreviewPage {
       if (!Number.isNaN(num) && num > 0) basePer100 = num;
     }
 
-    // Pack qty: seleccionado global o el primero
+    // Selected pack quantity or first available option
     let packQty = 500;
     const packGroup = document.getElementById("wrap-prices-group");
     if (packGroup) {
@@ -464,6 +516,7 @@ class PreviewPage {
       }
     }
 
+    // Quantity discount or increase table
     const PACK_ADJUST = {
       50: 0.05,
       100: 0.0,
@@ -478,8 +531,10 @@ class PreviewPage {
     const adjust = PACK_ADJUST[packQty] ?? 0;
     const packFactor = 1 + adjust;
 
+    // Base subtotal calculation
     let subtotal = basePer100 * (packQty / 100) * packFactor;
 
+    // Adds delivery adjustment if selected
     const deliveryRadio = document.querySelector('input[name="delivery_speed"]:checked');
     if (deliveryRadio) {
       const mode = deliveryRadio.dataset.mode;
@@ -492,6 +547,7 @@ class PreviewPage {
       }
     }
 
+    // VAT estimation
     const VAT_RATE = 0.2;
     const taxEl = document.getElementById("bb_tax");
     const taxAmount = subtotal * VAT_RATE;
@@ -499,6 +555,7 @@ class PreviewPage {
       taxEl.textContent = `Estimated £${taxAmount.toFixed(2)}`;
     }
 
+    // Final total and unit price
     const total = subtotal;
     const packQtySafe = packQty || 1;
     const unitPrice = total / packQtySafe;
@@ -518,6 +575,10 @@ class PreviewPage {
     });
   }
 
+  /* ============================================================================
+     Back and Publish buttons
+  ============================================================================ */
+
   setupBackPublishButtons() {
     const backBtn = document.getElementById("btn_back_edit");
     const publishBtn = document.getElementById("btn_publish");
@@ -532,6 +593,7 @@ class PreviewPage {
         const sku = current.searchParams.get("sku");
         const skuv = current.searchParams.get("sku_variation");
 
+        // Preserves sku and sku_variation in the destination URL
         if (sku) dest.searchParams.set("sku", sku);
         if (skuv) dest.searchParams.set("sku_variation", skuv);
 
@@ -550,12 +612,15 @@ class PreviewPage {
   }
 }
 
-/* ✅ Boot */
+/* Boot */
 function bootPreviewPage() {
   const page = new PreviewPage();
+
+  // Exposes the instance globally for debugging from the browser console
   window.previewGallery = page;
 }
 
+// If the DOM is still loading, wait for it
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", bootPreviewPage);
 } else {
