@@ -27,7 +27,7 @@ class PreviewPage {
     //this.initGalleryFromDom();
 
     // Enables zoom effect on the main image
-    //this.bindZoomEvents();
+    this.bindZoomEvents();
 
     // Enables the previous arrow button
     //this.bindPrevButton();
