@@ -45,7 +45,7 @@ class PreviewPage {
     //this.setupVariationSelection();
 
     // Handles delivery option changes
-    this.setupDeliveryOptions();
+    //this.setupDeliveryOptions();
 
     // Calculates the initial price
     //this.updatePrice();
@@ -57,11 +57,11 @@ class PreviewPage {
 
     // Recalculates the split on resize
     window.addEventListener("resize", () => {
-      this.setupVariationsSplit();
+      //this.setupVariationsSplit();
     });
 
     // Activates Back and Publish buttons
-    this.setupBackPublishButtons();
+  //  this.setupBackPublishButtons();
   }
 
   /* ============================================================================
