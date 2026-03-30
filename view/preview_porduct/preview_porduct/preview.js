@@ -30,7 +30,7 @@ class PreviewPage {
     //this.bindZoomEvents();
 
     // Enables the previous arrow button
-    //this.bindPrevButton();
+    this.bindPrevButton();
 
     // Allows only one pack size to be selected globally
     //this.setupPackSizeSelection();
