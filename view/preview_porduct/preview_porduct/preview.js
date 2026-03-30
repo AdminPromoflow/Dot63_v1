@@ -42,7 +42,7 @@ class PreviewPage {
     this.setupParallaxScroll();
 
     // Handles variation button selection, including dynamically injected buttons
-    //this.setupVariationSelection();
+    this.setupVariationSelection();
 
     // Handles delivery option changes
     //this.setupDeliveryOptions();
