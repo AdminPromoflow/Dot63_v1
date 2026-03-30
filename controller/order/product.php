@@ -46,6 +46,25 @@ class Product {
   private function getPreviewProductDetails($data){
     header('Content-Type: application/json; charset=utf-8');
 
+    $connection = new Database();
+    $user = new Users($connection);
+    $user->setSKU($data['sku']);
+    $company = $user->getUserCompanyBySKU();
+
+    $connection = new Database();
+    $category = new Categories($connection);
+    $category->setSKU($data['sku']);
+    $category_name = $category->getCategoryNameBySKU();
+
+    $connection = new Database();
+    $group = new Groups($connection);
+    $group->setSKU($data['sku']);
+    $group_name = $group->getGroupNameBySKU();
+
+    $connection = new Database();
+    $product = new Products($connection);
+    $product->setSku($data['sku']);
+    $product_details = $product->getProductDetailsBySKU();
 
     $connection = new Database();
     $variation = new Variation($connection);
@@ -54,6 +73,8 @@ class Product {
 
     echo json_encode(array($company,$category_name, $group_name, $product_details, $variation_details ));
   }
+
+
 }
 
 include "../../controller/config/database.php";

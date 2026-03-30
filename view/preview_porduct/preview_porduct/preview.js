@@ -7,10 +7,9 @@ class PreviewPage {
     this.currentImages = [];
     this.currentImageIndex = 0;
 
+    // ✅ Auto-rotate
     this.rotateTimer = null;
     this.rotateDelay = 5000;
-    this.galleryObserver = null;
-    this.isSyncingGallery = false;
 
     this.init();
   }
@@ -19,57 +18,29 @@ class PreviewPage {
     if (!this.main) return;
 
     this.initGalleryFromDom();
-    this.observeGalleryChanges();
+    this.bindZoomEvents();
 
+    // ✅ Prev button (la flecha izquierda no tenía click)
     this.bindPrevButton();
+
+    // ✅ Pack size: selección global (solo 1 en total)
     this.setupPackSizeSelection();
-    this.setupVariationSelection();
+
+    this.setupScrollAnimations();
+    this.setupParallaxScroll();
+    this.setupVariationSelection(); // ✅ delegación (sirve para botones inyectados)
+    this.setupDeliveryOptions();
     this.updatePrice();
+
+    window.addEventListener("load", () => {
+      this.setupVariationsSplit();
+    });
+
+    window.addEventListener("resize", () => {
+      this.setupVariationsSplit();
+    });
+
     this.setupBackPublishButtons();
-  }
-
-  observeGalleryChanges() {
-    if (!this.main || this.galleryObserver) return;
-
-    this.galleryObserver = new MutationObserver(() => {
-      if (this.isSyncingGallery) return;
-
-      const mediaEls = this.getGalleryMediaElements(this.main);
-
-      if (!mediaEls.length) {
-        this.stopAutoRotate();
-        this.currentImages = [];
-        this.currentImageIndex = 0;
-        return;
-      }
-
-      this.rebuildGalleryFromDom(0, false);
-    });
-
-    this.galleryObserver.observe(this.main, {
-      childList: true,
-      subtree: true,
-    });
-  }
-
-  getGalleryMediaElements(root) {
-    if (!root) return [];
-
-    const groupedMedia = root.querySelectorAll(".wrap-images .preview-media");
-    if (groupedMedia.length) {
-      return Array.from(groupedMedia);
-    }
-
-    return Array.from(root.querySelectorAll(".preview-media"));
-  }
-
-  setGalleryHtml(root, html) {
-    this.isSyncingGallery = true;
-    root.innerHTML = html;
-
-    window.setTimeout(() => {
-      this.isSyncingGallery = false;
-    }, 0);
   }
 
   /* ============================================================================
@@ -119,6 +90,29 @@ class PreviewPage {
     });
   }
 
+  // ✅ NEW: seleccionar el primero en general (un solo seleccionado total)
+  selectFirstPackSize() {
+    const parent = document.getElementById("wrap-prices-group");
+    if (!parent) return;
+
+    const all = Array.from(parent.querySelectorAll(".var-option"));
+    if (!all.length) return;
+
+    parent.querySelectorAll(".var-option.is-selected").forEach((x) => {
+      x.classList.remove("is-selected");
+    });
+
+    all[0].classList.add("is-selected");
+
+    const labelStrong = document.getElementById("var_label_items");
+    const span = all[0].querySelector(".opt-main");
+    if (labelStrong && span) {
+      labelStrong.textContent = span.textContent.trim();
+    }
+
+    this.updatePrice();
+  }
+
   /* ============================================================================
      Gallery
   ============================================================================ */
@@ -134,7 +128,7 @@ class PreviewPage {
     const root = document.getElementById("wrap-images-group");
     if (!root) return;
 
-    const mediaEls = this.getGalleryMediaElements(root);
+    const mediaEls = root.querySelectorAll(".preview-media");
 
     // Si NO force y el DOM tiene 1 (porque ya está mostrando una sola),
     // pero la memoria tiene más, NO dañamos la galería en memoria.
@@ -163,7 +157,7 @@ class PreviewPage {
       .filter(Boolean);
 
     if (!this.currentImages.length) {
-      this.setGalleryHtml(root, '<div class="cp-empty">No media</div>');
+      root.innerHTML = '<div class="cp-empty">No media</div>';
       this.currentImageIndex = 0;
       return;
     }
@@ -230,21 +224,21 @@ class PreviewPage {
     if (!sp_main) return;
 
     if (!mediaObj || !mediaObj.src) {
-      this.setGalleryHtml(sp_main, '<div class="cp-empty">No media</div>');
+      sp_main.innerHTML = '<div class="cp-empty">No media</div>';
       return;
     }
 
     if (mediaObj.type === "video") {
-      this.setGalleryHtml(sp_main, `
+      sp_main.innerHTML = `
         <video class="preview-media" controls preload="metadata">
           <source src="${mediaObj.src}" type="video/mp4">
           Your browser does not support the video tag.
         </video>
-      `);
+      `;
     } else {
-      this.setGalleryHtml(sp_main, `
+      sp_main.innerHTML = `
         <img class="preview-media" src="${mediaObj.src}" alt="Product image">
-      `);
+      `;
     }
   }
 
@@ -256,10 +250,148 @@ class PreviewPage {
     this.currentImageIndex = 0;
 
     const main = document.getElementById("wrap-images-group");
-    if (main) this.setGalleryHtml(main, "");
+    if (main) main.innerHTML = "";
 
     const thumbs = document.getElementById("sp_thumbs");
     if (thumbs) thumbs.innerHTML = "";
+  }
+
+  /* ============================================================================
+     Zoom
+  ============================================================================ */
+
+  bindZoomEvents() {
+    if (!this.main) return;
+
+    this.main.addEventListener("mouseenter", () => {
+      const img = this.main.querySelector("img");
+      if (img instanceof HTMLImageElement) {
+        img.style.transformOrigin = "center center";
+        img.style.transform = "scale(1)";
+      }
+    });
+
+    this.main.addEventListener("mouseleave", () => {
+      const img = this.main.querySelector("img");
+      if (img instanceof HTMLImageElement) {
+        img.style.transformOrigin = "center center";
+        img.style.transform = "scale(1)";
+      }
+    });
+
+    this.main.addEventListener("mousemove", (event) => {
+      if (window.innerWidth <= 760) return;
+
+      const img = this.main.querySelector("img");
+      if (!(img instanceof HTMLImageElement)) return;
+
+      const rect = this.main.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+      img.style.transformOrigin = `${x}% ${y}%`;
+      img.style.transform = "scale(2.1)";
+    });
+  }
+
+  /* ============================================================================
+     Variations split
+  ============================================================================ */
+
+  setupVariationsSplit() {
+    const main = document.querySelector(".sp-main");
+    const topContainer = document.querySelector(".sp-variations");
+    const bottomContainer = document.querySelector(".sp-variations-bottom");
+    if (!main || !topContainer || !bottomContainer) return;
+
+    const allGroups = [
+      ...topContainer.querySelectorAll(".wrap-variations"),
+      ...bottomContainer.querySelectorAll(".wrap-variations"),
+    ];
+    allGroups.forEach((group) => topContainer.appendChild(group));
+
+    if (window.innerWidth <= 760) {
+      bottomContainer.style.display = "none";
+      return;
+    } else {
+      bottomContainer.style.display = "grid";
+    }
+
+    const mainRect = main.getBoundingClientRect();
+    const thumbsEl = document.querySelector(".sp-thumbs");
+    const thumbsRect = thumbsEl ? thumbsEl.getBoundingClientRect() : { height: 0 };
+    const maxHeight = mainRect.height + thumbsRect.height;
+
+    const styles = window.getComputedStyle(topContainer);
+    const gap = parseFloat(styles.rowGap || styles.gap || "0") || 0;
+
+    let accumulated = 0;
+    let splitIndex = allGroups.length;
+
+    allGroups.forEach((group, index) => {
+      const rect = group.getBoundingClientRect();
+      const h = rect.height;
+      const extraGap = accumulated === 0 ? 0 : gap;
+
+      if (accumulated + extraGap + h <= maxHeight) {
+        accumulated += extraGap + h;
+      } else if (splitIndex === allGroups.length) {
+        splitIndex = index;
+      }
+    });
+
+    if (splitIndex < allGroups.length) {
+      const toMove = allGroups.slice(splitIndex);
+      toMove.forEach((group) => bottomContainer.appendChild(group));
+    }
+  }
+
+  /* ============================================================================
+     Scroll animations + Parallax
+  ============================================================================ */
+
+  setupScrollAnimations() {
+    const fadeEls = document.querySelectorAll(".js-fade-up");
+    const scaleEls = document.querySelectorAll(".js-scale-in");
+    if (!fadeEls.length && !scaleEls.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    fadeEls.forEach((el) => observer.observe(el));
+    scaleEls.forEach((el) => observer.observe(el));
+  }
+
+  setupParallaxScroll() {
+    const parallaxEls = document.querySelectorAll(".js-parallax");
+    if (!parallaxEls.length) return;
+
+    const update = () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+
+      parallaxEls.forEach((el) => {
+        if (window.innerWidth > 1120) {
+          const factor = el.closest(".sp-buybox") ? 0.02 : 0.03;
+          const offset = scrollY * factor;
+          el.style.transform = `translateY(${offset}px)`;
+        } else {
+          el.style.transform = "";
+        }
+      });
+    };
+
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
   }
 
   /* ============================================================================
@@ -373,6 +505,17 @@ class PreviewPage {
 
     unitEl.textContent  = `£${unitPrice.toFixed(2)}`;
     totalEl.textContent = `£${total.toFixed(2)}`;
+  }
+
+  setupDeliveryOptions() {
+    const radios = document.querySelectorAll('input[name="delivery_speed"]');
+    if (!radios.length) return;
+
+    radios.forEach((radio) => {
+      radio.addEventListener("change", () => {
+        this.updatePrice();
+      });
+    });
   }
 
   setupBackPublishButtons() {
