@@ -201,6 +201,7 @@ class PreviewLogic {
       // ✅ Siempre borrar estos (incluyendo el actual)
       this.deleteItems(typeId);
     // var deleteImages =
+      this.deleteImages(typeId);
 
       this.deletePrices(typeId);
       this.deleteArtwork(typeId);
@@ -208,7 +209,6 @@ class PreviewLogic {
       // ✅ Solo borrar variations si NO es el type actual
       if (typeId !== current) {
         this.deleteVariations(typeId);
-        this.deleteImages(typeId);
       }
     }
 
@@ -659,6 +659,7 @@ class PreviewLogic {
   }
 
   deleteImages(typeId) {
+    alert("Esto sale en un orden raro");
   const el = document.getElementById(`wrap-images-${String(typeId ?? "")}`);
   return el ? (el.remove(), true) : false;
   }
