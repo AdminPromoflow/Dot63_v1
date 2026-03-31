@@ -272,11 +272,7 @@ class PreviewLogic {
         }
       }
 
-      const wrap_images_62 = document.getElementById("wrap-images-62");
-
-      if (wrap_images_62) {
-        wrap_images_62.remove();
-      }
+      
 
 
       this.renderItems(itemsOnlyOfType, typeVariation);
