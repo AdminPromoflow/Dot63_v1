@@ -200,7 +200,8 @@ class PreviewLogic {
 
       // ✅ Siempre borrar estos (incluyendo el actual)
       this.deleteItems(typeId);
-      //var deleteImages = this.deleteImages(typeId);
+    // var deleteImages =
+      this.deleteImages(typeId);
       this.deletePrices(typeId);
       this.deleteArtwork(typeId);
 
@@ -272,7 +273,7 @@ class PreviewLogic {
         }
       }
 
-      
+
 
 
       this.renderItems(itemsOnlyOfType, typeVariation);
