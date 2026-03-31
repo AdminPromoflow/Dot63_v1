@@ -331,8 +331,6 @@ class PreviewLogic {
           if (Array.isArray(artworksOnlyOfType) && artworksOnlyOfType.length > 0 ) {
             this.renderArtwork(artworksOnlyOfType, typeVariation);
           }
-
-
         }
       }
 
@@ -465,40 +463,48 @@ class PreviewLogic {
     return this.variationSelected;
   }
   renderItems(itemsOnlyOfType = [], typeVariation) {
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
+    );
+
     const parent = document.getElementById("wrap-items-group");
     if (!parent) return;
 
-    const typeId = typeVariation?.type_id ?? "null";
+    const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-items-${typeId}`;
 
-    const existing = parent.querySelector(`.wrap-items[data-type-id="${typeId}"]`);
-    if (existing) existing.remove();
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
 
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
+    if (!wrapper) {
+      wrapper = document.createElement("div");
+      wrapper.className = "wrap-items";
+      wrapper.id = wrapId;
+      wrapper.dataset.typeId = typeId;
+      parent.appendChild(wrapper);
+    }
 
-    if (!Array.isArray(itemsOnlyOfType) || itemsOnlyOfType.length === 0) return;
+    wrapper.innerHTML = "";
 
-    let itemsHtml = "";
-    for (const it of itemsOnlyOfType) {
+    for (let i = 0; i < itemsOnlyOfType.length; i++) {
+      const it = itemsOnlyOfType[i];
+
+      if (Number(it?.variation_id) !== id_variation) continue;
+
       const title = String(it?.name ?? "").trim();
       const desc  = String(it?.description ?? "").trim();
 
-      itemsHtml += `
-        <div class="sp-item">
-          <strong class="sp-item-subtitle">${title}</strong>
-          <span>${desc}</span>
-        </div>
+      if (!title && !desc) continue;
+
+      const item = document.createElement("div");
+      item.className = "sp-item";
+
+      item.innerHTML = `
+        <strong class="sp-item-subtitle">${title}</strong>
+        <span>${desc}</span>
       `;
+
+      wrapper.appendChild(item);
     }
-
-    const blockHtml = `
-      <div class="wrap-items" id="${wrapId}" data-type-id="${typeId}">
-        ${itemsHtml}
-      </div>
-    `;
-
-    parent.insertAdjacentHTML("beforeend", blockHtml);
   }
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
@@ -648,23 +654,33 @@ class PreviewLogic {
   }
 
   renderArtwork(artworksOnlyOfType = [], typeVariation) {
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
+    );
+
     const parent = document.getElementById("wrap-artworks-group");
     if (!parent) return;
 
-    const typeId = typeVariation?.type_id ?? "null";
+    const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-artworks-${typeId}`;
 
-    const existing = parent.querySelector(`.wrap-artworks[data-type-id="${typeId}"]`);
-    if (existing) existing.remove();
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
 
-    const typeName = String(typeVariation?.type_name ?? "").trim();
-    if (!typeName) return;
+    if (!wrapper) {
+      wrapper = document.createElement("div");
+      wrapper.className = "wrap-artworks";
+      wrapper.id = wrapId;
+      wrapper.dataset.typeId = typeId;
+      parent.appendChild(wrapper);
+    }
 
-    if (!Array.isArray(artworksOnlyOfType) || artworksOnlyOfType.length === 0) return;
+    wrapper.innerHTML = "";
 
-    let artHtml = "";
+    for (let i = 0; i < artworksOnlyOfType.length; i++) {
+      const a = artworksOnlyOfType[i];
 
-    for (const a of artworksOnlyOfType) {
+      if (Number(a?.variation_id) !== id_variation) continue;
+
       const name = String(a?.name_pdf_artwork ?? "").trim();
       const rawPdf = String(a?.pdf_artwork ?? "").trim().replace(/^\/+/, "");
 
@@ -672,7 +688,9 @@ class PreviewLogic {
 
       const pdfSrc = rawPdf
         ? (
-            rawPdf.startsWith("http") || rawPdf.startsWith("data:") || rawPdf.startsWith("blob:")
+            rawPdf.startsWith("http") ||
+            rawPdf.startsWith("data:") ||
+            rawPdf.startsWith("blob:")
               ? rawPdf
               : (rawPdf.startsWith("controller/")
                   ? "../../" + rawPdf
@@ -680,23 +698,16 @@ class PreviewLogic {
           )
         : "";
 
-      artHtml += `
-        <div class="sp-artwork">
-          ${name ? `<strong class="sp-artwork-name">${name}</strong>` : ""}
-          ${pdfSrc ? `<a class="sp-artwork-link" href="${pdfSrc}" target="_blank" rel="noopener">Open PDF</a>` : ""}
-        </div>
+      const artwork = document.createElement("div");
+      artwork.className = "sp-artwork";
+
+      artwork.innerHTML = `
+        ${name ? `<strong class="sp-artwork-name">${name}</strong>` : ""}
+        ${pdfSrc ? `<a class="sp-artwork-link" href="${pdfSrc}" target="_blank" rel="noopener">Open PDF</a>` : ""}
       `;
+
+      wrapper.appendChild(artwork);
     }
-
-    if (!artHtml.trim()) return;
-
-    const blockHtml = `
-      <div class="wrap-artworks" id="${wrapId}" data-type-id="${typeId}">
-        ${artHtml}
-      </div>
-    `;
-
-    parent.insertAdjacentHTML("beforeend", blockHtml);
   }
 
 
