@@ -164,9 +164,9 @@ class PreviewLogic {
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
         // ✅ 1) BORRAR lo viejo
-        if (variationTypesForDelete.length) {
+        //if (variationTypesForDelete.length) {
           var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
-        }
+      //  }
         alert(organizeVariationsForDelete);
 
         // ✅ 2) PINTAR lo nuevo
