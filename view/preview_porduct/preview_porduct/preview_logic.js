@@ -170,9 +170,9 @@ class PreviewLogic {
 
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
-        //  if (organizeVariationsForDelete) {
+         if (organizeVariationsForDelete) {
             this.organizeVariationsForRender(childVariations, variationTypes);
-        //  }
+         }
         }
 
         loader.hide();
@@ -188,37 +188,90 @@ class PreviewLogic {
     - BORRA images/items/prices/artworks SIEMPRE
     - BORRA variations SOLO si NO es el type actual
   ============================================================================ */
-  organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
 
-    alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
-    if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
-    const current = String(currentTypeId ?? "");
 
-    for (let i = 0; i < variationTypes.length; i++) {
-      const typeId = String(variationTypes[i]?.type_id ?? "");
+    /* ============================================================================
+      DELETE helpers
+    ============================================================================ */
 
-      // ✅ Siempre borrar estos (incluyendo el actual)
-      this.deleteItems(typeId);
-    // var deleteImages =
-      this.deleteImages(typeId);
+    organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
+      alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
+      if (!Array.isArray(variationTypes) || variationTypes.length === 0) return true;
 
-      this.deletePrices(typeId);
-      this.deleteArtwork(typeId);
+      const current = String(currentTypeId ?? "");
 
-      // ✅ Solo borrar variations si NO es el type actual
-      if (typeId !== current) {
-        this.deleteVariations(typeId);
+      for (let i = 0; i < variationTypes.length; i++) {
+        const typeId = String(variationTypes[i]?.type_id ?? "");
+
+        const itemEl = document.getElementById(`wrap-items-${typeId}`);
+        if (itemEl) {
+          this.deleteItems(typeId);
+        }
+
+        const imageEl = document.getElementById(`wrap-images-${typeId}`);
+        if (imageEl) {
+          this.deleteImages(typeId);
+        }
+
+        const priceEl = document.getElementById(`wrap-price-${typeId}`);
+        if (priceEl) {
+          this.deletePrices(typeId);
+        }
+
+        const artworkEl = document.getElementById(`wrap-artworks-${typeId}`);
+        if (artworkEl) {
+          this.deleteArtwork(typeId);
+        }
+
+        if (typeId !== current) {
+          const variationEl = document.querySelector(
+            `#wrap-variations-group .wrap-variations[data-type-id="${CSS.escape(typeId)}"]`
+          );
+
+          if (variationEl) {
+            this.deleteVariations(typeId);
+          }
+        }
       }
-    }
 
-    if (deleteImages) {// acá poner o ó ||
       return true;
     }
-    else {
-      return false;
+
+    deleteVariations(typeId) {
+    const id = String(typeId ?? "");
+    const nodes = document.querySelectorAll(
+      `#wrap-variations-group .wrap-variations[data-type-id="${CSS.escape(id)}"]`
+    );
+
+    for (const el of nodes) {
+      el.innerHTML = "";
     }
   }
+
+  deleteItems(typeId) {
+    const id = String(typeId ?? "");
+    document.getElementById(`wrap-items-${id}`)?.remove();
+  }
+
+  deleteImages(typeId) {
+    const id = String(typeId ?? "");
+    document.getElementById(`wrap-images-${id}`)?.remove();
+  }
+
+  deletePrices(typeId) {
+    const id = String(typeId ?? "");
+    document.getElementById(`wrap-price-${id}`)?.remove();
+  }
+
+  deleteArtwork(typeId) {
+    const id = String(typeId ?? "");
+    document.getElementById(`wrap-artworks-${id}`)?.remove();
+  }
+
+
+
+
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
     for (const typeVariation of variationTypes) {
@@ -277,9 +330,9 @@ class PreviewLogic {
 
 
 
-      this.renderItems(itemsOnlyOfType, typeVariation);
-      this.renderPrices(pricesOnlyOfType, typeVariation);
-      this.renderArtwork(artworksOnlyOfType, typeVariation);
+      // this.renderItems(itemsOnlyOfType, typeVariation);
+      // this.renderPrices(pricesOnlyOfType, typeVariation);
+      // this.renderArtwork(artworksOnlyOfType, typeVariation);
 
     }
   }
@@ -635,44 +688,7 @@ class PreviewLogic {
     parent.insertAdjacentHTML("beforeend", blockHtml);
   }
 
-  /* ============================================================================
-    DELETE helpers
-  ============================================================================ */
 
-  deleteVariations(typeId) {
-    const id = String(typeId ?? "");
-    if (!id) return;
-
-    // ✅ SOLO variations (no toca items/images/prices/artworks)
-    const nodes = document.querySelectorAll(
-      `#wrap-variations-group .wrap-variations[data-type-id="${CSS.escape(id)}"]`
-    );
-
-    for (const el of nodes) {
-      el.innerHTML = "";
-    }
-  }
-
-  deleteItems(typeId) {
-    const id = String(typeId ?? "");
-    document.getElementById(`wrap-items-${id}`)?.remove();
-  }
-
-  deleteImages(typeId) {
-    alert("Esto sale en un orden raro");
-  const el = document.getElementById(`wrap-images-${String(typeId ?? "")}`);
-  return el ? (el.remove(), true) : false;
-  }
-
-  deletePrices(typeId) {
-    const id = String(typeId ?? "");
-    document.getElementById(`wrap-price-${id}`)?.remove();
-  }
-
-  deleteArtwork(typeId) {
-    const id = String(typeId ?? "");
-    document.getElementById(`wrap-artworks-${id}`)?.remove();
-  }
 }
 
 const previewLogic = new PreviewLogic();
