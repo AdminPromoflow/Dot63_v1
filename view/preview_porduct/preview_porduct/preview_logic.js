@@ -275,77 +275,91 @@ class PreviewLogic {
 
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
+    if (!Array.isArray(childVariations) || childVariations.length === 0) return;
+    if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
+
     for (const typeVariation of variationTypes) {
-      const typeName = typeVariation?.type_name ?? null;
+      const typeName = String(typeVariation?.type_name ?? "").trim();
+      if (!typeName) continue;
 
       const variationsOnlyOfType = [];
-      const itemsOnlyOfType      = [];
-      const imagesOnlyOfType     = [];
-      const pricesOnlyOfType     = [];
-      const artworksOnlyOfType   = [];
+      const itemsOnlyOfType = [];
+      const imagesOnlyOfType = [];
+      const pricesOnlyOfType = [];
+      const artworksOnlyOfType = [];
 
       for (const row of childVariations) {
-        const v = row?.variation;
-        if (!v) continue;
+        const variation = row?.variation;
+        if (!variation) continue;
 
-        const vTypeName = v?.type_name ?? null;
+        const variationTypeName = String(variation?.type_name ?? "").trim();
+        if (variationTypeName !== typeName) continue;
 
-        if (vTypeName === typeName) {
-          variationsOnlyOfType.push(v);
+        variationsOnlyOfType.push(variation);
 
-          if (Array.isArray(row?.items) && row.items.length) {
-            itemsOnlyOfType.push(...row.items);
-          }
+        if (Array.isArray(row?.items) && row.items.length > 0) {
+          itemsOnlyOfType.push(
+            ...row.items.map((item) => ({
+              ...item,
+              variation_id: variation?.variation_id ?? null,
+            }))
+          );
+        }
 
-          if (Array.isArray(row?.images) && row.images.length) {
-            imagesOnlyOfType.push(...row.images);
-          }
+        if (Array.isArray(row?.images) && row.images.length > 0) {
+          imagesOnlyOfType.push(
+            ...row.images.map((image) => ({
+              ...image,
+              variation_id: variation?.variation_id ?? null,
+            }))
+          );
+        }
 
-          if (Array.isArray(row?.prices) && row.prices.length) {
-            pricesOnlyOfType.push(...row.prices);
-          }
+        if (Array.isArray(row?.prices) && row.prices.length > 0) {
+          pricesOnlyOfType.push(
+            ...row.prices.map((price) => ({
+              ...price,
+              variation_id: variation?.variation_id ?? null,
+            }))
+          );
+        }
 
-          const art = row?.artwork ?? null;
-          if (art) {
-            const pdf  = String(art?.pdf_artwork ?? "").trim();
-            const name = String(art?.name_pdf_artwork ?? "").trim();
-            if (pdf || name) {
-              artworksOnlyOfType.push({
-                ...art,
-                variation_id: v?.variation_id ?? null,
-              });
-            }
+        const artwork = row?.artwork ?? null;
+        if (artwork) {
+          const pdf = String(artwork?.pdf_artwork ?? "").trim();
+          const name = String(artwork?.name_pdf_artwork ?? "").trim();
+
+          if (pdf || name) {
+            artworksOnlyOfType.push({
+              ...artwork,
+              variation_id: variation?.variation_id ?? null,
+            });
           }
         }
       }
-      if (Array.isArray(variationsOnlyOfType) && variationsOnlyOfType.length > 0) {
 
-        var variationsFinished =  this.renderVariations(variationsOnlyOfType, typeVariation);
-        if (variationsFinished) {
-          if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 ) {
-            this.renderImages(imagesOnlyOfType, typeVariation);
-          }
-          if (Array.isArray(itemsOnlyOfType) && itemsOnlyOfType.length > 0 ) {
-            this.renderItems(itemsOnlyOfType, typeVariation);
-          }
-          if (Array.isArray(artworksOnlyOfType) && artworksOnlyOfType.length > 0 ) {
-            this.renderArtwork(artworksOnlyOfType, typeVariation);
-          }
-        }
+      if (!variationsOnlyOfType.length) continue;
+
+      const variationsFinished = this.renderVariations(variationsOnlyOfType, typeVariation);
+      if (!variationsFinished) continue;
+
+      if (imagesOnlyOfType.length > 0) {
+        this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
+      if (itemsOnlyOfType.length > 0) {
+        this.renderItems(itemsOnlyOfType, typeVariation);
+      }
 
-      // if (Array.isArray(itemsOnlyOfType) && itemsOnlyOfType.length > 0 ) {
-      //   this.renderItems(itemsOnlyOfType, typeVariation);
-      // }
+      if (pricesOnlyOfType.length > 0) {
+        this.renderPrices(pricesOnlyOfType, typeVariation);
+      }
 
-      //
-      //
-      //
-
+      if (artworksOnlyOfType.length > 0) {
+        this.renderArtwork(artworksOnlyOfType, typeVariation);
+      }
     }
   }
-
   renderVariations(childVariationsOfType = [], typeVariation) {
     try {
       alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
@@ -569,22 +583,34 @@ class PreviewLogic {
       wrapper.appendChild(img);
     }
   }
-
   renderPrices(pricesOnlyOfType = [], typeVariation) {
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
+    );
+
     const parent = document.getElementById("wrap-prices-group");
     if (!parent) return;
 
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-price-${typeId}`;
 
-    const existing = parent.querySelector(`.wrap-price[data-type-id="${typeId}"]`);
-    if (existing) existing.remove();
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
 
-    if (!Array.isArray(pricesOnlyOfType) || pricesOnlyOfType.length === 0) return;
+    if (!wrapper) {
+      wrapper = document.createElement("div");
+      wrapper.className = "wrap-price";
+      wrapper.id = wrapId;
+      wrapper.dataset.typeId = typeId;
+      parent.appendChild(wrapper);
+    }
 
-    let buttonsHtml = "";
+    wrapper.innerHTML = "";
 
-    for (const p of pricesOnlyOfType) {
+    for (let i = 0; i < pricesOnlyOfType.length; i++) {
+      const p = pricesOnlyOfType[i];
+
+      if (Number(p?.variation_id) !== id_variation) continue;
+
       const priceId = String(p?.price_id ?? "").trim();
       const minQty  = String(p?.min_quantity ?? "").trim();
       const maxQty  = String(p?.max_quantity ?? "").trim();
@@ -592,30 +618,21 @@ class PreviewLogic {
 
       if (maxQty === "") continue;
 
-      buttonsHtml += `
-        <button
-          type="button"
-          class="var-option js-scale-in js-price-option"
-          value="${price}"
-          data-price-id="${priceId}"
-          data-min-quantity="${minQty}"
-          data-max-quantity="${maxQty}"
-          data-price="${price}"
-        >
-          <span class="opt-main">${maxQty}</span>
-        </button>
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "var-option js-scale-in js-price-option";
+      button.value = price;
+      button.dataset.priceId = priceId;
+      button.dataset.minQuantity = minQty;
+      button.dataset.maxQuantity = maxQty;
+      button.dataset.price = price;
+
+      button.innerHTML = `
+        <span class="opt-main">${maxQty}</span>
       `;
+
+      wrapper.appendChild(button);
     }
-
-    if (!buttonsHtml.trim()) return;
-
-    const blockHtml = `
-      <div class="wrap-price" id="${wrapId}" data-type-id="${typeId}">
-        ${buttonsHtml}
-      </div>
-    `;
-
-    parent.insertAdjacentHTML("beforeend", blockHtml);
 
     this.bindPriceButtons(`#${wrapId}`);
   }
