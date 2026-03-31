@@ -171,6 +171,7 @@ class PreviewLogic {
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
          if (organizeVariationsForDelete) {
+           alert(organizeVariationsForDelete);
             this.organizeVariationsForRender(childVariations, variationTypes);
          }
         }
