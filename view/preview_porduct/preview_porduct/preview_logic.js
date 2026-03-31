@@ -256,7 +256,7 @@ class PreviewLogic {
   }
 
   deleteImages(typeId) {
-    alert("Estoy eliminando las imagenes en un orden que no tengo no se");
+    alert("Estoy eliminando las imagenes en un orden que no tengo no se, con el div:" + typeId);
     const id = String(typeId ?? "");
     document.getElementById(`wrap-images-${id}`)?.remove();
   }
