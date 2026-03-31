@@ -328,15 +328,22 @@ class PreviewLogic {
           if (Array.isArray(itemsOnlyOfType) && itemsOnlyOfType.length > 0 ) {
             this.renderItems(itemsOnlyOfType, typeVariation);
           }
+          if (Array.isArray(artworksOnlyOfType) && artworksOnlyOfType.length > 0 ) {
+            this.renderArtwork(artworksOnlyOfType, typeVariation);
+          }
+
+
         }
       }
 
 
-
+      // if (Array.isArray(itemsOnlyOfType) && itemsOnlyOfType.length > 0 ) {
+      //   this.renderItems(itemsOnlyOfType, typeVariation);
+      // }
 
       //
-      // this.renderPrices(pricesOnlyOfType, typeVariation);
-      // this.renderArtwork(artworksOnlyOfType, typeVariation);
+      //
+      //
 
     }
   }
