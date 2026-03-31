@@ -325,13 +325,16 @@ class PreviewLogic {
           if (Array.isArray(imagesOnlyOfType) && imagesOnlyOfType.length > 0 ) {
             this.renderImages(imagesOnlyOfType, typeVariation);
           }
+          if (Array.isArray(itemsOnlyOfType) && itemsOnlyOfType.length > 0 ) {
+            this.renderItems(itemsOnlyOfType, typeVariation);
+          }
         }
       }
 
 
 
 
-      // this.renderItems(itemsOnlyOfType, typeVariation);
+      //
       // this.renderPrices(pricesOnlyOfType, typeVariation);
       // this.renderArtwork(artworksOnlyOfType, typeVariation);
 
