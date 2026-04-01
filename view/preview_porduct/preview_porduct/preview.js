@@ -5,13 +5,13 @@ class PreviewGallery {
     this.rootId = options.rootId || "wrap-images-group";
     this.thumbsId = options.thumbsId || "sp_thumbs";
     this.intervalMs = Number(options.intervalMs || 5000);
+    this.zoomScale = Number(options.zoomScale || 2);
 
     this.currentIndex = 0;
     this.autoTimer = null;
     this.observer = null;
 
     this.init();
-
   }
 
   /* ============================================================================
@@ -22,22 +22,24 @@ class PreviewGallery {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => {
         this.setupObserver();
+        this.setupZoomEvents();
         this.refreshGallery();
       });
     } else {
       this.setupObserver();
+      this.setupZoomEvents();
       this.refreshGallery();
     }
 
     this.setupBackPublishButtons();
     this.setupVariationSelection();
-
   }
+
   setupVariationSelection() {
     const parent = document.getElementById("wrap-variations-group");
     if (!parent) return;
 
-    // Prevents duplicate binding
+    // Prevents duplicate binding.
     if (parent.dataset.bound === "1") return;
     parent.dataset.bound = "1";
 
@@ -48,25 +50,26 @@ class PreviewGallery {
       const group = option.closest(".wrap-variations");
       if (!group) return;
 
-      // Removes selected class only within the same variation group
+      // Removes the selected class only within the same variation group.
       group.querySelectorAll(".var-option.is-selected").forEach((btn) => {
         btn.classList.remove("is-selected");
       });
 
-      // Selects the clicked option
+      // Selects the clicked option.
       option.classList.add("is-selected");
 
-      // Updates the visible selected label
+      // Updates the visible selected label.
       const labelStrong = group.querySelector(".var-label strong");
       const mainSpan = option.querySelector(".opt-main");
       if (labelStrong && mainSpan) {
         labelStrong.textContent = mainSpan.textContent.trim();
       }
 
-      // Recalculates price after change
-    //  this.updatePrice();
+      // Recalculates the price after a change if needed.
+      // this.updatePrice();
     });
   }
+
   setupBackPublishButtons() {
     const backBtn = document.getElementById("btn_back_edit");
     const publishBtn = document.getElementById("btn_publish");
@@ -81,7 +84,7 @@ class PreviewGallery {
         const sku = current.searchParams.get("sku");
         const skuv = current.searchParams.get("sku_variation");
 
-        // Preserves sku and sku_variation in the destination URL
+        // Preserves sku and sku_variation in the destination URL.
         if (sku) dest.searchParams.set("sku", sku);
         if (skuv) dest.searchParams.set("sku_variation", skuv);
 
@@ -91,12 +94,11 @@ class PreviewGallery {
 
     if (publishBtn) {
       publishBtn.addEventListener("click", () => {
-        alert(
-          "This page is currently under construction."
-        );
+        alert("This page is currently under construction.");
       });
     }
   }
+
   setupObserver() {
     const root = this.getRoot();
     if (!root) return;
@@ -105,7 +107,7 @@ class PreviewGallery {
       this.observer.disconnect();
     }
 
-    // Watch for media inserted later by preview_logic.js
+    // Watches for media inserted later by preview_logic.js.
     this.observer = new MutationObserver(() => {
       this.refreshGallery(true);
     });
@@ -115,6 +117,23 @@ class PreviewGallery {
       subtree: true,
       attributes: true,
       attributeFilter: ["src", "poster"]
+    });
+  }
+
+  setupZoomEvents() {
+    const root = this.getRoot();
+    if (!root) return;
+
+    // Prevents duplicate binding.
+    if (root.dataset.zoomBound === "1") return;
+    root.dataset.zoomBound = "1";
+
+    root.addEventListener("mousemove", (event) => {
+      this.handleZoomMove(event);
+    });
+
+    root.addEventListener("mouseleave", () => {
+      this.handleZoomLeave();
     });
   }
 
@@ -182,6 +201,48 @@ class PreviewGallery {
     }
   }
 
+  resetZoom(media = null) {
+    const items = media ? [media] : this.getMediaItems();
+
+    for (const item of items) {
+      if (!(item instanceof HTMLElement)) continue;
+
+      item.classList.remove("is-zooming");
+      item.style.transformOrigin = "50% 50%";
+      item.style.transform = "scale(1)";
+    }
+  }
+
+  handleZoomMove(event) {
+    const activeMedia = event.target.closest(".preview-media.is-active");
+    if (!activeMedia) return;
+    if (activeMedia.tagName !== "IMG") return;
+
+    const rect = activeMedia.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+
+    const xPercent = (offsetX / rect.width) * 100;
+    const yPercent = (offsetY / rect.height) * 100;
+
+    activeMedia.classList.add("is-zooming");
+    activeMedia.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+    activeMedia.style.transform = `scale(${this.zoomScale})`;
+
+    this.stopAutoplay();
+  }
+
+  handleZoomLeave() {
+    const current = this.getCurrentMedia();
+    if (current && current.tagName === "IMG") {
+      this.resetZoom(current);
+    }
+
+    this.startAutoplay();
+  }
+
   /* ============================================================================
     MAIN GALLERY REFRESH
   ============================================================================ */
@@ -214,6 +275,8 @@ class PreviewGallery {
     for (let i = 0; i < items.length; i++) {
       const media = items[i];
       const isActive = i === this.currentIndex;
+
+      this.resetZoom(media);
 
       media.classList.toggle("is-active", isActive);
       media.hidden = !isActive;
@@ -395,7 +458,8 @@ class PreviewGallery {
 const previewGallery = new PreviewGallery({
   rootId: "wrap-images-group",
   thumbsId: "sp_thumbs",
-  intervalMs: 5000
+  intervalMs: 5000,
+  zoomScale: 2
 });
 
 window.previewGallery = previewGallery;
