@@ -15,6 +15,9 @@ class PreviewLogic {
     // Flag used to determine whether grouped content should be removed first.
     this.shouldDeleteItems = false;
 
+    // Store the currently selected price payload.
+    this.priceSelected = null;
+
     // const preview_media = document.getElementById("preview-media");
 
     // const sp_nav_next = document.getElementById("sp-nav-next");
@@ -781,22 +784,55 @@ class PreviewLogic {
     if (!scope) return;
 
     const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
+    if (buttons.length === 0) return;
 
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
         const el = e.currentTarget;
-
-        const payload = {
-          price_id: String(el.dataset.priceId ?? ""),
-          min_quantity: String(el.dataset.minQuantity ?? ""),
-          max_quantity: String(el.dataset.maxQuantity ?? ""),
-          price: String(el.dataset.price ?? ""),
-          value: String(el.value ?? ""),
-        };
-
-        this.onPriceSelected(payload);
+        this.selectPriceButton(el, scope);
       });
     }
+
+    // Automatically select the first price button if one exists.
+    this.selectPriceButton(buttons[0], scope);
+  }
+
+  selectPriceButton(button, scope = null) {
+    if (!button) return false;
+
+    const container = scope || button.closest(".wrap-price");
+    if (!container) return false;
+
+    const buttons = container.querySelectorAll(".js-price-option");
+
+    for (const btn of buttons) {
+      btn.classList.remove("is-selected");
+      btn.setAttribute("aria-pressed", "false");
+    }
+
+    button.classList.add("is-selected");
+    button.setAttribute("aria-pressed", "true");
+
+    const payload = {
+      price_id: String(button.dataset.priceId ?? ""),
+      min_quantity: String(button.dataset.minQuantity ?? ""),
+      max_quantity: String(button.dataset.maxQuantity ?? ""),
+      price: String(button.dataset.price ?? ""),
+      value: String(button.value ?? ""),
+    };
+
+    this.setSelectedPrice(payload);
+    this.onPriceSelected(payload);
+
+    return true;
+  }
+
+  setSelectedPrice(payload = null) {
+    this.priceSelected = payload;
+  }
+
+  getSelectedPrice() {
+    return this.priceSelected;
   }
 
   onPriceSelected(payload) {
