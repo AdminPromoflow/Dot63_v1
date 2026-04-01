@@ -9,6 +9,7 @@ class PreviewLogic {
     }
     this.variationSelected;
 
+    this.shouldDeleteItems = false;
 
   //  const preview_media = document.getElementById("preview-media");
 
@@ -163,15 +164,19 @@ class PreviewLogic {
         // ✅ Current type (backend lo manda primero)
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
+        alert("auxilio" + variationTypes);
+        // if (variationTypesForDelete.length || ) {
+        //   this.shouldDeleteItems - false;
+        // }
         // ✅ 1) BORRAR lo viejo
          if (variationTypesForDelete.length) {
-           var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+        //   var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
          }
 
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
          //if (organizeVariationsForDelete) {
-            this.organizeVariationsForRender(childVariations, variationTypes);
+          //  this.organizeVariationsForRender(childVariations, variationTypes);
          //}
         }
 
