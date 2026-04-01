@@ -36,53 +36,15 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
           <div class="sp-main-wrapper js-parallax">
 
-            <button type="button" class="sp-nav sp-nav-prev" aria-label="Previous media">‹</button>
+            <button
+              type="button"
+              class="sp-nav sp-nav-prev"
+              aria-label="Previous media"
+              onclick="previewGallery.prevImage()">
+              ‹
+            </button>
 
-            <div class="sp-main wrap-images-group" id="wrap-images-group" aria-live="polite">
-
-              <!-- ✅ 12-13: Aquí van imágenes y 1 video, agrupados con wrap-images -->
-
-                <!-- <div class="wrap-images">
-                  <img
-                    class="preview-media"
-                    src="../../view/preview_porduct/img/5ecd4b8a-c3ad-4bd4-a2ed-155007cec1f1.png"
-                    alt="Preview image 1"
-                    loading="lazy"
-                    decoding="async"
-                  >
-                  <img
-                    class="preview-media"
-                    src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859 copy.png"
-                    alt="Preview image 2"
-                    loading="lazy"
-                    decoding="async"
-                  >
-                </div>
-
-                <div class="wrap-images">
-                  <video class="preview-media" controls preload="metadata">
-                    <source src="" type="video/mp4">
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-
-                <div class="wrap-images">
-                  <img
-                    class="preview-media"
-                    src="../../view/preview_porduct/img/0785090d-cff6-4a3b-abd9-d3000dfaf859.png"
-                    alt="Preview image 1"
-                    loading="lazy"
-                    decoding="async"
-                  >
-                  <img
-                    class="preview-media"
-                    src="../../view/preview_porduct/img/be2f5822-1db5-4ed3-aa84-8583b2b6c1cd.png"
-                    alt="Preview image 2"
-                    loading="lazy"
-                    decoding="async"
-                  >
-                </div> -->
-            </div>
+            <div class="sp-main wrap-images-group" id="wrap-images-group" aria-live="polite"></div>
 
             <button
               type="button"
@@ -94,7 +56,6 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
           </div>
 
-          <!-- Miniaturas (JS debería inyectarlas). -->
           <div class="sp-thumbs" id="sp_thumbs" role="list"></div>
 
           <small class="cp-hint">Hover to zoom • Media changes every 5 seconds</small>
