@@ -171,6 +171,7 @@ class PreviewLogic {
          } else {
            this.shouldDeleteItems = false;
          }
+         alert("deberia eliminar?" + this.shouldDeleteItems);
 
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
