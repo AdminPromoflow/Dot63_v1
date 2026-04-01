@@ -64,9 +64,6 @@ class PreviewGallery {
       if (labelStrong && mainSpan) {
         labelStrong.textContent = mainSpan.textContent.trim();
       }
-
-      // Recalculates the price after a change if needed.
-      // this.updatePrice();
     });
   }
 
@@ -386,15 +383,18 @@ class PreviewGallery {
     - Kept because preview_logic.js already calls window.previewGallery?.updatePrice?.()
   ============================================================================ */
 
-  updatePrice() {
+  updatePrice(preferredButton = null) {
     const selectedButton =
+      preferredButton ||
       document.querySelector("#wrap-prices-group .js-price-option.is-selected") ||
       document.querySelector("#wrap-prices-group .js-price-option");
 
-    if (!selectedButton) return;
+    if (!selectedButton) return false;
 
     this.paintSelectedPrice(selectedButton);
     this.syncPriceDisplay(selectedButton);
+
+    return true;
   }
 
   paintSelectedPrice(activeButton) {
@@ -404,9 +404,11 @@ class PreviewGallery {
 
     for (const btn of buttons) {
       btn.classList.remove("is-selected");
+      btn.setAttribute("aria-pressed", "false");
     }
 
     activeButton.classList.add("is-selected");
+    activeButton.setAttribute("aria-pressed", "true");
   }
 
   syncPriceDisplay(button) {
@@ -433,19 +435,21 @@ class PreviewGallery {
       spPrice.innerHTML = `${major}<span class="sp-price-minor">.${minor}</span>`;
     }
 
-    if (spUnitHint && maxQuantity) {
-      spUnitHint.textContent = `per ${maxQuantity} units`;
+    if (spUnitHint) {
+      spUnitHint.textContent = maxQuantity ? `per ${maxQuantity} units` : "";
     }
 
     if (bbTotal) {
       bbTotal.textContent = `${symbol}${fixed}`;
     }
 
-    if (bbUnit && maxQuantity) {
+    if (bbUnit) {
       const qty = Number(maxQuantity.replace(/,/g, ""));
       if (Number.isFinite(qty) && qty > 0) {
         const unit = (safePrice / qty).toFixed(2);
         bbUnit.textContent = `${symbol}${unit}`;
+      } else {
+        bbUnit.textContent = "";
       }
     }
   }
@@ -473,6 +477,5 @@ document.addEventListener("click", (event) => {
   const button = event.target.closest("#wrap-prices-group .js-price-option");
   if (!button) return;
 
-  window.previewGallery?.paintSelectedPrice?.(button);
-  window.previewGallery?.syncPriceDisplay?.(button);
+  window.previewGallery?.updatePrice?.(button);
 });

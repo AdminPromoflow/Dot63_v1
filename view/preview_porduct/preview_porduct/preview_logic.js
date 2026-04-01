@@ -119,7 +119,7 @@ class PreviewLogic {
 
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
-        if ((variationTypesForDelete?.length > 0)) {
+        if (variationTypesForDelete?.length > 0) {
           this.shouldDeleteItems = true;
           this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         } else {
@@ -563,8 +563,6 @@ class PreviewLogic {
 
       parent.insertAdjacentHTML("beforeend", blockHtml);
 
-      window.previewGallery?.updatePrice?.();
-
       if (firstDomId) {
         const selectVariationResult = previewLogic.SelectVariation(firstDomId);
 
@@ -781,10 +779,14 @@ class PreviewLogic {
 
   bindPriceButtons(scopeSelector) {
     const scope = document.querySelector(scopeSelector);
-    if (!scope) return;
+    if (!scope) return false;
 
     const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
-    if (buttons.length === 0) return;
+
+    if (buttons.length === 0) {
+      window.previewGallery?.updatePrice?.();
+      return false;
+    }
 
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
@@ -793,8 +795,10 @@ class PreviewLogic {
       });
     }
 
-    // Automatically select the first price button if one exists.
+    // Always auto-select the first available price button.
     this.selectPriceButton(buttons[0], scope);
+
+    return true;
   }
 
   selectPriceButton(button, scope = null) {
@@ -822,7 +826,7 @@ class PreviewLogic {
     };
 
     this.setSelectedPrice(payload);
-    this.onPriceSelected(payload);
+    this.onPriceSelected(payload, button);
 
     return true;
   }
@@ -835,7 +839,7 @@ class PreviewLogic {
     return this.priceSelected;
   }
 
-  onPriceSelected(payload) {
+  onPriceSelected(payload, button = null) {
     // alert(
     //   "PRICE SELECTED:\n" +
     //   "price_id: " + payload.price_id + "\n" +
@@ -844,6 +848,8 @@ class PreviewLogic {
     //   "price: " + payload.price + "\n" +
     //   "button value: " + payload.value
     // );
+
+    window.previewGallery?.updatePrice?.(button);
   }
 
   /* ============================================================================
