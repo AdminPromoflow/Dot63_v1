@@ -30,8 +30,42 @@ class PreviewGallery {
     }
 
     this.setupBackPublishButtons();
+    this.setupVariationSelection();
 
+  }
+  setupVariationSelection() {
+    const parent = document.getElementById("wrap-variations-group");
+    if (!parent) return;
 
+    // Prevents duplicate binding
+    if (parent.dataset.bound === "1") return;
+    parent.dataset.bound = "1";
+
+    parent.addEventListener("click", (e) => {
+      const option = e.target.closest(".var-option");
+      if (!option || !parent.contains(option)) return;
+
+      const group = option.closest(".wrap-variations");
+      if (!group) return;
+
+      // Removes selected class only within the same variation group
+      group.querySelectorAll(".var-option.is-selected").forEach((btn) => {
+        btn.classList.remove("is-selected");
+      });
+
+      // Selects the clicked option
+      option.classList.add("is-selected");
+
+      // Updates the visible selected label
+      const labelStrong = group.querySelector(".var-label strong");
+      const mainSpan = option.querySelector(".opt-main");
+      if (labelStrong && mainSpan) {
+        labelStrong.textContent = mainSpan.textContent.trim();
+      }
+
+      // Recalculates price after change
+    //  this.updatePrice();
+    });
   }
   setupBackPublishButtons() {
     const backBtn = document.getElementById("btn_back_edit");
