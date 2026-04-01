@@ -164,7 +164,7 @@ class PreviewLogic {
 
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
-        if ((variationTypesForDelete?.length > 0) && (variationTypes?.length > 0)) {
+        if ((variationTypesForDelete?.length > 0) ) {
           this.shouldDeleteItems = true;
           this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         } else {
