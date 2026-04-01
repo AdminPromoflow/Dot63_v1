@@ -164,14 +164,6 @@ class PreviewLogic {
         // ✅ Current type (backend lo manda primero)
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
-        alert("auxilio" + variationTypes?.length > 0);        // if (variationTypesForDelete.length || ) {
-        //
-        // }
-        // ✅ 1) BORRAR lo viejo
-         if (variationTypesForDelete.length || variationTypes.length) {
-           this.shouldDeleteItems  false;
-        //
-         }
 
          if ((variationTypesForDelete?.length > 0) && (variationTypes?.length > 0)) {
            this.shouldDeleteItems = true;
