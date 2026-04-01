@@ -164,19 +164,25 @@ class PreviewLogic {
         // ✅ Current type (backend lo manda primero)
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
-        alert(variationTypes?.length > 0);        // if (variationTypesForDelete.length || ) {
-        //   this.shouldDeleteItems - false;
+        alert("auxilio" + variationTypes?.length > 0);        // if (variationTypesForDelete.length || ) {
+        //
         // }
         // ✅ 1) BORRAR lo viejo
-         if (variationTypesForDelete.length) {
-        //   var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+         if (variationTypesForDelete.length || variationTypes.length) {
+           this.shouldDeleteItems  false;
+        //
+         }
+
+         if ((variationTypesForDelete?.length > 0) && (variationTypes?.length > 0)) {
+           this.shouldDeleteItems = true;
+           var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+         } else {
+           this.shouldDeleteItems = false;
          }
 
         // ✅ 2) PINTAR lo nuevo
         if (childVariations.length && variationTypes.length ) {
-         //if (organizeVariationsForDelete) {
-          //  this.organizeVariationsForRender(childVariations, variationTypes);
-         //}
+            this.organizeVariationsForRender(childVariations, variationTypes);
         }
 
         loader.hide();
