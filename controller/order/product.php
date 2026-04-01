@@ -29,6 +29,11 @@ class Product {
     $connection = new Database();
     $variation = new Variation($connection);
     $variation->setVariationId($data['variation_id']);
+    $currentVariationData = $variation->getDetailsCurrentVariationById();
+
+    $connection = new Database();
+    $variation = new Variation($connection);
+    $variation->setVariationId($data['variation_id']);
     $variationTypes = $variation->getTypeVariationsChildByVariationId();
 
     $connection = new Database();
@@ -38,6 +43,7 @@ class Product {
 
     echo json_encode([
       'childVariations' => $childVariations,
+      'currentVariationData' => $currentVariationData,
       'variationTypes' => $variationTypes,
       'variationTypesForDelete' => $variationTypesForDelete
 

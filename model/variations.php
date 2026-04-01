@@ -320,6 +320,115 @@ class Variation {
       return ['success' => false, 'error' => 'DB error'];
     }
   }
+  public function getDetailsCurrentVariationById(): array
+  {
+    // 1) Get the current variation_id from the object.
+    $currentVariationId = (int)($this->variation_id ?? 0);
+
+    // 2) Validate that the variation_id is valid.
+    if ($currentVariationId <= 0) {
+      return ['success' => false, 'error' => 'variation_id requerido'];
+    }
+
+    try {
+      // 3) Get the PDO connection.
+      $pdo = $this->connection->getConnection();
+
+      // 4) Get the current variation and its type name.
+      $stmt = $pdo->prepare("
+        SELECT
+          variations.variation_id,
+          variations.name,
+          variations.SKU,
+          variations.image,
+          variations.parent_id,
+          variations.product_id,
+          variations.type_id,
+          variations.pdf_artwork,
+          variations.name_pdf_artwork,
+          type_variations.type_name
+        FROM variations
+        LEFT JOIN type_variations
+          ON type_variations.type_id = variations.type_id
+        WHERE variations.variation_id = :variation_id
+        LIMIT 1
+      ");
+      $stmt->execute([':variation_id' => $currentVariationId]);
+
+      $currentVariation = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      // 5) If the current variation does not exist, return an error.
+      if (!$currentVariation) {
+        return ['success' => false, 'error' => 'Variación actual no encontrada por variation_id'];
+      }
+
+      // 6) Get all images linked to the current variation.
+      $stmt = $pdo->prepare("
+        SELECT
+          images.image_id,
+          images.link,
+          images.updated,
+          images.variation_id
+        FROM images
+        WHERE images.variation_id = :variation_id
+        ORDER BY images.image_id ASC
+      ");
+      $stmt->execute([':variation_id' => $currentVariationId]);
+      $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      // 7) Get all items linked to the current variation.
+      $stmt = $pdo->prepare("
+        SELECT
+          items.item_id,
+          items.name,
+          items.description,
+          items.variation_id
+        FROM items
+        WHERE items.variation_id = :variation_id
+        ORDER BY items.item_id ASC
+      ");
+      $stmt->execute([':variation_id' => $currentVariationId]);
+      $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      // 8) Get all prices linked to the current variation.
+      $stmt = $pdo->prepare("
+        SELECT
+          prices.price_id,
+          prices.min_quantity,
+          prices.max_quantity,
+          prices.price,
+          prices.variation_id
+        FROM prices
+        WHERE prices.variation_id = :variation_id
+        ORDER BY prices.price_id ASC
+      ");
+      $stmt->execute([':variation_id' => $currentVariationId]);
+      $prices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      // 9) Build the artwork block from the current variation row.
+      $artwork = [
+        'pdf_artwork' => $currentVariation['pdf_artwork'] ?? null,
+        'name_pdf_artwork' => $currentVariation['name_pdf_artwork'] ?? null,
+      ];
+
+      // 10) Remove artwork fields from the main variation block if you prefer
+      //     to keep artwork grouped separately.
+      unset($currentVariation['pdf_artwork'], $currentVariation['name_pdf_artwork']);
+
+      // 11) Return the final structure.
+      return [
+        'variation' => $currentVariation,
+        'images'    => $images,
+        'items'     => $items,
+        'prices'    => $prices,
+        'artwork'   => $artwork,
+      ];
+
+    } catch (PDOException $e) {
+      error_log('getDetailsCurrentVariationById: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
   public function getTypeVariationsChildByVariationId(): array
   {
     $parentVariationId = (int)($this->variation_id ?? 0);
