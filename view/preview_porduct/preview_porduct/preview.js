@@ -58,7 +58,6 @@ class PreviewGallery {
     if (publishBtn) {
       publishBtn.addEventListener("click", () => {
         alert(
-          "Your configuration will now be reviewed and then approved. " +
           "This page is currently under construction."
         );
       });
