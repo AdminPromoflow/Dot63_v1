@@ -2,23 +2,31 @@
 
 class PreviewLogic {
   constructor() {
+    // Initialise the product data once the DOM is ready.
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => this.getDataProduct());
     } else {
       this.getDataProduct();
     }
+
+    // Store the currently selected variation button id.
     this.variationSelected;
 
+    // Flag used to determine whether grouped content should be removed first.
     this.shouldDeleteItems = false;
 
-  //  const preview_media = document.getElementById("preview-media");
+    // const preview_media = document.getElementById("preview-media");
 
     // const sp_nav_next = document.getElementById("sp-nav-next");
     //
-    // sp_nav_next.addEventListener("click", function(){
-    //   alert("ahy juemadre");
-    // })
+    // sp_nav_next.addEventListener("click", function () {
+    //   // alert("ahy juemadre");
+    // });
   }
+
+  /* ============================================================================
+    PRODUCT DATA
+  ============================================================================ */
 
   getDataProduct() {
     const params = new URLSearchParams(window.location.search);
@@ -45,12 +53,13 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert("1. " + text);
+        // alert("1. " + text);
+
         const json = JSON.parse(text);
 
-        const company_name  = (json.find(x => x.company_name)?.company_name) ?? "";
+        const company_name = (json.find(x => x.company_name)?.company_name) ?? "";
         const category_name = (json.find(x => x.category_name)?.category_name) ?? "";
-        const group_name    = (json.find(x => x.group_name)?.group_name) ?? "";
+        const group_name = (json.find(x => x.group_name)?.group_name) ?? "";
         const default_variation_id = (json.find(x => x.default_variation_id)?.default_variation_id) ?? "";
 
         const product_details = (json.find(x => x.product_details)?.product_details) ?? {};
@@ -66,27 +75,85 @@ class PreviewLogic {
         this.renderDescription(description);
 
         this.deleteGroupsContent();
-
         this.fetchChildVariationsById(default_variation_id);
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
-        //alert("Error loading preview data.");
+        // alert("Error loading preview data.");
       });
   }
 
+  fetchChildVariationsById(variation_id) {
+    if (!variation_id) {
+      console.warn("No variation_id provided");
+      return;
+    }
+
+    const url = "../../controller/order/product.php";
+    const data = {
+      action: "get_variation_children_by_id",
+      variation_id: variation_id
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+        console.log("2. " + text);
+
+        const json = JSON.parse(text);
+
+        const variationTypes = json.variationTypes || [];
+        const childVariations = json.childVariations || [];
+        const variationTypesForDelete = json.variationTypesForDelete || [];
+        const currentVariationData = json.currentVariationData || {};
+
+        const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
+
+        if ((variationTypesForDelete?.length > 0)) {
+          this.shouldDeleteItems = true;
+          this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+        } else {
+          this.shouldDeleteItems = false;
+        }
+
+        // The current variation must be organised after the delete step.
+        this.organizeCurrentVariation(currentVariationData);
+
+        if (childVariations.length && variationTypes.length) {
+          this.organizeVariationsForRender(childVariations, variationTypes);
+        }
+
+        loader.hide();
+      })
+      .catch((error) => {
+        console.error("Error fetching preview:", error);
+        // alert("Error loading preview data.");
+      });
+  }
+
+  /* ============================================================================
+    BASIC RENDER HELPERS
+  ============================================================================ */
+
   deleteGroupsContent() {
     const wrapVariationsGroup = document.querySelector("#wrap-variations-group");
-    const wrapImagesGroup     = document.querySelector("#wrap-images-group");
-    const wrapItemsGroup      = document.querySelector("#wrap-items-group");
-    const wrapPricesGroup     = document.querySelector("#wrap-prices-group");
-    const wrapArtworksGroup   = document.querySelector("#wrap-artworks-group");
+    const wrapImagesGroup = document.querySelector("#wrap-images-group");
+    const wrapItemsGroup = document.querySelector("#wrap-items-group");
+    const wrapPricesGroup = document.querySelector("#wrap-prices-group");
+    const wrapArtworksGroup = document.querySelector("#wrap-artworks-group");
 
     if (wrapVariationsGroup) wrapVariationsGroup.innerHTML = "";
-    if (wrapImagesGroup)     wrapImagesGroup.innerHTML = "";
-    if (wrapItemsGroup)      wrapItemsGroup.innerHTML = "";
-    if (wrapPricesGroup)     wrapPricesGroup.innerHTML = "";
-    if (wrapArtworksGroup)   wrapArtworksGroup.innerHTML = "";
+    if (wrapImagesGroup) wrapImagesGroup.innerHTML = "";
+    if (wrapItemsGroup) wrapItemsGroup.innerHTML = "";
+    if (wrapPricesGroup) wrapPricesGroup.innerHTML = "";
+    if (wrapArtworksGroup) wrapArtworksGroup.innerHTML = "";
 
     window.previewGallery?.clearGallery?.();
   }
@@ -131,60 +198,9 @@ class PreviewLogic {
     sp_desc.textContent = description || "";
   }
 
-  fetchChildVariationsById(variation_id) {
-    if (!variation_id) {
-      console.warn("No variation_id provided");
-      return;
-    }
-
-    const url = "../../controller/order/product.php";
-    const data = {
-      action: "get_variation_children_by_id",
-      variation_id: variation_id
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Network error.");
-        return response.text();
-      })
-      .then((text) => {
-        console.log("2. " + text);
-
-        const json = JSON.parse(text);
-
-        const variationTypes  = json.variationTypes || [];
-        const childVariations = json.childVariations || [];
-        const variationTypesForDelete = json.variationTypesForDelete || [];
-        const currentVariationData = json.currentVariationData || {};
-
-        const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
-
-        if ((variationTypesForDelete?.length > 0) ) {
-          this.shouldDeleteItems = true;
-          this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
-        } else {
-          this.shouldDeleteItems = false;
-        }
-
-        // Current variation must be organised after delete.
-        this.organizeCurrentVariation(currentVariationData);
-
-        if (childVariations.length && variationTypes.length) {
-          this.organizeVariationsForRender(childVariations, variationTypes);
-        }
-
-        loader.hide();
-      })
-      .catch((error) => {
-        console.error("Error fetching preview:", error);
-        //alert("Error loading preview data.");
-      });
-  }
+  /* ============================================================================
+    CURRENT VARIATION
+  ============================================================================ */
 
   organizeCurrentVariation(currentVariationData = {}) {
     try {
@@ -197,18 +213,18 @@ class PreviewLogic {
 
       if (!variationId || !typeId || !typeName) return false;
 
-      // 1) Mark the current variation as selected so the render helpers
-      //    can filter by the current variation_id.
+      // Mark the current variation as selected so the render helpers
+      // can filter by the current variation_id.
       const currentDomId = `variation_id_${variationId}`;
       this.setSelectVariation(currentDomId);
 
-      // 2) Build the type object expected by the render helpers.
+      // Build the type object expected by the render helpers.
       const typeVariation = {
         type_id: typeId,
         type_name: typeName
       };
 
-      // 3) Normalise arrays for render helpers.
+      // Normalise the arrays so they match the same structure used elsewhere.
       const imagesOnlyOfType = Array.isArray(currentVariationData?.images)
         ? currentVariationData.images.map((image) => ({
             ...image,
@@ -245,7 +261,7 @@ class PreviewLogic {
         }
       }
 
-      // 4) Delete first.
+      // Delete the current grouped content first.
       const itemEl = document.getElementById(`wrap-items-${typeId}`);
       if (itemEl) {
         this.deleteItems(typeId);
@@ -266,7 +282,7 @@ class PreviewLogic {
         this.deleteArtwork(typeId);
       }
 
-      // 5) Render after delete.
+      // Render the current grouped content after the delete step.
       if (imagesOnlyOfType.length > 0) {
         this.renderImages(imagesOnlyOfType, typeVariation);
       }
@@ -291,61 +307,56 @@ class PreviewLogic {
   }
 
   /* ============================================================================
-    ✅ organizeVariationsForDelete(variationTypes, currentTypeId)
-    - BORRA images/items/prices/artworks SIEMPRE
-    - BORRA variations SOLO si NO es el type actual
+    DELETE FLOW
+    - Deletes images, items, prices and artwork for all types
+    - Deletes variations only when the type is not the current one
   ============================================================================ */
 
+  organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
+    // alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
 
+    if (!Array.isArray(variationTypes) || variationTypes.length === 0) return true;
 
-    /* ============================================================================
-      DELETE helpers
-    ============================================================================ */
+    const current = String(currentTypeId ?? "");
 
-    organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
-      alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
-      if (!Array.isArray(variationTypes) || variationTypes.length === 0) return true;
+    for (let i = 0; i < variationTypes.length; i++) {
+      const typeId = String(variationTypes[i]?.type_id ?? "");
 
-      const current = String(currentTypeId ?? "");
-
-      for (let i = 0; i < variationTypes.length; i++) {
-        const typeId = String(variationTypes[i]?.type_id ?? "");
-
-        const itemEl = document.getElementById(`wrap-items-${typeId}`);
-        if (itemEl) {
-          this.deleteItems(typeId);
-        }
-
-        const imageEl = document.getElementById(`wrap-images-${typeId}`);
-        if (imageEl) {
-          this.deleteImages(typeId);
-        }
-
-        const priceEl = document.getElementById(`wrap-price-${typeId}`);
-        if (priceEl) {
-          this.deletePrices(typeId);
-        }
-
-        const artworkEl = document.getElementById(`wrap-artworks-${typeId}`);
-        if (artworkEl) {
-          this.deleteArtwork(typeId);
-        }
-
-        if (typeId !== current) {
-          const variationEl = document.querySelector(
-            `#wrap-variations-group .wrap-variations[data-type-id="${CSS.escape(typeId)}"]`
-          );
-
-          if (variationEl) {
-            this.deleteVariations(typeId);
-          }
-        }
+      const itemEl = document.getElementById(`wrap-items-${typeId}`);
+      if (itemEl) {
+        this.deleteItems(typeId);
       }
 
-      return true;
+      const imageEl = document.getElementById(`wrap-images-${typeId}`);
+      if (imageEl) {
+        this.deleteImages(typeId);
+      }
+
+      const priceEl = document.getElementById(`wrap-price-${typeId}`);
+      if (priceEl) {
+        this.deletePrices(typeId);
+      }
+
+      const artworkEl = document.getElementById(`wrap-artworks-${typeId}`);
+      if (artworkEl) {
+        this.deleteArtwork(typeId);
+      }
+
+      if (typeId !== current) {
+        const variationEl = document.querySelector(
+          `#wrap-variations-group .wrap-variations[data-type-id="${CSS.escape(typeId)}"]`
+        );
+
+        if (variationEl) {
+          this.deleteVariations(typeId);
+        }
+      }
     }
 
-    deleteVariations(typeId) {
+    return true;
+  }
+
+  deleteVariations(typeId) {
     const id = String(typeId ?? "");
     const nodes = document.querySelectorAll(
       `#wrap-variations-group .wrap-variations[data-type-id="${CSS.escape(id)}"]`
@@ -362,7 +373,8 @@ class PreviewLogic {
   }
 
   deleteImages(typeId) {
-    alert("Estoy eliminando las imagenes en un orden que no tengo no se, con el div:" + typeId);
+    // alert("Estoy eliminando las imagenes en un orden que no tengo no se, con el div:" + typeId);
+
     const id = String(typeId ?? "");
     document.getElementById(`wrap-images-${id}`)?.remove();
   }
@@ -377,9 +389,9 @@ class PreviewLogic {
     document.getElementById(`wrap-artworks-${id}`)?.remove();
   }
 
-
-
-
+  /* ============================================================================
+    CHILD VARIATIONS ORGANISER
+  ============================================================================ */
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
     if (!Array.isArray(childVariations) || childVariations.length === 0) return;
@@ -467,15 +479,20 @@ class PreviewLogic {
       }
     }
   }
+
+  /* ============================================================================
+    VARIATIONS RENDER
+  ============================================================================ */
+
   renderVariations(childVariationsOfType = [], typeVariation) {
     try {
-      alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
+      // alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
 
       const parent = document.getElementById("wrap-variations-group");
       if (!parent) return false;
 
-      const typeId    = typeVariation?.type_id ?? "null";
-      const labelId   = `var_label_size_${typeId}`;
+      const typeId = typeVariation?.type_id ?? "null";
+      const labelId = `var_label_size_${typeId}`;
       const optionsId = `var-options-${typeId}`;
 
       const existing = parent.querySelector(`.wrap-variations[data-type-id="${typeId}"]`);
@@ -561,28 +578,34 @@ class PreviewLogic {
   }
 
   SelectVariation(domId = "") {
-      //loader.show();
-      alert("El id seleccionado es: " + domId);
-      this.setSelectVariation(domId);
+    // loader.show();
+    // alert("El id seleccionado es: " + domId);
 
-      const id = String(domId || "").trim();
-      if (!id) return;
+    this.setSelectVariation(domId);
 
-      const variationId = id.replace(/^variation_id_/, "").trim();
-      if (!variationId) return;
+    const id = String(domId || "").trim();
+    if (!id) return;
 
+    const variationId = id.replace(/^variation_id_/, "").trim();
+    if (!variationId) return;
 
-    //   setTimeout(() => {
-      this.fetchChildVariationsById(variationId);
+    // setTimeout(() => {
+    this.fetchChildVariationsById(variationId);
     // }, 1000);
   }
 
-  setSelectVariation(domId){
+  setSelectVariation(domId) {
     this.variationSelected = domId;
   }
-  getSelectVariation(){
+
+  getSelectVariation() {
     return this.variationSelected;
   }
+
+  /* ============================================================================
+    ITEMS RENDER
+  ============================================================================ */
+
   renderItems(itemsOnlyOfType = [], typeVariation) {
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
@@ -612,7 +635,7 @@ class PreviewLogic {
       if (Number(it?.variation_id) !== id_variation) continue;
 
       const title = String(it?.name ?? "").trim();
-      const desc  = String(it?.description ?? "").trim();
+      const desc = String(it?.description ?? "").trim();
 
       if (!title && !desc) continue;
 
@@ -628,19 +651,23 @@ class PreviewLogic {
     }
   }
 
+  /* ============================================================================
+    IMAGES RENDER
+  ============================================================================ */
+
   renderImages(imagesOnlyOfType = [], typeVariation) {
-  //  alert("ay" + JSON.stringify(imagesOnlyOfType));
+    // alert("ay" + JSON.stringify(imagesOnlyOfType));
 
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
 
-    alert(
-      "5. Este alert es dentro de render Images y vamos bien " +
-      JSON.stringify(imagesOnlyOfType) +
-      "   " +
-      JSON.stringify(typeVariation)
-    );
+    // alert(
+    //   "5. Este alert es dentro de render Images y vamos bien " +
+    //   JSON.stringify(imagesOnlyOfType) +
+    //   "   " +
+    //   JSON.stringify(typeVariation)
+    // );
 
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
@@ -690,6 +717,11 @@ class PreviewLogic {
       wrapper.appendChild(img);
     }
   }
+
+  /* ============================================================================
+    PRICES RENDER
+  ============================================================================ */
+
   renderPrices(pricesOnlyOfType = [], typeVariation) {
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
@@ -719,9 +751,9 @@ class PreviewLogic {
       if (Number(p?.variation_id) !== id_variation) continue;
 
       const priceId = String(p?.price_id ?? "").trim();
-      const minQty  = String(p?.min_quantity ?? "").trim();
-      const maxQty  = String(p?.max_quantity ?? "").trim();
-      const price   = String(p?.price ?? "").trim();
+      const minQty = String(p?.min_quantity ?? "").trim();
+      const maxQty = String(p?.max_quantity ?? "").trim();
+      const price = String(p?.price ?? "").trim();
 
       if (maxQty === "") continue;
 
@@ -749,6 +781,7 @@ class PreviewLogic {
     if (!scope) return;
 
     const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
+
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
         const el = e.currentTarget;
@@ -767,15 +800,19 @@ class PreviewLogic {
   }
 
   onPriceSelected(payload) {
-    alert(
-      "PRICE SELECTED:\n" +
-      "price_id: " + payload.price_id + "\n" +
-      "min_quantity: " + payload.min_quantity + "\n" +
-      "max_quantity: " + payload.max_quantity + "\n" +
-      "price: " + payload.price + "\n" +
-      "button value: " + payload.value
-    );
+    // alert(
+    //   "PRICE SELECTED:\n" +
+    //   "price_id: " + payload.price_id + "\n" +
+    //   "min_quantity: " + payload.min_quantity + "\n" +
+    //   "max_quantity: " + payload.max_quantity + "\n" +
+    //   "price: " + payload.price + "\n" +
+    //   "button value: " + payload.value
+    // );
   }
+
+  /* ============================================================================
+    ARTWORK RENDER
+  ============================================================================ */
 
   renderArtwork(artworksOnlyOfType = [], typeVariation) {
     const id_variation = Number(
@@ -833,8 +870,6 @@ class PreviewLogic {
       wrapper.appendChild(artwork);
     }
   }
-
-
 }
 
 const previewLogic = new PreviewLogic();
