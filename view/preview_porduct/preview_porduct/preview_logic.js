@@ -458,7 +458,7 @@ class PreviewLogic {
 
   SelectVariation(domId = "") {
       //loader.show();
-    //  alert("b SelectVariation");
+      alert("El id seleccionado es: " + domId);
       this.setSelectVariation(domId);
 
       const id = String(domId || "").trim();
