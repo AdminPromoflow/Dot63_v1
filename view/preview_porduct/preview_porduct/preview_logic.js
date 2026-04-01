@@ -160,22 +160,22 @@ class PreviewLogic {
         const variationTypes  = json.variationTypes || [];
         const childVariations = json.childVariations || [];
         const variationTypesForDelete = json.variationTypesForDelete || [];
+        const currentVariationData = json.currentVariationData || {};
 
-        // ✅ Current type (backend lo manda primero)
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
+        if ((variationTypesForDelete?.length > 0) && (variationTypes?.length > 0)) {
+          this.shouldDeleteItems = true;
+          this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+        } else {
+          this.shouldDeleteItems = false;
+        }
 
-         if ((variationTypesForDelete?.length > 0) && (variationTypes?.length > 0)) {
-           this.shouldDeleteItems = true;
-           var organizeVariationsForDelete = this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
-         } else {
-           this.shouldDeleteItems = false;
-         }
-         alert("deberia eliminar?" + this.shouldDeleteItems);
+        // Current variation must be organised after delete.
+        this.organizeCurrentVariation(currentVariationData);
 
-        // ✅ 2) PINTAR lo nuevo
-        if (childVariations.length && variationTypes.length ) {
-            this.organizeVariationsForRender(childVariations, variationTypes);
+        if (childVariations.length && variationTypes.length) {
+          this.organizeVariationsForRender(childVariations, variationTypes);
         }
 
         loader.hide();
@@ -184,6 +184,110 @@ class PreviewLogic {
         console.error("Error fetching preview:", error);
         //alert("Error loading preview data.");
       });
+  }
+
+  organizeCurrentVariation(currentVariationData = {}) {
+    try {
+      const variation = currentVariationData?.variation ?? null;
+      if (!variation) return false;
+
+      const variationId = String(variation?.variation_id ?? "").trim();
+      const typeId = String(variation?.type_id ?? "null").trim();
+      const typeName = String(variation?.type_name ?? "").trim();
+
+      if (!variationId || !typeId || !typeName) return false;
+
+      // 1) Mark the current variation as selected so the render helpers
+      //    can filter by the current variation_id.
+      const currentDomId = `variation_id_${variationId}`;
+      this.setSelectVariation(currentDomId);
+
+      // 2) Build the type object expected by the render helpers.
+      const typeVariation = {
+        type_id: typeId,
+        type_name: typeName
+      };
+
+      // 3) Normalise arrays for render helpers.
+      const imagesOnlyOfType = Array.isArray(currentVariationData?.images)
+        ? currentVariationData.images.map((image) => ({
+            ...image,
+            variation_id: variationId
+          }))
+        : [];
+
+      const itemsOnlyOfType = Array.isArray(currentVariationData?.items)
+        ? currentVariationData.items.map((item) => ({
+            ...item,
+            variation_id: variationId
+          }))
+        : [];
+
+      const pricesOnlyOfType = Array.isArray(currentVariationData?.prices)
+        ? currentVariationData.prices.map((price) => ({
+            ...price,
+            variation_id: variationId
+          }))
+        : [];
+
+      const artworksOnlyOfType = [];
+      const artwork = currentVariationData?.artwork ?? null;
+
+      if (artwork) {
+        const pdf = String(artwork?.pdf_artwork ?? "").trim();
+        const name = String(artwork?.name_pdf_artwork ?? "").trim();
+
+        if (pdf || name) {
+          artworksOnlyOfType.push({
+            ...artwork,
+            variation_id: variationId
+          });
+        }
+      }
+
+      // 4) Delete first.
+      const itemEl = document.getElementById(`wrap-items-${typeId}`);
+      if (itemEl) {
+        this.deleteItems(typeId);
+      }
+
+      const imageEl = document.getElementById(`wrap-images-${typeId}`);
+      if (imageEl) {
+        this.deleteImages(typeId);
+      }
+
+      const priceEl = document.getElementById(`wrap-price-${typeId}`);
+      if (priceEl) {
+        this.deletePrices(typeId);
+      }
+
+      const artworkEl = document.getElementById(`wrap-artworks-${typeId}`);
+      if (artworkEl) {
+        this.deleteArtwork(typeId);
+      }
+
+      // 5) Render after delete.
+      if (imagesOnlyOfType.length > 0) {
+        this.renderImages(imagesOnlyOfType, typeVariation);
+      }
+
+      if (itemsOnlyOfType.length > 0) {
+        this.renderItems(itemsOnlyOfType, typeVariation);
+      }
+
+      if (pricesOnlyOfType.length > 0) {
+        this.renderPrices(pricesOnlyOfType, typeVariation);
+      }
+
+      if (artworksOnlyOfType.length > 0) {
+        this.renderArtwork(artworksOnlyOfType, typeVariation);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in organizeCurrentVariation:", error);
+      return false;
+    }
   }
 
   /* ============================================================================
