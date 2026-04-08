@@ -15,7 +15,7 @@ class Variation {
   private $group_name;
   private $name_pdf_artwork;
   private ?int $type_id = null;
-
+  private $price_display_mode;
 
 
   // ===== Constructor =====
@@ -60,7 +60,10 @@ class Variation {
   public function setSKUVariation(?string $v)      { $v = trim((string)$v); $this->sku_variation  = ($v === '') ? null : $v; }
   public function setImage(?string $v)    { $v = trim((string)$v); $this->image = ($v === '') ? null : $v; }
   public function setPdfArtwork(?string $v){ $v = trim((string)$v); $this->pdf_artwork = ($v === '') ? null : $v; }
-
+  public function setPriceDisplayMode(?string $v): void{
+      $v = trim((string)$v);
+      $this->price_display_mode = in_array($v, ['prices', 'variation'], true) ? $v : 'prices';
+  }
 
   public function getVariationChildrenById(): array
   {
@@ -320,6 +323,49 @@ class Variation {
       return ['success' => false, 'error' => 'DB error'];
     }
   }
+
+
+  public function getPriceDisplayModeBySkuVariation(): array
+  {
+      $targetSku = trim((string)($this->sku_variation ?? ''));
+
+      if ($targetSku === '') {
+          return ['success' => false, 'error' => 'sku_variation required'];
+      }
+
+      try {
+          $pdo = $this->connection->getConnection();
+
+          $stmt = $pdo->prepare("
+              SELECT variation_id, price_display_mode
+              FROM variations
+              WHERE LOWER(SKU) = LOWER(:sku_variation)
+              LIMIT 1
+          ");
+          $stmt->execute([
+              ':sku_variation' => $targetSku
+          ]);
+
+          $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+          if (!$row) {
+              return ['success' => false, 'error' => 'Variation not found'];
+          }
+
+          return [
+              'success'            => true,
+              'variation_id'       => (int)$row['variation_id'],
+              'price_display_mode' => !empty($row['price_display_mode']) ? $row['price_display_mode'] : 'prices'
+          ];
+
+      } catch (PDOException $e) {
+          error_log('getPriceDisplayModeBySkuVariation error: ' . $e->getMessage());
+          return ['success' => false, 'error' => 'DB error'];
+      }
+  }
+
+
+
   public function getDetailsCurrentVariationById(): array
   {
     // 1) Get the current variation_id from the object.
@@ -428,6 +474,66 @@ class Variation {
       error_log('getDetailsCurrentVariationById: ' . $e->getMessage());
       return ['success' => false, 'error' => 'DB error'];
     }
+  }
+  public function updatePriceDisplayMode(): array
+  {
+      $variationId = (int)($this->variation_id ?? 0);
+      $targetSku = trim((string)($this->sku_variation ?? ''));
+      $priceDisplayMode = trim((string)($this->price_display_mode ?? ''));
+
+      if (!in_array($priceDisplayMode, ['prices', 'variation'], true)) {
+          $priceDisplayMode = 'prices';
+      }
+
+      try {
+          $pdo = $this->connection->getConnection();
+
+          // 1) If variation_id is missing, resolve it from sku_variation
+          if ($variationId <= 0) {
+              if ($targetSku === '') {
+                  return ['success' => false, 'error' => 'variation_id or sku_variation required'];
+              }
+
+              $stmt = $pdo->prepare("
+                  SELECT variation_id
+                  FROM variations
+                  WHERE LOWER(SKU) = LOWER(:sku_variation)
+                  LIMIT 1
+              ");
+              $stmt->execute([
+                  ':sku_variation' => $targetSku
+              ]);
+
+              $row = $stmt->fetch(PDO::FETCH_ASSOC);
+              if (!$row) {
+                  return ['success' => false, 'error' => 'Variation not found by sku_variation'];
+              }
+
+              $variationId = (int)$row['variation_id'];
+          }
+
+          // 2) Update the global mode
+          $stmt = $pdo->prepare("
+              UPDATE variations
+              SET price_display_mode = :price_display_mode
+              WHERE variation_id = :variation_id
+          ");
+
+          $stmt->execute([
+              ':price_display_mode' => $priceDisplayMode,
+              ':variation_id'       => $variationId
+          ]);
+
+          return [
+              'success'            => true,
+              'variation_id'       => $variationId,
+              'price_display_mode' => $priceDisplayMode
+          ];
+
+      } catch (PDOException $e) {
+          error_log('updatePriceDisplayMode error: ' . $e->getMessage());
+          return ['success' => false, 'error' => 'DB error'];
+      }
   }
   public function getTypeVariationsChildByVariationId(): array
   {

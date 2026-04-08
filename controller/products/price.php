@@ -83,28 +83,40 @@ class Price {
    * Fetch prices for a given variation SKU
    * -----------------------------------------------------
    */
-  private function getPricesDetails($data): void
-  {
-      $connection = new Database();
-      $price = new Prices($connection); // modelo Prices
+   private function getPricesDetails($data): void
+   {
+       header('Content-Type: application/json; charset=utf-8');
 
-      $skuVariation = $data['sku_variation'] ?? null;
-      if (!$skuVariation) {
-          header('Content-Type: application/json; charset=utf-8');
-          echo json_encode(["success" => false, "error" => "Missing sku_variation"]);
-          return;
-      }
+       $connection = new Database();
+       $price = new Prices($connection);
+       $variation = new Variation($connection);
 
-      $price->setSKUVariation($skuVariation);
-      $prices = $price->getPricesBySKUVariation();
+       $skuVariation = $data['sku_variation'] ?? null;
+       if (!$skuVariation) {
+           echo json_encode([
+               "success" => false,
+               "error"   => "Missing sku_variation"
+           ]);
+           return;
+       }
 
-      header('Content-Type: application/json; charset=utf-8');
-      echo json_encode([
-          "success" => true,
-          "prices"  => $prices
-      ]);
-  }
+       $price->setSKUVariation($skuVariation);
+       $prices = $price->getPricesBySKUVariation();
 
+       $variation->setSKUVariation($skuVariation);
+       $modeResult = $variation->getPriceDisplayModeBySkuVariation();
+
+       $priceDisplayMode = "prices";
+       if (!empty($modeResult['success'])) {
+           $priceDisplayMode = $modeResult['price_display_mode'] ?? 'prices';
+       }
+
+       echo json_encode([
+           "success"            => true,
+           "prices"             => $prices,
+           "price_display_mode" => $priceDisplayMode
+       ]);
+   }
   /**
    * -----------------------------------------------------
    * Create/replace prices for a given variation
@@ -112,119 +124,124 @@ class Price {
    * - Inserta filas válidas (price no-null); min/max pueden ser null
    * -----------------------------------------------------
    */
-  private function savePrices($data): void
-  {
-      header('Content-Type: application/json; charset=utf-8');
+   private function savePrices($data): void
+   {
+       header('Content-Type: application/json; charset=utf-8');
 
-      // 1) Conexión y modelo
-      $connection = new Database();
-      $price = new Prices($connection);
+       // 1) Connection and models
+       $connection = new Database();
+       $price = new Prices($connection);
+       $variation = new Variation($connection);
 
-      // 2) Lectura de datos
-      $skuVariation = $data["sku_variation"] ?? null;
-      if (!$skuVariation) {
-          echo json_encode([
-              "success" => false,
-              "error"   => "Falta el SKU de la variación (sku_variation)"
-          ]);
-          return;
-      }
+       // 2) Read incoming data
+       $skuVariation = $data["sku_variation"] ?? null;
+       if (!$skuVariation) {
+           echo json_encode([
+               "success" => false,
+               "error"   => "Falta el SKU de la variación (sku_variation)"
+           ]);
+           return;
+       }
 
-      $ids     = isset($data["ids"])      && is_array($data["ids"])      ? $data["ids"]      : [];
-      $mins    = isset($data["min_qty"])  && is_array($data["min_qty"])  ? $data["min_qty"]  : [];
-      $maxs    = isset($data["max_qty"])  && is_array($data["max_qty"])  ? $data["max_qty"]  : [];
-      $pricesA = isset($data["prices"])   && is_array($data["prices"])   ? $data["prices"]   : [];
+       $ids     = isset($data["ids"])      && is_array($data["ids"])      ? $data["ids"]      : [];
+       $mins    = isset($data["min_qty"])  && is_array($data["min_qty"])  ? $data["min_qty"]  : [];
+       $maxs    = isset($data["max_qty"])  && is_array($data["max_qty"])  ? $data["max_qty"]  : [];
+       $pricesA = isset($data["prices"])   && is_array($data["prices"])   ? $data["prices"]   : [];
 
-      // 3) Eliminar TODOS los precios previos de esa variación
-      $price->setSKUVariation($skuVariation);
-      $price->deletePricesBySkuVariation();
+       $price_display_mode = isset($data["price_display_mode"])
+           ? trim((string)$data["price_display_mode"])
+           : "prices";
 
-      // 4) Si no hay filas, devolver success = true (estado vacío es válido)
-      if (empty($mins) && empty($maxs) && empty($pricesA)) {
-          // Opcional: puedes devolver también el dropdown actualizado
-          $price->setSKU($data["sku"] ?? null);
-          $variations = $price->getVariationsBySKUProduct();
+       // 3) Save the global mode FIRST
+       $variation->setSKUVariation($skuVariation);
+       $variation->setPriceDisplayMode($price_display_mode);
 
-          echo json_encode([
-              "success"    => true,
-              "insertados" => 0,
-              "fallidos"   => 0,
-              "errores"    => [],
-              "variations" => $variations,
-              "prices"     => []
-          ]);
-          return;
-      }
+       $modeResult = $variation->updatePriceDisplayMode();
+       if (empty($modeResult['success'])) {
+           echo json_encode([
+               "success" => false,
+               "error"   => $modeResult['error'] ?? 'Could not update price_display_mode'
+           ]);
+           return;
+       }
 
-      // 5) Insertar nuevas filas (se usa el mínimo de longitudes para evitar desbordes)
-      $total = min(count($mins), count($maxs), count($pricesA));
-      $insertados = 0;
-      $errores = [];
+       // 4) Delete all previous prices for this variation
+       $price->setSKUVariation($skuVariation);
+       $price->deletePricesBySkuVariation();
 
-      for ($i = 0; $i < $total; $i++) {
-          // Normaliza valores
-          $minq  = $mins[$i]    ?? null;
-          $maxq  = $maxs[$i]    ?? null;
-          $prc   = $pricesA[$i] ?? null;
+       // 5) If there are no rows, this is still valid
+       if (empty($mins) && empty($maxs) && empty($pricesA)) {
+           echo json_encode([
+               "success"            => true,
+               "insertados"         => 0,
+               "fallidos"           => 0,
+               "errores"            => [],
+               "prices"             => [],
+               "price_display_mode" => $price_display_mode
+           ]);
+           return;
+       }
 
-          $minq  = ($minq === '' || $minq === null) ? null : (int)$minq;
-          $maxq  = ($maxq === '' || $maxq === null) ? null : (int)$maxq;
-          $prc   = ($prc  === '' || $prc  === null) ? null : (float)$prc;
+       // 6) Insert rows
+       $total = min(count($mins), count($maxs), count($pricesA));
+       $insertados = 0;
+       $errores = [];
 
-          // Regla mínima: price requerido (el front ya valida, aquí reforzamos)
-          if ($prc === null) {
-              // saltar fila vacía / sin precio
-              continue;
-          }
+       for ($i = 0; $i < $total; $i++) {
+           $minq = $mins[$i] ?? null;
+           $maxq = $maxs[$i] ?? null;
+           $prc  = $pricesA[$i] ?? null;
 
-          // Validación ligera (si ambos existen)
-          if ($minq !== null && $maxq !== null && $maxq < $minq) {
-              $errores[] = [
-                  "index" => $i,
-                  "min"   => $minq,
-                  "max"   => $maxq,
-                  "price" => $prc,
-                  "msg"   => "max_quantity < min_quantity"
-              ];
-              continue;
-          }
+           $minq = ($minq === '' || $minq === null) ? null : (int)$minq;
+           $maxq = ($maxq === '' || $maxq === null) ? null : (int)$maxq;
+           $prc  = ($prc  === '' || $prc  === null) ? null : (float)$prc;
 
-          // Setters del modelo
-          $price->setMinQuantity($minq);
-          $price->setMaxQuantity($maxq);
-          $price->setPrice($prc);
+           if ($prc === null) {
+               continue;
+           }
 
-          // Inserta
-          $ok = $price->savePrice();
-          if ($ok) $insertados++;
-          else {
-              $errores[] = [
-                  "index" => $i,
-                  "min"   => $minq,
-                  "max"   => $maxq,
-                  "price" => $prc,
-                  "msg"   => "No se pudo insertar la fila"
-              ];
-          }
-      }
+           if ($minq !== null && $maxq !== null && $maxq < $minq) {
+               $errores[] = [
+                   "index" => $i,
+                   "min"   => $minq,
+                   "max"   => $maxq,
+                   "price" => $prc,
+                   "msg"   => "max_quantity < min_quantity"
+               ];
+               continue;
+           }
 
-      // 6) Recuperar datos actualizados
-      $price->setSKU($data["sku"] ?? null);
-      $variations = $price->getVariationsBySKUProduct();
+           $price->setMinQuantity($minq);
+           $price->setMaxQuantity($maxq);
+           $price->setPrice($prc);
 
-      $price->setSKUVariation($skuVariation);
-      $rows = $price->getPricesBySKUVariation();
+           $ok = $price->savePrice();
+           if ($ok) {
+               $insertados++;
+           } else {
+               $errores[] = [
+                   "index" => $i,
+                   "min"   => $minq,
+                   "max"   => $maxq,
+                   "price" => $prc,
+                   "msg"   => "No se pudo insertar la fila"
+               ];
+           }
+       }
 
-      // 7) Respuesta final
-      echo json_encode([
-          "success"     => true,
-          "insertados"  => $insertados,
-          "fallidos"    => count($errores),
-          "errores"     => $errores,
-          "variations"  => $variations,
-          "prices"      => $rows
-      ]);
-  }
+       // 7) Get updated rows
+       $price->setSKUVariation($skuVariation);
+       $rows = $price->getPricesBySKUVariation();
+
+       echo json_encode([
+           "success"            => true,
+           "insertados"         => $insertados,
+           "fallidos"           => count($errores),
+           "errores"            => $errores,
+           "prices"             => $rows,
+           "price_display_mode" => $price_display_mode
+       ]);
+   }
 }
 
 // ------------------------------------------------------
@@ -232,6 +249,7 @@ class Price {
 // ------------------------------------------------------
 include_once "../../controller/config/database.php";
 include_once "../../model/prices.php"; // modelo correcto
+include_once "../../model/variations.php"; // modelo correcto
 
 $priceClass = new Price(); // controlador en singular
 if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) {
