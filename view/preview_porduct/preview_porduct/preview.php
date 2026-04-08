@@ -93,7 +93,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
 
         <!-- VARIATIONS -->
-        <section id="wrap-variations-group" class="sp-variations js-fade-up wrap-variations-group" aria-label="Product configuration">
+        <section class="sp-variations js-fade-up wrap-variations-group" aria-label="Product configuration">
 
           <!-- <div class="wrap-variations" aria-labelledby="var_label_size_1">
             <div class="var-label">
@@ -190,7 +190,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
       </section>
 
       <!-- VARIATIONS BOTTOM -->
-      <section class="sp-variations-bottom js-fade-up" aria-label="More configuration options"></section>
+      <section id="wrap-variations-group"  class="sp-variations-bottom js-fade-up" aria-label="More configuration options"></section>
 
       <!-- ===============================================================
         PACK SIZE
