@@ -1,8 +1,8 @@
 <?php
-// Rutas absolutas (seguras)
+// Absolute paths (safe)
 $base = realpath(__DIR__ . '/../../view/prices/prices/');
 
-// Si existen los archivos, crea un hash del contenido; si no, usa time()
+// If the files exist, create a hash from the content; otherwise use time()
 $cssPath = $base . '/prices.css';
 $jsPath  = $base . '/prices.js';
 
@@ -29,8 +29,13 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath) : time();
             <button class="btn btn-ghost" id="menu_btn" type="button" aria-haspopup="true" aria-expanded="false">
               Select variation ▾
             </button>
-            <ul id="menu_list" class="cp-menu-list" hidden
-                style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:240px; max-height:260px; overflow:auto;">
+
+            <ul
+              id="menu_list"
+              class="cp-menu-list"
+              hidden
+              style="position:absolute; right:0; top:110%; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:240px; max-height:260px; overflow:auto;"
+            >
               <li>Loading…</li>
             </ul>
           </div>
@@ -44,14 +49,34 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath) : time();
       <h2 id="cp-pr-title">Prices</h2>
     </header>
 
-    <!-- Formulario principal -->
+    <!-- Main form -->
     <form id="variationPricesForm" class="cp-form" autocomplete="off" novalidate>
+      <div class="cp-field cp-field-full">
+        <label class="cp-inline-label" id="display_in_label">Show in</label>
+
+        <div class="cp-display-switch" role="radiogroup" aria-labelledby="display_in_label">
+          <label class="cp-radio-card">
+            <input type="radio" name="display_in" value="prices" checked>
+            <span>Prices</span>
+          </label>
+
+          <label class="cp-radio-card">
+            <input type="radio" name="display_in" value="variation">
+            <span>Variation</span>
+          </label>
+        </div>
+
+        <small class="cp-hint">
+          This option applies to the whole selected variation.
+        </small>
+      </div>
+
       <div class="cp-field cp-field-full">
         <div class="cp-actions">
           <button type="button" class="btn" id="add_price">+ Add price</button>
         </div>
 
-        <!-- Lista dinámica de filas de precios -->
+        <!-- Dynamic list of price rows -->
         <div id="prices_list" class="cp-list cp-list-onecol" aria-live="polite" aria-relevant="additions removals"></div>
 
         <small class="cp-hint">
@@ -63,6 +88,7 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath) : time();
 
   <div class="cp-footer">
     <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
+
     <div class="cp-footer-actions">
       <button class="btn btn-primary" type="submit" id="save_prices" form="variationPricesForm">Save</button>
       <button class="btn" id="next_prices" type="button">Save & Next</button>
