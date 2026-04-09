@@ -488,9 +488,11 @@ video{
     transform .2s ease,
     filter .2s ease,
     background .2s ease;
-  display: flex;
-  align-items: centre;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
   color: #1f2937;
 }
 
@@ -501,16 +503,73 @@ video{
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid #e5e7eb;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+}
+
+.var-option .opt-copy{
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  grid-column: 2;
+}
+
+.var-option .opt-main,
+.var-option .opt-sub,
+.var-option .opt-price-extra{
+  min-width: 0;
+}
+
+.var-option > .opt-main,
+.var-option > .opt-sub,
+.var-option > .opt-price-extra{
+  grid-column: 2;
+}
+
+.var-option > .opt-main{
+  grid-row: 1;
+}
+
+.var-option > .opt-sub{
+  grid-row: 2;
+}
+
+.var-option > .opt-price-extra{
+  grid-row: 3;
 }
 
 .var-option .opt-main{
   display: block;
+  font-weight: 600;
+  line-height: 1.15;
 }
 
 .var-option .opt-sub{
   display: block;
   font-size: .94rem;
+  line-height: 1.15;
   color: var(--muted);
+}
+
+.var-option .opt-price-extra{
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: .82rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: .01em;
+  color: var(--accent-hover);
+}
+
+.var-option.has-price-extra{
+  border-radius: 22px;
+  padding-block: 11px;
 }
 
 .sp-packsize .var-option .opt-main{
@@ -526,6 +585,28 @@ video{
   opacity: .55;
 }
 
+.sp-packsize .var-option{
+  min-width: 150px;
+  display: block;
+}
+
+.sp-packsize .opt-price-extra{
+  display: none !important;
+}
+
+.sp-packsize .opt-sub{
+  font-size: .9rem;
+}
+
+.sp-variations-bottom .var-option{
+  text-align: right;
+  justify-items: end;
+}
+
+.sp-variations-bottom .var-option .opt-copy{
+  align-items: flex-end;
+}
+
 .var-option:hover{
   transform: translateY(-2px);
   background: #f9fafb;
@@ -537,6 +618,11 @@ video{
   background: #f3f4f6;
   border-color: #9ca3af;
   box-shadow: 0 0 0 1px rgba(156, 163, 175, .22);
+}
+
+.var-option.is-selected .opt-price-extra{
+  background: rgba(255, 138, 61, .18);
+  color: #cf661d;
 }
 
 /* =============================================================================

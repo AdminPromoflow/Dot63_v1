@@ -93,6 +93,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
 
         <!-- VARIATIONS -->
+        <!-- VARIATIONS -->
         <section class="sp-variations js-fade-up wrap-variations-group" aria-label="Product configuration">
 
           <!-- <div class="wrap-variations" aria-labelledby="var_label_size_1">
@@ -101,36 +102,54 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
               <strong id="var_label_size_1">20mm</strong>
             </div>
 
-            <div class="var-options" >
+            <div class="var-options">
 
-              <button type="button" class="var-option js-scale-in">
+              <button type="button" class="var-option js-scale-in has-price-extra">
                 <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg" alt="Slim lanyard sample">
-                <span class="opt-main">10mm</span>
+                <span class="opt-copy">
+                  <span class="opt-main">10mm</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
               </button>
 
-              <button type="button" class="var-option js-scale-in">
+              <button type="button" class="var-option js-scale-in has-price-extra">
                 <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/40/Red_lanyard.jpg" alt="Narrow lanyard sample">
-                <span class="opt-main">15mm</span>
+                <span class="opt-copy">
+                  <span class="opt-main">15mm</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
               </button>
 
-              <button type="button" class="var-option is-selected js-scale-in">
+              <button type="button" class="var-option is-selected js-scale-in has-price-extra">
                 <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Lanyard_mit_Logo_bedruckt.jpg" alt="Standard 20mm printed lanyard">
-                <span class="opt-main">20mm</span>
+                <span class="opt-copy">
+                  <span class="opt-main">20mm</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
               </button>
 
-              <button type="button" class="var-option js-scale-in">
+              <button type="button" class="var-option js-scale-in has-price-extra">
                 <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg" alt="Wide strap lanyard">
-                <span class="opt-main">25mm</span>
+                <span class="opt-copy">
+                  <span class="opt-main">25mm</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
               </button>
 
-              <button type="button" class="var-option js-scale-in">
+              <button type="button" class="var-option js-scale-in has-price-extra">
                 <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/40/Red_lanyard.jpg" alt="Extra wide lanyard">
-                <span class="opt-main">30mm</span>
+                <span class="opt-copy">
+                  <span class="opt-main">30mm</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
               </button>
 
-              <button type="button" class="var-option js-scale-in">
+              <button type="button" class="var-option js-scale-in has-price-extra">
                 <img class="var-thumb" src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Lanyard_mit_Logo_bedruckt.jpg" alt="Oversized sponsor lanyard">
-                <span class="opt-main">35mm</span>
+                <span class="opt-copy">
+                  <span class="opt-main">35mm</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
               </button>
 
             </div>
@@ -147,9 +166,12 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
                 <span class="opt-main">Double sided</span>
               </button>
 
-              <button type="button" class="var-option js-scale-in">
-                <span class="opt-main">Single sided</span>
-                <span class="opt-sub">Budget option</span>
+              <button type="button" class="var-option js-scale-in has-price-extra">
+                <span class="opt-copy">
+                  <span class="opt-main">Single sided</span>
+                  <span class="opt-sub">Budget option</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
               </button>
             </div>
           </div>
@@ -162,31 +184,44 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
             <div class="var-options">
 
-                <button type="button" class="var-option is-selected js-scale-in">
-                  <span class="opt-main">Double sided</span>
-                </button>
+              <button type="button" class="var-option is-selected js-scale-in">
+                <span class="opt-main">Swivel hook</span>
+              </button>
 
-                <button type="button" class="var-option js-scale-in">
-                  <span class="opt-main">Single sided</span>
-                </button>
-                <button type="button" class="var-option  js-scale-in">
-                  <span class="opt-main">Double sided</span>
-                </button>
+              <button type="button" class="var-option js-scale-in has-price-extra">
+                <span class="opt-copy">
+                  <span class="opt-main">Bulldog clip</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
+              </button>
 
-                <button type="button" class="var-option js-scale-in">
-                  <span class="opt-main">Single sided</span>
-                </button>
-                <button type="button" class="var-option  js-scale-in">
-                  <span class="opt-main">Double sided</span>
-                </button>
+              <button type="button" class="var-option js-scale-in has-price-extra">
+                <span class="opt-copy">
+                  <span class="opt-main">Metal lobster clip</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
+              </button>
 
-                <button type="button" class="var-option js-scale-in">
-                  <span class="opt-main">Single sided</span>
-                </button>
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">Trigger clip</span>
+              </button>
+
+              <button type="button" class="var-option js-scale-in has-price-extra">
+                <span class="opt-copy">
+                  <span class="opt-main">Crocodile clip</span>
+                  <span class="opt-price-extra">+0.2 p/u</span>
+                </span>
+              </button>
+
+              <button type="button" class="var-option js-scale-in">
+                <span class="opt-main">Standard clip</span>
+              </button>
             </div>
           </div> -->
 
         </section>
+
+
       </section>
 
       <!-- VARIATIONS BOTTOM -->
