@@ -198,6 +198,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeCurrentVariation(currentVariationData = {}) {
+    alert(JSON.stringify(currentVariationData));
     try {
       const variation = currentVariationData?.variation ?? null;
       if (!variation) return false;
