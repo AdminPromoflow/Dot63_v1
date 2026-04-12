@@ -453,7 +453,7 @@ video{
   display: flex;
   gap: 6px;
   align-items: flex-start;
-  
+  justify-content: flex-start;
   font-size: 1rem;
   font-weight: 560;
   flex-wrap: wrap;
