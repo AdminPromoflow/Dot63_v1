@@ -452,7 +452,8 @@ video{
 .var-label{
   display: flex;
   gap: 6px;
-  align-items: baseline;
+  align-items: flex-start;
+  
   font-size: 1rem;
   font-weight: 560;
   flex-wrap: wrap;
