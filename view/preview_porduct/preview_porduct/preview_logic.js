@@ -17,14 +17,6 @@ class PreviewLogic {
 
     // Store the currently selected price payload.
     this.priceSelected = null;
-
-    // const preview_media = document.getElementById("preview-media");
-
-    // const sp_nav_next = document.getElementById("sp-nav-next");
-    //
-    // sp_nav_next.addEventListener("click", function () {
-    //   // alert("ahy juemadre");
-    // });
   }
 
   /* ============================================================================
@@ -724,6 +716,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
+    alert(JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
