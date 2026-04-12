@@ -656,18 +656,9 @@ class PreviewLogic {
   ============================================================================ */
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
-    // alert("ay" + JSON.stringify(imagesOnlyOfType));
-
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
-
-    // alert(
-    //   "5. Este alert es dentro de render Images y vamos bien " +
-    //   JSON.stringify(imagesOnlyOfType) +
-    //   "   " +
-    //   JSON.stringify(typeVariation)
-    // );
 
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
@@ -687,12 +678,15 @@ class PreviewLogic {
 
     wrapper.innerHTML = "";
 
+    const defaultSrc = "../../view/preview_porduct/img/icon_product.png";
+
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
       const imgObj = imagesOnlyOfType[i];
 
-      if (Number(imgObj.variation_id) !== id_variation) continue;
+      if (Number(imgObj?.variation_id) !== id_variation) continue;
 
       const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
+
       const src = rawLink
         ? (
             rawLink.startsWith("http") ||
@@ -703,16 +697,18 @@ class PreviewLogic {
                   ? "../../" + rawLink
                   : "../../controller/" + rawLink)
           )
-        : "";
-
-      if (!src) continue;
+        : defaultSrc;
 
       const img = document.createElement("img");
       img.className = "preview-media";
-      img.src = src;
+      img.src = src || defaultSrc;
       img.alt = `Preview image ${i + 1}`;
       img.loading = "lazy";
       img.decoding = "async";
+
+      img.onerror = function () {
+        this.src = defaultSrc;
+      };
 
       wrapper.appendChild(img);
     }
