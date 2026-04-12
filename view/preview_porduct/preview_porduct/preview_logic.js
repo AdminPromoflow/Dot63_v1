@@ -100,7 +100,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        //console.log("2. " + text);
+        console.log("2. " + text);
 
         const json = JSON.parse(text);
 
