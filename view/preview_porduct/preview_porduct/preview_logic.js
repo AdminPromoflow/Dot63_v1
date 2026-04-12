@@ -100,7 +100,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        console.log("2. " + text);
+        //console.log("2. " + text);
 
         const json = JSON.parse(text);
 
@@ -717,7 +717,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    //alert(JSON.stringify(pricesOnlyOfType));
+    alert(JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
