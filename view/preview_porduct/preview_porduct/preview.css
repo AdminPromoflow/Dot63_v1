@@ -609,7 +609,7 @@ video{
 }
 
 .sp-variations-bottom .var-option .opt-copy{
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .var-option:hover{
