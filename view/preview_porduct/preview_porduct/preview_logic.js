@@ -109,6 +109,8 @@ class PreviewLogic {
         const variationTypesForDelete = json.variationTypesForDelete || [];
         const currentVariationData = json.currentVariationData || {};
 
+        alert("current" + JSON.stringify(currentVariationData));
+
         const currentTypeId = variationTypesForDelete?.[0]?.type_id ?? null;
 
         if (variationTypesForDelete?.length > 0) {
