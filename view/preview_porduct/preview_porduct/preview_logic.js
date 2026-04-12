@@ -390,7 +390,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
-  //  alert(JSON.stringify(childVariations));
+    alert(JSON.stringify(childVariations));
     if (!Array.isArray(childVariations) || childVariations.length === 0) return;
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
