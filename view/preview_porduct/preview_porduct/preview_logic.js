@@ -100,7 +100,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        console.log("2. " + text);
+        //console.log("2. " + text);
 
         const json = JSON.parse(text);
 
@@ -389,7 +389,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
-    alert(JSON.stringify(childVariations));
+  //  alert(JSON.stringify(childVariations));
     if (!Array.isArray(childVariations) || childVariations.length === 0) return;
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
@@ -482,7 +482,7 @@ class PreviewLogic {
 
   renderVariations(childVariationsOfType = [], typeVariation) {
     try {
-      alert(JSON.stringify(childVariationsOfType));
+    //  alert(JSON.stringify(childVariationsOfType));
 
       const parent = document.getElementById("wrap-variations-group");
       if (!parent) return false;

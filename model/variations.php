@@ -109,9 +109,11 @@ class Variation {
           variations.name,
           variations.SKU,
           variations.image,
+          variations.price_display_mode,
           variations.parent_id,
           variations.product_id,
           variations.type_id
+
         FROM variations
         WHERE variations.parent_id = :parent_id
         ORDER BY variations.variation_id ASC
