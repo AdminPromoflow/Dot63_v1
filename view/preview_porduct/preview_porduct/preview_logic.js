@@ -277,6 +277,7 @@ class PreviewLogic {
       if (artworkEl) {
         this.deleteArtwork(typeId);
       }
+      alert("acá se recorre de una forma rara");
 
       // Render the current grouped content after the delete step.
       if (imagesOnlyOfType.length > 0) {
