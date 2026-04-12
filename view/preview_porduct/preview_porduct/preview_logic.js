@@ -719,8 +719,6 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-
-  //  alert("vamos bien" +   JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
@@ -744,19 +742,20 @@ class PreviewLogic {
     wrapper.innerHTML = "";
 
     for (let i = 0; i < pricesOnlyOfType.length; i++) {
-
       const p = pricesOnlyOfType[i];
-      //if (p.price_display_mode !== "prices")continue;
 
+      // Si este precio no pertenece a la variación seleccionada, lo saltamos
       if (Number(p?.variation_id) !== id_variation) continue;
-      alert(JSON.stringify(p));
 
+      // Solo dibujamos si el modo es "prices"
+      if (String(p?.price_display_mode ?? "").trim() !== "prices") continue;
 
       const priceId = String(p?.price_id ?? "").trim();
       const minQty = String(p?.min_quantity ?? "").trim();
       const maxQty = String(p?.max_quantity ?? "").trim();
       const price = String(p?.price ?? "").trim();
 
+      // Si no tiene cantidad máxima, no se dibuja
       if (maxQty === "") continue;
 
       const button = document.createElement("button");
@@ -767,14 +766,14 @@ class PreviewLogic {
       button.dataset.minQuantity = minQty;
       button.dataset.maxQuantity = maxQty;
       button.dataset.price = price;
+      button.dataset.variationId = String(p?.variation_id ?? "");
+      button.dataset.priceDisplayMode = String(p?.price_display_mode ?? "");
 
       button.innerHTML = `
         <span class="opt-main">${maxQty}</span>
       `;
 
       wrapper.appendChild(button);
-
-
     }
 
     this.bindPriceButtons(`#${wrapId}`);
