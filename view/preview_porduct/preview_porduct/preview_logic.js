@@ -235,12 +235,13 @@ class PreviewLogic {
           }))
         : [];
 
-      const pricesOnlyOfType = Array.isArray(currentVariationData?.prices)
-        ? currentVariationData.prices.map((price) => ({
-            ...price,
-            variation_id: variationId
-          }))
-        : [];
+        const pricesOnlyOfType = Array.isArray(currentVariationData?.prices)
+          ? currentVariationData.prices.map((price) => ({
+              ...price,
+              variation_id: variationId,
+              price_display_mode: variation?.price_display_mode ?? null
+            }))
+          : [];
 
       const artworksOnlyOfType = [];
       const artwork = currentVariationData?.artwork ?? null;
@@ -390,7 +391,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
-    alert("voy a llorar pero siguiendo");
+  //  alert("voy a llorar pero siguiendo");
     //alert("Por acá es" + JSON.stringify(childVariations));
     if (!Array.isArray(childVariations) || childVariations.length === 0) return;
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
@@ -720,7 +721,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    alert("Acá se muestran dos cosas diferentes" + JSON.stringify(pricesOnlyOfType));
+    alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
