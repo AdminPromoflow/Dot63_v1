@@ -481,7 +481,7 @@ class PreviewLogic {
 
   renderVariations(childVariationsOfType = [], typeVariation) {
     try {
-      // alert("4. Este alert es dentro de renderVariations" + JSON.stringify(childVariationsOfType) + "   " + JSON.stringify(typeVariation));
+      alert(JSON.stringify(childVariationsOfType));
 
       const parent = document.getElementById("wrap-variations-group");
       if (!parent) return false;
@@ -716,7 +716,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    alert(JSON.stringify(pricesOnlyOfType));
+    //alert(JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
