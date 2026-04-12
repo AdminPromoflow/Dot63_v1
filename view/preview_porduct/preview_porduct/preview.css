@@ -605,7 +605,7 @@ video{
 }
 
 .sp-variations-bottom .var-option{
-  text-align: left;
+  text-align: right;
 }
 
 .sp-variations-bottom .var-option .opt-copy{
@@ -773,7 +773,7 @@ video{
   border-top: 1px solid #e5e7eb;
   display: grid;
   gap: 18px;
-  justify-items: end;
+  justify-items: start;
 }
 
 .sp-variations-bottom .var-label,
