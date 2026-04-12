@@ -719,7 +719,8 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    alert("vamos bien" + JSON.stringify(pricesOnlyOfType));
+
+    alert("vamos bien" +   JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
@@ -743,7 +744,9 @@ class PreviewLogic {
     wrapper.innerHTML = "";
 
     for (let i = 0; i < pricesOnlyOfType.length; i++) {
+
       const p = pricesOnlyOfType[i];
+      if (p.price_display_mode == "prices") {
 
       if (Number(p?.variation_id) !== id_variation) continue;
 
@@ -768,6 +771,8 @@ class PreviewLogic {
       `;
 
       wrapper.appendChild(button);
+    }
+
     }
 
     this.bindPriceButtons(`#${wrapId}`);
