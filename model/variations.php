@@ -394,6 +394,7 @@ class Variation {
           variations.type_id,
           variations.pdf_artwork,
           variations.name_pdf_artwork,
+          variations.price_display_mode,
           type_variations.type_name
         FROM variations
         LEFT JOIN type_variations
