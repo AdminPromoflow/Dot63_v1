@@ -746,10 +746,11 @@ class PreviewLogic {
     for (let i = 0; i < pricesOnlyOfType.length; i++) {
 
       const p = pricesOnlyOfType[i];
-      if (p.price_display_mode == "prices")continue;
-      alert(JSON.stringify(p));
+      if (p.price_display_mode !== "prices")continue;
 
       if (Number(p?.variation_id) !== id_variation) continue;
+      alert(JSON.stringify(p));
+
 
       const priceId = String(p?.price_id ?? "").trim();
       const minQty = String(p?.min_quantity ?? "").trim();
