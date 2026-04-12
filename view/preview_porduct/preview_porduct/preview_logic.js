@@ -390,7 +390,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
-    alert("Por acá es" + JSON.stringify(childVariations));
+    //alert("Por acá es" + JSON.stringify(childVariations));
     if (!Array.isArray(childVariations) || childVariations.length === 0) return;
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
@@ -436,6 +436,7 @@ class PreviewLogic {
             ...row.prices.map((price) => ({
               ...price,
               variation_id: variation?.variation_id ?? null,
+              price_display_mode: variation?.price_display_mode ?? null,
             }))
           );
         }
@@ -718,7 +719,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    alert(JSON.stringify(pricesOnlyOfType));
+    alert("vamos bien" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
