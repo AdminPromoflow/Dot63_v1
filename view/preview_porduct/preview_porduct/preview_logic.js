@@ -526,7 +526,7 @@ class PreviewLogic {
                     ? "../../" + rawImg
                     : "../../controller/" + rawImg)
             )
-          : "https://upload.wikimedia.org/wikipedia/commons/6/6d/Various_lanyards.jpg";
+          : "../../view/preview_porduct/img/icon_product.png";
 
         const label = String(v?.name ?? "");
         const selectedClass = (i === 0) ? " is-selected" : "";
@@ -656,9 +656,18 @@ class PreviewLogic {
   ============================================================================ */
 
   renderImages(imagesOnlyOfType = [], typeVariation) {
+    // alert("ay" + JSON.stringify(imagesOnlyOfType));
+
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
+
+    // alert(
+    //   "5. Este alert es dentro de render Images y vamos bien " +
+    //   JSON.stringify(imagesOnlyOfType) +
+    //   "   " +
+    //   JSON.stringify(typeVariation)
+    // );
 
     const parent = document.getElementById("wrap-images-group");
     if (!parent) return;
@@ -678,15 +687,12 @@ class PreviewLogic {
 
     wrapper.innerHTML = "";
 
-    const defaultSrc = "../../view/preview_porduct/img/icon_product.png";
-
     for (let i = 0; i < imagesOnlyOfType.length; i++) {
       const imgObj = imagesOnlyOfType[i];
 
-      if (Number(imgObj?.variation_id) !== id_variation) continue;
+      if (Number(imgObj.variation_id) !== id_variation) continue;
 
       const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
-
       const src = rawLink
         ? (
             rawLink.startsWith("http") ||
@@ -697,18 +703,16 @@ class PreviewLogic {
                   ? "../../" + rawLink
                   : "../../controller/" + rawLink)
           )
-        : defaultSrc;
+        : "";
+
+      if (!src) continue;
 
       const img = document.createElement("img");
       img.className = "preview-media";
-      img.src = src || defaultSrc;
+      img.src = src;
       img.alt = `Preview image ${i + 1}`;
       img.loading = "lazy";
       img.decoding = "async";
-
-      img.onerror = function () {
-        this.src = defaultSrc;
-      };
 
       wrapper.appendChild(img);
     }
@@ -719,7 +723,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
+    //alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
