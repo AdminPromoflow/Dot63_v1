@@ -454,6 +454,7 @@ video{
   gap: 6px;
   align-items: flex-start;
   justify-content: flex-start;
+  text-align: left;
   font-size: 1rem;
   font-weight: 560;
   flex-wrap: wrap;
@@ -779,12 +780,12 @@ video{
 
 .sp-variations-bottom .var-label,
 .sp-variations-bottom .var-options{
-  justify-content: flex-end;
-  text-align: right;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .sp-variations-bottom .var-option{
-  text-align: right;
+  text-align: left;
 }
 
 /* Pack size */
