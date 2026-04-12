@@ -746,6 +746,7 @@ class PreviewLogic {
     for (let i = 0; i < pricesOnlyOfType.length; i++) {
 
       const p = pricesOnlyOfType[i];
+      alert(p.price_display_mode);
       if (p.price_display_mode == "prices") {
 
       if (Number(p?.variation_id) !== id_variation) continue;
