@@ -198,7 +198,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeCurrentVariation(currentVariationData = {}) {
-    alert(JSON.stringify(currentVariationData));
+    //alert(JSON.stringify(currentVariationData));
     try {
       const variation = currentVariationData?.variation ?? null;
       if (!variation) return false;
@@ -720,7 +720,7 @@ class PreviewLogic {
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
 
-    alert("vamos bien" +   JSON.stringify(pricesOnlyOfType));
+  //  alert("vamos bien" +   JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
