@@ -26,6 +26,13 @@ class Product {
   }
   private function getVariationPrices($data){
     echo json_encode($data);
+
+    $connection = new Database();
+    $variation = new Variation($connection);
+
+    foreach ($data["ids"] as $ids) {
+      $variation ->setIdVariation($ids);
+    }
   }
   private function getVariationChildrenById($data){
     $connection = new Database();
