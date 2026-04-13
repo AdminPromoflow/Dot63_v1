@@ -134,6 +134,7 @@ class PreviewLogic {
          childVariations.length == null ||
          childVariations.length === 0
        ) {
+         alert("ay ");
          this.updateVariationPrices();
        }
 
