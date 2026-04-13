@@ -811,7 +811,6 @@ class PreviewLogic {
   }
 
   selectPriceButton(button, scope = null) {
-    //alert(JSON.stringify(scope));
     if (!button) return false;
 
     const container = scope || button.closest(".wrap-price");
@@ -834,10 +833,11 @@ class PreviewLogic {
       price: String(button.dataset.price ?? ""),
       value: String(button.value ?? ""),
     };
-    alert(payload["max_quantity"]);
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
+
+    this.updateVariationPrices(payload["max_quantity"]);
 
     return true;
   }
@@ -845,6 +845,21 @@ class PreviewLogic {
   setSelectedPrice(payload = null) {
     this.priceSelected = payload;
   }
+
+
+
+  updateVariationPrices(max_quantity){
+    const variationsWithPrices = document.querySelectorAll("var-option");
+
+    const ids = Array.from(variationsWithPrices).map((button) =>
+      Number(button.id.replace("variation_id_", ""))
+    );
+
+    alert(ids);
+  }
+
+
+
 
   getSelectedPrice() {
     return this.priceSelected;
