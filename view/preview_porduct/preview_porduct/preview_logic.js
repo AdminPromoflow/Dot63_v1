@@ -126,9 +126,11 @@ class PreviewLogic {
         if (childVariations.length && variationTypes.length) {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
-        else {
-          this.updateVariationPrices();
-        }
+
+        alert(childVariations.length );
+        // else {
+        //   this.updateVariationPrices();
+        // }
 
 
         loader.hide();
