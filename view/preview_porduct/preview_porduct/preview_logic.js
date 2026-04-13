@@ -811,7 +811,7 @@ class PreviewLogic {
   }
 
   selectPriceButton(button, scope = null) {
-    alert(JSON.stringify(scope));
+    //alert(JSON.stringify(scope));
     if (!button) return false;
 
     const container = scope || button.closest(".wrap-price");
@@ -834,6 +834,7 @@ class PreviewLogic {
       price: String(button.dataset.price ?? ""),
       value: String(button.value ?? ""),
     };
+    alert(JSON.stringify(payload));
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
