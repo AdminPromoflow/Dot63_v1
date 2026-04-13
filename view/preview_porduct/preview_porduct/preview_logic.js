@@ -811,6 +811,7 @@ class PreviewLogic {
   }
 
   selectPriceButton(button, scope = null) {
+    alert(JSON.stringify(button));
     if (!button) return false;
 
     const container = scope || button.closest(".wrap-price");
