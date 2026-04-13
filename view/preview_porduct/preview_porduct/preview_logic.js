@@ -127,10 +127,10 @@ class PreviewLogic {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
 
-        alert(childVariations.length );
-        // else {
-        //   this.updateVariationPrices();
-        // }
+        if (childVariations.length == "undefined" || childVariations.length == ""
+        || childVariations.length == null || childVariations.length == 0) {
+          this.updateVariationPrices();
+        }
 
 
         loader.hide();
