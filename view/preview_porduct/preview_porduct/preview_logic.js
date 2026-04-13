@@ -838,7 +838,7 @@ class PreviewLogic {
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
-
+    this.updateVariationPrices();
 
     return true;
   }
