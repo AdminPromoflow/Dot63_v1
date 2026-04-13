@@ -34,10 +34,16 @@ class Prices {
   public function setPrice($v)                     { $v = ($v === '' || $v === null) ? null : (float)$v; $this->price = $v; }
   public function setVariationId($v)               { $v = is_numeric($v)? (int)$v : null; $this->variation_id = $v; }
 
-
   public function getPricesByIdVariation()
   {
-      if (!$this->variation_id || $this->max_quantity === null) {
+      $variationId = (int)($this->variation_id ?? 0);
+      $quantity    = $this->max_quantity;
+
+      if ($variationId <= 0 || $quantity === null) {
+          return null;
+      }
+
+      if (!$this->variationExists($variationId)) {
           return null;
       }
 
@@ -54,8 +60,8 @@ class Prices {
           ");
 
           $stmt->execute([
-              ':variation_id' => $this->variation_id,
-              ':quantity' => $this->max_quantity
+              ':variation_id' => $variationId,
+              ':quantity' => $quantity
           ]);
 
           $result = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -71,6 +77,31 @@ class Prices {
           return null;
       }
   }
+  private function variationExists($variationId): bool
+  {
+      try {
+          $pdo = $this->connection->getConnection();
+
+          $stmt = $pdo->prepare("
+              SELECT variation_id
+              FROM variations
+              WHERE variation_id = :variation_id
+              LIMIT 1
+          ");
+
+          $stmt->execute([
+              ':variation_id' => $variationId
+          ]);
+
+          return (bool)$stmt->fetch(\PDO::FETCH_ASSOC);
+
+      } catch (\PDOException $e) {
+          error_log('variationExists: ' . $e->getMessage());
+          return false;
+      }
+  }
+
+
   // -----------------------------------------------------
   // Variations by product SKU (for the dropdown)  ← DEJAR IGUAL
   // -----------------------------------------------------
