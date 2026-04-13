@@ -895,7 +895,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        this.drawExtraVariationPrices(text);
+        previewLogic.drawExtraVariationPrices(text);
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
