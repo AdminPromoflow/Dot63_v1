@@ -12,6 +12,9 @@ class PreviewLogic {
     // Store the currently selected variation button id.
     this.variationSelected;
 
+    this.max_quantity;
+
+
     // Flag used to determine whether grouped content should be removed first.
     this.shouldDeleteItems = false;
 
@@ -846,8 +849,8 @@ class PreviewLogic {
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
-    // this.setMaxQuantity(payload["max_quantity"]);
-    // this.updateVariationPrices();
+     this.setMaxQuantity(payload["max_quantity"]);
+     this.updateVariationPrices();
 
     return true;
   }
