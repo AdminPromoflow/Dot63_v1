@@ -866,7 +866,6 @@ class PreviewLogic {
 
 
   updateVariationPrices(){
-    alert("entramos pero pasa algo raro!");
     const variationsWithPrices = document.querySelectorAll(".var-option");
 
     const ids = Array.from(variationsWithPrices).map((button) =>

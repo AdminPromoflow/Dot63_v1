@@ -25,7 +25,7 @@ class Product {
     }
   }
   private function getVariationPrices($data){
-    echo json_encode($data);
+    echo json_encode($data);exit;
 
     $connection = new Database();
     $variation = new Variation($connection);
