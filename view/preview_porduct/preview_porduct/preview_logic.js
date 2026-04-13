@@ -735,7 +735,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
+    //alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
