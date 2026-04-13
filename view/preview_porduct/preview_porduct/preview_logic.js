@@ -935,7 +935,7 @@ class PreviewLogic {
         variation_id = "variation_id_" + data[i]["variation_id"];
         html_button = document.getElementById(variation_id);
       //  alert(variation_id);
-        html_button.innerHTML = '<span class="opt-price-extra">+0.2 p/u</span>';
+        html_button.innerHTML += '<span class="opt-price-extra">+0.2 p/u</span>';
     //  }
 
     }
