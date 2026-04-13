@@ -13,13 +13,20 @@ class Product {
       case 'get_variation_children_by_id':
         $this->getVariationChildrenById($data);
         break;
+
+        case 'get_variation_prices':
+          $this->getVariationPrices($data);
+          break;
+
       default:
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['response' => false, 'error' => 'Unsupported action']);
         break;
     }
   }
-
+  private function getVariationPrices($data){
+    echo json_encode($data);
+  }
   private function getVariationChildrenById($data){
     $connection = new Database();
     $variation = new Variation($connection);
