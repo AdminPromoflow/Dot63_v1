@@ -926,6 +926,7 @@ class PreviewLogic {
     window.previewGallery?.updatePrice?.(button);
   }
   drawExtraVariationPrices(data) {
+    alert(JSON.stringify(data));
     if (!data?.success || !Array.isArray(data.prices)) return;
 
     data.prices.forEach((item) => {
