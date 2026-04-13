@@ -129,9 +129,13 @@ class PreviewLogic {
 
        alert(childVariations.length);
 
-      if (!Array.isArray(childVariations) || childVariations.length === 0) {
-        this.updateVariationPrices();
-      }
+       if (
+         childVariations == null ||
+         childVariations.length == null ||
+         childVariations.length === 0
+       ) {
+         this.updateVariationPrices();
+       }
 
 
         loader.hide();
