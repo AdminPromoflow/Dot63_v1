@@ -45,7 +45,9 @@ class Prices {
           $pdo = $this->connection->getConnection();
 
           $stmt = $pdo->prepare("
-              SELECT p.price
+              SELECT
+                  p.price,
+                  v.price_display_mode
               FROM prices p
               INNER JOIN variations v ON v.variation_id = p.variation_id
               WHERE p.variation_id = :variation_id
@@ -62,7 +64,10 @@ class Prices {
 
           $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-          return $result ? (float)$result['price'] : null;
+          return $result ? [
+              'price' => (float)$result['price'],
+              'price_display_mode' => $result['price_display_mode']
+          ] : null;
 
       } catch (\PDOException $e) {
           error_log('getPricesByIdVariation: ' . $e->getMessage());
