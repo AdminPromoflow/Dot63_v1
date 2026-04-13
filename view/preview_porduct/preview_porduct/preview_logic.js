@@ -135,7 +135,7 @@ class PreviewLogic {
          childVariations.length == null ||
          childVariations.length === 0
        ) {
-         this.updateVariationPrices();
+         //this.updateVariationPrices();
        }
 
 
@@ -845,6 +845,9 @@ class PreviewLogic {
       price: String(button.dataset.price ?? ""),
       value: String(button.value ?? ""),
     };
+
+    this.setMaxQuantity(payload["max_quantity"]);
+
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
