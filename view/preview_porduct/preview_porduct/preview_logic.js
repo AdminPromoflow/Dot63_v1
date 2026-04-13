@@ -127,8 +127,7 @@ class PreviewLogic {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
 
-        if (childVariations.length == "undefined" || childVariations.length == ""
-        || childVariations.length == null || childVariations.length == 0) {
+        if (!Array.isArray(childVariations) || childVariations.length === 0) {
           this.updateVariationPrices();
         }
 
