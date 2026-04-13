@@ -127,14 +127,12 @@ class PreviewLogic {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
 
-       alert(childVariations.length);
 
        if (
          childVariations == null ||
          childVariations.length == null ||
          childVariations.length === 0
        ) {
-         alert("ay ");
          this.updateVariationPrices();
        }
 
@@ -868,6 +866,7 @@ class PreviewLogic {
 
 
   updateVariationPrices(){
+    alert("entramos pero pasa algo raro!");
     const variationsWithPrices = document.querySelectorAll(".var-option");
 
     const ids = Array.from(variationsWithPrices).map((button) =>
