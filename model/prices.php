@@ -34,16 +34,10 @@ class Prices {
   public function setPrice($v)                     { $v = ($v === '' || $v === null) ? null : (float)$v; $this->price = $v; }
   public function setVariationId($v)               { $v = is_numeric($v)? (int)$v : null; $this->variation_id = $v; }
 
+
   public function getPricesByIdVariation()
   {
-      $variationId = (int)($this->variation_id ?? 0);
-      $quantity    = $this->max_quantity;
-
-      if ($variationId <= 0 || $quantity === null) {
-          return null;
-      }
-
-      if (!$this->variationExists($variationId)) {
+      if (!$this->variation_id || $this->max_quantity === null) {
           return null;
       }
 
@@ -51,57 +45,30 @@ class Prices {
           $pdo = $this->connection->getConnection();
 
           $stmt = $pdo->prepare("
-              SELECT price
-              FROM prices
-              WHERE variation_id = :variation_id
-                AND :quantity BETWEEN min_quantity AND max_quantity
-                AND price IS NOT NULL
+              SELECT p.price
+              FROM prices p
+              INNER JOIN variation v ON v.variation_id = p.variation_id
+              WHERE p.variation_id = :variation_id
+                AND :quantity BETWEEN p.min_quantity AND p.max_quantity
+                AND v.price_display_mode = :price_display_mode
               LIMIT 1
           ");
 
           $stmt->execute([
-              ':variation_id' => $variationId,
-              ':quantity' => $quantity
+              ':variation_id' => $this->variation_id,
+              ':quantity' => $this->max_quantity,
+              ':price_display_mode' => 'variation'
           ]);
 
           $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-          if (!$result) {
-              return null;
-          }
-
-          return (float)$result['price'];
+          return $result ? (float)$result['price'] : null;
 
       } catch (\PDOException $e) {
           error_log('getPricesByIdVariation: ' . $e->getMessage());
           return null;
       }
   }
-  private function variationExists($variationId): bool
-  {
-      try {
-          $pdo = $this->connection->getConnection();
-
-          $stmt = $pdo->prepare("
-              SELECT variation_id
-              FROM prices
-              WHERE variation_id = :variation_id
-              LIMIT 1
-          ");
-
-          $stmt->execute([
-              ':variation_id' => $variationId
-          ]);
-
-          return (bool)$stmt->fetch(\PDO::FETCH_ASSOC);
-
-      } catch (\PDOException $e) {
-          error_log('variationExists: ' . $e->getMessage());
-          return false;
-      }
-  }
-
-
   // -----------------------------------------------------
   // Variations by product SKU (for the dropdown)  ← DEJAR IGUAL
   // -----------------------------------------------------
