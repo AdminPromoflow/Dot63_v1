@@ -127,6 +127,8 @@ class PreviewLogic {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
 
+        this.updateVariationPrices();
+
         loader.hide();
       })
       .catch((error) => {
@@ -847,14 +849,22 @@ class PreviewLogic {
   }
 
 
+  setMaxQuantity(max_quantity){
+    this.max_quantity = max_quantity;
+  }
+  getMaxQuantity(){
+    return this.max_quantity;
+  }
 
-  updateVariationPrices(max_quantity){
+
+  updateVariationPrices(){
     const variationsWithPrices = document.querySelectorAll(".var-option");
 
     const ids = Array.from(variationsWithPrices).map((button) =>
       Number(button.id.replace("variation_id_", ""))
     );
-
+    const max_quantity = this.getMaxQuantity();
+    alert(max_quantity);
     alert(ids);
   }
 
