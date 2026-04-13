@@ -873,7 +873,7 @@ class PreviewLogic {
     );
     const max_quantity = this.getMaxQuantity();
 
-
+    alert("Bueno" + max_quantity);
     const url = "../../controller/order/product.php";
     const data = {
       action: "get_variation_prices",
