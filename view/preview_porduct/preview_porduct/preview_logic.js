@@ -930,16 +930,18 @@ class PreviewLogic {
     //alert(JSON.stringify(data));
     var variation_id;
     var html_button;
-    const elemento;
+    let elemento;
     for (var i = 0; i < data.length; i++) {
       //if (data[i]["price_display_mode"] == "variation") {
         variation_id = "variation_id_" + data[i]["variation_id"];
         html_button = document.getElementById(variation_id);
       //  alert(variation_id);
-       elemento = html_button.querySelector(".opt-price-extra");
-      elemento.remove();
+        elemento = html_button.querySelector(".opt-price-extra");
+        if (elemento) {
+          elemento.remove();
+        }
         html_button.innerHTML += '<span class="opt-price-extra">+0.2 p/u</span>';
-    //  }
+      //  }
 
     }
 
