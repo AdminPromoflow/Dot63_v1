@@ -60,7 +60,11 @@ class Prices {
 
           $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-          return $result ? (float)$result['price'] : null;
+          if (!$result) {
+              return null;
+          }
+
+          return (float)$result['price'];
 
       } catch (\PDOException $e) {
           error_log('getPricesByIdVariation: ' . $e->getMessage());
