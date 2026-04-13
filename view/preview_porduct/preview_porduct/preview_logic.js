@@ -135,7 +135,7 @@ class PreviewLogic {
          childVariations.length == null ||
          childVariations.length === 0
        ) {
-         //this.updateVariationPrices();
+         this.updateVariationPrices();
        }
 
 
