@@ -838,6 +838,7 @@ class PreviewLogic {
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
+    this.setMaxQuantity(payload["max_quantity"]);
     this.updateVariationPrices();
 
     return true;
