@@ -891,7 +891,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert(text);
+      //  alert(text);
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
