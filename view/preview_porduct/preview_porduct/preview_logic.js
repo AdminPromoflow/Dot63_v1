@@ -735,7 +735,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    //alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
+    alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
@@ -846,8 +846,8 @@ class PreviewLogic {
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
-    this.setMaxQuantity(payload["max_quantity"]);
-    this.updateVariationPrices();
+    // this.setMaxQuantity(payload["max_quantity"]);
+    // this.updateVariationPrices();
 
     return true;
   }
