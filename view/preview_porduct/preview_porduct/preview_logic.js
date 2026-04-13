@@ -543,7 +543,7 @@ class PreviewLogic {
           >
             <img class="var-thumb" src="${imgSrc}" alt="Option sample">
             <span class="opt-main">${label}</span>
-            <span class="opt-price-extra">+0.2 p/u</span>
+            <!-- <span class="opt-price-extra">+0.2 p/u</span> -->
 
           </button>
         `;
