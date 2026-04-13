@@ -84,7 +84,7 @@ class Prices {
 
           $stmt = $pdo->prepare("
               SELECT variation_id
-              FROM variations
+              FROM prices
               WHERE variation_id = :variation_id
               LIMIT 1
           ");
