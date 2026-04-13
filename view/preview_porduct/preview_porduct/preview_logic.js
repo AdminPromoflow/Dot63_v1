@@ -12,6 +12,8 @@ class PreviewLogic {
     // Store the currently selected variation button id.
     this.variationSelected;
 
+    this.max_quantity;
+
     // Flag used to determine whether grouped content should be removed first.
     this.shouldDeleteItems = false;
 
