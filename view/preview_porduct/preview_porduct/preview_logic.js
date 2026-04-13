@@ -128,7 +128,7 @@ class PreviewLogic {
         }
 
 
-       if (
+       else if (
          childVariations == null ||
          childVariations.length == null ||
          childVariations.length === 0
