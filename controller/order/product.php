@@ -32,12 +32,20 @@ class Product {
       $arrayPrices = [];
 
       foreach ($data["ids"] as $id) {
+          $id = (int)$id;
+
+          if ($id <= 0) {
+              continue;
+          }
+
           $prices->setVariationId($id);
           $prices->setMaxQuantity($data["max_quantity"]);
 
+          $price = $prices->getPricesByIdVariation();
+
           $arrayPrices[] = [
-              'variation_id' => (int)$id,
-              'price' => $prices->getPricesByIdVariation()
+              'variation_id' => $id,
+              'price' => $price
           ];
       }
 
