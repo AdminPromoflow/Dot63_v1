@@ -849,7 +849,7 @@ class PreviewLogic {
 
 
   updateVariationPrices(max_quantity){
-    const variationsWithPrices = document.querySelectorAll("var-option");
+    const variationsWithPrices = document.querySelectorAll(".var-option");
 
     const ids = Array.from(variationsWithPrices).map((button) =>
       Number(button.id.replace("variation_id_", ""))
