@@ -846,9 +846,6 @@ class PreviewLogic {
       value: String(button.value ?? ""),
     };
 
-    this.setMaxQuantity(payload["max_quantity"]);
-
-
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
     this.setMaxQuantity(payload["max_quantity"]);
@@ -878,6 +875,7 @@ class PreviewLogic {
     );
     const max_quantity = this.getMaxQuantity();
 
+    alert("Bueno" + max_quantity);
     const url = "../../controller/order/product.php";
     const data = {
       action: "get_variation_prices",
