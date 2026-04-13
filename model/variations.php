@@ -18,6 +18,7 @@ class Variation {
   private $price_display_mode;
 
 
+
   // ===== Constructor =====
   public function __construct($connection) { $this->connection = $connection; }
 
@@ -64,6 +65,8 @@ class Variation {
       $v = trim((string)$v);
       $this->price_display_mode = in_array($v, ['prices', 'variation'], true) ? $v : 'prices';
   }
+
+
 
   public function getVariationChildrenById(): array
   {

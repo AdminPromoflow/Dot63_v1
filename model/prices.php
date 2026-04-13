@@ -34,6 +34,38 @@ class Prices {
   public function setPrice($v)                     { $v = ($v === '' || $v === null) ? null : (float)$v; $this->price = $v; }
   public function setVariationId($v)               { $v = is_numeric($v)? (int)$v : null; $this->variation_id = $v; }
 
+
+  public function getPricesByIdVariation()
+  {
+      if (!$this->variation_id || $this->max_quantity === null) {
+          return null;
+      }
+
+      try {
+          $pdo = $this->connection->getConnection();
+
+          $stmt = $pdo->prepare("
+              SELECT price
+              FROM prices
+              WHERE variation_id = :variation_id
+                AND :quantity BETWEEN min_quantity AND max_quantity
+              LIMIT 1
+          ");
+
+          $stmt->execute([
+              ':variation_id' => $this->variation_id,
+              ':quantity' => $this->max_quantity
+          ]);
+
+          $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+          return $result ? (float)$result['price'] : null;
+
+      } catch (\PDOException $e) {
+          error_log('getPricesByIdVariation: ' . $e->getMessage());
+          return null;
+      }
+  }
   // -----------------------------------------------------
   // Variations by product SKU (for the dropdown)  ← DEJAR IGUAL
   // -----------------------------------------------------

@@ -24,15 +24,27 @@ class Product {
         break;
     }
   }
-  private function getVariationPrices($data){
-    echo json_encode($data);exit;
+  private function getVariationPrices($data)
+  {
+      $connection = new Database();
+      $prices = new Prices($connection);
 
-    $connection = new Database();
-    $variation = new Variation($connection);
+      $arrayPrices = [];
 
-    foreach ($data["ids"] as $ids) {
-      $variation ->setIdVariation($ids);
-    }
+      foreach ($data["ids"] as $id) {
+          $prices->setVariationId($id);
+          $prices->setMaxQuantity($data["max_quantity"]);
+
+          $arrayPrices[] = [
+              'variation_id' => (int)$id,
+              'price' => $prices->getPricesByIdVariation()
+          ];
+      }
+
+      echo json_encode([
+          'success' => true,
+          'prices' => $arrayPrices
+      ]);
   }
   private function getVariationChildrenById($data){
     $connection = new Database();
@@ -102,6 +114,7 @@ include "../../model/products.php";
 include "../../model/users.php";
 include "../../model/categories.php";
 include "../../model/groups.php";
+include "../../model/prices.php";
 include "../../model/variations.php";
 include "../../controller/products/variations.php";
 
