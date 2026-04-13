@@ -927,7 +927,7 @@ class PreviewLogic {
     window.previewGallery?.updatePrice?.(button);
   }
   drawExtraVariationPrices(data) {
-    //alert(JSON.stringify(data));
+    alert(JSON.stringify(data));
     var variation_id;
     var html_button;
     for (var i = 0; i < data.length; i++) {
