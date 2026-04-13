@@ -931,12 +931,12 @@ class PreviewLogic {
     var variation_id;
     var html_button;
     for (var i = 0; i < data.length; i++) {
-      if (data[i]["price_display_mode"] == "variation") {
+      //if (data[i]["price_display_mode"] == "variation") {
         variation_id = "variation_id_" + data[i]["variation_id"];
         html_button = document.getElementById("variation_id");
         alert(variation_id);
         html_button.innerHTML += '<span class="opt-price-extra">+0.2 p/u</span>';
-      }
+    //  }
 
     }
 
