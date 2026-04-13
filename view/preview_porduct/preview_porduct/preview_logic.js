@@ -12,8 +12,6 @@ class PreviewLogic {
     // Store the currently selected variation button id.
     this.variationSelected;
 
-    this.max_quantity
-
     // Flag used to determine whether grouped content should be removed first.
     this.shouldDeleteItems = false;
 
@@ -129,7 +127,7 @@ class PreviewLogic {
           this.organizeVariationsForRender(childVariations, variationTypes);
         }
 
-        alert("pinche max quantity" + this.getMaxQuantity());
+
        if (
          childVariations == null ||
          childVariations.length == null ||
@@ -874,6 +872,7 @@ class PreviewLogic {
       Number(button.id.replace("variation_id_", ""))
     );
     const max_quantity = this.getMaxQuantity();
+
 
     const url = "../../controller/order/product.php";
     const data = {
