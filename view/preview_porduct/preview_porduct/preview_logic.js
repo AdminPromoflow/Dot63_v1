@@ -926,31 +926,38 @@ class PreviewLogic {
     window.previewGallery?.updatePrice?.(button);
   }
   drawExtraVariationPrices(data) {
-    alert(JSON.stringify(data));
-    if (!data?.success || !Array.isArray(data.prices)) return;
-
-    data.prices.forEach((item) => {
-      const variationId = Number(item.variation_id);
-      const price = item.price;
-
-      if (!variationId || price == null) return;
-
-      const button = document.getElementById(`variation_id_${variationId}`);
-      if (!button) return;
-
-      const oldPriceExtra = button.querySelector(".opt-price-extra");
-      if (oldPriceExtra) {
-        oldPriceExtra.remove();
+    try {
+      if (typeof data === "string") {
+        data = JSON.parse(data);
       }
 
-      const optMain = button.querySelector(".opt-main");
-      if (!optMain) return;
+      if (!data?.success || !Array.isArray(data.prices)) return;
 
-      optMain.insertAdjacentHTML(
-        "afterend",
-        `<span class="opt-price-extra">+${price} p/u</span>`
-      );
-    });
+      data.prices.forEach((item) => {
+        const variationId = Number(item.variation_id);
+        const price = item.price;
+
+        if (!variationId || price == null) return;
+
+        const button = document.getElementById(`variation_id_${variationId}`);
+        if (!button) return;
+
+        const oldPriceExtra = button.querySelector(".opt-price-extra");
+        if (oldPriceExtra) {
+          oldPriceExtra.remove();
+        }
+
+        const optMain = button.querySelector(".opt-main");
+        if (!optMain) return;
+
+        optMain.insertAdjacentHTML(
+          "afterend",
+          `<span class="opt-price-extra">+${price} p/u</span>`
+        );
+      });
+    } catch (error) {
+      console.error("Error in drawExtraVariationPrices:", error);
+    }
   }
 
 
