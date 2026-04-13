@@ -47,7 +47,7 @@ class Prices {
           $stmt = $pdo->prepare("
               SELECT p.price
               FROM prices p
-              INNER JOIN variation v ON v.variation_id = p.variation_id
+              INNER JOIN variations v ON v.variation_id = p.variation_id
               WHERE p.variation_id = :variation_id
                 AND :quantity BETWEEN p.min_quantity AND p.max_quantity
                 AND v.price_display_mode = :price_display_mode
