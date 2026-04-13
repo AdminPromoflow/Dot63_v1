@@ -49,6 +49,7 @@ class Prices {
               FROM prices
               WHERE variation_id = :variation_id
                 AND :quantity BETWEEN min_quantity AND max_quantity
+                AND price IS NOT NULL
               LIMIT 1
           ");
 
