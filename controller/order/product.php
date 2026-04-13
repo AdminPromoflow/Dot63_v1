@@ -43,12 +43,15 @@ class Product {
 
           $price = $prices->getPricesByIdVariation();
 
+          if ($price === null) {
+              continue;
+          }
+
           $arrayPrices[] = [
               'variation_id' => $id,
               'price' => $price
           ];
       }
-
       echo json_encode([
           'success' => true,
           'prices' => $arrayPrices
