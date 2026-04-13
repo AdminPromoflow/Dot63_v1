@@ -869,7 +869,7 @@ class PreviewLogic {
     const url = "../../controller/order/product.php";
     const data = {
       action: "get_variation_prices",
-      ids: variation_id,
+      ids: ids,
       max_quantity: max_quantity
     };
 
