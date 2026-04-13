@@ -834,7 +834,7 @@ class PreviewLogic {
       price: String(button.dataset.price ?? ""),
       value: String(button.value ?? ""),
     };
-    alert(JSON.stringify(payload));
+    alert(payload["max_quantity"]);
 
     this.setSelectedPrice(payload);
     this.onPriceSelected(payload, button);
