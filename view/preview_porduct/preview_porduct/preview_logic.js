@@ -895,7 +895,8 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        previewLogic.drawExtraVariationPrices(text);
+        var data = JSON.parse(text);
+        previewLogic.drawExtraVariationPrices(data["prices"]);
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
@@ -926,6 +927,7 @@ class PreviewLogic {
     window.previewGallery?.updatePrice?.(button);
   }
   drawExtraVariationPrices(data) {
+    alert(JSON.stringify(data));
     try {
       if (typeof data === "string") {
         data = JSON.parse(data);
