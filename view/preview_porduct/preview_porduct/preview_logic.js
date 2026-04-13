@@ -930,54 +930,26 @@ class PreviewLogic {
     //alert(JSON.stringify(data));
     var variation_id;
     var html_button;
+    var old_price_extra;
+
     for (var i = 0; i < data.length; i++) {
       //if (data[i]["price_display_mode"] == "variation") {
         variation_id = "variation_id_" + data[i]["variation_id"];
         html_button = document.getElementById(variation_id);
-      //  alert(variation_id);
-        html_button.innerHTML += '<span class="opt-price-extra">+0.2 p/u</span>';
-    //  }
 
-    }
-
-
-
-
-
-
-    try {
-      if (typeof data === "string") {
-        data = JSON.parse(data);
-      }
-
-      if (!data?.success || !Array.isArray(data.prices)) return;
-
-      data.prices.forEach((item) => {
-        const variationId = Number(item.variation_id);
-        const price = item.price;
-
-        if (!variationId || price == null) return;
-
-        const button = document.getElementById(`variation_id_${variationId}`);
-        if (!button) return;
-
-        const oldPriceExtra = button.querySelector(".opt-price-extra");
-        if (oldPriceExtra) {
-          oldPriceExtra.remove();
+        if (!html_button) {
+          continue;
         }
 
-        const optMain = button.querySelector(".opt-main");
-        if (!optMain) return;
+        old_price_extra = html_button.querySelector(".opt-price-extra");
+        if (old_price_extra) {
+          old_price_extra.remove();
+        }
 
-        optMain.insertAdjacentHTML(
-          "afterend",
-          `<span class="opt-price-extra">+${price} p/u</span>`
-        );
-      });
-    } catch (error) {
-      console.error("Error in drawExtraVariationPrices:", error);
+        html_button.innerHTML += '<span class="opt-price-extra">+0.2 p/u</span>';
+      //}
     }
-  }
+  },
 
 
   /* ============================================================================
