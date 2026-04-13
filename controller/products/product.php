@@ -42,13 +42,19 @@ class Product {
         $this->getPreviewProductDetails($data);
         break;
 
-
+      case 'get_variation_prices':
+        $this->getVariationPrices($data);
+        break;
 //
       default:
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['response' => false, 'error' => 'Unsupported action']);
         break;
     }
+  }
+
+  private function getVariationPrices($data){
+    echo json_encode($data);
   }
 
 

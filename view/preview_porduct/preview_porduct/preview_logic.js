@@ -864,8 +864,32 @@ class PreviewLogic {
       Number(button.id.replace("variation_id_", ""))
     );
     const max_quantity = this.getMaxQuantity();
-    alert(max_quantity);
-    alert(ids);
+
+
+    const url = "../../controller/order/product.php";
+    const data = {
+      action: "get_variation_prices",
+      ids: variation_id,
+      max_quantity: max_quantity
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+        alert(text);
+      })
+      .catch((error) => {
+        console.error("Error fetching preview:", error);
+        // alert("Error loading preview data.");
+      });
+
   }
 
 
