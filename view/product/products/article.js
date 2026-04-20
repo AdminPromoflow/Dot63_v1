@@ -34,6 +34,7 @@ class ProductsClass {
       });
   }
   drawProducts(data){
+    alert(JSON.stringify(data));
     articles.innerHTML = "";
     for (var i = 0; i < data.result.length; i++) {
       articles.innerHTML += `
@@ -43,13 +44,23 @@ class ProductsClass {
         <p>Paper Bags</p>
         <p>Large</p>
         <p>£ 0.6</p>
-        <button class="buttom_products" type="button" name="button">Buy</button>
+        <button
+          class="buttom_products"
+          type="button"
+          name="button"
+          onclick="productsClass.buyProduct('${data.result[i].sku}')"
+        >
+          Buy
+        </button>
       </div>
       `
-
-    //  alert(data.result[i].name);
     }
   }
+
+  buyProduct(sku) {
+  alert(sku);
+  }
+
 }
 
 const articles = document.getElementById("articles");

@@ -927,23 +927,23 @@ class PreviewLogic {
     window.previewGallery?.updatePrice?.(button);
   }
   drawExtraVariationPrices(data) {
+  //  alert(JSON.stringify(data));
 
-    var variation_id;
-    var html_button;
-    let elemento;
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
+      const variationId = "variation_id_" + data[i].variation_id;
+      const htmlButton = document.getElementById(variationId);
 
-        variation_id = "variation_id_" + data[i]["variation_id"];
-        html_button = document.getElementById(variation_id);
+      if (!htmlButton) {
+        continue;
+      }
 
-        elemento = html_button.querySelector(".opt-price-extra");
-        if (elemento) {
-          elemento.remove();
-        }
-        html_button.innerHTML += '<span class="opt-price-extra">+0.2 p/u</span>';
+      const existingPrice = htmlButton.querySelector(".opt-price-extra");
+      if (existingPrice) {
+        existingPrice.remove();
+      }
 
+      htmlButton.innerHTML += `<span class="opt-price-extra">+${data[i].price.price} p/u</span>`;
     }
-
   }
 
 
