@@ -390,7 +390,7 @@ class Variations {
         const json = this.safeJsonParse(text);
         if (!json?.success) return;
 
-        alert(JSON.stringify(json.variations) + "  " + JSON.stringify(json.current));
+  //      alert(JSON.stringify(json.variations) + "  " + JSON.stringify(json.current));
 
     //  alert(JSON.stringify(json.variations));
       //  Render page sections (each method does one job)
@@ -412,7 +412,7 @@ class Variations {
      ========================= */
 
      renderTopMenu(variationsRaw, skuVariation) {
-       alert("renderTopMenu" + JSON.stringify(variationsRaw));
+      // alert("renderTopMenu" + JSON.stringify(variationsRaw));
        //console.log(JSON.stringify(variationsRaw));
        if (!this.menuList) return;
 

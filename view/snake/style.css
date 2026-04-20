@@ -1,0 +1,19 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+.body_snake {
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  padding: 1rem;
+  background-color: #fafafa;
+  font-family: 'Poppins', sans-serif;
+}
+
+button {
+  font-family: inherit;
+}

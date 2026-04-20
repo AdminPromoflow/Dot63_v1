@@ -56,7 +56,7 @@ class EmailSender {
         $mail->addAddress($this->recipientEmail, $this->recipientName);
 
         // ===== Asunto =====
-        $mail->Subject = 'Welcome to Lanyards For You';
+        $mail->Subject = 'Welcome ';
 
         // ===== Datos con escape seguro =====
         $name     = htmlspecialchars((string)$this->recipientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
