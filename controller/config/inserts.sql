@@ -1,14 +1,7 @@
 /* =========================================================
-   FULL SQL SCRIPT (UPDATED)
-   - Inserts categories (including Unassigned Category)
-   - Creates "Unassigned Group" for EVERY category
-   - Inserts all product groups by category name
+   INSERT CATEGORIES AND GROUPS
    - approved = 1
-
-   ✅ Update applied:
-   - Removed: "Lanyards & ID"
-   - Added:   "Identification / Credentials"
-   - Groups for this category: ONLY "Lanyards (ID Card)"
+   - Safe inserts
    ========================================================= */
 
 
@@ -16,518 +9,578 @@
    1) CATEGORIES
    ========================= */
 
-/* CATEGORY: Unassigned Category */
-INSERT INTO `categories` (`name`, `approved`) VALUES
-('Unassigned Category', 1);
 
-/* Main categories */
-INSERT INTO `categories`(`name`, `approved`) VALUES
-('Bags', 1),
-('Packaging & Presentation', 1),
-('Tech & USBs', 1),
-('Badges & Accessories', 1),
-('Identification / Credentials', 1),
-('Clothing & Wearables', 1),
-('Office & Stationery', 1),
-('Gift & Seasonal', 1),
-('Custom / Bespoke Projects', 1);
+
+
+INSERT INTO `categories` (`name`, `approved`)
+SELECT x.name, 1
+FROM (
+  SELECT 'Clothing' AS name
+  UNION ALL SELECT 'Bags'
+  UNION ALL SELECT 'Drinkware'
+  UNION ALL SELECT 'Pens & Writing'
+  UNION ALL SELECT 'Technology'
+  UNION ALL SELECT 'Notebooks & Paper Products'
+  UNION ALL SELECT 'Umbrellas'
+  UNION ALL SELECT 'Home & Kitchen'
+  UNION ALL SELECT 'Giveaways'
+  UNION ALL SELECT 'Sports & Leisure'
+  UNION ALL SELECT 'Toys & Games'
+  UNION ALL SELECT 'Tools & Car Accessories'
+  UNION ALL SELECT 'Health & Personal Care'
+  UNION ALL SELECT 'Unassigned Category'
+) x
+LEFT JOIN `categories` c
+  ON c.name = x.name
+WHERE c.category_id IS NULL;
+
 
 
 /* =========================
-   2) DEFAULT GROUP for EACH category
-   (Safe insert: avoids duplicates)
+   2) GROUPS
    ========================= */
+
+
+
 INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT 'Unassigned Group', 1, c.category_id
+SELECT x.group_name, 1, c.category_id
 FROM `categories` c
+JOIN (
+
+
+
+  SELECT 'Clothing' AS category_name, 'Tops - T-shirts' AS group_name
+
+  UNION ALL SELECT 'Bags', 'Unassigned Group'
+  UNION ALL SELECT 'Drinkware', 'Unassigned Group'
+  UNION ALL SELECT 'Pens & Writing', 'Unassigned Group'
+  UNION ALL SELECT 'Technology', 'Unassigned Group'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Unassigned Group'
+  UNION ALL SELECT 'Umbrellas', 'Unassigned Group'
+  UNION ALL SELECT 'Home & Kitchen', 'Unassigned Group'
+  UNION ALL SELECT 'Giveaways', 'Unassigned Group'
+  UNION ALL SELECT 'Sports & Leisure', 'Unassigned Group'
+  UNION ALL SELECT 'Toys & Games', 'Unassigned Group'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Unassigned Group'
+  UNION ALL SELECT 'Health & Personal Care', 'Unassigned Group'
+  UNION ALL SELECT 'Unassigned Category', 'Unassigned Group'
+
+  UNION ALL SELECT 'Clothing', 'Tops - Polos'
+  UNION ALL SELECT 'Clothing', 'Tops - Shirts'
+  UNION ALL SELECT 'Clothing', 'Sweaters & Hoodies - Sweaters'
+  UNION ALL SELECT 'Clothing', 'Sweaters & Hoodies - Hoodies'
+  UNION ALL SELECT 'Clothing', 'Outdoor - Jackets'
+  UNION ALL SELECT 'Clothing', 'Outdoor - Bodywarmers'
+  UNION ALL SELECT 'Clothing', 'Outdoor - Fleece'
+  UNION ALL SELECT 'Clothing', 'Headwear - Caps & Hats'
+  UNION ALL SELECT 'Clothing', 'Headwear - Beanies'
+  UNION ALL SELECT 'Clothing', 'Sports - Tops'
+  UNION ALL SELECT 'Clothing', 'Sports - Caps'
+  UNION ALL SELECT 'Clothing', 'Sports - Activewear'
+  UNION ALL SELECT 'Clothing', 'Sports - Shorts & Trousers'
+  UNION ALL SELECT 'Clothing', 'Sports - Shoes'
+  UNION ALL SELECT 'Clothing', 'Sports - Sets'
+  UNION ALL SELECT 'Clothing', 'Workwear'
+
+  UNION ALL SELECT 'Bags', 'Business Bags - Conference Bags'
+  UNION ALL SELECT 'Bags', 'Business Bags - Messenger & Shoulder Bags'
+  UNION ALL SELECT 'Bags', 'Business Bags - Laptop & Tablet Bags'
+  UNION ALL SELECT 'Bags', 'Backpacks'
+  UNION ALL SELECT 'Bags', 'Backpacks - Laptop Backpacks'
+  UNION ALL SELECT 'Bags', 'Backpacks - Drawstring Bags'
+  UNION ALL SELECT 'Bags', 'Shopping Bags - Shopping & Tote Bags'
+  UNION ALL SELECT 'Bags', 'Shopping Bags - Cotton Bags'
+  UNION ALL SELECT 'Bags', 'Shopping Bags - Jute Bags'
+  UNION ALL SELECT 'Bags', 'Shopping Bags - Paper Bags'
+  UNION ALL SELECT 'Bags', 'Shopping Bags - Foldable Bags'
+  UNION ALL SELECT 'Bags', 'Sports & Leisure - Sport & Gym Bags'
+  UNION ALL SELECT 'Bags', 'Sports & Leisure - Cooler Bags'
+  UNION ALL SELECT 'Bags', 'Travel - Travel Bags'
+  UNION ALL SELECT 'Bags', 'Travel - Trolleys & Suitcases'
+  UNION ALL SELECT 'Bags', 'Travel - Sailor Bags'
+  UNION ALL SELECT 'Bags', 'Travel - Toiletry Bags'
+  UNION ALL SELECT 'Bags', 'Travel - Wallets & Card Wallets'
+  UNION ALL SELECT 'Bags', 'Travel - Travel Accessories'
+
+  UNION ALL SELECT 'Drinkware', 'Bottles - Sports Bottles'
+  UNION ALL SELECT 'Drinkware', 'Bottles - Water Bottles'
+  UNION ALL SELECT 'Drinkware', 'Bottles - Insulated Bottles'
+  UNION ALL SELECT 'Drinkware', 'Bottles - Infuser Bottles'
+  UNION ALL SELECT 'Drinkware', 'Mugs & Tumblers - Standard Mugs'
+  UNION ALL SELECT 'Drinkware', 'Mugs & Tumblers - Travel Mugs'
+  UNION ALL SELECT 'Drinkware', 'Mugs & Tumblers - Insulated Mugs'
+  UNION ALL SELECT 'Drinkware', 'Mugs & Tumblers - Cups'
+  UNION ALL SELECT 'Drinkware', 'Glasses & Carafes - Glasses'
+  UNION ALL SELECT 'Drinkware', 'Gift Sets'
+
+  UNION ALL SELECT 'Pens & Writing', 'Pens - Ballpoint Pens'
+  UNION ALL SELECT 'Pens & Writing', 'Pens - Fountain Pens'
+  UNION ALL SELECT 'Pens & Writing', 'Pens - Rollerball Pens'
+  UNION ALL SELECT 'Pens & Writing', 'Pens - Stylus Pens'
+  UNION ALL SELECT 'Pens & Writing', 'Gift Sets'
+  UNION ALL SELECT 'Pens & Writing', 'Pencils & Writing Accessories - Pencils'
+  UNION ALL SELECT 'Pens & Writing', 'Pencils & Writing Accessories - Colouring Sets'
+  UNION ALL SELECT 'Pens & Writing', 'Pencils & Writing Accessories - Markers'
+  UNION ALL SELECT 'Pens & Writing', 'Pencils & Writing Accessories - Other Pens & Writing Accessories'
+
+  UNION ALL SELECT 'Technology', 'Audio - Speakers'
+  UNION ALL SELECT 'Technology', 'Audio - Earbuds'
+  UNION ALL SELECT 'Technology', 'Audio - Headphones'
+  UNION ALL SELECT 'Technology', 'Charging - Power Banks'
+  UNION ALL SELECT 'Technology', 'Charging - Chargers'
+  UNION ALL SELECT 'Technology', 'Charging - Wireless Charging'
+  UNION ALL SELECT 'Technology', 'USB - USB Flash Drives'
+  UNION ALL SELECT 'Technology', 'USB - USB Hubs'
+  UNION ALL SELECT 'Technology', 'Other Tech - Gadgets'
+  UNION ALL SELECT 'Technology', 'Other Tech - Cameras'
+  UNION ALL SELECT 'Technology', 'Other Tech - Smartwatches'
+  UNION ALL SELECT 'Technology', 'Other Tech - Computer Accessories'
+  UNION ALL SELECT 'Technology', 'Phone & Tablet - Stands & Holders'
+  UNION ALL SELECT 'Technology', 'Phone & Tablet - Cables'
+  UNION ALL SELECT 'Technology', 'Phone & Tablet - Telephone & Tablet Accessories'
+
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Notebooks - Hard Cover Notebooks'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Notebooks - Soft Cover Notebooks'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Notebooks - Portfolios'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Notebooks - Planners'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Notebooks - Sketchbooks'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Paper Products - Memo Blocks'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Paper Products - Sticky Notes'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Paper Products - Notepads'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Paper Products - Desk Pads'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Paper Products - Greeting Cards'
+
+  UNION ALL SELECT 'Umbrellas', 'Umbrellas - Standard Umbrellas'
+  UNION ALL SELECT 'Umbrellas', 'Umbrellas - Golf Umbrellas'
+  UNION ALL SELECT 'Umbrellas', 'Umbrellas - Rain Ponchos'
+  UNION ALL SELECT 'Umbrellas', 'Umbrellas - Storm Umbrellas'
+  UNION ALL SELECT 'Umbrellas', 'Umbrellas - Folding Umbrellas'
+
+  UNION ALL SELECT 'Home & Kitchen', 'Kitchen - Aprons'
+  UNION ALL SELECT 'Home & Kitchen', 'Kitchen - Bottle Openers & Accessories'
+  UNION ALL SELECT 'Home & Kitchen', 'Kitchen - Serving Boards & Sets'
+  UNION ALL SELECT 'Home & Kitchen', 'Kitchen - Lunch Boxes'
+  UNION ALL SELECT 'Home & Kitchen', 'Kitchen - Chef’s Knives'
+  UNION ALL SELECT 'Home & Kitchen', 'Kitchen - Kitchenware'
+  UNION ALL SELECT 'Home & Kitchen', 'Kitchen - Kitchen Linen'
+  UNION ALL SELECT 'Home & Kitchen', 'Home - Home Accessories'
+  UNION ALL SELECT 'Home & Kitchen', 'Home - Blankets'
+  UNION ALL SELECT 'Home & Kitchen', 'Home - Glasses & Carafes'
+  UNION ALL SELECT 'Home & Kitchen', 'Home - Wine Accessories'
+
+  UNION ALL SELECT 'Giveaways', 'Giveaways - Lanyards'
+  UNION ALL SELECT 'Giveaways', 'Giveaways - Wristbands'
+  UNION ALL SELECT 'Giveaways', 'Giveaways - Badge Holders'
+  UNION ALL SELECT 'Giveaways', 'Giveaways - Keychains & Keyrings'
+  UNION ALL SELECT 'Giveaways', 'Giveaways - Stress Balls'
+  UNION ALL SELECT 'Giveaways', 'Giveaways - Sweets'
+
+  UNION ALL SELECT 'Sports & Leisure', 'Leisure - Outdoor Items'
+  UNION ALL SELECT 'Sports & Leisure', 'Leisure - Picnic Accessories'
+  UNION ALL SELECT 'Sports & Leisure', 'Leisure - Travel Accessories'
+  UNION ALL SELECT 'Sports & Leisure', 'Leisure - BBQ Accessories'
+  UNION ALL SELECT 'Sports & Leisure', 'Leisure - Cycling Accessories'
+  UNION ALL SELECT 'Sports & Leisure', 'Leisure - Sunglasses'
+  UNION ALL SELECT 'Sports & Leisure', 'Leisure - Beach Items'
+  UNION ALL SELECT 'Sports & Leisure', 'Sport - Fitness & Sport'
+  UNION ALL SELECT 'Sports & Leisure', 'Sport - Sport Shirts'
+  UNION ALL SELECT 'Sports & Leisure', 'Sport - Activewear'
+
+  UNION ALL SELECT 'Toys & Games', 'Toys - Colouring Sets For Kids'
+  UNION ALL SELECT 'Toys & Games', 'Games - Indoor Games'
+  UNION ALL SELECT 'Toys & Games', 'Games - Outdoor Games'
+
+  UNION ALL SELECT 'Tools & Car Accessories', 'Tools - Lamps'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Tools - Measuring Tapes'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Tools - Multitools'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Tools - Pocket Knives'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Tools - Tool Sets'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Safety & Car - Reflective Items'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Safety & Car - Safety Vests'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Safety & Car - Car Accessories'
+
+  UNION ALL SELECT 'Health & Personal Care', 'Personal Care - Towels'
+  UNION ALL SELECT 'Health & Personal Care', 'Personal Care'
+  UNION ALL SELECT 'Health & Personal Care', 'Personal Care - Toiletry Bags'
+  UNION ALL SELECT 'Health & Personal Care', 'Personal Care - Lip Balms'
+  UNION ALL SELECT 'Health & Personal Care', 'Personal Care - Wellness & Manicure Sets'
+  UNION ALL SELECT 'Health & Personal Care', 'Health - First Aid Kits'
+  UNION ALL SELECT 'Health & Personal Care', 'Health - Protection'
+
+) x
+  ON x.category_name = c.name
 LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = 'Unassigned Group'
+  ON g.category_id = c.category_id
+ AND g.name = x.group_name
 WHERE g.group_id IS NULL;
 
 
+
 /* =========================================================
-   3) GROUPS (product groups) by Category name
+   3) TYPE VARIATIONS / FILTERS
    - Uses existing categories
-   - approved = 1
-   - Safe inserts (avoid duplicates)
+   - Safe inserts
    ========================================================= */
 
-
-/* =========================
-   3.1) Bags
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
+INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
+SELECT x.filter_name, NULL, c.category_id
 FROM `categories` c
 JOIN (
-  SELECT 'Classic Rope Handle Paper Bags' AS name
-  UNION ALL SELECT 'Luxury Rope Handle Paper Bags'
-  UNION ALL SELECT 'Twist Handle Paper Bags'
-  UNION ALL SELECT 'Flat Handle Paper Bags'
-  UNION ALL SELECT 'Gloss Laminated Paper Bags'
-  UNION ALL SELECT 'Matte Laminated Paper Bags'
-  UNION ALL SELECT 'Kraft Paper Bags'
-  UNION ALL SELECT 'Recycled Paper Bags'
-  UNION ALL SELECT 'Euro Tote Paper Bags'
-  UNION ALL SELECT 'Bottle Bags (Paper)'
-  UNION ALL SELECT 'Takeaway / Food Paper Bags'
-  UNION ALL SELECT 'SOS Paper Bags (Block Bottom)'
-  UNION ALL SELECT 'Die-Cut Handle Paper Bags'
-  UNION ALL SELECT 'Gift Paper Bags'
-  UNION ALL SELECT 'Cotton Tote Bags'
-  UNION ALL SELECT 'Canvas Tote Bags'
-  UNION ALL SELECT 'Non-Woven Tote Bags'
-  UNION ALL SELECT 'RPET Tote Bags'
-  UNION ALL SELECT 'Jute / Hessian Bags'
-  UNION ALL SELECT 'Drawstring Bags'
-  UNION ALL SELECT 'Backpacks & Gymsacks'
-  UNION ALL SELECT 'Cooler Bags'
-  UNION ALL SELECT 'Garment Bags'
-  UNION ALL SELECT 'Messenger / Conference Bags'
+
+  SELECT 'Clothing' AS category_name, 'Price' AS filter_name
+  UNION ALL SELECT 'Clothing', 'Colour'
+  UNION ALL SELECT 'Clothing', 'Print technique'
+  UNION ALL SELECT 'Clothing', 'Material'
+  UNION ALL SELECT 'Clothing', 'Environmental certifications'
+  UNION ALL SELECT 'Clothing', 'Social audit'
+  UNION ALL SELECT 'Clothing', 'Impact Index'
+  UNION ALL SELECT 'Clothing', 'Brand'
+  UNION ALL SELECT 'Clothing', 'Theme'
+  UNION ALL SELECT 'Clothing', 'Stock location'
+  UNION ALL SELECT 'Clothing', 'Gender'
+  UNION ALL SELECT 'Clothing', 'Clothing features'
+
+  UNION ALL SELECT 'Bags', 'Price'
+  UNION ALL SELECT 'Bags', 'Colour'
+  UNION ALL SELECT 'Bags', 'Print technique'
+  UNION ALL SELECT 'Bags', 'Material'
+  UNION ALL SELECT 'Bags', 'Environmental certifications'
+  UNION ALL SELECT 'Bags', 'Social audit'
+  UNION ALL SELECT 'Bags', 'Impact Index'
+  UNION ALL SELECT 'Bags', 'Brand'
+  UNION ALL SELECT 'Bags', 'Theme'
+  UNION ALL SELECT 'Bags', 'Stock location'
+  UNION ALL SELECT 'Bags', 'Origin'
+
+  UNION ALL SELECT 'Drinkware', 'Price'
+  UNION ALL SELECT 'Drinkware', 'Colour'
+  UNION ALL SELECT 'Drinkware', 'Print technique'
+  UNION ALL SELECT 'Drinkware', 'Material'
+  UNION ALL SELECT 'Drinkware', 'Environmental certifications'
+  UNION ALL SELECT 'Drinkware', 'Social audit'
+  UNION ALL SELECT 'Drinkware', 'Impact Index'
+  UNION ALL SELECT 'Drinkware', 'Brand'
+  UNION ALL SELECT 'Drinkware', 'Theme'
+  UNION ALL SELECT 'Drinkware', 'Stock location'
+  UNION ALL SELECT 'Drinkware', 'Insulation'
+  UNION ALL SELECT 'Drinkware', 'Dishwasher safe'
+  UNION ALL SELECT 'Drinkware', 'Microwave safe'
+
+  UNION ALL SELECT 'Pens & Writing', 'Price'
+  UNION ALL SELECT 'Pens & Writing', 'Colour'
+  UNION ALL SELECT 'Pens & Writing', 'Print technique'
+  UNION ALL SELECT 'Pens & Writing', 'Material'
+  UNION ALL SELECT 'Pens & Writing', 'Environmental certifications'
+  UNION ALL SELECT 'Pens & Writing', 'Social audit'
+  UNION ALL SELECT 'Pens & Writing', 'Impact Index'
+  UNION ALL SELECT 'Pens & Writing', 'Brand'
+  UNION ALL SELECT 'Pens & Writing', 'Theme'
+  UNION ALL SELECT 'Pens & Writing', 'Stock location'
+  UNION ALL SELECT 'Pens & Writing', 'Paper type'
+  UNION ALL SELECT 'Pens & Writing', 'Pen ink colour'
+  UNION ALL SELECT 'Pens & Writing', 'Cover'
+
+  UNION ALL SELECT 'Technology', 'Price'
+  UNION ALL SELECT 'Technology', 'Colour'
+  UNION ALL SELECT 'Technology', 'Print technique'
+  UNION ALL SELECT 'Technology', 'Material'
+  UNION ALL SELECT 'Technology', 'Environmental certifications'
+  UNION ALL SELECT 'Technology', 'Social audit'
+  UNION ALL SELECT 'Technology', 'Impact Index'
+  UNION ALL SELECT 'Technology', 'Brand'
+  UNION ALL SELECT 'Technology', 'Theme'
+  UNION ALL SELECT 'Technology', 'Stock location'
+  UNION ALL SELECT 'Technology', 'Memory size'
+  UNION ALL SELECT 'Technology', 'Bluetooth'
+  UNION ALL SELECT 'Technology', 'Charging time'
+  UNION ALL SELECT 'Technology', 'Battery duration'
+
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Price'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Colour'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Print technique'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Material'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Environmental certifications'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Social audit'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Impact Index'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Brand'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Theme'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Stock location'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Notebook size'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Paper type'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Cover'
+
+  UNION ALL SELECT 'Umbrellas', 'Price'
+  UNION ALL SELECT 'Umbrellas', 'Colour'
+  UNION ALL SELECT 'Umbrellas', 'Print technique'
+  UNION ALL SELECT 'Umbrellas', 'Material'
+  UNION ALL SELECT 'Umbrellas', 'Social audit'
+  UNION ALL SELECT 'Umbrellas', 'Impact Index'
+  UNION ALL SELECT 'Umbrellas', 'Brand'
+  UNION ALL SELECT 'Umbrellas', 'Theme'
+  UNION ALL SELECT 'Umbrellas', 'Stock location'
+  UNION ALL SELECT 'Umbrellas', 'Opening type'
+
+  UNION ALL SELECT 'Home & Kitchen', 'Price'
+  UNION ALL SELECT 'Home & Kitchen', 'Colour'
+  UNION ALL SELECT 'Home & Kitchen', 'Print technique'
+  UNION ALL SELECT 'Home & Kitchen', 'Material'
+  UNION ALL SELECT 'Home & Kitchen', 'Environmental certifications'
+  UNION ALL SELECT 'Home & Kitchen', 'Social audit'
+  UNION ALL SELECT 'Home & Kitchen', 'Impact Index'
+  UNION ALL SELECT 'Home & Kitchen', 'Brand'
+  UNION ALL SELECT 'Home & Kitchen', 'Theme'
+  UNION ALL SELECT 'Home & Kitchen', 'Stock location'
+  UNION ALL SELECT 'Home & Kitchen', 'Bluetooth'
+  UNION ALL SELECT 'Home & Kitchen', 'Charging time'
+  UNION ALL SELECT 'Home & Kitchen', 'Dishwasher safe'
+  UNION ALL SELECT 'Home & Kitchen', 'Microwave safe'
+
+  UNION ALL SELECT 'Giveaways', 'Price'
+  UNION ALL SELECT 'Giveaways', 'Colour'
+  UNION ALL SELECT 'Giveaways', 'Print technique'
+  UNION ALL SELECT 'Giveaways', 'Material'
+  UNION ALL SELECT 'Giveaways', 'Environmental certifications'
+  UNION ALL SELECT 'Giveaways', 'Social audit'
+  UNION ALL SELECT 'Giveaways', 'Impact Index'
+  UNION ALL SELECT 'Giveaways', 'Brand'
+  UNION ALL SELECT 'Giveaways', 'Theme'
+  UNION ALL SELECT 'Giveaways', 'Stock location'
+  UNION ALL SELECT 'Giveaways', 'Bluetooth'
+
+  UNION ALL SELECT 'Sports & Leisure', 'Price'
+  UNION ALL SELECT 'Sports & Leisure', 'Colour'
+  UNION ALL SELECT 'Sports & Leisure', 'Print technique'
+  UNION ALL SELECT 'Sports & Leisure', 'Material'
+  UNION ALL SELECT 'Sports & Leisure', 'Environmental certifications'
+  UNION ALL SELECT 'Sports & Leisure', 'Social audit'
+  UNION ALL SELECT 'Sports & Leisure', 'Impact Index'
+  UNION ALL SELECT 'Sports & Leisure', 'Brand'
+  UNION ALL SELECT 'Sports & Leisure', 'Theme'
+  UNION ALL SELECT 'Sports & Leisure', 'Stock location'
+  UNION ALL SELECT 'Sports & Leisure', 'Gender'
+  UNION ALL SELECT 'Sports & Leisure', 'Clothing features'
+
+  UNION ALL SELECT 'Toys & Games', 'Price'
+  UNION ALL SELECT 'Toys & Games', 'Colour'
+  UNION ALL SELECT 'Toys & Games', 'Print technique'
+  UNION ALL SELECT 'Toys & Games', 'Material'
+  UNION ALL SELECT 'Toys & Games', 'Social audit'
+  UNION ALL SELECT 'Toys & Games', 'Impact Index'
+  UNION ALL SELECT 'Toys & Games', 'Theme'
+  UNION ALL SELECT 'Toys & Games', 'Stock location'
+
+  UNION ALL SELECT 'Tools & Car Accessories', 'Price'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Colour'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Print technique'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Material'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Environmental certifications'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Social audit'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Impact Index'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Brand'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Theme'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Stock location'
+
+  UNION ALL SELECT 'Health & Personal Care', 'Price'
+  UNION ALL SELECT 'Health & Personal Care', 'Colour'
+  UNION ALL SELECT 'Health & Personal Care', 'Print technique'
+  UNION ALL SELECT 'Health & Personal Care', 'Material'
+  UNION ALL SELECT 'Health & Personal Care', 'Environmental certifications'
+  UNION ALL SELECT 'Health & Personal Care', 'Social audit'
+  UNION ALL SELECT 'Health & Personal Care', 'Impact Index'
+  UNION ALL SELECT 'Health & Personal Care', 'Brand'
+  UNION ALL SELECT 'Health & Personal Care', 'Theme'
+  UNION ALL SELECT 'Health & Personal Care', 'Stock location'
+  UNION ALL SELECT 'Health & Personal Care', 'Battery duration'
+
 ) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Bags' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.2) Packaging & Presentation
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Satin Ribbon' AS name
-  UNION ALL SELECT 'Grosgrain Ribbon'
-  UNION ALL SELECT 'Cotton Ribbon'
-  UNION ALL SELECT 'Printed Ribbon'
-  UNION ALL SELECT 'Gift Wrap Paper'
-  UNION ALL SELECT 'Tissue Paper'
-  UNION ALL SELECT 'Gift Boxes'
-  UNION ALL SELECT 'Rigid Gift Boxes'
-  UNION ALL SELECT 'Folding Cartons'
-  UNION ALL SELECT 'Mailer Boxes'
-  UNION ALL SELECT 'Postal / Mailing Bags'
-  UNION ALL SELECT 'Paper Carrier Trays'
-  UNION ALL SELECT 'Stickers & Labels'
-  UNION ALL SELECT 'Branded Seals / Thank You Stickers'
-  UNION ALL SELECT 'Swing Tags'
-  UNION ALL SELECT 'Product Inserts / Thank You Cards'
-  UNION ALL SELECT 'Wrapping Sleeves / Belly Bands'
-  UNION ALL SELECT 'Bubble Wrap / Protective Packaging'
-  UNION ALL SELECT 'Packing Tape (Printed)'
-  UNION ALL SELECT 'Kraft Paper Roll / Void Fill'
-  UNION ALL SELECT 'Shopping Bag Accessories (Handles / Tags)'
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Packaging & Presentation' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.3) Tech & USBs
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'USB Sticks (Standard)' AS name
-  UNION ALL SELECT 'USB Sticks (Eco / Recycled)'
-  UNION ALL SELECT 'USB Sticks (Wood)'
-  UNION ALL SELECT 'USB Sticks (Metal)'
-  UNION ALL SELECT 'USB Sticks (Card Style)'
-  UNION ALL SELECT 'USB Sticks (Key Style)'
-  UNION ALL SELECT 'Power Banks'
-  UNION ALL SELECT 'Wireless Chargers'
-  UNION ALL SELECT 'Charging Cables (Multi)'
-  UNION ALL SELECT 'Wall Chargers / Plugs'
-  UNION ALL SELECT 'Car Chargers'
-  UNION ALL SELECT 'Earbuds / Headphones'
-  UNION ALL SELECT 'Bluetooth Speakers'
-  UNION ALL SELECT 'Smart Trackers (Key finders)'
-  UNION ALL SELECT 'Webcam Covers'
-  UNION ALL SELECT 'Laptop / Phone Stands'
-  UNION ALL SELECT 'Mouse Mats (Tech)'
-  UNION ALL SELECT 'Screen Cleaners'
-  UNION ALL SELECT 'Phone Holders / Grips'
-  UNION ALL SELECT 'Tech Pouches / Cable Organisers'
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Tech & USBs' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.4) Badges & Accessories
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Button Badges' AS name
-  UNION ALL SELECT 'Metal Pin Badges'
-  UNION ALL SELECT 'Enamel Pin Badges'
-  UNION ALL SELECT 'Name Badges (Plastic)'
-  UNION ALL SELECT 'Name Badges (Metal)'
-  UNION ALL SELECT 'Magnetic Name Badges'
-  UNION ALL SELECT 'Clip Name Badges'
-  UNION ALL SELECT 'Badge Reels (Yo-yo)'
-  UNION ALL SELECT 'Badge Holders (Rigid)'
-  UNION ALL SELECT 'Badge Holders (Soft PVC)'
-  UNION ALL SELECT 'Event Pass Holders'
-  UNION ALL SELECT 'Badge Lanyard Clips'
-  UNION ALL SELECT 'ID Card Clips'
-  UNION ALL SELECT 'Wristbands (Tyvek)'
-  UNION ALL SELECT 'Wristbands (Fabric)'
-  UNION ALL SELECT 'Wristbands (Silicone)'
-  UNION ALL SELECT 'Event Tickets / Vouchers'
-  UNION ALL SELECT 'Keyrings (Standard)'
-  UNION ALL SELECT 'Keyrings (Metal)'
-  UNION ALL SELECT 'Keyrings (Leather)'
-  UNION ALL SELECT 'Keyrings (Eco)'
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Badges & Accessories' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.5) Identification / Credentials
-   (ONLY one main group)
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Lanyards (ID Card)' AS name
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Identification / Credentials' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.6) Clothing & Wearables
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Shoe Laces' AS name
-  UNION ALL SELECT 'Caps & Hats'
-  UNION ALL SELECT 'T-Shirts'
-  UNION ALL SELECT 'Polo Shirts'
-  UNION ALL SELECT 'Hoodies & Sweatshirts'
-  UNION ALL SELECT 'Jackets & Gilets'
-  UNION ALL SELECT 'Hi-Vis / Safety Wear'
-  UNION ALL SELECT 'Aprons'
-  UNION ALL SELECT 'Workwear (General)'
-  UNION ALL SELECT 'Socks'
-  UNION ALL SELECT 'Scarves / Beanies / Gloves'
-  UNION ALL SELECT 'Umbrellas'
-  UNION ALL SELECT 'Tote Aprons / Hospitality Wear'
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Clothing & Wearables' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.7) Office & Stationery
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Notebooks' AS name
-  UNION ALL SELECT 'Journals'
-  UNION ALL SELECT 'Sticky Notes'
-  UNION ALL SELECT 'Notepads'
-  UNION ALL SELECT 'Pens (Plastic)'
-  UNION ALL SELECT 'Pens (Metal)'
-  UNION ALL SELECT 'Eco Pens'
-  UNION ALL SELECT 'Highlighters'
-  UNION ALL SELECT 'Pencil Sets'
-  UNION ALL SELECT 'Desk Calendars'
-  UNION ALL SELECT 'Wall Calendars'
-  UNION ALL SELECT 'Planners / Diaries'
-  UNION ALL SELECT 'Folders / Document Wallets'
-  UNION ALL SELECT 'Presentation Folders'
-  UNION ALL SELECT 'Business Cards'
-  UNION ALL SELECT 'Desk Organisers'
-  UNION ALL SELECT 'Mouse Mats (Office)'
-  UNION ALL SELECT 'Coasters (Office)'
-  UNION ALL SELECT 'Desk Name Plates'
-  UNION ALL SELECT 'Magnets'
-  UNION ALL SELECT 'Clipboards'
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Office & Stationery' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.8) Gift & Seasonal
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Chocolate Advent Calendars' AS name
-  UNION ALL SELECT 'Seasonal Gift Sets'
-  UNION ALL SELECT 'Christmas Hampers'
-  UNION ALL SELECT 'Branded Chocolates / Sweets'
-  UNION ALL SELECT 'Mugs & Drinkware'
-  UNION ALL SELECT 'Water Bottles'
-  UNION ALL SELECT 'Tumblers / Travel Cups'
-  UNION ALL SELECT 'Thermos / Flasks'
-  UNION ALL SELECT 'Key Gift Sets'
-  UNION ALL SELECT 'Eco Gift Sets'
-  UNION ALL SELECT 'Summer Gifts (Outdoor)'
-  UNION ALL SELECT 'Winter Gifts (Warm items)'
-  UNION ALL SELECT 'New Joiner / Onboarding Packs'
-  UNION ALL SELECT 'Employee Appreciation Gifts'
-  UNION ALL SELECT 'Client Thank-You Gifts'
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Gift & Seasonal' AND g.group_id IS NULL;
-
-
-/* =========================
-   3.9) Custom / Bespoke Projects
-   ========================= */
-INSERT INTO `groups` (`name`, `approved`, `category_id`)
-SELECT x.name, 1, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Samples Picking' AS name
-  UNION ALL SELECT 'Kan Samples'
-  UNION ALL SELECT 'Bespoke Orders'
-  UNION ALL SELECT 'Custom Packaging Projects'
-  UNION ALL SELECT 'Custom Event Packs'
-  UNION ALL SELECT 'Custom Welcome Packs'
-  UNION ALL SELECT 'White Label Projects'
-  UNION ALL SELECT 'Offline Only Projects'
-  UNION ALL SELECT 'Works Hamble – Bespoke'
-  UNION ALL SELECT 'Large Volume / Tender Orders'
-  UNION ALL SELECT 'Design Service Requests'
-  UNION ALL SELECT 'Prototypes & Mockups'
-) x
-LEFT JOIN `groups` g
-  ON g.category_id = c.category_id AND g.name = x.name
-WHERE c.name = 'Custom / Bespoke Projects' AND g.group_id IS NULL;
-
-
-
+  ON x.category_name = c.name
+LEFT JOIN `type_variations` tv
+  ON tv.category_id = c.category_id
+ AND tv.type_name = x.filter_name
+WHERE tv.type_id IS NULL;
 
 
 
 
 /* =========================================================
-   4) TYPE VARIATIONS by Category name
-   - Uses existing categories (already inserted)
-   - Safe inserts (avoid duplicates)
+   INSERT TYPE VARIATIONS / FILTERS
+   - Uses existing categories
+   - Safe inserts
    ========================================================= */
 
-/* =========================
-   4.1) Bags
-   ========================= */
 INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
+SELECT x.filter_name, NULL, c.category_id
 FROM `categories` c
 JOIN (
-  SELECT 'Size (W×H×Gusset)' AS type_name
-  UNION ALL SELECT 'Material / Paper type'
-  UNION ALL SELECT 'Paper weight (gsm)'
-  UNION ALL SELECT 'Handle type'
-  UNION ALL SELECT 'Finish (Gloss/Matte/Uncoated/Soft-touch)'
-  UNION ALL SELECT 'Bag colour'
-  UNION ALL SELECT 'Print method (Digital/Offset/Screen/Foil)'
-  UNION ALL SELECT 'Print sides / coverage (1-side/2-side/Full-bleed)'
-  UNION ALL SELECT 'Gusset / base reinforcement option'
+
+  SELECT 'Clothing' AS category_name, 'Price' AS filter_name
+  UNION ALL SELECT 'Clothing', 'Colour'
+  UNION ALL SELECT 'Clothing', 'Print technique'
+  UNION ALL SELECT 'Clothing', 'Material'
+  UNION ALL SELECT 'Clothing', 'Environmental certifications'
+  UNION ALL SELECT 'Clothing', 'Social audit'
+  UNION ALL SELECT 'Clothing', 'Impact Index'
+  UNION ALL SELECT 'Clothing', 'Brand'
+  UNION ALL SELECT 'Clothing', 'Theme'
+  UNION ALL SELECT 'Clothing', 'Stock location'
+  UNION ALL SELECT 'Clothing', 'Gender'
+  UNION ALL SELECT 'Clothing', 'Clothing features'
+
+  UNION ALL SELECT 'Bags', 'Price'
+  UNION ALL SELECT 'Bags', 'Colour'
+  UNION ALL SELECT 'Bags', 'Print technique'
+  UNION ALL SELECT 'Bags', 'Material'
+  UNION ALL SELECT 'Bags', 'Environmental certifications'
+  UNION ALL SELECT 'Bags', 'Social audit'
+  UNION ALL SELECT 'Bags', 'Impact Index'
+  UNION ALL SELECT 'Bags', 'Brand'
+  UNION ALL SELECT 'Bags', 'Theme'
+  UNION ALL SELECT 'Bags', 'Stock location'
+  UNION ALL SELECT 'Bags', 'Origin'
+
+  UNION ALL SELECT 'Drinkware', 'Price'
+  UNION ALL SELECT 'Drinkware', 'Colour'
+  UNION ALL SELECT 'Drinkware', 'Print technique'
+  UNION ALL SELECT 'Drinkware', 'Material'
+  UNION ALL SELECT 'Drinkware', 'Environmental certifications'
+  UNION ALL SELECT 'Drinkware', 'Social audit'
+  UNION ALL SELECT 'Drinkware', 'Impact Index'
+  UNION ALL SELECT 'Drinkware', 'Brand'
+  UNION ALL SELECT 'Drinkware', 'Theme'
+  UNION ALL SELECT 'Drinkware', 'Stock location'
+  UNION ALL SELECT 'Drinkware', 'Insulation'
+  UNION ALL SELECT 'Drinkware', 'Dishwasher safe'
+  UNION ALL SELECT 'Drinkware', 'Microwave safe'
+
+  UNION ALL SELECT 'Pens & Writing', 'Price'
+  UNION ALL SELECT 'Pens & Writing', 'Colour'
+  UNION ALL SELECT 'Pens & Writing', 'Print technique'
+  UNION ALL SELECT 'Pens & Writing', 'Material'
+  UNION ALL SELECT 'Pens & Writing', 'Environmental certifications'
+  UNION ALL SELECT 'Pens & Writing', 'Social audit'
+  UNION ALL SELECT 'Pens & Writing', 'Impact Index'
+  UNION ALL SELECT 'Pens & Writing', 'Brand'
+  UNION ALL SELECT 'Pens & Writing', 'Theme'
+  UNION ALL SELECT 'Pens & Writing', 'Stock location'
+  UNION ALL SELECT 'Pens & Writing', 'Paper type'
+  UNION ALL SELECT 'Pens & Writing', 'Pen ink colour'
+  UNION ALL SELECT 'Pens & Writing', 'Cover'
+
+  UNION ALL SELECT 'Technology', 'Price'
+  UNION ALL SELECT 'Technology', 'Colour'
+  UNION ALL SELECT 'Technology', 'Print technique'
+  UNION ALL SELECT 'Technology', 'Material'
+  UNION ALL SELECT 'Technology', 'Environmental certifications'
+  UNION ALL SELECT 'Technology', 'Social audit'
+  UNION ALL SELECT 'Technology', 'Impact Index'
+  UNION ALL SELECT 'Technology', 'Brand'
+  UNION ALL SELECT 'Technology', 'Theme'
+  UNION ALL SELECT 'Technology', 'Stock location'
+  UNION ALL SELECT 'Technology', 'Memory size'
+  UNION ALL SELECT 'Technology', 'Bluetooth'
+  UNION ALL SELECT 'Technology', 'Charging time'
+  UNION ALL SELECT 'Technology', 'Battery duration'
+
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Price'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Colour'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Print technique'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Material'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Environmental certifications'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Social audit'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Impact Index'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Brand'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Theme'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Stock location'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Notebook size'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Paper type'
+  UNION ALL SELECT 'Notebooks & Paper Products', 'Cover'
+
+  UNION ALL SELECT 'Umbrellas', 'Price'
+  UNION ALL SELECT 'Umbrellas', 'Colour'
+  UNION ALL SELECT 'Umbrellas', 'Print technique'
+  UNION ALL SELECT 'Umbrellas', 'Material'
+  UNION ALL SELECT 'Umbrellas', 'Social audit'
+  UNION ALL SELECT 'Umbrellas', 'Impact Index'
+  UNION ALL SELECT 'Umbrellas', 'Brand'
+  UNION ALL SELECT 'Umbrellas', 'Theme'
+  UNION ALL SELECT 'Umbrellas', 'Stock location'
+  UNION ALL SELECT 'Umbrellas', 'Opening type'
+
+  UNION ALL SELECT 'Home & Kitchen', 'Price'
+  UNION ALL SELECT 'Home & Kitchen', 'Colour'
+  UNION ALL SELECT 'Home & Kitchen', 'Print technique'
+  UNION ALL SELECT 'Home & Kitchen', 'Material'
+  UNION ALL SELECT 'Home & Kitchen', 'Environmental certifications'
+  UNION ALL SELECT 'Home & Kitchen', 'Social audit'
+  UNION ALL SELECT 'Home & Kitchen', 'Impact Index'
+  UNION ALL SELECT 'Home & Kitchen', 'Brand'
+  UNION ALL SELECT 'Home & Kitchen', 'Theme'
+  UNION ALL SELECT 'Home & Kitchen', 'Stock location'
+  UNION ALL SELECT 'Home & Kitchen', 'Bluetooth'
+  UNION ALL SELECT 'Home & Kitchen', 'Charging time'
+  UNION ALL SELECT 'Home & Kitchen', 'Dishwasher safe'
+  UNION ALL SELECT 'Home & Kitchen', 'Microwave safe'
+
+  UNION ALL SELECT 'Giveaways', 'Price'
+  UNION ALL SELECT 'Giveaways', 'Colour'
+  UNION ALL SELECT 'Giveaways', 'Print technique'
+  UNION ALL SELECT 'Giveaways', 'Material'
+  UNION ALL SELECT 'Giveaways', 'Environmental certifications'
+  UNION ALL SELECT 'Giveaways', 'Social audit'
+  UNION ALL SELECT 'Giveaways', 'Impact Index'
+  UNION ALL SELECT 'Giveaways', 'Brand'
+  UNION ALL SELECT 'Giveaways', 'Theme'
+  UNION ALL SELECT 'Giveaways', 'Stock location'
+  UNION ALL SELECT 'Giveaways', 'Bluetooth'
+
+  UNION ALL SELECT 'Sports & Leisure', 'Price'
+  UNION ALL SELECT 'Sports & Leisure', 'Colour'
+  UNION ALL SELECT 'Sports & Leisure', 'Print technique'
+  UNION ALL SELECT 'Sports & Leisure', 'Material'
+  UNION ALL SELECT 'Sports & Leisure', 'Environmental certifications'
+  UNION ALL SELECT 'Sports & Leisure', 'Social audit'
+  UNION ALL SELECT 'Sports & Leisure', 'Impact Index'
+  UNION ALL SELECT 'Sports & Leisure', 'Brand'
+  UNION ALL SELECT 'Sports & Leisure', 'Theme'
+  UNION ALL SELECT 'Sports & Leisure', 'Stock location'
+  UNION ALL SELECT 'Sports & Leisure', 'Gender'
+  UNION ALL SELECT 'Sports & Leisure', 'Clothing features'
+
+  UNION ALL SELECT 'Toys & Games', 'Price'
+  UNION ALL SELECT 'Toys & Games', 'Colour'
+  UNION ALL SELECT 'Toys & Games', 'Print technique'
+  UNION ALL SELECT 'Toys & Games', 'Material'
+  UNION ALL SELECT 'Toys & Games', 'Social audit'
+  UNION ALL SELECT 'Toys & Games', 'Impact Index'
+  UNION ALL SELECT 'Toys & Games', 'Theme'
+  UNION ALL SELECT 'Toys & Games', 'Stock location'
+
+  UNION ALL SELECT 'Tools & Car Accessories', 'Price'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Colour'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Print technique'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Material'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Environmental certifications'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Social audit'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Impact Index'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Brand'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Theme'
+  UNION ALL SELECT 'Tools & Car Accessories', 'Stock location'
+
+  UNION ALL SELECT 'Health & Personal Care', 'Price'
+  UNION ALL SELECT 'Health & Personal Care', 'Colour'
+  UNION ALL SELECT 'Health & Personal Care', 'Print technique'
+  UNION ALL SELECT 'Health & Personal Care', 'Material'
+  UNION ALL SELECT 'Health & Personal Care', 'Environmental certifications'
+  UNION ALL SELECT 'Health & Personal Care', 'Social audit'
+  UNION ALL SELECT 'Health & Personal Care', 'Impact Index'
+  UNION ALL SELECT 'Health & Personal Care', 'Brand'
+  UNION ALL SELECT 'Health & Personal Care', 'Theme'
+  UNION ALL SELECT 'Health & Personal Care', 'Stock location'
+  UNION ALL SELECT 'Health & Personal Care', 'Battery duration'
+
 ) x
+  ON x.category_name = c.name
 LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Bags' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.2) Packaging & Presentation
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Dimensions / capacity' AS type_name
-  UNION ALL SELECT 'Material (Card/Paper/Plastic/Fabric)'
-  UNION ALL SELECT 'Finish (Matt/Gloss/Soft-touch/Foil)'
-  UNION ALL SELECT 'Closure type (Lid/Magnetic/Ribbon/etc.)'
-  UNION ALL SELECT 'Insert / inlay option (Foam/Card/None)'
-  UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Print method'
-  UNION ALL SELECT 'Window option (Yes/No)'
-  UNION ALL SELECT 'Assembly (Flat-packed/Assembled)'
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Packaging & Presentation' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.3) Tech & USBs
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Product type / model' AS type_name
-  UNION ALL SELECT 'Memory / capacity (GB) (if applicable)'
-  UNION ALL SELECT 'Interface (USB-A/USB-C/etc.)'
-  UNION ALL SELECT 'Material (Metal/Plastic/Wood/etc.)'
-  UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Branding method (Laser/Print/Engrave)'
-  UNION ALL SELECT 'Packaging option'
-  UNION ALL SELECT 'Accessory add-ons (Keyring/Lanyard/etc.)'
-  UNION ALL SELECT 'Data services (Preload/Encryption) (if applicable)'
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Tech & USBs' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.4) Badges & Accessories
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Product type' AS type_name
-  UNION ALL SELECT 'Size / dimensions'
-  UNION ALL SELECT 'Shape'
-  UNION ALL SELECT 'Material (Metal/Plastic/etc.)'
-  UNION ALL SELECT 'Fixing type (Pin/Magnet/Clip)'
-  UNION ALL SELECT 'Finish (Gloss/Matte)'
-  UNION ALL SELECT 'Colour / print (Full-colour/Spot)'
-  UNION ALL SELECT 'Backing card / packaging option'
-  UNION ALL SELECT 'Personalisation (Name/Number) (if applicable)'
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Badges & Accessories' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.5) Identification / Credentials
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Width (mm)' AS type_name
-  UNION ALL SELECT 'Material'
-  UNION ALL SELECT 'Print method'
-  UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Length / style '
-  UNION ALL SELECT 'Attachment type '
-  UNION ALL SELECT 'Safety breakaway '
-  UNION ALL SELECT 'Accessory add-ons '
-  UNION ALL SELECT 'ID holder type '
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Identification / Credentials' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.6) Clothing & Wearables
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Garment type' AS type_name
-  UNION ALL SELECT 'Size (S–XXL, etc.)'
-  UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Fit (Unisex/Men/Women)'
-  UNION ALL SELECT 'Material / fabric'
-  UNION ALL SELECT 'Branding method (Embroidery/Screen/DTG)'
-  UNION ALL SELECT 'Print position (Front/Back/Sleeve)'
-  UNION ALL SELECT 'Label / tag option (if applicable)'
-  UNION ALL SELECT 'Packaging (Individual bagging) (if applicable)'
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Clothing & Wearables' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.7) Office & Stationery
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Product type' AS type_name
-  UNION ALL SELECT 'Size / format (A5/A4/etc.)'
-  UNION ALL SELECT 'Paper stock (gsm) / material'
-  UNION ALL SELECT 'Page count / capacity'
-  UNION ALL SELECT 'Binding type (Spiral/Perfect/etc.)'
-  UNION ALL SELECT 'Cover type / finish (Soft/Hard, Matt/Gloss)'
-  UNION ALL SELECT 'Ruling (Lined/Blank/Dotted) (if applicable)'
-  UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Branding method / print spec'
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Office & Stationery' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.8) Gift & Seasonal
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Occasion / theme' AS type_name
-  UNION ALL SELECT 'Set contents (if applicable)'
-  UNION ALL SELECT 'Size / dimensions'
-  UNION ALL SELECT 'Material'
-  UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Packaging option'
-  UNION ALL SELECT 'Personalisation method'
-  UNION ALL SELECT 'Message card option (if applicable)'
-  UNION ALL SELECT 'Seasonal lead time / deadline'
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Gift & Seasonal' AND tv.type_id IS NULL;
-
-
-/* =========================
-   4.9) Custom / Bespoke Projects
-   ========================= */
-INSERT INTO `type_variations` (`type_name`, `description`, `category_id`)
-SELECT x.type_name, NULL, c.category_id
-FROM `categories` c
-JOIN (
-  SELECT 'Project spec / requirements' AS type_name
-  UNION ALL SELECT 'Dimensions'
-  UNION ALL SELECT 'Material'
-  UNION ALL SELECT 'Colour'
-  UNION ALL SELECT 'Branding method'
-  UNION ALL SELECT 'Packaging option'
-  UNION ALL SELECT 'Lead time'
-  UNION ALL SELECT 'MOQ tier / quantity break'
-  UNION ALL SELECT 'Compliance / certification needs (if applicable)'
-) x
-LEFT JOIN `type_variations` tv
-  ON tv.category_id = c.category_id AND tv.type_name = x.type_name
-WHERE c.name = 'Custom / Bespoke Projects' AND tv.type_id IS NULL;
-
-
-
-
-/**/
+  ON tv.category_id = c.category_id
+ AND tv.type_name = x.filter_name
+WHERE tv.type_id IS NULL;

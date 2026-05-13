@@ -8,7 +8,7 @@
 
   <body>
     <script type="text/javascript">
-    window.location.href = 'view/main/index.php';
+      window.location.href = 'view/main/index.php';
     </script>
   </body>
 </html>

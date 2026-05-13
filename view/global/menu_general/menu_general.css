@@ -73,7 +73,7 @@ a{ text-decoration: none; color: inherit; }
   letter-spacing: .5px;
   font-size: 1.45rem;
   font-weight: 800;
-  color: var(--ov-text);
+  color: white;
 }
 
 .brand-logo{
@@ -149,7 +149,7 @@ a{ text-decoration: none; color: inherit; }
 .nav-list a{
   display: block;
   padding: .95rem 1rem;
-  color: var(--ov-text);
+  color: white;
   border-radius: 14px;
   border: 1px solid transparent;
   background: rgba(255,255,255,.04);
@@ -165,7 +165,7 @@ a{ text-decoration: none; color: inherit; }
 
 .nav-list .cta{
   background: var(--accent);
-  color: #111;
+  color: white;
   font-weight: 700;
   border-color: var(--accent);
   box-shadow: 0 12px 26px rgba(0,0,0,.18);
@@ -229,7 +229,7 @@ a{ text-decoration: none; color: inherit; }
   }
 
   .nav-list a{
-    color: var(--ov-text);
+    color: white;
     padding: .6rem .9rem;
     background: transparent;
     border-radius: 12px;

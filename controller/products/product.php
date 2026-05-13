@@ -171,6 +171,7 @@ class Product {
   }
 
   private function createNewProduct(){
+
     header('Content-Type: application/json; charset=utf-8');
 
     // Instancia del modelo
@@ -191,6 +192,8 @@ class Product {
       return;
     }
     $products->setEmail($email);
+
+
 
 
     // Crear producto (el modelo deduce supplier por email)

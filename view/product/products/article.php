@@ -14,131 +14,72 @@ $jsTime = filemtime('../../view/product/products/article.js');
       <h1>Filters</h1>
 
       <div class="filter-group">
-        <h1>Category</h1>
-        <ul class="checklist">
-          <li>
-            <label for="acepto">
-              <input type="checkbox" id="acepto" name="acepto">
-              Paper Bags
-            </label>
-          </li>
-          <li>
-            <label for="acepto">
-              <input type="checkbox" id="acepto" name="acepto">
-              Tech & USBs
-            </label>
-          </li>
-          <li>
-            <label for="acepto">
-              <input type="checkbox" id="acepto" name="acepto">
-              Badges & Accessories
-            </label>
-          </li>
-          <li>
-            <label for="acepto">
-              <input type="checkbox" id="acepto" name="acepto">
-              Gift & Seasonal
-            </label>
-          </li>
-        </ul>
-      </div>
-
-      <div class="filter-group">
-        <h1>Size</h1>
-        <ul class="checklist">
-          <li>
-            <label for="acepto">
-              <input type="checkbox" id="acepto" name="acepto">
-              Small
-            </label>
-          </li>
-          <li>
-            <label for="acepto">
-              <input type="checkbox" id="acepto" name="acepto">
-              Medium
-            </label>
-          </li>
-          <li>
-            <label for="acepto">
-              <input type="checkbox" id="acepto" name="acepto">
-              Large
-            </label>
-          </li>
-        </ul>
-      </div>
-
-      <div class="filter-group">
-        <h1>Color</h1>
-        <ul class="color-list">
-          <li>
-            <label class="swatch">
-              <input type="radio" name="color[]" value="sand">
-              <span class="dot" style="--c:#E1C9A1"></span>
-              <span class="sr-only">Sand</span>
-            </label>
-          </li>
-          <li>
-            <label class="swatch">
-              <input type="radio" name="color[]" value="brown">
-              <span class="dot" style="--c:#7A4A21"></span>
-              <span class="sr-only">Brown</span>
-            </label>
-          </li>
-          <li>
-            <label class="swatch">
-              <input type="radio" name="color[]" value="olive">
-              <span class="dot" style="--c:#7A8647"></span>
-              <span class="sr-only">Olive</span>
-            </label>
-          </li>
-          <li>
-            <label class="swatch">
-              <input type="radio" name="color[]" value="teal">
-              <span class="dot" style="--c:#1F8A89"></span>
-              <span class="sr-only">Teal</span>
-            </label>
-          </li>
-          <li>
-            <label class="swatch">
-              <input type="radio" name="color[]" value="black">
-              <span class="dot" style="--c:#111111"></span>
-              <span class="sr-only">Black</span>
-            </label>
-          </li>
-          <li>
-            <label class="swatch">
-              <input type="radio" name="color[]" value="warm-scale">
-              <span class="dot" style="--c:linear-gradient(135deg,#F3E1C4,#B98045)"></span>
-              <span class="sr-only">Warm scale</span>
-            </label>
-          </li>
-          <li>
-            <label class="swatch">
-              <input type="radio" name="color[]" value="gray-scale">
-              <span class="dot" style="--c:linear-gradient(135deg,#ffffff,#111111)"></span>
-              <span class="sr-only">Greyscale</span>
-            </label>
-          </li>
-        </ul>
-      </div>
-
-      <div class="filter-group">
         <h1>Price</h1>
+        <ul class="checklist">
+          <li><label><input type="checkbox" name="price[]" value="low"> Low price</label></li>
+          <li><label><input type="checkbox" name="price[]" value="medium"> Medium price</label></li>
+          <li><label><input type="checkbox" name="price[]" value="high"> High price</label></li>
+        </ul>
+      </div>
 
-        <div class="price-range" data-min="0" data-max="100">
-          <input type="range" class="range min" id="price-min"
-                 min="0" max="100" value="0" step="1" aria-label="Minimum price">
+      <div class="filter-group">
+        <h1>Colour</h1>
+        <ul class="color-list">
+          <li><label class="swatch"><input type="radio" name="colour" value="black"><span class="dot" style="--c:#111111"></span><span class="sr-only">Black</span></label></li>
+          <li><label class="swatch"><input type="radio" name="colour" value="white"><span class="dot" style="--c:#ffffff"></span><span class="sr-only">White</span></label></li>
+          <li><label class="swatch"><input type="radio" name="colour" value="blue"><span class="dot" style="--c:#2563eb"></span><span class="sr-only">Blue</span></label></li>
+          <li><label class="swatch"><input type="radio" name="colour" value="red"><span class="dot" style="--c:#dc2626"></span><span class="sr-only">Red</span></label></li>
+          <li><label class="swatch"><input type="radio" name="colour" value="green"><span class="dot" style="--c:#16a34a"></span><span class="sr-only">Green</span></label></li>
+        </ul>
+      </div>
 
-          <input type="range" class="range max" id="price-max"
-                 min="0" max="100" value="100" step="1" aria-label="Maximum price">
+      <div class="filter-group">
+        <h1>Print technique</h1>
+        <ul class="checklist">
+          <li><label><input type="checkbox" name="print_technique[]" value="screen-print"> Screen print</label></li>
+          <li><label><input type="checkbox" name="print_technique[]" value="digital-print"> Digital print</label></li>
+          <li><label><input type="checkbox" name="print_technique[]" value="embroidery"> Embroidery</label></li>
+          <li><label><input type="checkbox" name="print_technique[]" value="laser-engraving"> Laser engraving</label></li>
+        </ul>
+      </div>
 
-          <div class="rail"></div>
+      <div class="filter-group">
+        <h1>Material</h1>
+        <ul class="checklist">
+          <li><label><input type="checkbox" name="material[]" value="cotton"> Cotton</label></li>
+          <li><label><input type="checkbox" name="material[]" value="polyester"> Polyester</label></li>
+          <li><label><input type="checkbox" name="material[]" value="paper"> Paper</label></li>
+          <li><label><input type="checkbox" name="material[]" value="plastic"> Plastic</label></li>
+          <li><label><input type="checkbox" name="material[]" value="metal"> Metal</label></li>
+        </ul>
+      </div>
 
-          <div class="labels">
-            <span>£0</span>
-            <span>£100</span>
-          </div>
-        </div>
+      <div class="filter-group">
+        <h1>Theme</h1>
+        <ul class="checklist">
+          <li><label><input type="checkbox" name="theme[]" value="eco"> Eco</label></li>
+          <li><label><input type="checkbox" name="theme[]" value="office"> Office</label></li>
+          <li><label><input type="checkbox" name="theme[]" value="events"> Events</label></li>
+          <li><label><input type="checkbox" name="theme[]" value="seasonal"> Seasonal</label></li>
+        </ul>
+      </div>
+
+      <div class="filter-group">
+        <h1>Stock location</h1>
+        <ul class="checklist">
+          <li><label><input type="checkbox" name="stock_location[]" value="uk"> UK</label></li>
+          <li><label><input type="checkbox" name="stock_location[]" value="eu"> Europe</label></li>
+          <li><label><input type="checkbox" name="stock_location[]" value="china"> China</label></li>
+        </ul>
+      </div>
+
+      <div class="filter-group">
+        <h1>Impact Index</h1>
+        <ul class="checklist">
+          <li><label><input type="checkbox" name="impact_index[]" value="low"> Low impact</label></li>
+          <li><label><input type="checkbox" name="impact_index[]" value="medium"> Medium impact</label></li>
+          <li><label><input type="checkbox" name="impact_index[]" value="high"> High impact</label></li>
+        </ul>
       </div>
 
       <div class="filter-group">
@@ -147,6 +88,15 @@ $jsTime = filemtime('../../view/product/products/article.js');
     </div>
 
     <div class="articles" id="articles">
+      <div class="products-search-panel">
+        <label for="product-search">Search products</label>
+        <input
+          type="search"
+          id="product-search"
+          placeholder="Search by name, category, group or SKU..."
+        >
+      </div>
+
       <h1>All Products</h1>
 
       <div class="box_article">

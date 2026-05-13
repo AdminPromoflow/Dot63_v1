@@ -129,6 +129,8 @@ class Products {
      =========================== */
      // 3) create() MINIMAL, resolviendo supplier_id por email y usando `SKU`
      public function create() {
+
+
        // Validaciones mínimas
        if ($this->sku === null || $this->sku === '') {
          return ['success' => false, 'error' => 'SKU required'];
@@ -188,6 +190,8 @@ class Products {
          if ($unassignedGroupId === false) {
            return ['success' => false, 'error' => 'Unassigned Group / Unassigned Category not found'];
          }
+
+
 
 
          // 2) Inserción mínima: SKU + supplier_id + group_id
@@ -460,15 +464,57 @@ class Products {
       try {
           $pdo = $this->connection->getConnection();
 
-          $sql = "SELECT * FROM products ORDER BY product_id DESC";
+          $sql = "
+              SELECT
+                  p.product_id,
+                  p.SKU,
+                  p.name,
+                  p.is_approved,
+                  g.name AS group_name,
+                  c.name AS category_name,
+                  i.link AS image_link
+              FROM products p
+              LEFT JOIN `groups` g
+                  ON p.group_id = g.group_id
+              LEFT JOIN categories c
+                  ON g.category_id = c.category_id
+              LEFT JOIN variations v
+                  ON p.product_id = v.product_id
+              LEFT JOIN images i
+                  ON v.variation_id = i.variation_id
+              ORDER BY p.product_id DESC
+          ";
+
           $stmt = $pdo->prepare($sql);
           $stmt->execute();
 
           $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+          $products = [];
+
+          foreach ($rows as $row) {
+              $productId = $row['product_id'];
+
+              if (!isset($products[$productId])) {
+                  $products[$productId] = [
+                      'product_id'    => $row['product_id'],
+                      'SKU'           => $row['SKU'],
+                      'name'          => $row['name'],
+                      'is_approved'   => $row['is_approved'],
+                      'group_name'    => $row['group_name'],
+                      'category_name' => $row['category_name'],
+                      'images'        => []
+                  ];
+              }
+
+              if (!empty($row['image_link']) && !in_array($row['image_link'], $products[$productId]['images'])) {
+                  $products[$productId]['images'][] = $row['image_link'];
+              }
+          }
+
           return [
               'success' => true,
-              'result'  => $rows
+              'result'  => array_values($products)
           ];
 
       } catch (PDOException $e) {
