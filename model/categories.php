@@ -82,6 +82,25 @@ class Categories {
           return false;
       }
   }
+  public function getCategories() {
+    try {
+        $pdo = $this->connection->getConnection();
+
+        $stmt = $pdo->prepare("SELECT *
+          FROM categories
+        ");
+
+        $stmt->execute();
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $result;
+
+    } catch (PDOException $e) {
+        error_log('getCategories error: ' . $e->getMessage());
+        return false;
+    }
+}
 
   public function getCategorySelected() {
     $sku = trim((string)$this->sku);
