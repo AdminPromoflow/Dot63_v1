@@ -14,7 +14,7 @@ class Products {
   private $supplier_id;  // int
   private $email; // string|null
   private $group_id;    // int
-
+  private $groups = []; // array
 
   public function __construct($connection) {
     $this->connection = $connection;
@@ -23,11 +23,12 @@ class Products {
   /* ===========================
      Setters
      =========================== */
-  public function setGroupId($id) { $this->group_id = (int)$id; }
+  public function setGroupId($id)       { $this->group_id = (int)$id; }
+  public function setGroups(array $groups){$this->groups = array_map('intval', $groups);}
   public function setId($id)            { $this->product_id  = (int)$id; }
   public function setSku($sku)          { $this->sku         = $this->normalizeText($sku); }
   public function setName($name)        { $this->name        = $this->normalizeText($name); }
-  public function setDescription($desc)  { $this->description = is_string($desc) ? trim($desc) : null; }
+  public function setDescription($desc) { $this->description = is_string($desc) ? trim($desc) : null; }
   public function setTaglineDescription($pd_tagline)  { $this->pd_tagline = is_string($pd_tagline) ? trim($pd_tagline) : null; }
   public function setStatus($status)    { $this->status      = $this->normalizeText($status); }
   public function setCategoryId($id)    { $this->category_id = ($id === null || $id === '') ? null : (int)$id; }
@@ -39,7 +40,41 @@ class Products {
     $s = is_string($s) ? trim($s) : '';
     return preg_replace('/\s+/', ' ', $s);
   }
+  public function getProductsByGroups() {
+      try {
+          $pdo = $this->connection->getConnection();
 
+          // Validar que groups exista y sea un array con datos
+          if (empty($this->groups) || !is_array($this->groups)) {
+              return [];
+          }
+
+          // Convertir todos los valores a enteros por seguridad
+          $groups = array_map('intval', $this->groups);
+          // echo json_encode($groups);exit;
+
+
+          // Eliminar valores repetidos si los hay
+          $groups = array_unique($groups);
+
+          // Crear placeholders dinámicos según la cantidad de grupos
+          $placeholders = implode(',', array_fill(0, count($groups), '?'));
+
+          $stmt = $pdo->prepare("
+              SELECT *
+              FROM products
+              WHERE group_id IN ($placeholders)
+          ");
+
+          $stmt->execute(array_values($groups));
+
+          return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      } catch (PDOException $e) {
+          error_log('getProductsByGroups error: ' . $e->getMessage());
+          return false;
+      }
+  }
   /** Verifica si ya existe un producto con el mismo SKU para el mismo proveedor (case-insensitive) */
   private function existsBySkuForSupplier($sku, $supplierId) {
     try {

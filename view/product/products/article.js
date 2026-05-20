@@ -10,6 +10,32 @@ class ProductsClass {
     this.initSearch();
     this.getCategoryFilters();
     this.initPriceRange();
+
+    var group_category = '';
+
+    document.addEventListener('change', function(event) {
+      if (!event.target.classList.contains('all_groups')) {
+        return;
+      }
+      if (event.target.classList.contains('all_groups')) {
+        const groups = document.querySelectorAll(".groups");
+
+        groups.forEach(function(group) {
+          group_category = group.value.split("-")[0];
+
+          if (event.target.value == group_category) {
+            if (event.target.checked == true) {
+              group.checked = true;
+            }
+            else {
+              group.checked = false;
+            }
+          }
+        });
+      }
+
+      productsClass.getProductsByFilterGroups();
+    });
   }
 
   initSearch() {
@@ -29,32 +55,32 @@ class ProductsClass {
         );
       });
 
-      this.drawProducts({
-        success: true,
-        result: filteredProducts
-      });
+      // this.drawProducts({
+      //   success: true,
+      //   result: filteredProducts
+      // });
     });
   }
 
   initPriceRange() {
-  const priceRange = document.getElementById("priceRange");
-  const priceValue = document.getElementById("priceValue");
+    const priceRange = document.getElementById("priceRange");
+    const priceValue = document.getElementById("priceValue");
 
-  if (!priceRange || !priceValue) return;
+    if (!priceRange || !priceValue) return;
 
-  const updatePrice = () => {
-    priceValue.textContent = `£${priceRange.value}`;
-  };
+    const updatePrice = () => {
+      priceValue.textContent = `£${priceRange.value}`;
+    };
 
-  priceRange.addEventListener("input", updatePrice);
-  updatePrice();
-}
+    priceRange.addEventListener("input", updatePrice);
+    updatePrice();
+  }
 
   getCategoryFilters() {
     const url = "../../controller/filters/category_filters.php";
 
     const data = {
-      action: "get_categories_filter"
+      action: "get_categories_filter_and_their_groups"
     };
 
     fetch(url, {
@@ -66,17 +92,24 @@ class ProductsClass {
     })
       .then(response => {
         if (!response.ok) throw new Error("Network error.");
+
         return response.text();
       })
       .then(text => {
+        console.log(text);
+
         const result = JSON.parse(text);
 
         this.categoryFilter.innerHTML = "";
 
         for (let i = 0; i < result.length; i++) {
-
-          this.renderCategoriesFilter(result[i].name);
-
+          if (result[i].approved == 1) {
+            this.renderCategoriesFilter(
+              result[i].category_id,
+              result[i].name,
+              result[i].groups
+            );
+          }
         }
 
         this.initCategoryAccordion();
@@ -86,10 +119,76 @@ class ProductsClass {
       });
   }
 
-  renderCategoriesFilter(name) {
+  getProductsByFilterGroups() {
+    const groups = document.querySelectorAll(".groups");
+    const getGroups = [];
 
+    groups.forEach(function(group) {
+      if (group.checked) {
 
+        getGroups.push(group.value.split("-")[1]);
+      }
+    });
+    // const groupId = group.value.split("-")[1];
+
+    alert(JSON.stringify(getGroups));
+
+    const url = "../../controller/filters/category_filters.php";
+
+    const data = {
+      action: "get_products_by_groups",
+      groups: getGroups
+
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+
+    })
+      .then(response => {
+        if (!response.ok) throw new Error("Network error.");
+
+        return response.text();
+      })
+      .then(result => {
+         alert(result);
+
+        const data = JSON.parse(result);
+
+        this.drawSearch();
+        this.drawProducts(data);
+
+      })
+      .catch(error => {
+        console.error("Error:", error);
+      });
+  }
+  drawSearch(){
+    this.articles.innerHTML = `
+      <div class="products-search-panel">
+        <label for="product-search">Search products</label>
+        <input
+          type="search"
+          id="product-search"
+          placeholder="Search by name, category, group or SKU..."
+          <!-- value="${this.searchInput ? this.searchInput.value : ""}" -->
+        <!-- > -->
+      </div>
+
+      <h1>All Products</h1>
+    `;
+  }
+
+  renderCategoriesFilter(category_id, name, groups) {
     const safeId = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+    var groups_HTML = this.renderGroupsFilters(category_id, name, groups);
+
+    // alert(JSON.stringify(groups_HTML));
 
     this.categoryFilter.insertAdjacentHTML("beforeend", `
       <li class="category-accordion-item">
@@ -99,48 +198,53 @@ class ProductsClass {
         </button>
 
         <div class="category-groups">
-          <label>
-            <input type="checkbox" name="category[]" value="${name}">
-            <span>All ${name}</span>
-          </label>
-
-          <label>
-            <input type="checkbox" name="group[]" value="${safeId}-group-1">
-            <span>Bags</span>
-          </label>
-
-          <label>
-            <input type="checkbox" name="group[]" value="${safeId}-group-2">
-            <span>Drinkware</span>
-          </label>
-
-          <label>
-            <input type="checkbox" name="group[]" value="${safeId}-group-3">
-            <span>Pens & Writing</span>
-          </label>
+          ${groups_HTML}
         </div>
       </li>
     `);
   }
 
+  renderGroupsFilters(category_id, name, groups) {
+    var groups_HTML = `
+      <label>
+        <input class="all_groups" type="checkbox" name="group[]" value="${category_id}">
+        <span>All groups</span>
+      </label>
+    `;
+
+    for (var i = 0; i < groups.length; i++) {
+      // alert(JSON.stringify(groups));
+
+      groups_HTML += `
+        <label>
+          <input class="groups" type="checkbox" name="group[]" value="${category_id}-${groups[i].group_id}">
+          <span>${groups[i].name}</span>
+        </label>
+      `;
+    }
+
+    return groups_HTML;
+  }
+
   initCategoryAccordion() {
-  const buttons = document.querySelectorAll(".category-accordion-btn");
+    const buttons = document.querySelectorAll(".category-accordion-btn");
 
-  buttons.forEach(button => {
-    button.addEventListener("click", () => {
-      const item = button.closest(".category-accordion-item");
+    buttons.forEach(button => {
+      button.addEventListener("click", () => {
+        const item = button.closest(".category-accordion-item");
 
-      if (!item) return;
+        if (!item) return;
 
-      item.classList.toggle("is-open");
+        item.classList.toggle("is-open");
 
-      const icon = button.querySelector(".category-accordion-icon");
-      if (icon) {
-        icon.textContent = item.classList.contains("is-open") ? "−" : "+";
-      }
+        const icon = button.querySelector(".category-accordion-icon");
+
+        if (icon) {
+          icon.textContent = item.classList.contains("is-open") ? "−" : "+";
+        }
+      });
     });
-  });
-}
+  }
 
   fetchGetProducts() {
     const url = "../../controller/products/product.php";
@@ -158,13 +262,31 @@ class ProductsClass {
     })
       .then(response => {
         if (!response.ok) throw new Error("Network error.");
+
         return response.text();
       })
       .then(result => {
+        // alert(result);
+
         const data = JSON.parse(result);
 
-        this.productsData = data.result || [];
-        this.drawProducts(data);
+        this.articles.innerHTML = `
+          <div class="products-search-panel">
+            <label for="product-search">Search products</label>
+            <input
+              type="search"
+              id="product-search"
+              placeholder="Search by name, category, group or SKU..."
+              <!-- value="${this.searchInput ? this.searchInput.value : ""}" -->
+            <!-- > -->
+          </div>
+
+          <h1>All Products</h1>
+        `;
+
+        this.initSearch();
+        this.drawSearch();
+        this.drawProducts(data["result"]);
       })
       .catch(error => {
         console.error("Error:", error);
@@ -172,37 +294,30 @@ class ProductsClass {
   }
 
   drawProducts(data) {
-    this.articles.innerHTML = `
-      <div class="products-search-panel">
-        <label for="product-search">Search products</label>
-        <input
-          type="search"
-          id="product-search"
-          placeholder="Search by name, category, group or SKU..."
-          value="${this.searchInput ? this.searchInput.value : ""}"
-        >
-      </div>
+  // alert(JSON.stringify(data));
 
-      <h1>All Products</h1>
-    `;
+  this.productsData = Array.isArray(data) ? data : [];
 
-    this.initSearch();
+  if (!Array.isArray(data) || data.length === 0) {
+    this.articles.innerHTML += `<p>No products found.</p>`;
+    return;
+  }
 
-    if (!data || !data.success || !data.result || !data.result.length) {
-      this.articles.innerHTML += `<p>No products found.</p>`;
-      return;
-    }
+  for (let i = 0; i < data.length; i++) {
+    const product = data[i];
 
-    for (let i = 0; i < data.result.length; i++) {
-      const product = data.result[i];
-      const firstImage = "../../../view/product/products/img/icon_products.png";
+    if (product.is_approved == 1) {
+      const firstImage = product.images && product.images.length > 0
+        ? product.images[0]
+        : "../../../view/product/products/img/icon_products.png";
 
       this.articles.innerHTML += `
         <div class="box_article">
-          <img src="../../${firstImage}" alt="${product.name}">
-          <h1>${product.name}</h1>
-          <p>${product.category_name}</p>
-          <p>${product.group_name}</p>
+          <img src="../../${firstImage}" alt="${product.name || 'Product image'}">
+
+          <h1>${product.name || 'Unnamed product'}</h1>
+          <p>${product.category_name || 'No category'}</p>
+          <p>${product.group_name || 'No group'}</p>
 
           <button
             class="buttom_products"
@@ -215,6 +330,7 @@ class ProductsClass {
       `;
     }
   }
+}
 
   buyProduct(sku) {
     window.location.href = `../../view/preview_porduct/index.php?sku=${encodeURIComponent(sku)}`;

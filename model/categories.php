@@ -83,24 +83,66 @@ class Categories {
       }
   }
   public function getCategories() {
-    try {
-        $pdo = $this->connection->getConnection();
+      try {
+          $pdo = $this->connection->getConnection();
 
-        $stmt = $pdo->prepare("SELECT *
-          FROM categories
-        ");
+          $stmt = $pdo->prepare("
+              SELECT
+                  c.category_id,
+                  c.name AS category_name,
+                  c.approved AS category_approved,
 
-        $stmt->execute();
+                  g.group_id,
+                  g.name AS group_name,
+                  g.approved AS group_approved
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+              FROM categories c
 
-        return $result;
+              LEFT JOIN `groups` g
+                  ON c.category_id = g.category_id
+                  AND g.name != 'Unassigned Group'
 
-    } catch (PDOException $e) {
-        error_log('getCategories error: ' . $e->getMessage());
-        return false;
-    }
-}
+              WHERE c.name != 'Unassigned Category'
+
+              ORDER BY
+                  c.name ASC,
+                  g.name ASC
+          ");
+
+          $stmt->execute();
+
+          $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+          $categories = [];
+
+          foreach ($rows as $row) {
+              $categoryId = $row['category_id'];
+
+              if (!isset($categories[$categoryId])) {
+                  $categories[$categoryId] = [
+                      'category_id' => $row['category_id'],
+                      'name' => $row['category_name'],
+                      'approved' => $row['category_approved'],
+                      'groups' => []
+                  ];
+              }
+
+              if (!empty($row['group_id'])) {
+                  $categories[$categoryId]['groups'][] = [
+                      'group_id' => $row['group_id'],
+                      'name' => $row['group_name'],
+                      'approved' => $row['group_approved']
+                  ];
+              }
+          }
+
+          return array_values($categories);
+
+      } catch (PDOException $e) {
+          error_log('getCategories error: ' . $e->getMessage());
+          return false;
+      }
+  }
 
   public function getCategorySelected() {
     $sku = trim((string)$this->sku);
