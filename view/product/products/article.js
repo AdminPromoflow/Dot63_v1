@@ -11,33 +11,43 @@ class ProductsClass {
     this.getCategoryFilters();
     this.initPriceRange();
 
-    var group_category = '';
 
     document.addEventListener('change', function(event) {
-      if (!event.target.classList.contains('all_groups')) {
-        return;
-      }
-      if (event.target.classList.contains('all_groups')) {
-        const groups = document.querySelectorAll(".groups");
-
-        groups.forEach(function(group) {
-          group_category = group.value.split("-")[0];
-
-          if (event.target.value == group_category) {
-            if (event.target.checked == true) {
-              group.checked = true;
-            }
-            else {
-              group.checked = false;
-            }
-          }
-        });
-      }
-
-      productsClass.getProductsByFilterGroups();
+      productsClass.getEventAllGroups();
+      productsClass.getEventGroups();
     });
   }
+  getEventGroups(){
+    if (!event.target.classList.contains('groups')) {
+      return;
+    }
+    this.getProductsByFilterGroups();
+  }
+  getEventAllGroups(){
+    var group_category = '';
 
+    if (!event.target.classList.contains('all_groups')) {
+      return;
+    }
+    if (event.target.classList.contains('all_groups')) {
+      const groups = document.querySelectorAll(".groups");
+
+      groups.forEach(function(group) {
+        group_category = group.value.split("-")[0];
+
+        if (event.target.value == group_category) {
+          if (event.target.checked == true) {
+            group.checked = true;
+          }
+          else {
+            group.checked = false;
+          }
+        }
+      });
+    }
+
+    this.getProductsByFilterGroups();
+  }
   initSearch() {
     this.searchInput = document.getElementById("product-search");
 

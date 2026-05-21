@@ -51,8 +51,6 @@ class Products {
 
           // Convertir todos los valores a enteros por seguridad
           $groups = array_map('intval', $this->groups);
-          // echo json_encode($groups);exit;
-
 
           // Eliminar valores repetidos si los hay
           $groups = array_unique($groups);
@@ -61,9 +59,24 @@ class Products {
           $placeholders = implode(',', array_fill(0, count($groups), '?'));
 
           $stmt = $pdo->prepare("
-              SELECT *
+              SELECT
+                  products.*,
+
+                  groups.group_id AS group_id,
+                  groups.name AS group_name,
+
+                  categories.category_id AS category_id,
+                  categories.name AS category_name
+
               FROM products
-              WHERE group_id IN ($placeholders)
+
+              INNER JOIN groups
+                  ON products.group_id = groups.group_id
+
+              INNER JOIN categories
+                  ON groups.category_id = categories.category_id
+
+              WHERE products.group_id IN ($placeholders)
           ");
 
           $stmt->execute(array_values($groups));
