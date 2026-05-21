@@ -22,8 +22,8 @@
 <body class="body_product_details">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
-
-
   <?php include "../../view/images/img/images.php";?>
+  <?php include "../../view/images/navigation/navigation.php" ?>
+
 </body>
 </html>

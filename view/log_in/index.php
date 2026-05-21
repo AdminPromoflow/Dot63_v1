@@ -21,6 +21,7 @@
 
 <body class="body_login">
   <?php include "../../view/global/menu_general/menu_general.php"; ?>
+  <?php include "../../view/log_in/navigation/navigation.php" ?>
   <?php include "../../view/log_in/log_in/login.php";?>
 </body>
 </html>

@@ -20,6 +20,7 @@
 
 <body class="body_supplier_profile">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
+  <?php include "../../view/supplier_profile/navigation/navigation.php" ?>
   <?php include "../../view/supplier_profile/supplier_profile/supplier_profile.php";?>
 </body>
 </html>

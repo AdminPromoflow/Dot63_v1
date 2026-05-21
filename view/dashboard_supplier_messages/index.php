@@ -20,6 +20,7 @@
 
 <body class="body_dashboard_supplier">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
+  <?php include "../../view/dashboard_supplier_messages/navigation/navigation.php" ?>
   <?php include "../../view/dashboard_supplier_messages/dashboard_supplier/dashboard_supplier_messages.php";?>
 </body>
 </html>

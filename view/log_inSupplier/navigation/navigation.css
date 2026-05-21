@@ -1,0 +1,133 @@
+/* =========================================================
+   Navigation / Breadcrumbs
+   Clean premium style matching the product page UI
+   ========================================================= */
+
+:root {
+  --nav-bg: #f8f9fb;
+  --nav-card: #ffffff;
+
+  --nav-ink: #111827;
+  --nav-muted: #6b7280;
+  --nav-blue: #20364f;
+  --nav-blue-soft: rgba(32, 54, 79, 0.08);
+
+  --nav-border: rgba(15, 23, 42, 0.08);
+  --nav-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+
+  --nav-radius: 16px;
+  --nav-container: 1480px;
+  --nav-gutter: clamp(1rem, 4vw, 3rem);
+}
+
+/* Main wrapper */
+.nav-section {
+  width: 100%;
+  background: var(--nav-bg);
+  padding: clamp(1rem, 2.5vw, 1.8rem) var(--nav-gutter);
+  box-sizing: border-box;
+}
+
+/* Breadcrumb container */
+.nav-breadcrumbs {
+  width: min(100%, var(--nav-container));
+  margin: 0 auto;
+}
+
+/* Breadcrumb list */
+.nav-breadcrumbs__list {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 12px 16px;
+
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  list-style: none;
+  box-sizing: border-box;
+}
+
+/* Breadcrumb item */
+.nav-breadcrumbs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  color: var(--nav-muted);
+  font-size: clamp(0.88rem, 1.4vw, 0.98rem);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Divider */
+.nav-breadcrumbs__item:not(:last-child)::after {
+  content: "›";
+  color: #000;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* Links */
+.nav-breadcrumbs__link {
+  color: #000;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.nav-breadcrumbs__link:hover {
+  color: var(--nav-blue);
+}
+
+/* Current page */
+.nav-breadcrumbs__current {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 7px 14px;
+  color: #fafafa;
+  background: var(--nav-blue);
+  border-radius: 10px;
+}
+
+/* Focus state */
+.nav-breadcrumbs__link:focus-visible {
+  outline: 3px solid rgba(32, 54, 79, 0.25);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .nav-section {
+    padding-inline: 14px;
+  }
+
+  .nav-breadcrumbs__list {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 14px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .nav-breadcrumbs__item {
+    font-size: 0.88rem;
+  }
+
+  .nav-breadcrumbs__current {
+    padding: 6px 12px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .nav-breadcrumbs__link {
+    transition: none;
+  }
+}

@@ -21,6 +21,7 @@
 
 <body class="body_sign_up">
   <?php include "../../view/global/menu_general/menu_general.php"; ?>
+  <?php include "../../view/sign_up/navigation/navigation.php" ?>
   <?php include "../../view/sign_up/sign/sign.php";?>
 </body>
 </html>

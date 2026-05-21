@@ -20,6 +20,7 @@
 
 <body class="body_for_password">
   <?php include "../../view/global/menu_general/menu_general.php"; ?>
+  <?php include "../../view/forg_password/navigation/navigation.php" ?>
   <?php include "../../view/forg_password/password/password.php";?>
 </body>
 </html>

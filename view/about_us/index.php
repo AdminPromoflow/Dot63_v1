@@ -22,5 +22,7 @@
 <body class="body_about">
   <?php include "../../view/global/menu_general/menu_general.php"; ?>
   <?php include "../../view/about_us/about/about.php";?>
+  <?php include "../../view/about_us/navigation/navigation.php" ?>
+
 </body>
 </html>

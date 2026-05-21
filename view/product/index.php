@@ -21,6 +21,7 @@
 
 <body class="body_product">
   <?php include "../../view/global/menu_general/menu_general.php"; ?>
+  <?php include "../../view/product/navigation/navigation.php" ?>
   <?php include "../../view/product/products/article.php";?>
 </body>
 </html>
