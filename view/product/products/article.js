@@ -343,7 +343,7 @@ class ProductsClass {
 }
 
   buyProduct(sku) {
-    window.location.href = `../../view/preview_porduct/index.php?sku=${encodeURIComponent(sku)}`;
+    window.location.href = `../../view/preview_product_customers/index.php?sku=${encodeURIComponent(sku)}`;
   }
 }
 
