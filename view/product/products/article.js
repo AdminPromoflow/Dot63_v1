@@ -304,7 +304,7 @@ class ProductsClass {
   }
 
   drawProducts(data) {
-  // alert(JSON.stringify(data));
+   alert(JSON.stringify(data));
 
   this.productsData = Array.isArray(data) ? data : [];
 
