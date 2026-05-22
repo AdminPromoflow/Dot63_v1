@@ -106,7 +106,7 @@ class ProductsClass {
         return response.text();
       })
       .then(text => {
-        console.log(text);
+        alert(text);
 
         const result = JSON.parse(text);
 
@@ -165,7 +165,7 @@ class ProductsClass {
         return response.text();
       })
       .then(result => {
-         alert(result);
+        // alert(result);
 
         const data = JSON.parse(result);
 
