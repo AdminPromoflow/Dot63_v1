@@ -158,7 +158,7 @@ class ProductsClass {
     });
     // const groupId = group.value.split("-")[1];
 
-  //  alert(JSON.stringify(getGroups));
+    alert(JSON.stringify(getGroups));
 
     const url = "../../controller/filters/category_filters.php";
 
