@@ -48,6 +48,7 @@ class ProductsClass {
 
     this.getProductsByFilterGroups();
   }
+
   initSearch() {
     this.searchInput = document.getElementById("product-search");
 
@@ -97,7 +98,9 @@ class ProductsClass {
       }
     });
 
-    alert(JSON.stringify(getGroups));
+      alert(JSON.stringify(getGroups));
+
+
     const url = "../../controller/filters/category_filters.php";
 
     const data = {
@@ -118,7 +121,7 @@ class ProductsClass {
         return response.text();
       })
       .then(text => {
-        alert(text);
+      //  alert(text);
 
         const result = JSON.parse(text);
         if (result["success"]) {
