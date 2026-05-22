@@ -141,7 +141,7 @@ class ProductsClass {
     });
     // const groupId = group.value.split("-")[1];
 
-    alert(JSON.stringify(getGroups));
+  //  alert(JSON.stringify(getGroups));
 
     const url = "../../controller/filters/category_filters.php";
 
@@ -165,7 +165,7 @@ class ProductsClass {
         return response.text();
       })
       .then(result => {
-         alert(result);
+      //   alert(result);
 
         const data = JSON.parse(result);
 
@@ -304,7 +304,7 @@ class ProductsClass {
   }
 
   drawProducts(data) {
-  alert(JSON.stringify(data));
+//  alert(JSON.stringify(data));
 
   this.productsData = Array.isArray(data) ? data : [];
 
