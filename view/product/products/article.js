@@ -109,20 +109,23 @@ class ProductsClass {
         alert(text);
 
         const result = JSON.parse(text);
+        if (result["success"]) {
+          this.categoryFilter.innerHTML = "";
 
-        this.categoryFilter.innerHTML = "";
-
-        for (let i = 0; i < result.length; i++) {
-          if (result[i].approved == 1) {
-            this.renderCategoriesFilter(
-              result[i].category_id,
-              result[i].name,
-              result[i].groups
-            );
+          for (let i = 0; i < result["cateogories"].length; i++) {
+            if (result["cateogories"][i].approved == 1) {
+              this.renderCategoriesFilter(
+                result["cateogories"][i].category_id,
+                result["cateogories"][i].name,
+                result["cateogories"][i].groups
+              );
+            }
           }
+
+          this.initCategoryAccordion();
         }
 
-        this.initCategoryAccordion();
+
       })
       .catch(error => {
         console.error("Error fetching categories:", error);

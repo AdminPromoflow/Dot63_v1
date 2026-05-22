@@ -38,8 +38,10 @@ private function getCategoriesFilter(){
   $connection = new Database();
   $categories   = new Categories($connection);
   $response = $categories->getCategories();
-  echo json_encode($response);
-  // getCategories()
+
+  echo json_encode(array('success' => true,
+                         'cateogories' => $response));
+  
 }
 
 }
