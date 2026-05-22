@@ -23,6 +23,7 @@ class ProductsClass {
     }
     this.getProductsByFilterGroups();
   }
+
   getEventAllGroups(){
     var group_category = '';
 
@@ -194,6 +195,7 @@ class ProductsClass {
         console.error("Error:", error);
       });
   }
+
   drawSearch(){
     this.articles.innerHTML = `
       <div class="products-search-panel">
