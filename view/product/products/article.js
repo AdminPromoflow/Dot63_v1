@@ -211,17 +211,60 @@ class ProductsClass {
         .replaceAll(" ", "_")
         .replaceAll("-", "_");
 
-        groupsFilterGroup.innerHTML += `
-          <div id="type_${typeId}" class="filter-group filter-${slug}">
-            <h1>${typeName}</h1>
+      const randomColor = this.getRandomColor();
 
-            <div class="parent_${slug}_filter scroll_filter ${slug}-scroll">
-              <ul id="${slug}_filter" class="checklist ${slug}-list">
-              </ul>
-            </div>
+      groupsFilterGroup.innerHTML += `
+        <div
+          id="type_${typeId}"
+          class="filter-group filter-${slug}"
+          style="--filter-accent: ${randomColor};"
+        >
+          <h1>${typeName}</h1>
+
+          <div class="parent_${slug}_filter scroll_filter ${slug}-scroll">
+            <ul id="${slug}_filter" class="checklist ${slug}-list">
+              <li>
+                <label>
+                  <input type="checkbox" name="${slug}[]" value="option_1">
+                  Option 1
+                </label>
+              </li>
+
+              <li>
+                <label>
+                  <input type="checkbox" name="${slug}[]" value="option_2">
+                  Option 2
+                </label>
+              </li>
+
+              <li>
+                <label>
+                  <input type="checkbox" name="${slug}[]" value="option_3">
+                  Option 3
+                </label>
+              </li>
+            </ul>
           </div>
-        `;
+        </div>
+      `;
     }
+  }
+
+  getRandomColor() {
+    const colors = [
+      "#7C3AED",
+      "#2563EB",
+      "#059669",
+      "#EA580C",
+      "#DC2626",
+      "#0891B2",
+      "#9333EA",
+      "#16A34A",
+      "#F59E0B",
+      "#DB2777"
+    ];
+
+    return colors[Math.floor(Math.random() * colors.length)];
   }
 
   drawSearch(){
