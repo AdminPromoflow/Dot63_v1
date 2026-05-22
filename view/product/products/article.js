@@ -183,12 +183,12 @@ class ProductsClass {
         return response.text();
       })
       .then(result => {
-      //   alert(result);
+         alert(result);
 
         const data = JSON.parse(result);
 
         this.drawSearch();
-        this.drawProducts(data);
+        this.drawProducts(data["products"]);
 
       })
       .catch(error => {

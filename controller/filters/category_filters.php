@@ -30,7 +30,16 @@ private function getProductsByGroups($groups){
   $products->setGroups($groups);
   $response = $products->getProductsByGroups();
 
-  echo json_encode($response);
+  $connection = new Database();
+  $typeVariation = new TypeVariation($connection);
+  $typeVariation->setGroups($groups);
+  $resultTypeVariations = $typeVariation->getTypeVariationsByGroups();
+
+  echo json_encode(array('success' => true,
+                         'products' => $response,
+                         'typeVariations' => $resultTypeVariations
+                       ));
+
 }
 private function getCategoriesFilter($groups){
   header('Content-Type: application/json; charset=utf-8');
@@ -40,15 +49,9 @@ private function getCategoriesFilter($groups){
   $response = $categories->getCategories();
 
 
-  $connection = new Database();
-  $typeVariation = new TypeVariation($connection);
-  $typeVariation->setGroups($groups);
-  $resultTypeVariations = $typeVariation->getTypeVariationsByGroups();
-
   echo json_encode(array('success' => true,
-                         'cateogories' => $response,
-                         'typeVariations' => $resultTypeVariations
-                       ));
+                         'cateogories' => $response
+                         ));
 
 }
 
