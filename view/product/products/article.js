@@ -165,7 +165,7 @@ class ProductsClass {
         return response.text();
       })
       .then(result => {
-      //   alert(result);
+         alert(result);
 
         const data = JSON.parse(result);
 
