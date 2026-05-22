@@ -87,10 +87,22 @@ class ProductsClass {
   }
 
   getCategoryFilters() {
+    const groups = document.querySelectorAll(".groups");
+    const getGroups = [];
+
+    groups.forEach(function(group) {
+      if (group.checked) {
+
+        getGroups.push(group.value.split("-")[1]);
+      }
+    });
+
+    alert(JSON.stringify(getGroups));
     const url = "../../controller/filters/category_filters.php";
 
     const data = {
-      action: "get_categories_filter_and_their_groups"
+      action: "get_categories_filter_and_their_groups",
+      groups: getGroups
     };
 
     fetch(url, {
