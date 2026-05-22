@@ -203,16 +203,24 @@ class ProductsClass {
     groupsFilterGroup.innerHTML = ``;
 
     for (let i = 0; i < typeVariations.length; i++) {
-      groupsFilterGroup.innerHTML += `
-        <div id="${typeVariations[i].type_id}" class="filter-group filter-quantity">
-          <h1>${typeVariations[i].type_name}</h1>
+      const typeId = typeVariations[i].type_id;
+      const typeName = typeVariations[i].type_name;
 
-          <div class="parent_quantity_filter scroll_filter quantity-scroll">
-            <ul id="quantity_filter_${typeVariations[i].type_id}" class="checklist quantity-list quantity-pills">
-            </ul>
+      const slug = typeName
+        .toLowerCase()
+        .replaceAll(" ", "_")
+        .replaceAll("-", "_");
+
+        groupsFilterGroup.innerHTML += `
+          <div id="type_${typeId}" class="filter-group filter-${slug}">
+            <h1>${typeName}</h1>
+
+            <div class="parent_${slug}_filter scroll_filter ${slug}-scroll">
+              <ul id="${slug}_filter" class="checklist ${slug}-list">
+              </ul>
+            </div>
           </div>
-        </div>
-      `;
+        `;
     }
   }
 
