@@ -10,7 +10,7 @@ public function  handleCategoryFilters(){
   $data = json_decode($input,true);
   switch ($data["action"] ?? null) {
     case 'get_categories_filter_and_their_groups':
-    $this->getCategoriesFilter();
+    $this->getCategoriesFilter($data["groups"]);
       break;
 
     case 'get_products_by_groups':
@@ -32,22 +32,31 @@ private function getProductsByGroups($groups){
 
   echo json_encode($response);
 }
-private function getCategoriesFilter(){
+private function getCategoriesFilter($groups){
   header('Content-Type: application/json; charset=utf-8');
 
   $connection = new Database();
   $categories   = new Categories($connection);
   $response = $categories->getCategories();
 
+
+  $connection = new Database();
+  $typeVariation = new TypeVariation($connection);
+  $typeVariation->setGroups($groups)
+  $resultTypeVariations = $typeVariation->getTypeVariationsByGroups();
+
   echo json_encode(array('success' => true,
-                         'cateogories' => $response));
-  
+                         'cateogories' => $response,
+                         'typeVariations' => $resultTypeVariations
+                       ));
+
 }
 
 }
 include "../../controller/config/database.php";
 include "../../model/categories.php";
 include "../../model/products.php";
+include "../../model/Type_variations.php";
 
 
 $categotyFilterClass = new CategoryFilters();
