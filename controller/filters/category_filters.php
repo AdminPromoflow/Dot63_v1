@@ -42,7 +42,7 @@ private function getCategoriesFilter($groups){
 
   $connection = new Database();
   $typeVariation = new TypeVariation($connection);
-  $typeVariation->setGroups($groups)
+  $typeVariation->setGroups($groups);
   $resultTypeVariations = $typeVariation->getTypeVariationsByGroups();
 
   echo json_encode(array('success' => true,
