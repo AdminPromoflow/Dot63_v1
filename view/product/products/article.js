@@ -200,16 +200,30 @@ class ProductsClass {
   drawTypeVariations(typeVariations) {
     const groupsFilterGroup = document.getElementById("groups-filter-group");
 
+    if (!groupsFilterGroup) return;
+
     groupsFilterGroup.innerHTML = ``;
+
+    if (!Array.isArray(typeVariations) || typeVariations.length === 0) {
+      groupsFilterGroup.innerHTML = `
+        <div class="filter-group" style="--filter-accent: #6b7280;">
+          <h1>Filters</h1>
+          <p>No filters found.</p>
+        </div>
+      `;
+      return;
+    }
 
     for (let i = 0; i < typeVariations.length; i++) {
       const typeId = typeVariations[i].type_id;
       const typeName = typeVariations[i].type_name;
 
-      const slug = typeName
+      const slug = String(typeName)
         .toLowerCase()
+        .trim()
         .replaceAll(" ", "_")
-        .replaceAll("-", "_");
+        .replaceAll("-", "_")
+        .replace(/[^a-z0-9_]/g, "");
 
       const randomColor = this.getRandomColor();
 
@@ -266,7 +280,6 @@ class ProductsClass {
 
     return colors[Math.floor(Math.random() * colors.length)];
   }
-
   drawSearch(){
     this.articles.innerHTML = `
       <div class="products-search-panel">
