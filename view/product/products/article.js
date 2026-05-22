@@ -189,11 +189,31 @@ class ProductsClass {
 
         this.drawSearch();
         this.drawProducts(data["products"]);
+        this.drawTypeVariations(data["typeVariations"]);
 
       })
       .catch(error => {
         console.error("Error:", error);
       });
+  }
+
+  drawTypeVariations(typeVariations) {
+    const groupsFilterGroup = document.getElementById("groups-filter-group");
+
+    groupsFilterGroup.innerHTML = ``;
+
+    for (let i = 0; i < typeVariations.length; i++) {
+      groupsFilterGroup.innerHTML += `
+        <div id="${typeVariations[i].type_id}" class="filter-group filter-quantity">
+          <h1>${typeVariations[i].type_name}</h1>
+
+          <div class="parent_quantity_filter scroll_filter quantity-scroll">
+            <ul id="quantity_filter_${typeVariations[i].type_id}" class="checklist quantity-list quantity-pills">
+            </ul>
+          </div>
+        </div>
+      `;
+    }
   }
 
   drawSearch(){
