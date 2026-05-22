@@ -120,7 +120,7 @@ class ProductsClass {
         return response.text();
       })
       .then(text => {
-      //  alert(text);
+        alert(text);
 
         const result = JSON.parse(text);
         if (result["success"]) {
@@ -182,7 +182,7 @@ class ProductsClass {
         return response.text();
       })
       .then(result => {
-         alert(result);
+      //   alert(result);
 
         const data = JSON.parse(result);
 
