@@ -6,10 +6,11 @@
 
 }
 
-h1 {
+.card h1 {
 	margin: 0 0 1.25rem 0;
 	letter-spacing: .01em;
   text-align: center;
+	color: #1F3551;
 }
 
 .field {
