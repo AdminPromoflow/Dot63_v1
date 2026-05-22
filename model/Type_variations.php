@@ -63,12 +63,16 @@ class TypeVariation
       $categoryIds = array_map('intval', $categoryIds);
       $categoryIds = array_values(array_unique($categoryIds));
 
+      if (empty($categoryIds)) {
+        return [];
+      }
+
       // 6) Create dynamic placeholders for categories
       $categoryPlaceholders = implode(',', array_fill(0, count($categoryIds), '?'));
 
-      // 7) Get type variations linked to those categories
+      // 7) Get type variations linked to those categories without duplicates
       $stmt = $pdo->prepare("
-        SELECT
+        SELECT DISTINCT
           type_id,
           type_name
         FROM type_variations
