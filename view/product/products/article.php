@@ -88,7 +88,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
       </div>
 
 
-      <div id="groups-filter-group" class="filter-group filter-brand">
+      <div id="groups-filter-group" class="">
 
       </div>
 
