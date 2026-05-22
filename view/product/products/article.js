@@ -98,7 +98,6 @@ class ProductsClass {
       }
     });
 
-      alert(JSON.stringify(getGroups));
 
 
     const url = "../../controller/filters/category_filters.php";
