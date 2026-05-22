@@ -189,13 +189,39 @@ class ProductsClass {
 
         this.drawSearch();
         this.drawProducts(data["products"]);
-        this.drawTypeVariations(data["typeVariations"]);
+        const uniqueTypeVariations = this.removeDuplicateTypeVariations(data["typeVariations"]);
 
+        this.drawTypeVariations(uniqueTypeVariations);
       })
       .catch(error => {
         console.error("Error:", error);
       });
   }
+
+  removeDuplicateTypeVariations(typeVariations) {
+  if (!Array.isArray(typeVariations)) {
+    return [];
+  }
+
+  const seen = new Set();
+
+  return typeVariations.filter(typeVariation => {
+    const typeName = String(typeVariation.type_name || "")
+      .toLowerCase()
+      .trim();
+
+    if (!typeName) {
+      return false;
+    }
+
+    if (seen.has(typeName)) {
+      return false;
+    }
+
+    seen.add(typeName);
+    return true;
+  });
+}
 
   drawTypeVariations(typeVariations) {
     const groupsFilterGroup = document.getElementById("groups-filter-group");
