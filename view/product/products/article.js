@@ -8,7 +8,7 @@ class ProductsClass {
 
     this.fetchGetProducts();
     this.initSearch();
-  //  this.getCategoryFilters();
+    this.getCategoryFilters();
     this.initPriceRange();
 
 
@@ -132,15 +132,13 @@ class ProductsClass {
             const category = result["categories"][i];
 
             if (
-              category.approved == 1 &&
-              category.name !== "Unassigned Category" &&
-              category.groups !== "Unassigned Group"
+              category.approved == 1
             ) {
-            //  this.renderCategoriesFilter(category.category_id, category.name, category.groups);
+              this.renderCategoriesFilter(category.category_id, category.name, category.groups);
             }
           }
 
-        //  this.initCategoryAccordion();
+          this.initCategoryAccordion();
         }
 
 
