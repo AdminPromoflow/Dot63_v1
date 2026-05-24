@@ -63,7 +63,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
         </div>
       </div>
 
-      <div class="filter-group filter-stock">
+      <!-- <div class="filter-group filter-stock">
         <h1>Stock</h1>
         <div class="parent_stock_filter scroll_filter stock-scroll">
           <ul id="stock_filter" class="checklist stock-list">
@@ -85,7 +85,7 @@ $jsTime = filemtime('../../view/product/products/article.js');
             <li><label><input type="checkbox" name="brand[]" value="unbranded"> Unbranded</label></li>
           </ul>
         </div>
-      </div>
+      </div> -->
 
 
       <div id="groups-filter-group" class="">
