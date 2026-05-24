@@ -17,6 +17,7 @@ class ProductsClass {
       productsClass.getEventGroups();
     });
   }
+
   getEventGroups(){
     if (!event.target.classList.contains('groups')) {
       return;
@@ -121,7 +122,7 @@ class ProductsClass {
         return response.text();
       })
       .then(text => {
-    //    alert(text);
+        alert(text);
 
         const result = JSON.parse(text);
         if (result["success"]) {
@@ -306,6 +307,7 @@ class ProductsClass {
 
     return colors[Math.floor(Math.random() * colors.length)];
   }
+
   drawSearch(){
     this.articles.innerHTML = `
       <div class="products-search-panel">
