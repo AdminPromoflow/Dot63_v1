@@ -140,7 +140,7 @@ class ProductsClass {
             }
           }
 
-          this.initCategoryAccordion();
+        //  this.initCategoryAccordion();
         }
 
 
