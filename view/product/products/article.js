@@ -122,7 +122,7 @@ class ProductsClass {
         return response.text();
       })
       .then(text => {
-        alert(text);
+      //  alert(text);
 
         const result = JSON.parse(text);
         if (result["success"]) {
