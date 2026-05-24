@@ -136,7 +136,7 @@ class ProductsClass {
               category.name !== "Unassigned Category" &&
               category.groups !== "Unassigned Group"
             ) {
-              this.renderCategoriesFilter(category.category_id, category.name, category.groups);
+            //  this.renderCategoriesFilter(category.category_id, category.name, category.groups);
             }
           }
 
