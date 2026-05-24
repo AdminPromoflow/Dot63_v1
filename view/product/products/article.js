@@ -129,7 +129,10 @@ class ProductsClass {
           this.categoryFilter.innerHTML = "";
 
           for (let i = 0; i < result["cateogories"].length; i++) {
-            if (result["cateogories"][i].approved == 1) {
+            if (result["cateogories"][i].approved == 1 &&
+                result["cateogories"][i].name != "Unassigned Category" &&
+                result["cateogories"][i].groups != "Unassigned Group"
+                ) {
               this.renderCategoriesFilter(
                 result["cateogories"][i].category_id,
                 result["cateogories"][i].name,
