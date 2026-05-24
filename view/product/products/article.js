@@ -8,7 +8,7 @@ class ProductsClass {
 
     this.fetchGetProducts();
     this.initSearch();
-    this.getCategoryFilters();
+  //  this.getCategoryFilters();
     this.initPriceRange();
 
 
