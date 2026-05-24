@@ -447,7 +447,10 @@ class ProductsClass {
   for (let i = 0; i < data.length; i++) {
     const product = data[i];
 
-    if (product.is_approved == 1) {
+    if (product.is_approved == 1  &&
+        product.category_name !== "Unassigned Category" &&
+        product.category_name !== "Unassigned Group"
+        ) {
       const firstImage = product.images && product.images.length > 0
         ? product.images[0]
         : "../../../view/product/products/img/icon_products.png";
