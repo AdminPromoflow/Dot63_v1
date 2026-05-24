@@ -128,15 +128,18 @@ class ProductsClass {
         if (result["success"]) {
           this.categoryFilter.innerHTML = "";
 
-          for (let i = 0; i < result["cateogories"].length; i++) {
-            if (result["cateogories"][i].approved == 1 &&
-                result["cateogories"][i].name != "Unassigned Category" &&
-                result["cateogories"][i].groups != "Unassigned Group"
-                ) {
+          for (let i = 0; i < result["categories"].length; i++) {
+            const category = result["categories"][i];
+
+            if (
+              category.approved == 1 &&
+              category.name !== "Unassigned Category" &&
+              category.groups !== "Unassigned Group"
+            ) {
               this.renderCategoriesFilter(
-                result["cateogories"][i].category_id,
-                result["cateogories"][i].name,
-                result["cateogories"][i].groups
+                category.category_id,
+                category.name,
+                category.groups
               );
             }
           }
