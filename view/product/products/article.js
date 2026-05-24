@@ -122,19 +122,19 @@ class ProductsClass {
         return response.text();
       })
       .then(text => {
-      //  alert(text);
+    //    alert(text);
 
         const result = JSON.parse(text);
         if (result["success"]) {
           this.categoryFilter.innerHTML = "";
 
-          for (let i = 0; i < result["categories"].length; i++) {
-            const category = result["categories"][i];
-
-            if (
-              category.approved == 1
-            ) {
-              this.renderCategoriesFilter(category.category_id, category.name, category.groups);
+          for (let i = 0; i < result["cateogories"].length; i++) {
+            if (result["cateogories"][i].approved == 1) {
+              this.renderCategoriesFilter(
+                result["cateogories"][i].category_id,
+                result["cateogories"][i].name,
+                result["cateogories"][i].groups
+              );
             }
           }
 
