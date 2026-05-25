@@ -325,7 +325,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
-    // alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
+     alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
 
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return true;
 
