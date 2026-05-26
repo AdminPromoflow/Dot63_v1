@@ -849,7 +849,19 @@ class PreviewLogic {
     }
 
 
-    const var_label_quantity = document.getElementById("var_label_quantity");
+    const bb_unit = document.getElementById("bb_unit");
+    const bb_unit_quantity = document.getElementById("bb_unit_quantity");
+    const bb_extra_unit = document.getElementById("bb_extra_unit");
+    const bb_total = document.getElementById("bb_total");
+
+
+    bb_unit.innerHTML =  "£" + price;
+    bb_unit_quantity.innerHTML = quantity;
+    bb_extra_unit.innerHTML = "£" + totalExtraPrice;
+    bb_total.innerHTML = "";
+
+
+
 
   }
 
