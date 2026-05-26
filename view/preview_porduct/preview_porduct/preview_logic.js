@@ -828,60 +828,19 @@ class PreviewLogic {
 
   updateProductSummaryBox(quantity, price){
     const options = document.querySelectorAll(".var-option");
-
-     let totalExtraPrice = 0;
-
-     for (let i = 0; i < options.length; i++) {
-
-       /*
-
-         1. Check if this option has an extra price.
-
-       */
-
-       if (!options[i].querySelector(".opt-price-extra")) continue;
-
-       /*
-
-         2. Get the extra price text.
-
-         Example: "+0.05 p/u"
-
-       */
-
-       const priceExtraText = options[i].querySelector(".opt-price-extra").innerHTML;
-
-       /*
-
-         3. Clean the text and convert it into a number.
-
-         Example: "+0.05 p/u" becomes 0.05.
-
-       */
-
-       const priceExtraNumber = Number(
-
-         priceExtraText
-
-           .replace("+", "")
-
-           .replace("p/u", "")
-
-           .trim()
-
-       );
-
-       /*
-
-         4. Add this extra price to the total.
-
-       */
-
-       totalExtraPrice = totalExtraPrice + priceExtraNumber;
-
-     }
-
-     alert( totalExtraPrice);
+    let totalExtraPrice = 0;
+    for (let i = 0; i < options.length; i++) {
+      if (!options[i].querySelector(".opt-price-extra")) continue;
+      const priceExtraText = options[i].querySelector(".opt-price-extra").innerHTML;
+      const priceExtraNumber = Number(
+        priceExtraText
+          .replace("+", "")
+          .replace("p/u", "")
+          .trim()
+      );
+      totalExtraPrice = totalExtraPrice + priceExtraNumber;
+    }
+    alert(totalExtraPrice);
   }
 
   selectPriceButton(button, scope = null) {
