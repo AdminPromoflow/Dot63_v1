@@ -738,106 +738,65 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    /*
-      1. Get the currently selected variation ID.
-      Example:
-      "variation_id_3" becomes 3.
-    */
+  //  alert("Acá se muestran los datos de price" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
 
-    /*
-      2. Get the main parent where all price groups will be rendered.
-      This element always exists in the HTML.
-    */
     const parent = document.getElementById("wrap-prices-group");
+    if (!parent) return;
 
-    /*
-      3. Get the type variation ID.
-      This is used to create a unique wrapper for this type variation.
-    */
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-price-${typeId}`;
 
-    /*
-      4. Check if the wrapper already exists.
-      If it exists, reuse it.
-    */
     let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
 
-    /*
-      5. If the wrapper does not exist, create it and add it to the parent.
-    */
     if (!wrapper) {
       wrapper = document.createElement("div");
       wrapper.className = "wrap-price";
       wrapper.id = wrapId;
       wrapper.dataset.typeId = typeId;
-
       parent.appendChild(wrapper);
     }
 
-    /*
-      6. Store all price buttons as HTML before inserting them.
-    */
-    let html = "";
+    wrapper.innerHTML = "";
 
-    /*
-      7. Loop through all prices received for this type.
-    */
     for (let i = 0; i < pricesOnlyOfType.length; i++) {
       const p = pricesOnlyOfType[i];
 
-      /*
-        8. Skip this price if it does not belong to the selected variation.
-      */
+      // Si este precio no pertenece a la variación seleccionada, lo saltamos
       if (Number(p?.variation_id) !== id_variation) continue;
 
-      /*
-        9. Only render prices when the display mode is "prices".
-      */
+      // Solo dibujamos si el modo es "prices"
       if (String(p?.price_display_mode ?? "").trim() !== "prices") continue;
 
-      /*
-        10. Prepare clean values before adding them to the HTML.
-      */
       const priceId = String(p?.price_id ?? "").trim();
       const minQty = String(p?.min_quantity ?? "").trim();
       const maxQty = String(p?.max_quantity ?? "").trim();
       const price = String(p?.price ?? "").trim();
-      const variationId = String(p?.variation_id ?? "").trim();
-      const priceDisplayMode = String(p?.price_display_mode ?? "").trim();
 
-      /*
-        11. If the price does not have a maximum quantity, do not render it.
-      */
+      // Si no tiene cantidad máxima, no se dibuja
       if (maxQty === "") continue;
 
-      /*
-        12. Add the button HTML to the string.
-      */
-      html += `
-        <button
-          type="button"
-          class="var-option js-scale-in js-price-option"
-          value="${price}"
-          data-price-id="${priceId}"
-          data-min-quantity="${minQty}"
-          data-max-quantity="${maxQty}"
-          data-price="${price}"
-          data-variation-id="${variationId}"
-          data-price-display-mode="${priceDisplayMode}"
-        >
-          <span class="opt-main">${minQty}</span>
-        </button>
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "var-option js-scale-in js-price-option";
+      button.value = price;
+      button.dataset.priceId = priceId;
+      button.dataset.minQuantity = minQty;
+      button.dataset.maxQuantity = maxQty;
+      button.dataset.price = price;
+      button.dataset.variationId = String(p?.variation_id ?? "");
+      button.dataset.priceDisplayMode = String(p?.price_display_mode ?? "");
+
+      button.innerHTML = `
+        <span class="opt-main">${minQty}</span>
       `;
+
+      wrapper.appendChild(button);
     }
 
-    /*
-      13. Insert all generated price buttons into the wrapper.
-    */
-    wrapper.innerHTML = html;
+    this.bindPriceButtons(`#${wrapId}`);
   }
 
   bindPriceButtons(scopeSelector) {
