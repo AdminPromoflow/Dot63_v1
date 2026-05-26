@@ -814,8 +814,8 @@ class PreviewLogic {
 
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
-        alert("seleccione lo que era!");
         const el = e.currentTarget;
+        alert(JSON.stringify(el) + "  " + JSON.stringify(scope));
         this.selectPriceButton(el, scope);
       });
     }
@@ -824,6 +824,10 @@ class PreviewLogic {
     this.selectPriceButton(buttons[0], scope);
 
     return true;
+  }
+
+  updateProductSummaryBoxUnit(){
+    alert("buenas");
   }
 
   selectPriceButton(button, scope = null) {
