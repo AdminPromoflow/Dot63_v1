@@ -829,9 +829,8 @@ class PreviewLogic {
     // Always auto-select the first available price button.
 
 
-    this.selectPriceButton(buttons[0], scope);
 
-    const updateVariationPrice = this.selectPriceButton(el, scope);
+    const updateVariationPrice = this.selectPriceButton(buttons[0], scope);
 
 
     setTimeout(() => {
