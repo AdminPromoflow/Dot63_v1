@@ -815,8 +815,9 @@ class PreviewLogic {
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
         const el = e.currentTarget;
-        this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
         this.selectPriceButton(el, scope);
+        this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
+
       });
     }
 
@@ -829,6 +830,7 @@ class PreviewLogic {
   updateProductSummaryBox(quantity, price){
     const options = document.querySelectorAll(".var-option");
     let totalExtraPrice = 0;
+
     for (let i = 0; i < options.length; i++) {
       if (!options[i].querySelector(".opt-price-extra")) continue;
       const priceExtraText = options[i].querySelector(".opt-price-extra").innerHTML;
