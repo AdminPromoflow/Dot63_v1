@@ -847,7 +847,6 @@ class PreviewLogic {
       );
       totalExtraPrice = totalExtraPrice + priceExtraNumber;
     }
-    alert(totalExtraPrice);
   }
 
   selectPriceButton(button, scope = null) {
