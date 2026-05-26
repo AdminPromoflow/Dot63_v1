@@ -14,7 +14,8 @@ class PreviewGallery {
     this.init();
 
     document.addEventListener("click", (event) => {
-       this.getEventVarOption(event);
+      alert("buenas");
+       //this.getEventVarOption(event);
      });
 
 
