@@ -815,7 +815,7 @@ class PreviewLogic {
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
         const el = e.currentTarget;
-        alert(JSON.stringify(el.dataset.minQuantity) + "  " + JSON.stringify(el.value));
+        this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
         this.selectPriceButton(el, scope);
       });
     }
@@ -826,8 +826,8 @@ class PreviewLogic {
     return true;
   }
 
-  updateProductSummaryBoxUnit(){
-    alert("buenas");
+  updateProductSummaryBox(quantity, price){
+    alert(quantity + "buenas" + price);
   }
 
   selectPriceButton(button, scope = null) {
