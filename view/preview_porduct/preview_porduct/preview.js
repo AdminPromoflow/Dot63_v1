@@ -13,10 +13,7 @@ class PreviewGallery {
 
     this.init();
 
-    document.addEventListener("click", (event) => {
-      alert("buenas");
-       //this.getEventVarOption(event);
-     });
+
 
 
   }
@@ -60,6 +57,7 @@ class PreviewGallery {
     parent.dataset.bound = "1";
 
     parent.addEventListener("click", (e) => {
+      alert("vea pues");
       const option = e.target.closest(".var-option");
       if (!option || !parent.contains(option)) return;
 
