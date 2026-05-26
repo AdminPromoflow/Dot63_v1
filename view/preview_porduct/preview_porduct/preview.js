@@ -435,9 +435,9 @@ class PreviewGallery {
       spPrice.innerHTML = `${major}<span class="sp-price-minor">.${minor}</span>`;
     }
 
-    if (spUnitHint) {
-      spUnitHint.textContent = maxQuantity ? `per ${maxQuantity} units` : "";
-    }
+    // if (spUnitHint) {
+    //   spUnitHint.textContent = maxQuantity ? `per ${maxQuantity} units` : "";
+    // }
 
     if (bbTotal) {
       bbTotal.textContent = `${symbol}${fixed}`;
