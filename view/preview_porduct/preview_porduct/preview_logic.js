@@ -828,9 +828,19 @@ class PreviewLogic {
 
     // Always auto-select the first available price button.
 
-    this.updateProductSummaryBox(buttons[0].dataset.minQuantity, buttons[0].value);
 
     this.selectPriceButton(buttons[0], scope);
+
+    const updateVariationPrice = this.selectPriceButton(el, scope);
+
+
+    setTimeout(() => {
+      if (updateVariationPrice) {
+        this.updateProductSummaryBox(buttons[0].dataset.minQuantity, buttons[0].value);
+      }
+    }, 1500);
+
+
 
     return true;
   }
@@ -850,8 +860,6 @@ class PreviewLogic {
       );
       totalExtraPrice = totalExtraPrice + priceExtraNumber;
     }
-
-    alert(totalExtraPrice);
 
 
     const bb_unit = document.getElementById("bb_unit");
