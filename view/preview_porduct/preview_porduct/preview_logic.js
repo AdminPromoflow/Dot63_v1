@@ -833,12 +833,12 @@ class PreviewLogic {
   }
 
   updateProductSummaryBox(quantity, price){
-    const options = document.querySelectorAll(".var-option");
+    const is_selected = document.querySelectorAll(".is-selected");
     let totalExtraPrice = 0;
 
-    for (let i = 0; i < options.length; i++) {
-      if (!options[i].querySelector(".opt-price-extra")) continue;
-      const priceExtraText = options[i].querySelector(".opt-price-extra").innerHTML;
+    for (let i = 0; i < is_selected.length; i++) {
+      if (!is_selected[i].querySelector(".opt-price-extra")) continue;
+      const priceExtraText = is_selected[i].querySelector(".opt-price-extra").innerHTML;
       const priceExtraNumber = Number(
         priceExtraText
           .replace("+", "")
