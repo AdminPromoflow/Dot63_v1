@@ -597,9 +597,6 @@ class PreviewLogic {
 
   SelectVariation(domId = "") {
 
-    alert("haha");
-    // loader.show();
-    // alert("El id seleccionado es: " + domId);
 
     this.setSelectVariation(domId);
 
@@ -817,6 +814,7 @@ class PreviewLogic {
 
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
+        alert("seleccione lo que era!");
         const el = e.currentTarget;
         this.selectPriceButton(el, scope);
       });
