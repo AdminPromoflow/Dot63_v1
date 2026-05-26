@@ -118,7 +118,7 @@ class PreviewLogic {
 
         if (variationTypesForDelete?.length > 0) {
           this.shouldDeleteItems = true;
-          this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+        //  this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         } else {
           this.shouldDeleteItems = false;
         }
