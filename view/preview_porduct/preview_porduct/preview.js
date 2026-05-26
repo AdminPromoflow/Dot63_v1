@@ -25,7 +25,7 @@ class PreviewGallery {
 
     if (!button) return;
 
-    alert"Clicked var-option:", button);
+    alert button);
 
   }
 
