@@ -796,32 +796,32 @@ class PreviewLogic {
       wrapper.appendChild(button);
     }
 
-  //  this.bindPriceButtons(`#${wrapId}`);
+    this.bindPriceButtons(`#${wrapId}`);
   }
 
-  // bindPriceButtons(scopeSelector) {
-  //   const scope = document.querySelector(scopeSelector);
-  //   if (!scope) return false;
-  //
-  //   const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
-  //
-  //   if (buttons.length === 0) {
-  //   //  window.previewGallery?.updatePrice?.();
-  //     return false;
-  //   }
-  //
-  //   for (const btn of buttons) {
-  //     btn.addEventListener("click", (e) => {
-  //       const el = e.currentTarget;
-  //       this.selectPriceButton(el, scope);
-  //     });
-  //   }
-  //
-  //   // Always auto-select the first available price button.
-  //   this.selectPriceButton(buttons[0], scope);
-  //
-  //   return true;
-  // }
+  bindPriceButtons(scopeSelector) {
+    const scope = document.querySelector(scopeSelector);
+    if (!scope) return false;
+
+    const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
+
+    if (buttons.length === 0) {
+    //  window.previewGallery?.updatePrice?.();
+      return false;
+    }
+
+    for (const btn of buttons) {
+      btn.addEventListener("click", (e) => {
+        const el = e.currentTarget;
+        this.selectPriceButton(el, scope);
+      });
+    }
+
+    // Always auto-select the first available price button.
+    this.selectPriceButton(buttons[0], scope);
+
+    return true;
+  }
 
   selectPriceButton(button, scope = null) {
     if (!button) return false;
