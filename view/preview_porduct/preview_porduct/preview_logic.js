@@ -858,6 +858,7 @@ class PreviewLogic {
 
 
 
+
     const bb_extra_unit = document.getElementById("bb_extra_unit");
     const bb_extra_quantity = document.getElementById("bb_extra_quantity");
     const bb_extra_total = document.getElementById("bb_extra_total");
@@ -871,8 +872,17 @@ class PreviewLogic {
     bb_unit_quantity.innerHTML = quantity;
     bb_unit_total.innerHTML =  "£" + (price*quantity);
 
+    var quantityExtras;
+
+    if (totalExtraPrice == 0) {
+      quantityExtras = 0;
+    }
+    else {
+      quantityExtras = quantity;
+    }
+
     bb_extra_unit.innerHTML = "£" + totalExtraPrice;
-    bb_extra_quantity.innerHTML = "£" + quantity;
+    bb_extra_quantity.innerHTML = "£" + quantityExtras;
     bb_extra_total.innerHTML =  "£" + (totalExtraPrice*quantity);
 
 
