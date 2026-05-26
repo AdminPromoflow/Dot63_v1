@@ -815,7 +815,7 @@ class PreviewLogic {
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
         const el = e.currentTarget;
-        alert(JSON.stringify(el.dataset.maxQuantity) + "  " + JSON.stringify(scope));
+        alert(JSON.stringify(el.dataset.minQuantity) + "  " + JSON.stringify(el.dataset.value));
         this.selectPriceButton(el, scope);
       });
     }
