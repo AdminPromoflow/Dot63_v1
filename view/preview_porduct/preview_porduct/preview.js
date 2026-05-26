@@ -391,8 +391,8 @@ class PreviewGallery {
 
     if (!selectedButton) return false;
 
-   this.paintSelectedPrice(selectedButton);
-   this.syncPriceDisplay(selectedButton);
+   // this.paintSelectedPrice(selectedButton);
+   // this.syncPriceDisplay(selectedButton);
 
     return true;
   }
