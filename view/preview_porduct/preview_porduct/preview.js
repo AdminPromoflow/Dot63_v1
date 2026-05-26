@@ -12,6 +12,21 @@ class PreviewGallery {
     this.observer = null;
 
     this.init();
+
+    document.addEventListener("click", (event) => {
+       this.getEventVarOption(event);
+     });
+
+
+  }
+
+  getEventVarOption(event) {
+    const button = event.target.closest(".var-option");
+
+    if (!button) return;
+
+    alert"Clicked var-option:", button);
+
   }
 
   /* ============================================================================
