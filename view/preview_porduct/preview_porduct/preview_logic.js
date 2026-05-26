@@ -796,7 +796,7 @@ class PreviewLogic {
       wrapper.appendChild(button);
     }
 
-    this.bindPriceButtons(`#${wrapId}`);
+  //  this.bindPriceButtons(`#${wrapId}`);
   }
 
   bindPriceButtons(scopeSelector) {
