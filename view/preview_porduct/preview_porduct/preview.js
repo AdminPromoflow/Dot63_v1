@@ -426,7 +426,7 @@ class PreviewGallery {
     const spPrice = document.getElementById("sp_price");
     const spUnitHint = document.getElementById("sp_unit_hint");
     const bbTotal = document.getElementById("bb_total");
-    const bbUnit = document.getElementById("bb_unit");
+    // const bbUnit = document.getElementById("bb_unit");
     const symbolEl = document.getElementById("sp_currency_symbol");
 
     const symbol = symbolEl ? symbolEl.textContent.trim() || "£" : "£";
@@ -443,15 +443,15 @@ class PreviewGallery {
       bbTotal.textContent = `${symbol}${fixed}`;
     }
 
-    if (bbUnit) {
-      const qty = Number(maxQuantity.replace(/,/g, ""));
-      if (Number.isFinite(qty) && qty > 0) {
-        const unit = (safePrice / qty).toFixed(2);
-        bbUnit.textContent = `${symbol}${unit}`;
-      } else {
-        bbUnit.textContent = "";
-      }
-    }
+    // if (bbUnit) {
+    //   const qty = Number(maxQuantity.replace(/,/g, ""));
+    //   if (Number.isFinite(qty) && qty > 0) {
+    //     const unit = (safePrice / qty).toFixed(2);
+    //     bbUnit.textContent = `${symbol}${unit}`;
+    //   } else {
+    //     bbUnit.textContent = "";
+    //   }
+    // }
   }
 }
 
