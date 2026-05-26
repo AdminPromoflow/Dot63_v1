@@ -851,6 +851,8 @@ class PreviewLogic {
       totalExtraPrice = totalExtraPrice + priceExtraNumber;
     }
 
+    alert(totalExtraPrice);
+
 
     const bb_unit = document.getElementById("bb_unit");
     const bb_unit_quantity = document.getElementById("bb_unit_quantity");
