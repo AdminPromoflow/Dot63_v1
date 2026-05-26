@@ -815,7 +815,7 @@ class PreviewLogic {
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
         const el = e.currentTarget;
-        // const updateVariationPrice = this.selectPriceButton(el, scope);
+         const updateVariationPrice = this.selectPriceButton(el, scope);
 
          // if (updateVariationPrice) {
          //   this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
