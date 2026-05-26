@@ -828,7 +828,7 @@ class PreviewLogic {
 
     // Always auto-select the first available price button.
 
-    this.updateProductSummaryBox(buttons[0].dataset.minQuantity, buttons[0]buttons[0].value);
+    this.updateProductSummaryBox(buttons[0].dataset.minQuantity, buttons[0].value);
 
     this.selectPriceButton(buttons[0], scope);
 
