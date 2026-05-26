@@ -5,11 +5,11 @@ class PreviewLogic {
     // Initialise the product data once the DOM is ready.
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => this.getDataProduct());
-      const var_option = document.querySelectorAll(".var-option");
-
-      var_option.addEventListener("click", function(){
-        alert("entramos!");
-      })
+      // const var_option = document.querySelectorAll(".var-option");
+      //
+      // var_option.addEventListener("click", function(){
+      //   alert("entramos!");
+      // })
 
     } else {
       this.getDataProduct();
