@@ -850,6 +850,7 @@ class PreviewLogic {
 
 
     const var_label_quantity = document.getElementById("var_label_quantity");
+
   }
 
   selectPriceButton(button, scope = null) {
