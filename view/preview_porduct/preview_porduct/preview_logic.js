@@ -738,7 +738,7 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    alert("Acá se muestran los datos de price" + JSON.stringify(pricesOnlyOfType));
+  //  alert("Acá se muestran los datos de price" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
@@ -790,7 +790,7 @@ class PreviewLogic {
       button.dataset.priceDisplayMode = String(p?.price_display_mode ?? "");
 
       button.innerHTML = `
-        <span class="opt-main">${maxQty}</span>
+        <span class="opt-main">${minQty}</span>
       `;
 
       wrapper.appendChild(button);
