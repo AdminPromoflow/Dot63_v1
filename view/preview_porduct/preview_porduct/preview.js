@@ -439,9 +439,9 @@ class PreviewGallery {
     //   spUnitHint.textContent = maxQuantity ? `per ${maxQuantity} units` : "";
     // }
 
-    if (bbTotal) {
-      bbTotal.textContent = `${symbol}${fixed}`;
-    }
+    // if (bbTotal) {
+    //   bbTotal.textContent = `${symbol}${fixed}`;
+    // }
 
     // if (bbUnit) {
     //   const qty = Number(maxQuantity.replace(/,/g, ""));
