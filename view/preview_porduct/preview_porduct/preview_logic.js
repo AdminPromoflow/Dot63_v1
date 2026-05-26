@@ -847,7 +847,9 @@ class PreviewLogic {
       );
       totalExtraPrice = totalExtraPrice + priceExtraNumber;
     }
-    alert(totalExtraPrice);
+
+
+    const var_label_quantity = document.getElementById("var_label_quantity");
   }
 
   selectPriceButton(button, scope = null) {

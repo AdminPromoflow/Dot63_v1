@@ -235,7 +235,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
           <div class="var-label">
             <span class="var-name">Pack size</span>
-            <strong id="var_label_items">500 units</strong>
+            <strong id="var_label_quantity">500 units</strong>
           </div>
 
           <!-- ✅ 10: Agrupar botones dentro de wrap-items (sin id) -->
@@ -358,6 +358,11 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
               <div class="price-line">
                 <span class="label">Unit</span>
+                <strong id="bb_unit">£0.08</strong>
+              </div>
+
+              <div class="price-line">
+                <span class="label">Extras</span>
                 <strong id="bb_unit">£0.08</strong>
               </div>
 
