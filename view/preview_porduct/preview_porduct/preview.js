@@ -18,15 +18,6 @@ class PreviewGallery {
 
   }
 
-  getEventVarOption(event) {
-    const button = event.target.closest(".var-option");
-
-    if (!button) return;
-
-    alert button);
-
-  }
-
   /* ============================================================================
     INITIALISE
   ============================================================================ */
