@@ -21,7 +21,7 @@ class PreviewLogic {
     // Store the currently selected price payload.
     this.priceSelected = null;
 
-    const var_option = document.querySelectorAll("var-option");
+    const var_option = document.querySelectorAll(".var-option");
 
     var_option.addEventListener("click", function(){
       alert("entramos!");
