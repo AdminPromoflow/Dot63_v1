@@ -342,6 +342,7 @@ JOIN (
   UNION ALL SELECT 'Giveaways', 'Printed sides'
   UNION ALL SELECT 'Giveaways', 'Width'
 
+
   UNION ALL SELECT 'Sports & Leisure', 'Price'
   UNION ALL SELECT 'Sports & Leisure', 'Colour'
   UNION ALL SELECT 'Sports & Leisure', 'Print technique'

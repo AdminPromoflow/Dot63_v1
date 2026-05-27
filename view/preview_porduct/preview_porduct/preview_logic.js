@@ -826,9 +826,6 @@ class PreviewLogic {
       });
     }
 
-    // Always auto-select the first available price button.
-
-
 
     const updateVariationPrice = this.selectPriceButton(buttons[0], scope);
 
@@ -891,7 +888,7 @@ class PreviewLogic {
     }
 
     bb_extra_unit.innerHTML = "£" + totalExtraPrice;
-    bb_extra_quantity.innerHTML = "£" + quantityExtras;
+    bb_extra_quantity.innerHTML =   quantityExtras;
     bb_extra_total.innerHTML =  "£" + (totalExtraPrice*quantity);
 
 
