@@ -836,7 +836,7 @@ class PreviewLogic {
         //     loader.hide();
 
            }
-         }, 1500);
+         },500);
 
       });
     }
