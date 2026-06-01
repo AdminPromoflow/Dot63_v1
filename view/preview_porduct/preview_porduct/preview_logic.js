@@ -830,13 +830,11 @@ class PreviewLogic {
         const el = e.currentTarget;
          const updateVariationPrice = this.selectPriceButton(el, scope);
 
-         setTimeout(() => {
            if (updateVariationPrice) {
              this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
         //     loader.hide();
 
            }
-         },200);
 
       });
     }
