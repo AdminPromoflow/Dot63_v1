@@ -38,9 +38,6 @@ $jsLogicTime  = filemtime('../../view/images/img/image_logic.js');
 
     <header class="cp-card-header">
       <div>
-        <button id="btn_back_images" class="btn-back" type="button" aria-label="Back to Variations">
-          ← Back
-        </button>
         <h2 id="cp-vi-title">Images</h2>
         <p class="cp-subtitle">Upload and manage gallery images for this variation.</p>
       </div>
@@ -67,6 +64,9 @@ $jsLogicTime  = filemtime('../../view/images/img/image_logic.js');
   </section>
 
   <div class="cp-footer">
+    <button id="btn_back_images" class="btn-back" type="button" aria-label="Back to Variations">
+      ← Back
+    </button>
     <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
     <div class="cp-footer-actions">
       <button class="btn btn-primary" type="submit" id="save_images" form="variationImagesForm">Save</button>

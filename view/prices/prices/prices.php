@@ -87,6 +87,9 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath) : time();
   </section>
 
   <div class="cp-footer">
+    <button id="btn_back_prices" class="btn-back" type="button" aria-label="Back to Items">
+      ← Back
+    </button>
     <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
 
     <div class="cp-footer-actions">

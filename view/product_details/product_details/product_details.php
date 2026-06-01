@@ -18,12 +18,8 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
   <!-- Contenido -->
   <section class="cp-card" aria-labelledby="cp-pd-title">
     <header class="cp-card-header">
-      <div>
-        <button id="btn_back_product_details" class="btn-back" type="button" aria-label="Back to Groups">
-          ← Back
-        </button>
-        <h2 id="cp-pd-title">Product details</h2>
-      </div>
+      <h2 id="cp-pd-title">Product details</h2>
+    </header>
 
     <!-- Formulario de detalles -->
     <!-- Formulario de detalles -->
@@ -92,6 +88,9 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
 
   <!-- Footer: Next -->
   <div class="cp-footer">
+    <button id="btn_back_product_details" class="btn-back" type="button" aria-label="Back to Groups">
+      ← Back
+    </button>
     <button class="btn btn-danger" id="reset" type="button">Reset</button>
     <div class="cp-footer-actions">
       <button class="btn btn-primary" id="save" type="button">Save</button>

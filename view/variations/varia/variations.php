@@ -19,12 +19,8 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
 
   <section class="cp-card cp-section" id="variation_decision_section" aria-labelledby="cp-var-decision-title">
     <header class="cp-card-header">
-      <div>
-        <button id="btn_back_variations" class="btn-back" type="button" aria-label="Back to Product Details">
-          ← Back
-        </button>
-        <h2 id="cp-var-decision-title">Variations</h2>
-      </div>
+      <h2 id="cp-var-decision-title">Variations</h2>
+    </header>
 
     <div class="cp-decision">
       <div class="cp-choice">
@@ -147,6 +143,9 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
   </div>
 
   <div class="cp-footer" id="variation_actions_section">
+    <button id="btn_back_variations" class="btn-back" type="button" aria-label="Back to Product Details">
+      ← Back
+    </button>
     <button class="btn btn-danger" id="reset_form" type="button">Reset</button>
     <div class="cp-footer-actions">
       <button class="btn btn-primary" id="save_variation" type="button">Save</button>
