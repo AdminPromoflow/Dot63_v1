@@ -854,63 +854,62 @@ class PreviewLogic {
     return true;
   }
 
-  updateProductSummaryBox(quantity, price){
+  updateProductSummaryBox(quantity, price) {
     const is_selected = document.querySelectorAll(".is-selected");
     let totalExtraPrice = 0;
 
+    function this.formatPrice(value) {
+      return Number(value).toFixed(2);
+    }
+
     for (let i = 0; i < is_selected.length; i++) {
       if (!is_selected[i].querySelector(".opt-price-extra")) continue;
+
       const priceExtraText = is_selected[i].querySelector(".opt-price-extra").innerHTML;
+
       const priceExtraNumber = Number(
         priceExtraText
           .replace("+", "")
           .replace("p/u", "")
           .trim()
       );
+
       totalExtraPrice = totalExtraPrice + priceExtraNumber;
     }
-
 
     const bb_unit = document.getElementById("bb_unit");
     const bb_unit_quantity = document.getElementById("bb_unit_quantity");
     const bb_unit_total = document.getElementById("bb_unit_total");
 
-
-
-
     const bb_extra_unit = document.getElementById("bb_extra_unit");
     const bb_extra_quantity = document.getElementById("bb_extra_quantity");
     const bb_extra_total = document.getElementById("bb_extra_total");
 
-
-
     const bb_total = document.getElementById("bb_total");
 
-
-    bb_unit.innerHTML =  "£" + price;
+    bb_unit.innerHTML = "£" + this.formatPrice(price);
     bb_unit_quantity.innerHTML = quantity;
-    bb_unit_total.innerHTML =  "£" + (price*quantity);
+    bb_unit_total.innerHTML = "£" + this.formatPrice(price * quantity);
 
     var quantityExtras;
 
     if (totalExtraPrice == 0) {
       quantityExtras = 0;
-    }
-    else {
+    } else {
       quantityExtras = quantity;
     }
 
-    bb_extra_unit.innerHTML = "£" + totalExtraPrice;
-    bb_extra_quantity.innerHTML =   quantityExtras;
-    bb_extra_total.innerHTML =  "£" + (totalExtraPrice*quantity);
+    bb_extra_unit.innerHTML = "£" + this.formatPrice(totalExtraPrice);
+    bb_extra_quantity.innerHTML = quantityExtras;
+    bb_extra_total.innerHTML = "£" + this.formatPrice(totalExtraPrice * quantity);
 
-
-    bb_total.innerHTML = "£" + (price*quantity + totalExtraPrice*quantity) ;
-
-
-
-
+    bb_total.innerHTML = "£" + this.formatPrice((price * quantity) + (totalExtraPrice * quantity));
   }
+
+  formatPrice(value) {
+    return Number(value).toFixed(2);
+  }
+
 
   selectPriceButton(button, scope = null) {
     if (!button) return false;
