@@ -43,7 +43,7 @@ class PreviewLogic {
       return;
     }
 
-    const url = "../../controller/order/product.php";
+    const url = "../../controller/products/product.php";
     const data = {
       action: "publish_product",
       sku: sku
