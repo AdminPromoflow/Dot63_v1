@@ -106,7 +106,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert("2. " + text);
+      //  alert("2. " + text);
 
         const json = JSON.parse(text);
 
@@ -150,10 +150,10 @@ class PreviewLogic {
              allPriceButtons.forEach(btn => {
                btn.classList.remove("is-selected");
              });
-             
+
              this.updateProductSummaryBox(firstPriceButton.dataset.minQuantity, firstPriceButton.value);
              firstPriceButton.classList.add("is-selected");
-             
+
              const payload = {
                price_id: String(firstPriceButton.dataset.priceId ?? ""),
                min_quantity: String(firstPriceButton.dataset.minQuantity ?? ""),
@@ -161,7 +161,7 @@ class PreviewLogic {
                price: String(firstPriceButton.dataset.price ?? ""),
                value: String(firstPriceButton.value ?? ""),
              };
-             
+
              this.setSelectedPrice(payload);
              this.setMaxQuantity(payload["max_quantity"]);
            }
@@ -357,7 +357,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
-     alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
+  //   alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
 
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return true;
 
@@ -776,7 +776,7 @@ class PreviewLogic {
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
 
-    alert(JSON.stringify(pricesOnlyOfType) + " " + JSON.stringify(typeVariation));
+  //  alert(JSON.stringify(pricesOnlyOfType) + " " + JSON.stringify(typeVariation));
     loader.show();
 
 
