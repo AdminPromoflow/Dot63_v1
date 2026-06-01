@@ -145,6 +145,12 @@ class PreviewLogic {
          setTimeout(() => {
            const firstPriceButton = document.querySelector("#wrap-prices-group .js-price-option");
            if (firstPriceButton) {
+             // Deseleccionar todos los demás botones de precio
+             const allPriceButtons = document.querySelectorAll("#wrap-prices-group .js-price-option");
+             allPriceButtons.forEach(btn => {
+               btn.classList.remove("is-selected");
+             });
+             
              this.updateProductSummaryBox(firstPriceButton.dataset.minQuantity, firstPriceButton.value);
              firstPriceButton.classList.add("is-selected");
              
