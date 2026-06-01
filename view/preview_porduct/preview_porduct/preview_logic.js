@@ -123,6 +123,7 @@ class PreviewLogic {
           this.shouldDeleteItems = true;
         //  this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         } else {
+          loader.hide();
           this.shouldDeleteItems = false;
         }
 
@@ -143,7 +144,7 @@ class PreviewLogic {
        }
 
 
-      //  loader.hide();
+      //
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
