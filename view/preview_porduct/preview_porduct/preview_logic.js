@@ -124,8 +124,6 @@ class PreviewLogic {
         //  this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         } else {
           this.shouldDeleteItems = false;
-          loader.hide();
-
         }
 
         // The current variation must be organised after the delete step.
@@ -142,6 +140,9 @@ class PreviewLogic {
          childVariations.length === 0
        ) {
          this.updateVariationPrices();
+
+         loader.hide();
+
        }
 
 
