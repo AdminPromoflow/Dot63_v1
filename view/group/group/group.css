@@ -144,7 +144,6 @@ body{
   min-height: 300px;
   overflow-y: scroll;
   padding: 4px;
-  min-width: 60vw;
 }
 
 .cp-group-grid{
