@@ -35,7 +35,6 @@ class PreviewGallery {
       this.refreshGallery();
     }
 
-    this.setupBackPublishButtons();
     this.setupVariationSelection();
   }
 
@@ -71,34 +70,7 @@ class PreviewGallery {
     });
   }
 
-  setupBackPublishButtons() {
-    const backBtn = document.getElementById("btn_back_edit");
-    const publishBtn = document.getElementById("btn_publish");
 
-    if (backBtn) {
-      backBtn.addEventListener("click", () => {
-        const url = "../../view/product_details/index.php";
-
-        const current = new URL(window.location.href);
-        const dest = new URL(url, current);
-
-        const sku = current.searchParams.get("sku");
-        const skuv = current.searchParams.get("sku_variation");
-
-        // Preserves sku and sku_variation in the destination URL.
-        if (sku) dest.searchParams.set("sku", sku);
-        if (skuv) dest.searchParams.set("sku_variation", skuv);
-
-        window.location.assign(dest);
-      });
-    }
-
-    if (publishBtn) {
-      publishBtn.addEventListener("click", () => {
-        alert("This page is currently under construction.");
-      });
-    }
-  }
 
   setupObserver() {
     const root = this.getRoot();
