@@ -141,6 +141,26 @@ class PreviewLogic {
        ) {
          this.updateVariationPrices();
 
+         // Seleccionar automáticamente la primera cantidad
+         setTimeout(() => {
+           const firstPriceButton = document.querySelector("#wrap-prices-group .js-price-option");
+           if (firstPriceButton) {
+             this.updateProductSummaryBox(firstPriceButton.dataset.minQuantity, firstPriceButton.value);
+             firstPriceButton.classList.add("is-selected");
+             
+             const payload = {
+               price_id: String(firstPriceButton.dataset.priceId ?? ""),
+               min_quantity: String(firstPriceButton.dataset.minQuantity ?? ""),
+               max_quantity: String(firstPriceButton.dataset.maxQuantity ?? ""),
+               price: String(firstPriceButton.dataset.price ?? ""),
+               value: String(firstPriceButton.value ?? ""),
+             };
+             
+             this.setSelectedPrice(payload);
+             this.setMaxQuantity(payload["max_quantity"]);
+           }
+         }, 500); // Pequeña espera para que se rendericen los botones
+
          loader.hide();
 
        }
