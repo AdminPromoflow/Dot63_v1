@@ -22,8 +22,7 @@ class PreviewLogic {
     this.priceSelected = null;
 
 
-    const backBtn = document.getElementById("btn_back_edit");
-    const publishBtn = document.getElementById("btn_publish");
+
 
 
     backBtn.addEventListener("click", function(){
@@ -1159,5 +1158,6 @@ class PreviewLogic {
     }
   }
 }
-
+const backBtn = document.getElementById("btn_back_edit");
+const publishBtn = document.getElementById("btn_publish");
 const previewLogic = new PreviewLogic();
