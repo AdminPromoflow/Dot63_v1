@@ -143,7 +143,7 @@ class PreviewLogic {
        }
 
 
-        loader.hide();
+      //  loader.hide();
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
