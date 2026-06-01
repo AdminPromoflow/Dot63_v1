@@ -59,7 +59,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        // alert("1. " + text);
+         alert(text);
 
         const json = JSON.parse(text);
 
