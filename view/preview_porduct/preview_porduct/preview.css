@@ -248,8 +248,8 @@ video{
   background: rgba(255, 255, 255, .96);
   color: #374151;
   display: flex;
-  align-items: centre;
-  justify-content: centre;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   box-shadow: 0 10px 24px rgba(15, 23, 42, .10);
   font-size: 22px;
@@ -504,6 +504,7 @@ video{
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
 .var-option .opt-copy{
