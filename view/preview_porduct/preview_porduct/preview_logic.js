@@ -129,9 +129,9 @@ class PreviewLogic {
         // The current variation must be organised after the delete step.
         this.organizeCurrentVariation(currentVariationData);
 
-        if (childVariations.length && variationTypes.length) {
+      //  if (childVariations.length && variationTypes.length) {
           this.organizeVariationsForRender(childVariations, variationTypes);
-        }
+      //  }
 
 
        else if (
