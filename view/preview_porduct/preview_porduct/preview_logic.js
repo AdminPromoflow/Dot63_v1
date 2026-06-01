@@ -123,9 +123,9 @@ class PreviewLogic {
           this.shouldDeleteItems = true;
         //  this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         } else {
-          alert("juepucha");
-          loader.hide();
           this.shouldDeleteItems = false;
+          loader.hide();
+
         }
 
         // The current variation must be organised after the delete step.
