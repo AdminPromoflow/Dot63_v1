@@ -808,7 +808,6 @@ class PreviewLogic {
     }
 
     this.bindPriceButtons(`#${wrapId}`);
-    loader.hide();
 
   }
 
@@ -832,6 +831,8 @@ class PreviewLogic {
            if (updateVariationPrice) {
              this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
            }
+           loader.hide();
+
          }, 1500);
 
       });
