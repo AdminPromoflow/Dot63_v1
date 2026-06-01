@@ -597,6 +597,8 @@ class PreviewLogic {
 
   SelectVariation(domId = "") {
 
+    alert("hah");
+
 
     this.setSelectVariation(domId);
 
