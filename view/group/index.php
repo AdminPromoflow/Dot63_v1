@@ -8,7 +8,7 @@
   <meta name="description" content="" />
   <meta name="author" content="Promoflow" />
   <meta name="keywords" content="" />
-  <title>Category</title>
+  <title>Groups</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
