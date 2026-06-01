@@ -597,7 +597,10 @@ class PreviewLogic {
 
   SelectVariation(domId = "") {
 
-    alert("hah");
+    loader.show();
+
+
+  //  alert("hah");
 
 
     this.setSelectVariation(domId);
@@ -611,6 +614,9 @@ class PreviewLogic {
     // setTimeout(() => {
     this.fetchChildVariationsById(variationId);
     // }, 1000);
+
+    loader.hide();
+
   }
 
   setSelectVariation(domId) {
