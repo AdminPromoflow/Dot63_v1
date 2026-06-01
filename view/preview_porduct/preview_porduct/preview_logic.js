@@ -833,7 +833,7 @@ class PreviewLogic {
          setTimeout(() => {
            if (updateVariationPrice) {
              this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
-             loader.hide();
+        //     loader.hide();
 
            }
          }, 1500);
