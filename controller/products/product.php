@@ -42,7 +42,9 @@ class Product {
         $this->getPreviewProductDetails($data);
         break;
 
-
+      case 'publish_product':
+        $this->publishProduct($data);
+        break;
 //
       default:
         header('Content-Type: application/json; charset=utf-8');
@@ -52,7 +54,11 @@ class Product {
   }
 
 
+  private function publishProduct($data){
+    header('Content-Type: application/json; charset=utf-8');
 
+    echo json_encode("hooo");
+  }
 
   private function getPreviewProductDetails($data){
     header('Content-Type: application/json; charset=utf-8');

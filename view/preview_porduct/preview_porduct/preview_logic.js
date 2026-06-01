@@ -35,7 +35,39 @@ class PreviewLogic {
 
   }
   publishBtn(){
-        alert("Uff");
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    if (!sku) {
+      console.warn("No SKU in URL");
+      return;
+    }
+
+    const url = "../../controller/order/product.php";
+    const data = {
+      action: "publish_product",
+      sku: sku
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+        // alert("1. " + text);
+
+        const json = JSON.parse(text);
+
+      })
+      .catch((error) => {
+        console.error("Error fetching preview:", error);
+        // alert("Error loading preview data.");
+      });
   }
 
   backBtn() {
