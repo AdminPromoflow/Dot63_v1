@@ -597,7 +597,6 @@ class PreviewLogic {
 
   SelectVariation(domId = "") {
 
-    loader.show();
 
 
   //  alert("hah");
@@ -615,7 +614,6 @@ class PreviewLogic {
     this.fetchChildVariationsById(variationId);
     // }, 1000);
 
-    loader.hide();
 
   }
 
@@ -748,6 +746,9 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
+    loader.show();
+
+
   //  alert("Acá se muestran los datos de price" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
@@ -807,6 +808,8 @@ class PreviewLogic {
     }
 
     this.bindPriceButtons(`#${wrapId}`);
+    loader.hide();
+
   }
 
   bindPriceButtons(scopeSelector) {
