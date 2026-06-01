@@ -129,21 +129,21 @@ class PreviewLogic {
         // The current variation must be organised after the delete step.
         this.organizeCurrentVariation(currentVariationData);
 
-      //  if (childVariations.length && variationTypes.length) {
+        if (childVariations.length && variationTypes.length) {
           this.organizeVariationsForRender(childVariations, variationTypes);
-      //  }
+        }
 
 
-       // else if (
-       //   childVariations == null ||
-       //   childVariations.length == null ||
-       //   childVariations.length === 0
-       // ) {
+       else if (
+         childVariations == null ||
+         childVariations.length == null ||
+         childVariations.length === 0
+       ) {
          this.updateVariationPrices();
 
          loader.hide();
 
-      // }
+       }
 
 
       //
@@ -749,6 +749,8 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
+
+    alert(JSON.stringify(pricesOnlyOfType) + " " + JSON.stringify(typeVariation));
     loader.show();
 
 
