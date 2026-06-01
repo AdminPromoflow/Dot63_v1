@@ -858,10 +858,6 @@ class PreviewLogic {
     const is_selected = document.querySelectorAll(".is-selected");
     let totalExtraPrice = 0;
 
-    function this.formatPrice(value) {
-      return Number(value).toFixed(2);
-    }
-
     for (let i = 0; i < is_selected.length; i++) {
       if (!is_selected[i].querySelector(".opt-price-extra")) continue;
 
@@ -891,7 +887,7 @@ class PreviewLogic {
     bb_unit_quantity.innerHTML = quantity;
     bb_unit_total.innerHTML = "£" + this.formatPrice(price * quantity);
 
-    var quantityExtras;
+    let quantityExtras;
 
     if (totalExtraPrice == 0) {
       quantityExtras = 0;
@@ -903,7 +899,9 @@ class PreviewLogic {
     bb_extra_quantity.innerHTML = quantityExtras;
     bb_extra_total.innerHTML = "£" + this.formatPrice(totalExtraPrice * quantity);
 
-    bb_total.innerHTML = "£" + this.formatPrice((price * quantity) + (totalExtraPrice * quantity));
+    bb_total.innerHTML = "£" + this.formatPrice(
+      (price * quantity) + (totalExtraPrice * quantity)
+    );
   }
 
   formatPrice(value) {
