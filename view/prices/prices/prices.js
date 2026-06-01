@@ -17,7 +17,7 @@ class Prices {
       const btnBackPrices = document.getElementById("btn_back_prices");
       if (btnBackPrices) {
         btnBackPrices.addEventListener("click", () => {
-          window.headerAddProduct.goNext('../../view/items/items/items.php');
+          window.headerAddProduct.goNext('../../view/items/index.php');
         });
       }
 

@@ -14,7 +14,7 @@ class Images {
       const btnBackImages = document.getElementById("btn_back_images");
       if (btnBackImages) {
         btnBackImages.addEventListener("click", () => {
-          window.headerAddProduct.goNext('../../view/variations/varia/variations.php');
+          window.headerAddProduct.goNext('../../view/variations/index.php');
         });
       }
 

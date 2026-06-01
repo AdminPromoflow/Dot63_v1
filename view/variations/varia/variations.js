@@ -61,7 +61,7 @@ class Variations {
       const btnBackVariations = document.getElementById("btn_back_variations");
       if (btnBackVariations) {
         btnBackVariations.addEventListener("click", () => {
-          window.headerAddProduct.goNext('../../view/product_details/product_details/product_details.php');
+          window.headerAddProduct.goNext('../../view/product_details/index.php');
         });
       }
     });

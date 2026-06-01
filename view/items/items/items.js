@@ -18,7 +18,7 @@ class Items {
       const btnBackItems = document.getElementById("btn_back_items");
       if (btnBackItems) {
         btnBackItems.addEventListener("click", () => {
-          window.headerAddProduct.goNext('../../view/images/img/images.php');
+          window.headerAddProduct.goNext('../../view/images/index.php');
         });
       }
 
