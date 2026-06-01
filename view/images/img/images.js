@@ -10,6 +10,14 @@ class Images {
       this.menuBtn = menuBtn;
       this.menuList = menuList;
 
+      // Event listener para botón Back
+      const btnBackImages = document.getElementById("btn_back_images");
+      if (btnBackImages) {
+        btnBackImages.addEventListener("click", () => {
+          window.headerAddProduct.goNext('../../view/variations/varia/variations.php');
+        });
+      }
+
       if (menuBtn && menuList) {
         // Abrir/cerrar con clic
         menuBtn.addEventListener('click', (e) => {

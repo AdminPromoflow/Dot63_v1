@@ -45,9 +45,12 @@ $jsLogicVer  = file_exists($jsLogicPath)  ? md5_file($jsLogicPath)  : time();
 
   <section class="cp-card cp-section" aria-labelledby="cp-it-title">
     <header class="cp-card-header">
-
-      <h2 id="cp-vi-title">Items</h2>
-    </header>
+      <div>
+        <button id="btn_back_items" class="btn-back" type="button" aria-label="Back to Images">
+          ← Back
+        </button>
+        <h2 id="cp-vi-title">Items</h2>
+      </div>
 
 
 

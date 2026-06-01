@@ -14,6 +14,9 @@ $jsTime  = filemtime('../../view/group/group/group.js');  // ejemplo: '../Home/5
   <section class="cp-card" aria-labelledby="cp-group-title">
     <header class="cp-card-header">
       <div>
+        <button id="btn_back_groups" class="btn-back" type="button" aria-label="Back to Category">
+          ← Back
+        </button>
         <h2 id="cp-group-title">Group</h2>
         <p class="cp-subtitle">Choose an existing group or create a new one for this product.</p>
       </div>

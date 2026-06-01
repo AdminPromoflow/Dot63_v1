@@ -5,6 +5,14 @@ class ClassAddProductDetails {
 
     document.addEventListener("DOMContentLoaded", () => {
       headerAddProduct.setCurrentHeader("product details");
+      
+      // Event listener para botón Back
+      const btnBackProductDetails = document.getElementById("btn_back_product_details");
+      if (btnBackProductDetails) {
+        btnBackProductDetails.addEventListener("click", () => {
+          headerAddProduct.goNext('../../view/group/index.php');
+        });
+      }
     });
 
 

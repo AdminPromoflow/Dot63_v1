@@ -14,6 +14,14 @@ class Items {
     // Wait for the DOM to be ready before wiring anything up
     document.addEventListener('DOMContentLoaded', () => {
 
+      // Event listener para botón Back
+      const btnBackItems = document.getElementById("btn_back_items");
+      if (btnBackItems) {
+        btnBackItems.addEventListener("click", () => {
+          window.headerAddProduct.goNext('../../view/images/img/images.php');
+        });
+      }
+
       this.logic?.setupVariationMenu(); // dropdown: open/close, select, navigate
       this.init();                      // form refs, state, events, initial data load
     });
