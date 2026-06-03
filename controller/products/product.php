@@ -66,7 +66,7 @@ class Product {
     }
 
 
-
+    $connection = new Database();
     $product = new Products($connection);
     $product->setSku($data['sku']);
 
