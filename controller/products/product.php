@@ -262,7 +262,7 @@ class Product {
 include "../../controller/config/database.php";
 include "../../model/products.php";
 include "../../controller/products/variations.php";
-//include "../../controller/emails/send_emails.php";
+include "../../controller/emails/send_emails.php";
 
 
 

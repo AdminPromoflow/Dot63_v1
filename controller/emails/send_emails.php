@@ -1,22 +1,10 @@
 <?php
-// Include PHPMailer and its dependencies
-require '../assets/lib/send-email/PHPMailer/src/Exception.php';
-require '../assets/lib/send-email/PHPMailer/src/PHPMailer.php';
-require '../assets/lib/send-email/PHPMailer/src/SMTP.php';
-
-// Import PHPMailer classes
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
-
 class EmailSender {
     private $message;
     private $recipientEmail;
     private $recipientName;
     private $recipientPassword;
     private $recipientTableOrder;
-    private $recipientEmail;
-    private $recipientName;
 
     private $supplierName;
     private $supplierEmail;
@@ -26,42 +14,40 @@ class EmailSender {
 
     private $approvalUrl;
 
-
     // Setter for recipient email
     public function setRecipientEmail($recipientEmail) {
         $this->recipientEmail = $recipientEmail;
     }
-
 
     // Setter for recipient name
     public function setRecipientName($recipientName) {
         $this->recipientName = $recipientName;
     }
 
+    // Setter for recipient password
+    public function setRecipientPassword($recipientPassword) {
+        $this->recipientPassword = $recipientPassword;
+    }
 
     // Setter for supplier name
     public function setSupplierName($supplierName) {
         $this->supplierName = $supplierName;
     }
 
-
     // Setter for supplier email
     public function setSupplierEmail($supplierEmail) {
         $this->supplierEmail = $supplierEmail;
     }
-
 
     // Setter for product name
     public function setProductName($productName) {
         $this->productName = $productName;
     }
 
-
     // Setter for product SKU
     public function setProductSku($productSku) {
         $this->productSku = $productSku;
     }
-
 
     // Setter for approval URL
     public function setApprovalUrl($approvalUrl) {
