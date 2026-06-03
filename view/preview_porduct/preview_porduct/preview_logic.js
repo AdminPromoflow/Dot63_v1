@@ -979,9 +979,16 @@ class PreviewLogic {
 
     const bb_total = document.getElementById("bb_total");
 
+    const sp_price = document.getElementById("sp_price");
+    const var_label_quantity = document.getElementById("var_label_quantity");
+
+
     bb_unit.innerHTML = "£" + this.formatPrice(price);
     bb_unit_quantity.innerHTML = quantity;
     bb_unit_total.innerHTML = "£" + this.formatPrice(price * quantity);
+
+    sp_price.innerHTML = this.formatPrice(price);
+    var_label_quantity.innerHTML = quantity;
 
     let quantityExtras;
 
