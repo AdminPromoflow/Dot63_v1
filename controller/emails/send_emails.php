@@ -66,127 +66,142 @@ class EmailsSender {
     }
 
     // Method to send a registration email
-    public function sendEmailRegistration() {
-      try {
-        $mail = new PHPMailer(true);
+    public function sendEmailProductApprovalNotice() {
+        try {
+            $mail = new PHPMailer(true);
 
-        // ===== SMTP (Hostinger) =====
-        $mail->isSMTP();
-        $mail->SMTPDebug = 0;
-        $mail->Host       = 'smtp.hostinger.com';
-        $mail->Port       = 587; // STARTTLS
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'admin@lanyardsforyou.com';
-        $mail->Password   = '32skiff32!CI';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            // ===== SMTP (Hostinger) =====
+            $mail->isSMTP();
+            $mail->SMTPDebug = 0;
+            $mail->Host       = 'smtp.hostinger.com';
+            $mail->Port       = 587; // STARTTLS
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'admin@lanyardsforyou.com';
+            $mail->Password   = '32skiff32!CI';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-        $mail->CharSet    = 'UTF-8';
-        $mail->Encoding   = 'base64';
+            $mail->CharSet    = 'UTF-8';
+            $mail->Encoding   = 'base64';
 
-        // ===== Remitente y destinatarios =====
-        $mail->setFrom('admin@lanyardsforyou.com', 'Ian Southworth');
-        $mail->addReplyTo('admin@lanyardsforyou.com', 'Ian Southworth');
-        $mail->addAddress($this->recipientEmail, $this->recipientName);
+            // ===== Sender and recipient =====
+            $mail->setFrom('admin@lanyardsforyou.com', 'Ian Southworth');
+            $mail->addReplyTo('admin@lanyardsforyou.com', 'Ian Southworth');
+            $mail->addAddress($this->recipientEmail, $this->recipientName);
 
-        // ===== Asunto =====
-        $mail->Subject = 'Welcome';
+            // ===== Safe escaped data =====
+            $name          = htmlspecialchars((string)$this->recipientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $productName   = htmlspecialchars((string)$this->productName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $productSku    = htmlspecialchars((string)$this->productSku, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $supplierName  = htmlspecialchars((string)$this->supplierName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $supplierEmail = htmlspecialchars((string)$this->supplierEmail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $year          = date('Y');
 
-        // ===== Datos con escape seguro =====
-        $name     = htmlspecialchars((string)$this->recipientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $email    = htmlspecialchars((string)$this->recipientEmail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $password = htmlspecialchars((string)($this->recipientPassword ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $year     = date('Y');
+            // ===== Subject =====
+            $mail->Subject = 'Product sent for approval';
 
-        // ===== Cuerpo HTML (todo inline, blanco/negro, en inglés británico) =====
-        $mail->isHTML(true);
-        $mail->Body = <<<HTML
-      <!doctype html>
-      <html lang="en-GB">
-        <body style="margin:0; padding:0; background:#ffffff;">
-          <!-- Preheader (hidden) -->
-          <div style="display:none; max-height:0; overflow:hidden; line-height:1px; color:#ffffff; opacity:0;">
-            Your sign-in details are inside. Please change your password straightaway after your first sign-in.
-          </div>
+            // ===== HTML body =====
+            $mail->isHTML(true);
+            $mail->Body = <<<HTML
+    <!doctype html>
+    <html lang="en-GB">
+      <body style="margin:0; padding:0; background:#ffffff;">
+        <div style="display:none; max-height:0; overflow:hidden; line-height:1px; color:#ffffff; opacity:0;">
+          A product has been sent for approval. Please review it in PromoFlow.
+        </div>
 
-          <div style="width:100%; background:#ffffff;">
-            <div style="max-width:640px; margin:0 auto; padding:24px; border:1px solid #000000; box-sizing:border-box;">
-              <div style="margin:0 0 8px 0;">
-                <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:1.4; color:#000000;">
-                  .63
-                </p>
-              </div>
+        <div style="width:100%; background:#ffffff;">
+          <div style="max-width:640px; margin:0 auto; padding:24px; border:1px solid #000000; box-sizing:border-box;">
 
-              <div style="margin:0 0 16px 0;">
-                <h1 style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:22px; line-height:1.3; color:#000000;">
-                  Welcome aboard
-                </h1>
-              </div>
-
-              <div style="margin:0 0 12px 0;">
-                <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
-                  Hello {$name},
-                </p>
-              </div>
-
-              <div style="margin:0 0 16px 0;">
-                <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
-                  We’re delighted to have you with us at .63. Below are your sign-in details. Please keep them safe.
-                </p>
-              </div>
-
-              <div style="margin:16px 0; padding:12px 0; border-top:1px solid #000000; border-bottom:1px solid #000000;">
-                <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
-                  <strong style="display:inline-block; width:120px;">Email:</strong>
-                  <span style="font-family:Arial, Helvetica, sans-serif; color:#000000;">{$email}</span>
-                </p>
-                <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
-                  <strong style="display:inline-block; width:120px;">Password:</strong>
-                  <span style="font-family:Arial, Helvetica, sans-serif; color:#000000;">{$password}</span>
-                </p>
-              </div>
-
-
-              <div style="margin:0 0 8px 0;">
-                <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:1.6; color:#000000;">
-                  If you didn’t request this account, please let us know immediately by replying to this email.
-                </p>
-              </div>
-
-              <div style="margin:16px 0 0 0;">
-                <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:13px; color:#000000;">
-                  Kind regards,<br>
-                  .63 For You Team
-                </p>
-              </div>
+            <div style="margin:0 0 8px 0;">
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:1.4; color:#000000;">
+                .63
+              </p>
             </div>
 
-            <div style="max-width:640px; margin:8px auto 0 auto; text-align:center;">
-              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#000000;">
-                © {$year} Lanyards For You. All rights reserved.
+            <div style="margin:0 0 16px 0;">
+              <h1 style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:22px; line-height:1.3; color:#000000;">
+                Product sent for approval
+              </h1>
+            </div>
+
+            <div style="margin:0 0 12px 0;">
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
+                Hello {$name},
+              </p>
+            </div>
+
+            <div style="margin:0 0 16px 0;">
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
+                The product <strong>{$productName}</strong> has been sent for approval.
+              </p>
+            </div>
+
+            <div style="margin:16px 0; padding:12px 0; border-top:1px solid #000000; border-bottom:1px solid #000000;">
+              <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
+                <strong style="display:inline-block; width:130px;">Product:</strong>
+                <span>{$productName}</span>
+              </p>
+
+              <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
+                <strong style="display:inline-block; width:130px;">SKU:</strong>
+                <span>{$productSku}</span>
+              </p>
+
+              <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
+                <strong style="display:inline-block; width:130px;">Supplier:</strong>
+                <span>{$supplierName}</span>
+              </p>
+
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
+                <strong style="display:inline-block; width:130px;">Supplier email:</strong>
+                <span>{$supplierEmail}</span>
+              </p>
+            </div>
+
+            <div style="margin:0 0 16px 0;">
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
+                Please review this product in PromoFlow and approve it or send a message to the supplier if changes are needed.
+              </p>
+            </div>
+
+            <div style="margin:16px 0 0 0;">
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:13px; color:#000000;">
+                Kind regards,<br>
+                .63 For You Team
               </p>
             </div>
           </div>
-        </body>
-      </html>
-      HTML;
 
-          // ===== Texto plano (fallback) =====
-          $mail->AltBody =
-            "Hello {$name},\n\n" .
-            "Welcome to .63. Here are your sign-in details:\n" .
-            "Email: {$email}\n" .
-            "Password: {$password}\n\n" .
-            "For your security, please change this password straightaway after your first sign-in.\n" .
-            "Sign in: https://lanyardsforyou.com/login\n\n" .
-            "If you didn’t request this account, please let us know immediately by replying to this email.\n\n" .
-            "Kind regards,\nLanyards For You Team\n© {$year} Lanyards For You";
+          <div style="max-width:640px; margin:8px auto 0 auto; text-align:center;">
+            <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#000000;">
+              © {$year} Lanyards For You. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>
+    HTML;
 
-          // ===== Enviar =====
-          return $mail->send();
+            // ===== Plain text fallback =====
+            $mail->AltBody =
+                "Hello {$name},\n\n" .
+                "The product {$productName} has been sent for approval.\n\n" .
+                "Product: {$productName}\n" .
+                "SKU: {$productSku}\n" .
+                "Supplier: {$supplierName}\n" .
+                "Supplier email: {$supplierEmail}\n\n" .
+                "Please review this product in PromoFlow and approve it or send a message to the supplier if changes are needed.\n\n" .
+                "Kind regards,\n" .
+                ".63 For You Team\n" .
+                "© {$year} Lanyards For You";
+
+            // ===== Send =====
+            return $mail->send();
+
         } catch (Exception $e) {
-          error_log('EmailsSender::sendEmailRegistration error -> ' . $e->getMessage());
-          return false;
+            error_log('EmailsSender::sendEmailProductApprovalNotice error -> ' . $e->getMessage());
+            return false;
         }
-  }
+    }
 
 }

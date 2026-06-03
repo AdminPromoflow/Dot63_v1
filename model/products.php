@@ -89,6 +89,9 @@ class Products {
       }
   }
   /** Verifica si ya existe un producto con el mismo SKU para el mismo proveedor (case-insensitive) */
+
+
+
   private function existsBySkuForSupplier($sku, $supplierId) {
     try {
       $pdo = $this->connection->getConnection();
@@ -890,5 +893,64 @@ class Products {
       return ['success' => false, 'error' => 'DB error'];
     }
   }*/
+
+  /**
+   * Obtiene datos del producto y proveedor para enviar por email
+   * Usa el SKU actual del objeto (propiedad sku)
+   * @return array Datos para email
+   */
+  public function getDataForSendEmail() {
+    try {
+      // Verificar que tenemos el SKU
+      if (empty($this->sku)) {
+        return [
+          'success' => false,
+          'error' => 'SKU not set'
+        ];
+      }
+
+      $pdo = $this->connection->getConnection();
+
+      // Query para obtener datos del producto y proveedor
+      $stmt = $pdo->prepare("
+        SELECT
+          p.name as product_name,
+          p.sku as product_sku,
+          s.name as supplier_name,
+          s.email as supplier_email
+        FROM products p
+        LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id
+        WHERE p.sku = :sku
+        LIMIT 1
+      ");
+
+      $stmt->execute([':sku' => $this->sku]);
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      if (!$result) {
+        return [
+          'success' => false,
+          'error' => 'Product not found'
+        ];
+      }
+
+      return [
+        'success' => true,
+        'data' => [
+          'product_name' => $result['product_name'] ?? '',
+          'product_sku' => $result['product_sku'] ?? '',
+          'supplier_name' => $result['supplier_name'] ?? '',
+          'supplier_email' => $result['supplier_email'] ?? ''
+        ]
+      ];
+
+    } catch (PDOException $e) {
+      error_log('getDataForSendEmail error: ' . $e->getMessage());
+      return [
+        'success' => false,
+        'error' => 'Database error'
+      ];
+    }
+  }
 }
 ?>

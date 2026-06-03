@@ -60,31 +60,51 @@ class Product {
     echo json_encode("hooo");
   }
 
-  private function getPreviewProductDetails($data){
-    header('Content-Type: application/json; charset=utf-8');
+  private function getPreviewProductDetails($data, $connection) {
+      header('Content-Type: application/json; charset=utf-8');
 
+      if (empty($data['sku'])) {
+          echo json_encode([
+              'success' => false,
+              'message' => 'SKU is missing.'
+          ]);
+          exit;
+      }
 
+      $product = new Products($connection);
+      $product->setSku($data['sku']);
 
-  /*  $connection = new Database();
-    $product   = new Products($connection);
+      $result = $product->getDataForSendEmail();
 
+      if (empty($result['success'])) {
+          echo json_encode([
+              'success' => false,
+              'message' => 'Could not get product data.'
+          ]);
+          exit;
+      }
 
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
-    }
-    $product->setId($_SESSION['idProduct']);
+      $emailData = $result['data'];
 
-    $product->setName($data["name"]);
-    $product->setStatus($data["status"]);
-    $product->setDescription($data["description"]);
-    $product->setTaglineDescription($data["pd_tagline"]);
-    $product->setSku($data["sku"]);*/
+      $emailSender = new EmailsSender();
 
+      $emailSender->setRecipientEmail('admin@promoflow.net');
+      $emailSender->setRecipientName('Admin');
 
-  //  $response = $product->update();
+      $emailSender->setProductName($emailData['product_name']);
+      $emailSender->setProductSku($emailData['product_sku']);
+      $emailSender->setSupplierName($emailData['supplier_name']);
+      $emailSender->setSupplierEmail($emailData['supplier_email']);
 
+      $emailSent = $emailSender->sendEmailProductApprovalNotice();
 
-    echo json_encode("response");
+      echo json_encode([
+          'success' => $emailSent,
+          'message' => $emailSent
+              ? 'Email sent successfully.'
+              : 'Email could not be sent.'
+      ]);
+      exit;
   }
 
     private function getProductBasicBySKU($data){
