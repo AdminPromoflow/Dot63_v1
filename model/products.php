@@ -910,6 +910,7 @@ class Products {
       }
 
       $pdo = $this->connection->getConnection();
+      echo json_encode("hi4");exit;
 
       // Query para obtener datos del producto y proveedor
       $stmt = $pdo->prepare("
