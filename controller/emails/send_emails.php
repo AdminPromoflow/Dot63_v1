@@ -1,5 +1,5 @@
 <?php
-class EmailSender {
+class EmailsSender {
     private $message;
     private $recipientEmail;
     private $recipientName;
