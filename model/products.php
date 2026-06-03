@@ -900,6 +900,8 @@ class Products {
    * @return array Datos para email
    */
   public function getDataForSendEmail() {
+    echo json_encode("hi4");exit;
+
     try {
       // Verificar que tenemos el SKU
       if (empty($this->sku)) {
@@ -910,7 +912,6 @@ class Products {
       }
 
       $pdo = $this->connection->getConnection();
-      echo json_encode("hi4");exit;
 
       // Query para obtener datos del producto y proveedor
       $stmt = $pdo->prepare("
