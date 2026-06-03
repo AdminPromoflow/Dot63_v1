@@ -901,10 +901,10 @@ class Products {
    */
   public function getDataForSendEmail() {
     try {
-      echo json_encode("buenas");exit;
 
       $pdo = $this->connection->getConnection();
 
+      echo json_encode("buenas");exit;
 
       // Query para obtener datos del producto y proveedor
       $stmt = $pdo->prepare("
