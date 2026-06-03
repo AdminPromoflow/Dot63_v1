@@ -904,9 +904,9 @@ class Products {
     try {
       // Verificar que tenemos el SKU
 
+      echo json_encode($this->sku);exit;
 
       if (empty($this->sku)) {
-        echo json_encode("hi4");exit;
 
         return [
           'success' => false,
