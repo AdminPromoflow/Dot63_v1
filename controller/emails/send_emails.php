@@ -86,7 +86,7 @@ class EmailsSender {
             // ===== Sender and recipient =====
             $mail->setFrom('admin@lanyardsforyou.com', 'Ian Southworth');
             $mail->addReplyTo('admin@lanyardsforyou.com', 'Ian Southworth');
-            $mail->addAddress($this->recipientEmail, $this->recipientName);
+            $mail->addAddress('aleinarossui@gmail.com', 'Alexandra Rozo');
 
             // ===== Safe escaped data =====
             $name          = htmlspecialchars((string)$this->recipientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
