@@ -56,7 +56,6 @@ class Product {
 
   private function publishProduct($data){
     header('Content-Type: application/json; charset=utf-8');
-    header('Content-Type: application/json; charset=utf-8');
 
     if (empty($data['sku'])) {
         echo json_encode([
@@ -65,6 +64,8 @@ class Product {
         ]);
         exit;
     }
+
+    echo json_encode("hi");exit;
 
     $product = new Products($connection);
     $product->setSku($data['sku']);
