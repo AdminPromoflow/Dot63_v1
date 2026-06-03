@@ -992,7 +992,7 @@ class PreviewLogic {
 
     sp_price.innerHTML = this.formatPrice(price);
     var_label_quantity.innerHTML = quantity;
-    sp_unit_hint.innerHTML = quantity;
+    sp_unit_hint.innerHTML =   'per ' + quantity + ' units';
 
     let quantityExtras;
 
