@@ -899,58 +899,67 @@ class Products {
    * Usa el SKU actual del objeto (propiedad sku)
    * @return array Datos para email
    */
-  public function getDataForSendEmail() {
-    try {
-      // Verificar que tenemos el SKU
-      if (empty($this->sku)) {
-        return [
-          'success' => false,
-          'error' => 'SKU not set'
-        ];
-      }
+   public function getDataForSendEmail() {
+       try {
+           // 1. Check that SKU exists
+           if (empty($this->sku)) {
+               return [
+                   'success' => false,
+                   'error' => 'SKU not set'
+               ];
+           }
 
-      $pdo = $this->connection->getConnection();
+           // 2. Get database connection
+           $pdo = $this->connection->getConnection();
 
-      // Query para obtener datos del producto y proveedor
-      $stmt = $pdo->prepare("
-        SELECT
-          p.name as product_name,
-          p.sku as product_sku,
-          s.name as supplier_name,
-          s.email as supplier_email
-        FROM products p
-        LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id
-        WHERE p.sku = :sku
-        LIMIT 1
-      ");
+           // 3. Get product and supplier data
+           $stmt = $pdo->prepare("
+               SELECT
+                   p.name AS product_name,
+                   p.SKU AS product_sku,
+                   COALESCE(s.company_name, s.contact_name, '') AS supplier_name,
+                   s.email AS supplier_email
+               FROM products p
+               LEFT JOIN suppliers s
+                   ON p.supplier_id = s.supplier_id
+               WHERE p.SKU = :sku
+               LIMIT 1
+           ");
 
-      $stmt->execute([':sku' => $this->sku]);
-      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+           // 4. Execute query
+           $stmt->execute([
+               ':sku' => $this->sku
+           ]);
 
-      if (!$result) {
-        return [
-          'success' => false,
-          'error' => 'Product not found'
-        ];
-      }
+           $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-      return [
-        'success' => true,
-        'data' => [
-          'product_name' => $result['product_name'] ?? '',
-          'product_sku' => $result['product_sku'] ?? '',
-          'supplier_name' => $result['supplier_name'] ?? '',
-          'supplier_email' => $result['supplier_email'] ?? ''
-        ]
-      ];
+           // 5. Check if product exists
+           if (!$result) {
+               return [
+                   'success' => false,
+                   'error' => 'Product not found'
+               ];
+           }
 
-    } catch (PDOException $e) {
-      error_log('getDataForSendEmail error: ' . $e->getMessage());
-      return [
-        'success' => false,
-        'error' => 'Database error'
-      ];
-    }
-  }
+           // 6. Return formatted data
+           return [
+               'success' => true,
+               'data' => [
+                   'product_name'   => $result['product_name'] ?? '',
+                   'product_sku'    => $result['product_sku'] ?? '',
+                   'supplier_name'  => $result['supplier_name'] ?? '',
+                   'supplier_email' => $result['supplier_email'] ?? ''
+               ]
+           ];
+
+       } catch (PDOException $e) {
+           error_log('Products::getDataForSendEmail error: ' . $e->getMessage());
+
+           return [
+               'success' => false,
+               'error' => 'Database error'
+           ];
+       }
+   }
 }
 ?>
