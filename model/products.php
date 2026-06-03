@@ -900,10 +900,12 @@ class Products {
    * @return array Datos para email
    */
   public function getDataForSendEmail() {
-    echo json_encode("hi4");exit;
 
     try {
       // Verificar que tenemos el SKU
+
+      echo json_encode("hi4");exit;
+
       if (empty($this->sku)) {
         return [
           'success' => false,
