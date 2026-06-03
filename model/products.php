@@ -900,14 +900,7 @@ class Products {
    * @return array Datos para email
    */
   public function getDataForSendEmail() {
-    try {
-      // Verificar que tenemos el SKU
-      if (empty($this->sku)) {
-        return [
-          'success' => false,
-          'error' => 'SKU not set'
-        ];
-      }
+    try {    
 
       $pdo = $this->connection->getConnection();
 
