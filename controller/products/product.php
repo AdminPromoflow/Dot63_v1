@@ -64,7 +64,6 @@ class Product {
         ]);
         exit;
     }
-    echo json_encode("hi3");exit;
 
 
 
@@ -72,6 +71,7 @@ class Product {
     $product->setSku($data['sku']);
 
     $result = $product->getDataForSendEmail();
+    echo json_encode("hi4");exit;
 
     if (empty($result['success'])) {
         echo json_encode([
