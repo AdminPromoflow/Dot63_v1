@@ -56,55 +56,77 @@ class Product {
 
   private function publishProduct($data){
     header('Content-Type: application/json; charset=utf-8');
+    header('Content-Type: application/json; charset=utf-8');
 
-    echo json_encode("hooo");
+    if (empty($data['sku'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'SKU is missing.'
+        ]);
+        exit;
+    }
+
+    $product = new Products($connection);
+    $product->setSku($data['sku']);
+
+    $result = $product->getDataForSendEmail();
+
+    if (empty($result['success'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Could not get product data.'
+        ]);
+        exit;
+    }
+
+    $emailData = $result['data'];
+
+    $emailSender = new EmailsSender();
+
+    $emailSender->setRecipientEmail('admin@promoflow.net');
+    $emailSender->setRecipientName('Admin');
+
+    $emailSender->setProductName($emailData['product_name']);
+    $emailSender->setProductSku($emailData['product_sku']);
+    $emailSender->setSupplierName($emailData['supplier_name']);
+    $emailSender->setSupplierEmail($emailData['supplier_email']);
+
+    $emailSent = $emailSender->sendEmailProductApprovalNotice();
+
+    echo json_encode([
+        'success' => $emailSent,
+        'message' => $emailSent
+            ? 'Email sent successfully.'
+            : 'Email could not be sent.'
+    ]);
+    exit;
   }
 
-  private function getPreviewProductDetails($data, $connection) {
-      header('Content-Type: application/json; charset=utf-8');
+  private function getPreviewProductDetails($data){
+    header('Content-Type: application/json; charset=utf-8');
 
-      if (empty($data['sku'])) {
-          echo json_encode([
-              'success' => false,
-              'message' => 'SKU is missing.'
-          ]);
-          exit;
-      }
 
-      $product = new Products($connection);
-      $product->setSku($data['sku']);
 
-      $result = $product->getDataForSendEmail();
+  /*  $connection = new Database();
+    $product   = new Products($connection);
 
-      if (empty($result['success'])) {
-          echo json_encode([
-              'success' => false,
-              'message' => 'Could not get product data.'
-          ]);
-          exit;
-      }
 
-      $emailData = $result['data'];
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+      session_start();
+    }
+    $product->setId($_SESSION['idProduct']);
 
-      $emailSender = new EmailsSender();
+    $product->setName($data["name"]);
+    $product->setStatus($data["status"]);
+    $product->setDescription($data["description"]);
+    $product->setTaglineDescription($data["pd_tagline"]);
+    $product->setSku($data["sku"]);*/
 
-      $emailSender->setRecipientEmail('admin@promoflow.net');
-      $emailSender->setRecipientName('Admin');
 
-      $emailSender->setProductName($emailData['product_name']);
-      $emailSender->setProductSku($emailData['product_sku']);
-      $emailSender->setSupplierName($emailData['supplier_name']);
-      $emailSender->setSupplierEmail($emailData['supplier_email']);
+  //  $response = $product->update();
 
-      $emailSent = $emailSender->sendEmailProductApprovalNotice();
 
-      echo json_encode([
-          'success' => $emailSent,
-          'message' => $emailSent
-              ? 'Email sent successfully.'
-              : 'Email could not be sent.'
-      ]);
-      exit;
+    echo json_encode("response");
   }
 
     private function getProductBasicBySKU($data){
@@ -283,8 +305,6 @@ include "../../controller/config/database.php";
 include "../../model/products.php";
 include "../../controller/products/variations.php";
 include "../../controller/emails/send_emails.php";
-
-
 
 $productClass = new Product(); // instancia
 $productClass->handleProduct();
