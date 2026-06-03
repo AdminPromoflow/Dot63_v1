@@ -69,9 +69,10 @@ class Product {
 
     $product = new Products($connection);
     $product->setSku($data['sku']);
+    echo json_encode("hi4");exit;
+
 
     $result = $product->getDataForSendEmail();
-    echo json_encode("hi4");exit;
 
     if (empty($result['success'])) {
         echo json_encode([
