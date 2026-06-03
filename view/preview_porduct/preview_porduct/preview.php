@@ -86,7 +86,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
             <div class="sp-price-main js-fade-up">
               <span class="sp-price-symbol" id="sp_currency_symbol">£</span>
               <span id="sp_price" class="sp-price">
-                8<span class="sp-price-minor">.00</span>
+                0<span class="sp-price-minor">.00</span>
               </span>
               <span id="sp_unit_hint" class="sp-unit-hint">per 100 units</span>
             </div>

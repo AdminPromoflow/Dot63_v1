@@ -981,6 +981,9 @@ class PreviewLogic {
 
     const sp_price = document.getElementById("sp_price");
     const var_label_quantity = document.getElementById("var_label_quantity");
+    const sp_unit_hint = document.getElementById("sp_unit_hint");
+
+
 
 
     bb_unit.innerHTML = "£" + this.formatPrice(price);
@@ -989,6 +992,7 @@ class PreviewLogic {
 
     sp_price.innerHTML = this.formatPrice(price);
     var_label_quantity.innerHTML = quantity;
+    sp_unit_hint.innerHTML = quantity;
 
     let quantityExtras;
 
