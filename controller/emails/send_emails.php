@@ -1,4 +1,15 @@
 <?php
+// Include PHPMailer and its dependencies
+require '../assets/lib/send-email/PHPMailer/src/Exception.php';
+require '../assets/lib/send-email/PHPMailer/src/PHPMailer.php';
+require '../assets/lib/send-email/PHPMailer/src/SMTP.php';
+
+// Import PHPMailer classes
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+
 class EmailsSender {
     private $message;
     private $recipientEmail;
@@ -17,11 +28,6 @@ class EmailsSender {
     // Setter for recipient email
     public function setRecipientEmail($recipientEmail) {
         $this->recipientEmail = $recipientEmail;
-    }
-
-    // Setter for recipient name
-    public function setRecipientName($recipientName) {
-        $this->recipientName = $recipientName;
     }
 
     // Setter for recipient password
@@ -54,19 +60,9 @@ class EmailsSender {
         $this->approvalUrl = $approvalUrl;
     }
 
-    // Setter for recipient email
-    public function setRecipientEmail($recipientEmail) {
-        $this->recipientEmail = $recipientEmail;
-    }
-
     // Setter for recipient name
     public function setRecipientName($recipientName) {
         $this->recipientName = $recipientName;
-    }
-
-    // Setter for recipient password (optional)
-    public function setRecipientPassword($recipientPassword) {
-        $this->recipientPassword = $recipientPassword;
     }
 
     // Method to send a registration email
@@ -188,7 +184,7 @@ class EmailsSender {
           // ===== Enviar =====
           return $mail->send();
         } catch (Exception $e) {
-          error_log('EmailSender::sendEmailRegistration error -> ' . $e->getMessage());
+          error_log('EmailsSender::sendEmailRegistration error -> ' . $e->getMessage());
           return false;
         }
   }
