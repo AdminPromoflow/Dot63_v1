@@ -98,40 +98,40 @@ class Resques63API
     $product = new Products($connection);
     $product->setSku($data['sku']);
 
-    echo json_encode("ay vamos");exit;
+    $result = $product->approveProductWithSKU();
 
-
-    $result = $product->getDataForSendEmail();
-
-    if (empty($result['success'])) {
-      echo json_encode([
-        'success' => false,
-        'message' => 'Could not get product data.'
-      ]);
-      exit;
-    }
-
-    $emailData = $result['data'];
-
-    $emailSender = new EmailsSender();
-
-    $emailSender->setRecipientEmail('admin@promoflow.net');
-    $emailSender->setRecipientName('Admin');
-
-    $emailSender->setProductName($emailData['product_name']);
-    $emailSender->setProductSku($emailData['product_sku']);
-    $emailSender->setSupplierName($emailData['supplier_name']);
-    $emailSender->setSupplierEmail($emailData['supplier_email']);
-
-    $emailSent = $emailSender->sendEmailProductApprovalNotice();
-
-    echo json_encode([
-      'success' => $emailSent,
-      'message' => $emailSent
-        ? 'Email sent successfully.'
-        : 'Email could not be sent.'
-    ]);
-    exit;
+    //
+    // $result = $product->getDataForSendEmail();
+    //
+    // if (empty($result['success'])) {
+    //   echo json_encode([
+    //     'success' => false,
+    //     'message' => 'Could not get product data.'
+    //   ]);
+    //   exit;
+    // }
+    //
+    // $emailData = $result['data'];
+    //
+    // $emailSender = new EmailsSender();
+    //
+    // $emailSender->setRecipientEmail('admin@promoflow.net');
+    // $emailSender->setRecipientName('Admin');
+    //
+    // $emailSender->setProductName($emailData['product_name']);
+    // $emailSender->setProductSku($emailData['product_sku']);
+    // $emailSender->setSupplierName($emailData['supplier_name']);
+    // $emailSender->setSupplierEmail($emailData['supplier_email']);
+    //
+    // $emailSent = $emailSender->sendEmailProductApprovalNotice();
+    //
+    // echo json_encode([
+    //   'success' => $emailSent,
+    //   'message' => $emailSent
+    //     ? 'Email sent successfully.'
+    //     : 'Email could not be sent.'
+    // ]);
+    // exit;
   }
 
   private function getPreviewProductDetails($data)
