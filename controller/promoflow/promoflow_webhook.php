@@ -86,6 +86,7 @@ class Resques63API
 
   private function publishProduct($data)
   {
+    echo json_encode($data);exit;
     if (empty($data['sku'])) {
       echo json_encode([
         'success' => false,
