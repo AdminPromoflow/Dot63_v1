@@ -86,7 +86,6 @@ class Resques63API
 
   private function publishProduct($data)
   {
-    echo json_encode($data);exit;
     if (empty($data['sku'])) {
       echo json_encode([
         'success' => false,
@@ -98,6 +97,9 @@ class Resques63API
     $connection = new Database();
     $product = new Products($connection);
     $product->setSku($data['sku']);
+
+    echo json_encode("ay vamos");exit;
+
 
     $result = $product->getDataForSendEmail();
 
