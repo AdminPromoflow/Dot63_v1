@@ -3,9 +3,9 @@
 // Product Preview — Asset Versioning + Markup
 // -----------------------------------------------------------------------------
 
-$cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
-$jsPath  = '../../view/preview_porduct/preview_porduct/preview.js';
-$jsPath2 = '../../view/preview_porduct/preview_porduct/preview_logic.js';
+$cssPath = '../../view/preview_product_customers/preview_porduct/preview.css';
+$jsPath  = '../../view/preview_product_customers/preview_porduct/preview.js';
+$jsPath2 = '../../view/preview_product_customers/preview_porduct/preview_logic.js';
 
 $cssTime = @filemtime($cssPath) ?: time();
 $jsTime  = @filemtime($jsPath)  ?: time();
@@ -86,7 +86,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
             <div class="sp-price-main js-fade-up">
               <span class="sp-price-symbol" id="sp_currency_symbol">£</span>
               <span id="sp_price" class="sp-price">
-                8<span class="sp-price-minor">.00</span>
+                0<span class="sp-price-minor">.00</span>
               </span>
               <span id="sp_unit_hint" class="sp-unit-hint">per 100 units</span>
             </div>
@@ -235,7 +235,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 
           <div class="var-label">
             <span class="var-name">Pack size</span>
-            <strong id="var_label_items">500 units</strong>
+            <strong id="var_label_quantity">500 units</strong>
           </div>
 
           <!-- ✅ 10: Agrupar botones dentro de wrap-items (sin id) -->
@@ -354,18 +354,48 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
       <aside class="sp-col sp-buybox" aria-label="Purchase options">
         <div class="box js-fade-up js-scale-in js-parallax">
 
+          <div class="price-group">
 
+            <div class="price-row price-row--head">
+              <span class="label">Unit</span>
+              <strong id="bb_unit">£0.08</strong>
+            </div>
 
-              <div class="price-line">
-                <span class="label">Unit</span>
-                <strong id="bb_unit">£0.08</strong>
-              </div>
+            <div class="price-subrow">
+              <span>Quantity</span>
+              <strong id="bb_unit_quantity">100</strong>
+            </div>
 
-              <div class="price-line">
-                <span class="label">Total</span>
-                <strong id="bb_total">£8.00</strong>
-              </div>
+            <div class="price-subrow">
+              <span>Total</span>
+              <strong id="bb_unit_total">£8.00</strong>
+            </div>
 
+          </div>
+
+          <div class="price-group">
+
+            <div class="price-row price-row--head">
+              <span class="label">Extras</span>
+              <strong id="bb_extra_unit">£0.24</strong>
+            </div>
+
+            <div class="price-subrow">
+              <span>Quantity</span>
+              <strong id="bb_extra_quantity">100</strong>
+            </div>
+
+            <div class="price-subrow">
+              <span>Total</span>
+              <strong id="bb_extra_total">£24.00</strong>
+            </div>
+
+          </div>
+
+          <div class="price-line price-line--total">
+            <span class="label">Total</span>
+            <strong id="bb_total">£32.00</strong>
+          </div>
 
           <div class="ship">
             <span>Delivery</span>
@@ -375,11 +405,11 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
           <div class="stock in">In stock</div>
 
           <button type="button" class="btn btn-primary btn-buy js-scale-in" id="bb_add">
-            Add to basket (disabled)
+            Add to basket
           </button>
 
           <button type="button" class="btn btn-ghost btn-buy js-scale-in" id="bb_buy" disabled>
-            Buy now (disabled)
+            Buy now
           </button>
 
         </div>

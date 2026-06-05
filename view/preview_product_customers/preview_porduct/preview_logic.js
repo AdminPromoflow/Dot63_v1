@@ -20,6 +20,77 @@ class PreviewLogic {
 
     // Store the currently selected price payload.
     this.priceSelected = null;
+
+
+
+
+
+    backBtn.addEventListener("click", function(){
+      previewLogic.backBtn();
+    })
+
+    publishBtn.addEventListener("click", function(){
+      previewLogic.publishBtn();
+    })
+
+  }
+  publishBtn(){
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    if (!sku) {
+      console.warn("No SKU in URL");
+      return;
+    }
+
+    const url = "../../controller/products/product.php";
+    const data = {
+      action: "publish_product",
+      sku: sku
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+         alert(text);
+
+        const json = JSON.parse(text);
+
+      })
+      .catch((error) => {
+        console.error("Error fetching preview:", error);
+        // alert("Error loading preview data.");
+      });
+  }
+
+  backBtn() {
+    const backBtn = document.getElementById("btn_back_edit");
+    //const publishBtn = document.getElementById("btn_publish");
+
+      backBtn.addEventListener("click", () => {
+        const url = "../../view/product_details/index.php";
+
+        const current = new URL(window.location.href);
+        const dest = new URL(url, current);
+
+        const sku = current.searchParams.get("sku");
+        const skuv = current.searchParams.get("sku_variation");
+
+        // Preserves sku and sku_variation in the destination URL.
+        if (sku) dest.searchParams.set("sku", sku);
+        if (skuv) dest.searchParams.set("sku_variation", skuv);
+
+        window.location.assign(dest);
+      });
+
+
   }
 
   /* ============================================================================
@@ -103,7 +174,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        //console.log("2. " + text);
+      //  alert("2. " + text);
 
         const json = JSON.parse(text);
 
@@ -118,7 +189,7 @@ class PreviewLogic {
 
         if (variationTypesForDelete?.length > 0) {
           this.shouldDeleteItems = true;
-          this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
+        //  this.organizeVariationsForDelete(variationTypesForDelete, currentTypeId);
         } else {
           this.shouldDeleteItems = false;
         }
@@ -137,10 +208,39 @@ class PreviewLogic {
          childVariations.length === 0
        ) {
          this.updateVariationPrices();
+
+         // Seleccionar automáticamente la primera cantidad
+         setTimeout(() => {
+           const firstPriceButton = document.querySelector("#wrap-prices-group .js-price-option");
+           if (firstPriceButton) {
+             // Deseleccionar todos los demás botones de precio
+             const allPriceButtons = document.querySelectorAll("#wrap-prices-group .js-price-option");
+             allPriceButtons.forEach(btn => {
+               btn.classList.remove("is-selected");
+             });
+
+             this.updateProductSummaryBox(firstPriceButton.dataset.minQuantity, firstPriceButton.value);
+             firstPriceButton.classList.add("is-selected");
+
+             const payload = {
+               price_id: String(firstPriceButton.dataset.priceId ?? ""),
+               min_quantity: String(firstPriceButton.dataset.minQuantity ?? ""),
+               max_quantity: String(firstPriceButton.dataset.maxQuantity ?? ""),
+               price: String(firstPriceButton.dataset.price ?? ""),
+               value: String(firstPriceButton.value ?? ""),
+             };
+
+             this.setSelectedPrice(payload);
+             this.setMaxQuantity(payload["max_quantity"]);
+           }
+         }, 500); // Pequeña espera para que se rendericen los botones
+
+         loader.hide();
+
        }
 
 
-        loader.hide();
+      //
       })
       .catch((error) => {
         console.error("Error fetching preview:", error);
@@ -325,7 +425,7 @@ class PreviewLogic {
   ============================================================================ */
 
   organizeVariationsForDelete(variationTypes = [], currentTypeId = null) {
-    // alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
+  //   alert("3. " + JSON.stringify(variationTypes) + "  " + JSON.stringify(currentTypeId));
 
     if (!Array.isArray(variationTypes) || variationTypes.length === 0) return true;
 
@@ -593,8 +693,11 @@ class PreviewLogic {
   }
 
   SelectVariation(domId = "") {
-    // loader.show();
-    // alert("El id seleccionado es: " + domId);
+
+
+
+  //  alert("hah");
+
 
     this.setSelectVariation(domId);
 
@@ -607,6 +710,8 @@ class PreviewLogic {
     // setTimeout(() => {
     this.fetchChildVariationsById(variationId);
     // }, 1000);
+
+
   }
 
   setSelectVariation(domId) {
@@ -738,7 +843,12 @@ class PreviewLogic {
   ============================================================================ */
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
-    //alert("Acá se muestran dos cosas iguales" + JSON.stringify(pricesOnlyOfType));
+
+  //  alert(JSON.stringify(pricesOnlyOfType) + " " + JSON.stringify(typeVariation));
+    loader.show();
+
+
+  //  alert("Acá se muestran los datos de price" + JSON.stringify(pricesOnlyOfType));
     const id_variation = Number(
       String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
@@ -790,13 +900,14 @@ class PreviewLogic {
       button.dataset.priceDisplayMode = String(p?.price_display_mode ?? "");
 
       button.innerHTML = `
-        <span class="opt-main">${maxQty}</span>
+        <span class="opt-main">${minQty}</span>
       `;
 
       wrapper.appendChild(button);
     }
 
     this.bindPriceButtons(`#${wrapId}`);
+
   }
 
   bindPriceButtons(scopeSelector) {
@@ -806,22 +917,104 @@ class PreviewLogic {
     const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
 
     if (buttons.length === 0) {
-      window.previewGallery?.updatePrice?.();
+    //  window.previewGallery?.updatePrice?.();
       return false;
     }
 
     for (const btn of buttons) {
       btn.addEventListener("click", (e) => {
         const el = e.currentTarget;
-        this.selectPriceButton(el, scope);
+         const updateVariationPrice = this.selectPriceButton(el, scope);
+
+           if (updateVariationPrice) {
+             this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
+        //     loader.hide();
+
+           }
+
       });
     }
 
-    // Always auto-select the first available price button.
-    this.selectPriceButton(buttons[0], scope);
+
+    const updateVariationPrice = this.selectPriceButton(buttons[0], scope);
+
+
+    setTimeout(() => {
+      if (updateVariationPrice) {
+        this.updateProductSummaryBox(buttons[0].dataset.minQuantity, buttons[0].value);
+      }
+    }, 1500);
+
+
 
     return true;
   }
+
+  updateProductSummaryBox(quantity, price) {
+    const is_selected = document.querySelectorAll(".is-selected");
+    let totalExtraPrice = 0;
+
+    for (let i = 0; i < is_selected.length; i++) {
+      if (!is_selected[i].querySelector(".opt-price-extra")) continue;
+
+      const priceExtraText = is_selected[i].querySelector(".opt-price-extra").innerHTML;
+
+      const priceExtraNumber = Number(
+        priceExtraText
+          .replace("+", "")
+          .replace("p/u", "")
+          .trim()
+      );
+
+      totalExtraPrice = totalExtraPrice + priceExtraNumber;
+    }
+
+    const bb_unit = document.getElementById("bb_unit");
+    const bb_unit_quantity = document.getElementById("bb_unit_quantity");
+    const bb_unit_total = document.getElementById("bb_unit_total");
+
+    const bb_extra_unit = document.getElementById("bb_extra_unit");
+    const bb_extra_quantity = document.getElementById("bb_extra_quantity");
+    const bb_extra_total = document.getElementById("bb_extra_total");
+
+    const bb_total = document.getElementById("bb_total");
+
+    const sp_price = document.getElementById("sp_price");
+    const var_label_quantity = document.getElementById("var_label_quantity");
+    const sp_unit_hint = document.getElementById("sp_unit_hint");
+
+
+
+
+    bb_unit.innerHTML = "£" + this.formatPrice(price);
+    bb_unit_quantity.innerHTML = quantity;
+    bb_unit_total.innerHTML = "£" + this.formatPrice(price * quantity);
+
+    sp_price.innerHTML = this.formatPrice(price);
+    var_label_quantity.innerHTML = quantity;
+    sp_unit_hint.innerHTML =   'per ' + quantity + ' units';
+
+    let quantityExtras;
+
+    if (totalExtraPrice == 0) {
+      quantityExtras = 0;
+    } else {
+      quantityExtras = quantity;
+    }
+
+    bb_extra_unit.innerHTML = "£" + this.formatPrice(totalExtraPrice);
+    bb_extra_quantity.innerHTML = quantityExtras;
+    bb_extra_total.innerHTML = "£" + this.formatPrice(totalExtraPrice * quantity);
+
+    bb_total.innerHTML = "£" + this.formatPrice(
+      (price * quantity) + (totalExtraPrice * quantity)
+    );
+  }
+
+  formatPrice(value) {
+    return Number(value).toFixed(2);
+  }
+
 
   selectPriceButton(button, scope = null) {
     if (!button) return false;
@@ -924,7 +1117,7 @@ class PreviewLogic {
     //   "button value: " + payload.value
     // );
 
-    window.previewGallery?.updatePrice?.(button);
+    //window.previewGallery?.updatePrice?.(button);
   }
   drawExtraVariationPrices(data) {
   //  alert(JSON.stringify(data));
@@ -1008,5 +1201,6 @@ class PreviewLogic {
     }
   }
 }
-
+const backBtn = document.getElementById("btn_back_edit");
+const publishBtn = document.getElementById("btn_publish");
 const previewLogic = new PreviewLogic();

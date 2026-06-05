@@ -12,6 +12,10 @@ class PreviewGallery {
     this.observer = null;
 
     this.init();
+
+
+
+
   }
 
   /* ============================================================================
@@ -31,7 +35,6 @@ class PreviewGallery {
       this.refreshGallery();
     }
 
-    this.setupBackPublishButtons();
     this.setupVariationSelection();
   }
 
@@ -67,34 +70,7 @@ class PreviewGallery {
     });
   }
 
-  setupBackPublishButtons() {
-    const backBtn = document.getElementById("btn_back_edit");
-    const publishBtn = document.getElementById("btn_publish");
 
-    if (backBtn) {
-      backBtn.addEventListener("click", () => {
-        const url = "../../view/product_details/index.php";
-
-        const current = new URL(window.location.href);
-        const dest = new URL(url, current);
-
-        const sku = current.searchParams.get("sku");
-        const skuv = current.searchParams.get("sku_variation");
-
-        // Preserves sku and sku_variation in the destination URL.
-        if (sku) dest.searchParams.set("sku", sku);
-        if (skuv) dest.searchParams.set("sku_variation", skuv);
-
-        window.location.assign(dest);
-      });
-    }
-
-    if (publishBtn) {
-      publishBtn.addEventListener("click", () => {
-        alert("This page is currently under construction.");
-      });
-    }
-  }
 
   setupObserver() {
     const root = this.getRoot();
@@ -391,8 +367,8 @@ class PreviewGallery {
 
     if (!selectedButton) return false;
 
-    this.paintSelectedPrice(selectedButton);
-    this.syncPriceDisplay(selectedButton);
+   // this.paintSelectedPrice(selectedButton);
+   // this.syncPriceDisplay(selectedButton);
 
     return true;
   }
@@ -426,7 +402,7 @@ class PreviewGallery {
     const spPrice = document.getElementById("sp_price");
     const spUnitHint = document.getElementById("sp_unit_hint");
     const bbTotal = document.getElementById("bb_total");
-    const bbUnit = document.getElementById("bb_unit");
+    // const bbUnit = document.getElementById("bb_unit");
     const symbolEl = document.getElementById("sp_currency_symbol");
 
     const symbol = symbolEl ? symbolEl.textContent.trim() || "£" : "£";
@@ -435,23 +411,23 @@ class PreviewGallery {
       spPrice.innerHTML = `${major}<span class="sp-price-minor">.${minor}</span>`;
     }
 
-    if (spUnitHint) {
-      spUnitHint.textContent = maxQuantity ? `per ${maxQuantity} units` : "";
-    }
+    // if (spUnitHint) {
+    //   spUnitHint.textContent = maxQuantity ? `per ${maxQuantity} units` : "";
+    // }
 
-    if (bbTotal) {
-      bbTotal.textContent = `${symbol}${fixed}`;
-    }
+    // if (bbTotal) {
+    //   bbTotal.textContent = `${symbol}${fixed}`;
+    // }
 
-    if (bbUnit) {
-      const qty = Number(maxQuantity.replace(/,/g, ""));
-      if (Number.isFinite(qty) && qty > 0) {
-        const unit = (safePrice / qty).toFixed(2);
-        bbUnit.textContent = `${symbol}${unit}`;
-      } else {
-        bbUnit.textContent = "";
-      }
-    }
+    // if (bbUnit) {
+    //   const qty = Number(maxQuantity.replace(/,/g, ""));
+    //   if (Number.isFinite(qty) && qty > 0) {
+    //     const unit = (safePrice / qty).toFixed(2);
+    //     bbUnit.textContent = `${symbol}${unit}`;
+    //   } else {
+    //     bbUnit.textContent = "";
+    //   }
+    // }
   }
 }
 
