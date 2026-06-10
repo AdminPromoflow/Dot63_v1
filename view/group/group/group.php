@@ -63,6 +63,9 @@ $jsTime  = filemtime('../../view/group/group/group.js');  // ejemplo: '../Home/5
 
   <!-- Footer: Next button -->
   <div class="cp-footer">
+    <button id="btn_back_groups" class="btn-back" type="button" aria-label="Back to Category">
+      ← Back
+    </button>
     <button class="btn btn-danger" id="reset" type="button">Reset</button>
     <div class="cp-footer-actions">
       <button class="btn btn-primary" id="save" type="button">Save</button>

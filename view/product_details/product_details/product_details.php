@@ -88,6 +88,9 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
 
   <!-- Footer: Next -->
   <div class="cp-footer">
+    <button id="btn_back_product_details" class="btn-back" type="button" aria-label="Back to Groups">
+      ← Back
+    </button>
     <button class="btn btn-danger" id="reset" type="button">Reset</button>
     <div class="cp-footer-actions">
       <button class="btn btn-primary" id="save" type="button">Save</button>

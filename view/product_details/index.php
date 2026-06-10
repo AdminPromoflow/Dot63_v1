@@ -7,7 +7,7 @@
   <meta name="description" content="" />
   <meta name="author" content="Promoflow" />
   <meta name="keywords" content="" />
-  <title>product_details</title>
+  <title>Product details</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

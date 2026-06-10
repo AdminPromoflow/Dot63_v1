@@ -248,8 +248,8 @@ video{
   background: rgba(255, 255, 255, .96);
   color: #374151;
   display: flex;
-  align-items: centre;
-  justify-content: centre;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   box-shadow: 0 10px 24px rgba(15, 23, 42, .10);
   font-size: 22px;
@@ -504,6 +504,7 @@ video{
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
 .var-option .opt-copy{
@@ -651,24 +652,70 @@ video{
   box-shadow: var(--ov-shadow-soft);
   padding: 16px 14px 18px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
   will-change: transform;
 }
 
+.price-group{
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f9fafb;
+  display: grid;
+  gap: 8px;
+}
+
+.price-row,
+.price-subrow,
 .price-line{
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: baseline;
   gap: 10px;
 }
 
-.price-line .label{
-  color: var(--muted);
-  font-size: .98rem;
+.price-row--head{
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.price-line strong{
+.price-row--head .label,
+.price-line .label{
+  color: var(--muted);
+  font-size: .95rem;
+  font-weight: 650;
+}
+
+.price-row--head strong{
   color: #111827;
+  font-size: 1.1rem;
+}
+
+.price-subrow{
+  font-size: .9rem;
+  color: var(--muted);
+}
+
+.price-subrow strong{
+  color: #111827;
+  font-size: .95rem;
+}
+
+.price-line--total{
+  padding: 14px;
+  border-radius: 16px;
+  background: #1F3551;
+  color: #ffffff;
+}
+
+.price-line--total .label,
+.price-line--total strong{
+  color: #ffffff;
+}
+
+.price-line--total strong{
+  font-size: 1.35rem;
 }
 
 .stock.in{

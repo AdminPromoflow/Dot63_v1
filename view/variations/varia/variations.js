@@ -56,6 +56,14 @@ class Variations {
       if (window.headerAddProduct?.setCurrentHeader) {
         window.headerAddProduct.setCurrentHeader('variations');
       }
+      
+      // Event listener para botón Back
+      const btnBackVariations = document.getElementById("btn_back_variations");
+      if (btnBackVariations) {
+        btnBackVariations.addEventListener("click", () => {
+          window.headerAddProduct.goNext('../../view/product_details/index.php');
+        });
+      }
     });
 
     // Initialize the "Type" select with ONLY a placeholder (no create-group option)

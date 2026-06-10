@@ -64,6 +64,9 @@ $jsLogicTime  = filemtime('../../view/images/img/image_logic.js');
   </section>
 
   <div class="cp-footer">
+    <button id="btn_back_images" class="btn-back" type="button" aria-label="Back to Variations">
+      ← Back
+    </button>
     <button class="btn btn-danger" type="button" id="reset_form">Reset</button>
     <div class="cp-footer-actions">
       <button class="btn btn-primary" type="submit" id="save_images" form="variationImagesForm">Save</button>

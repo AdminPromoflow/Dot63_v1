@@ -6,6 +6,14 @@ class ClassGroup {
 
     document.addEventListener('DOMContentLoaded', () => {
       headerAddProduct.setCurrentHeader('group');
+      
+      // Event listener para botón Back
+      const btnBackGroups = document.getElementById("btn_back_groups");
+      if (btnBackGroups) {
+        btnBackGroups.addEventListener("click", () => {
+          headerAddProduct.goNext('../../view/category/index.php');
+        });
+      }
     });
 
     this.group_selected = "";

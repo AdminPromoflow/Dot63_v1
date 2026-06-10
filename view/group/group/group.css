@@ -144,7 +144,6 @@ body{
   min-height: 300px;
   overflow-y: scroll;
   padding: 4px;
-  min-width: 60vw;
 }
 
 .cp-group-grid{
@@ -436,6 +435,25 @@ body{
   color:#ef4444;
   background:#fff;
   box-shadow: none;
+}
+
+.cp-footer .btn-back {
+  appearance: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: #f8f9fa;
+  color: var(--text);
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 0.15s ease;
+}
+
+.cp-footer .btn-back:hover {
+  background: var(--muted);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
 }
 
 /* Responsive */

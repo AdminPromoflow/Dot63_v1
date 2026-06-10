@@ -13,6 +13,14 @@
 class Prices {
   constructor() {
     document.addEventListener('DOMContentLoaded', () => {
+      // Event listener para botón Back
+      const btnBackPrices = document.getElementById("btn_back_prices");
+      if (btnBackPrices) {
+        btnBackPrices.addEventListener("click", () => {
+          window.headerAddProduct.goNext('../../view/items/index.php');
+        });
+      }
+
       this.setupVariationMenu();
       this.init();
     });

@@ -178,7 +178,7 @@ class ImageLogic {
     })
       .then(res => res.ok ? res.text() : Promise.reject(new Error("Network error.")))
       .then(txt => {
-        alert(txt);
+      //  alert(txt);
         let data;
         try { data = JSON.parse(txt); }
         catch (err) { console.error("JSON parse error", err, txt); return; }

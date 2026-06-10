@@ -42,7 +42,9 @@ class Product {
         $this->getPreviewProductDetails($data);
         break;
 
-
+      case 'publish_product':
+        $this->publishProduct($data);
+        break;
 //
       default:
         header('Content-Type: application/json; charset=utf-8');
@@ -52,7 +54,55 @@ class Product {
   }
 
 
+  private function publishProduct($data){
+    header('Content-Type: application/json; charset=utf-8');
 
+    if (empty($data['sku'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'SKU is missing.'
+        ]);
+        exit;
+    }
+
+
+    $connection = new Database();
+    $product = new Products($connection);
+    $product->setSku($data['sku']);
+
+
+    $result = $product->getDataForSendEmail();
+
+    if (empty($result['success'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Could not get product data.'
+        ]);
+        exit;
+    }
+
+    $emailData = $result['data'];
+
+    $emailSender = new EmailsSender();
+
+    $emailSender->setRecipientEmail('admin@promoflow.net');
+    $emailSender->setRecipientName('Admin');
+
+    $emailSender->setProductName($emailData['product_name']);
+    $emailSender->setProductSku($emailData['product_sku']);
+    $emailSender->setSupplierName($emailData['supplier_name']);
+    $emailSender->setSupplierEmail($emailData['supplier_email']);
+
+    $emailSent = $emailSender->sendEmailProductApprovalNotice();
+
+    echo json_encode([
+        'success' => $emailSent,
+        'message' => $emailSent
+            ? 'Email sent successfully.'
+            : 'Email could not be sent.'
+    ]);
+    exit;
+  }
 
   private function getPreviewProductDetails($data){
     header('Content-Type: application/json; charset=utf-8');
@@ -256,6 +306,7 @@ class Product {
 include "../../controller/config/database.php";
 include "../../model/products.php";
 include "../../controller/products/variations.php";
+include "../../controller/emails/send_emails.php";
 
 $productClass = new Product(); // instancia
 $productClass->handleProduct();
