@@ -1,6 +1,6 @@
 <?php
 $cssTime = filemtime('../../view/product_list/addcategory/product_list.css'); // ejemplo: '../Home/5.Video/video.css'
-// $jsTime  = filemtime('../../view/product_list/addcategory/product_list.js');   // ejemplo: '../Home/5.Video/video.js'
+$jsTime  = filemtime('../../view/product_list/addcategory/product_list.js');   // ejemplo: '../Home/5.Video/video.js'
 ?>
 <link rel="stylesheet" href="../../view/product_list/addcategory/product_list.css?v=<?= $cssTime ?>">
 
@@ -72,4 +72,4 @@ $cssTime = filemtime('../../view/product_list/addcategory/product_list.css'); //
   </div>
 </main>
 
-<!-- <script src="../../view/product_list/addcategory/product_list.js?v=<?= $jsTime ?>"></script> -->
+<script src="../../view/product_list/addcategory/product_list.js?v=<?= $jsTime ?>"></script>
