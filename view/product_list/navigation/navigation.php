@@ -2,10 +2,10 @@
 declare(strict_types=1);
 
 /* Filesystem path for filemtime */
-$navCssFs = __DIR__ . '/view/products/navigation/navigation.css';
+$navCssFs = __DIR__ . '/view/product_list/navigation/navigation.css';
 
 /* Public path used in HTML */
-$navCssPublic = '../../view/products/navigation/navigation.css';
+$navCssPublic = '../../view/product_list/navigation/navigation.css';
 
 /* Cache-busting version */
 $navCssV = is_file($navCssFs) ? filemtime($navCssFs) : time();

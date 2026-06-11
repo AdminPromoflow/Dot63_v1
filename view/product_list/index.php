@@ -8,7 +8,7 @@
   <meta name="description" content="" />
   <meta name="author" content="Promoflow" />
   <meta name="keywords" content="" />
-  <title>Category</title>
+  <title>Product List</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,12 +16,12 @@
 
   <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
 
-  <link rel="stylesheet" href="../../view/products/style.css?v=<?php echo filemtime("../../view/products/style.css"); ?>">
+  <link rel="stylesheet" href="../../view/product_list/style.css?v=<?php echo filemtime("../../view/product_list/style.css"); ?>">
 </head>
 
-<body class="body_category">
+<body class="body_product_list">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
-  <?php include "../../view/products/navigation/category.php";?>
+  <?php include "../../view/products/navigation/product_list.php";?>
   <?php include "../../view/products/navigation/navigation.php" ?>
 
 </body>
