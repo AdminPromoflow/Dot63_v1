@@ -1,3 +1,4 @@
+
 <?php
 $cssTime = filemtime('../../view/group/group/group.css'); // ejemplo: '../Home/5.Video/video.css'
 $jsTime  = filemtime('../../view/group/group/group.js');  // ejemplo: '../Home/5.Video/video.js'
@@ -61,7 +62,7 @@ $jsTime  = filemtime('../../view/group/group/group.js');  // ejemplo: '../Home/5
     </form>-->
   </section>
 
-  <!-- Footer: Next button -->
+<!-- Footer: Next button -->
   <div class="cp-footer">
     <button id="btn_back_groups" class="btn-back" type="button" aria-label="Back to Category">
       ← Back
@@ -75,3 +76,4 @@ $jsTime  = filemtime('../../view/group/group/group.js');  // ejemplo: '../Home/5
 </main>
 
 <script src="../../view/group/group/group.js?v=<?= $jsTime ?>"></script>
+

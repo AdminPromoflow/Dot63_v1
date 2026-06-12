@@ -6,7 +6,7 @@ class ClassGroup {
 
     document.addEventListener('DOMContentLoaded', () => {
       headerAddProduct.setCurrentHeader('group');
-      
+
       // Event listener para botón Back
       const btnBackGroups = document.getElementById("btn_back_groups");
       if (btnBackGroups) {
@@ -80,7 +80,7 @@ class ClassGroup {
 
         if (res["success"]) {
           const id = Number.parseInt(res["group_id"], 10);
-          if (!Number.isNaN(id)) classGroup.selectGroup(id);
+          if (!Number.isNaN(id)) classGroup.selectBorderGroup(id);
 
           if (res["group_name"] === "Unassigned Group") {
             // alert("Please select a group first.");
@@ -118,7 +118,7 @@ class ClassGroup {
 
         if (res["success"]) {
           if (goNext) {
-            headerAddProduct.goNext('../../view/product_details/index.php');
+            headerAddProduct.goNext('../../view/product_list/index.php');
           }
         }
       })
@@ -182,6 +182,29 @@ class ClassGroup {
   }
 
   selectGroup(divId) {
+    if (!window.group_list) return;
+
+    const boxes = group_list.querySelectorAll('.cp-group');
+
+    // Limpiar bordes
+    for (let j = 0; j < boxes.length; j++) {
+      boxes[j].style.border = '2px solid var(--border)';
+      boxes[j].style.borderRadius = '';
+    }
+
+    // Pintar borde del seleccionado
+    const el = document.getElementById(divId);
+    if (!el) return;
+
+    el.style.border = '2px solid var(--brand, #005548)';
+    el.style.borderRadius = '12px';
+
+    // Guardar el ID seleccionado (NO índice)
+    this.group_selected = divId;
+    this.updateGroup(true);
+  }
+
+  selectBorderGroup(divId){
     if (!window.group_list) return;
 
     const boxes = group_list.querySelectorAll('.cp-group');

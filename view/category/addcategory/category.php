@@ -1,3 +1,4 @@
+
 <?php
 $cssTime = filemtime('../../view/category/addcategory/category.css'); // ejemplo: '../Home/5.Video/video.css'
 $jsTime  = filemtime('../../view/category/addcategory/category.js');   // ejemplo: '../Home/5.Video/video.js'
@@ -62,7 +63,7 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');   // ejempl
     </form>-->
   </section>
 
-  <!-- Footer: Next button -->
+<!-- Footer: Next button -->
   <div class="cp-footer">
     <button class="btn btn-danger" id="reset" type="button">Reset</button>
     <div class="cp-footer-actions">
@@ -73,3 +74,4 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');   // ejempl
 </main>
 
 <script src="../../view/category/addcategory/category.js?v=<?= $jsTime ?>"></script>
+

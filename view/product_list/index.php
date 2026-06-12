@@ -21,12 +21,12 @@
 
 <body class="body_product_list">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
-  <?php include "../../view/products/navigation/product_list.php";?>
-  <?php include "../../view/products/navigation/navigation.php" ?>
+  <?php include "../../view/product_list/product_list/product_list.php";?>
+  <?php include "../../view/product_list/navigation/navigation.php" ?>
 
 </body>
 
-<script src="../../view/global/security/security_helper.js" type="text/javascript">
+<!-- <script src="../../view/global/security/security_helper.js" type="text/javascript"> -->
 
 </script>
 

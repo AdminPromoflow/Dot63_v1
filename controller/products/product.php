@@ -1,4 +1,5 @@
 <?php
+
 class Product {
   public function handleProduct(){
 
@@ -12,6 +13,10 @@ class Product {
 
       case 'get_products':
         $this->getProducts();
+        break;
+
+      case 'get_products_by_group':
+        $this->getProductsByGroup();
         break;
 
       case 'update_products':
@@ -45,7 +50,11 @@ class Product {
       case 'publish_product':
         $this->publishProduct($data);
         break;
-//
+
+      case 'get_default_variation_by_sku':
+      $this->getDefaultVariationBySKU($data);
+      break;
+
       default:
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['response' => false, 'error' => 'Unsupported action']);
@@ -53,6 +62,41 @@ class Product {
     }
   }
 
+  private function getDefaultVariationBySKU($data){
+    header('Content-Type: application/json; charset=utf-8');
+
+    $connection = new Database();
+    $product   = new Variation($connection);
+
+
+    $product->setSku($data['sku'] ?? '');
+
+    $response = $product->getDefaultVariationBySKU();
+
+    echo json_encode($response);
+  }
+
+
+  private function getProductsByGroup(){
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+      session_start();
+    }
+
+    $group_id = $_SESSION['group_id'] ?? null;
+    $email    = $_SESSION['email'] ?? null;
+
+    $connection = new Database();
+    $products   = new Products($connection);
+
+    $products->setGroupId($group_id);
+    $products->setEmail($email);
+
+    $response = $products->getProductsByGroupId();
+
+    echo json_encode($response);
+  }
 
   private function publishProduct($data){
     header('Content-Type: application/json; charset=utf-8');
@@ -65,11 +109,9 @@ class Product {
         exit;
     }
 
-
     $connection = new Database();
     $product = new Products($connection);
     $product->setSku($data['sku']);
-
 
     $result = $product->getDataForSendEmail();
 
@@ -107,59 +149,35 @@ class Product {
   private function getPreviewProductDetails($data){
     header('Content-Type: application/json; charset=utf-8');
 
+    echo json_encode("response");
+  }
 
+  private function getProductBasicBySKU($data){
+    header('Content-Type: application/json; charset=utf-8');
 
-  /*  $connection = new Database();
+    $connection = new Database();
     $product   = new Products($connection);
 
+    $product->setSku($data['sku'] ?? '');
+    $response = $product->getProductBasicBySKU();
+
+    echo ($response);
+  }
+
+  private function getProductsBasicBySupplierEmail(){
+    header('Content-Type: application/json; charset=utf-8');
+    $connection = new Database();
+    $products   = new Products($connection);
 
     if (session_status() !== PHP_SESSION_ACTIVE) {
       session_start();
     }
-    $product->setId($_SESSION['idProduct']);
 
-    $product->setName($data["name"]);
-    $product->setStatus($data["status"]);
-    $product->setDescription($data["description"]);
-    $product->setTaglineDescription($data["pd_tagline"]);
-    $product->setSku($data["sku"]);*/
+    $products->setEmail($_SESSION['email']);
 
-
-  //  $response = $product->update();
-
-
-    echo json_encode("response");
+    $response   = $products->getProductsBasicBySupplierEmail();
+    echo ($response);
   }
-
-    private function getProductBasicBySKU($data){
-      header('Content-Type: application/json; charset=utf-8');
-
-      $connection = new Database();
-      $product   = new Products($connection);
-
-      $product->setSku($data['sku'] ?? '');
-      $response = $product->getProductBasicBySKU();
-
-      echo ($response);
-    }
-
-    private function getProductsBasicBySupplierEmail(){
-      header('Content-Type: application/json; charset=utf-8');
-      $connection = new Database();
-      $products   = new Products($connection);
-
-      if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-      }
-    //  echo json_encode("haha");exit;
-
-      $products->setEmail($_SESSION['email']);
-
-    //  echo json_encode("buenas");exit;
-
-      $response   = $products->getProductsBasicBySupplierEmail();
-      echo ($response);
-    }
 
   private function saveProductDetails($data){
     header('Content-Type: application/json; charset=utf-8');
@@ -167,10 +185,10 @@ class Product {
     $connection = new Database();
     $product   = new Products($connection);
 
-
     if (session_status() !== PHP_SESSION_ACTIVE) {
       session_start();
     }
+
     $product->setId($_SESSION['idProduct']);
 
     $product->setName($data["name"]);
@@ -179,9 +197,7 @@ class Product {
     $product->setTaglineDescription($data["pd_tagline"]);
     $product->setSku($data["sku"]);
 
-
     $response = $product->update();
-
 
     echo json_encode($response);
   }
@@ -192,9 +208,8 @@ class Product {
     $connection = new Database();
     $product    = new Products($connection);
 
-    // Valida inputs
     $sku = isset($data['sku']) ? trim((string)$data['sku']) : '';
-    $categoryId = $data['id'] ?? null; // o $data['category_id'] si así lo envías
+    $categoryId = $data['id'] ?? null;
 
     $product->setSku($sku);
     $product->setCategoryId($categoryId);
@@ -206,12 +221,17 @@ class Product {
   private function updateGroup(array $data) {
     header('Content-Type: application/json; charset=utf-8');
 
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+      session_start();
+    }
+
     $connection = new Database();
     $product    = new Products($connection);
 
-    // Valida inputs
     $sku = isset($data['sku']) ? trim((string)$data['sku']) : '';
-    $group_id = $data['group_id'] ?? null; // o $data['category_id'] si así lo envías
+    $group_id = $data['group_id'] ?? null;
+
+    $_SESSION['group_id'] = $group_id;
 
     $product->setSku($sku);
     $product->setGroupId($group_id);
@@ -224,30 +244,25 @@ class Product {
 
     header('Content-Type: application/json; charset=utf-8');
 
-    // Instancia del modelo
     $connection = new Database();
     $products   = new Products($connection);
 
-    // Generar y setear SKU
     $sku = $this->generate_sku();
     $products->setSku($sku);
 
-    // Obtener email desde la sesión (para resolver supplier internamente)
     if (session_status() !== PHP_SESSION_ACTIVE) {
       session_start();
     }
+
     $email = $_SESSION['email'] ?? '';
     if ($email === '') {
       echo json_encode(['success' => false, 'error' => 'Email required in session'], JSON_UNESCAPED_UNICODE);
       return;
     }
+
     $products->setEmail($email);
 
-
-
-
-    // Crear producto (el modelo deduce supplier por email)
-    $response = $products->create();//
+    $response = $products->create();
 
     if ($response['success']) {
       $variation = new Variations();
@@ -258,20 +273,13 @@ class Product {
 
         echo json_encode($result);
       }
-
     }
-
-
-
-    //echo json_encode($response, JSON_UNESCAPED_UNICODE);
-
-  //  echo json_encode($response);
   }
 
   private function generate_sku(string $prefix = 'PRD'): string {
     $dt    = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-    $stamp = $dt->format('Ymd-His-u'); // 20250925-175903-123456
-    $rand  = strtoupper(bin2hex(random_bytes(5)));   // 10 hex
+    $stamp = $dt->format('Ymd-His-u');
+    $rand  = strtoupper(bin2hex(random_bytes(5)));
     return sprintf(
       '%s-%s-%s',
       strtoupper(preg_replace('/[^A-Z0-9]/', '', $prefix)),
@@ -279,7 +287,6 @@ class Product {
       $rand
     );
   }
-
 
   private function getProducts(){
     header('Content-Type: application/json; charset=utf-8');
@@ -304,9 +311,12 @@ class Product {
 }
 
 include "../../controller/config/database.php";
+
 include "../../model/products.php";
+
 include "../../controller/products/variations.php";
 include "../../controller/emails/send_emails.php";
 
-$productClass = new Product(); // instancia
+$productClass = new Product();
+
 $productClass->handleProduct();

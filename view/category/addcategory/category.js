@@ -18,7 +18,7 @@ class ClassCategory {
       if (cats.length > 0) {
         const firstId = cats[0].id; // <- id del primer .cp-cat
         classCategory.category_selected = firstId;   // <- lo asignas antes
-        classCategory.updatedCategory(false);  
+        classCategory.updatedCategory(false);
         alert("Category reset to Unassigned Category");
         window.location.reload();
       }
@@ -85,7 +85,7 @@ class ClassCategory {
         if (data["success"]) {
 
           const id = Number.parseInt(data["category_id"], 10);
-          if (!Number.isNaN(id)) classCategory.selectCategory(id);
+          if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
           if (data["category_name"] == "Unassigned Category") {
           //  alert('Please select a category.');
           }
@@ -97,56 +97,6 @@ class ClassCategory {
       });
   //  alert(sku);
   }
-
-  /*createNewCategory(){
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
-    // alert(sku);
-    // alert(email.value + password.value);
-    // alert(email.value + password.value);
-    const url = "../../controller/products/category.php";
-    const data = {
-      action: "create_new_category",
-      name: new_category.value,
-      sku: sku
-    };
-    // Make a fetch request to the given URL with the specified data.
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        // Check if the response is okay, if so, return the response text.
-        if (response.ok) {
-          return response.text();
-        }
-        // If the response is not okay, throw an error.
-        throw new Error("Network error.");
-      })
-
-      .then(data => {
-      //  alert(data);
-        var data = JSON.parse(data);
-        if (data["success"]) {
-          // classCategory.category_selected;
-          alert("The category "+ new_category.value+" was created successfully.");
-          location.reload();
-        }
-        else {
-          alert("Error: " + data["error"])
-        }
-
-      })
-      .catch(error => {
-        // Log any errors to the console.
-        console.error("Error:", error);
-      });
-
-  }
-  */
 
   updatedCategory(goNext = false){
     const params = new URLSearchParams(window.location.search);
@@ -181,7 +131,7 @@ class ClassCategory {
         if (data["success"]) {
           if (goNext) {
             headerAddProduct.goNext('../../view/group/index.php');
-          } 
+          }
         }
         else {
           alert("Error saving category");
@@ -274,6 +224,29 @@ class ClassCategory {
     // Guardar el ID del div seleccionado
     this.category_selected = divId;
 
+    this.updatedCategory(true);
+  }
+
+  drawBorderCategory(divId){
+    if (!window.category_list) return;
+
+    var boxes = category_list.querySelectorAll('.cp-cat');
+
+    // Limpiar bordes
+    for (var j = 0; j < boxes.length; j++) {
+      boxes[j].style.border = '2px solid var(--border)';
+      boxes[j].style.borderRadius = '';
+    }
+
+    // Pintar borde del seleccionado
+    var el = document.getElementById(divId);
+    if (!el) return;
+
+    el.style.border = '2px solid var(--brand, #005548)';
+    el.style.borderRadius = '12px';
+
+    // Guardar el ID del div seleccionado
+    this.category_selected = divId;
   }
 
 

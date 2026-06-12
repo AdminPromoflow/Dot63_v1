@@ -66,7 +66,61 @@ class Variation {
       $this->price_display_mode = in_array($v, ['prices', 'variation'], true) ? $v : 'prices';
   }
 
+  public function getDefaultVariationBySKU(): array
+  {
+      $productSku = trim((string)($this->sku ?? ''));
 
+      if ($productSku === '') {
+          return [
+              'success' => false,
+              'error' => 'Product SKU required'
+          ];
+      }
+
+      try {
+          $pdo = $this->connection->getConnection();
+
+          $stmt = $pdo->prepare("
+              SELECT v.SKU AS sku_variation
+              FROM products p
+              INNER JOIN variations v
+                  ON v.product_id = p.product_id
+              WHERE LOWER(p.SKU) = LOWER(:sku)
+                AND LOWER(v.name) = 'default'
+              ORDER BY v.variation_id ASC
+              LIMIT 1
+          ");
+
+          $stmt->execute([
+              ':sku' => $productSku
+          ]);
+
+          $skuVariation = $stmt->fetchColumn();
+
+          if (!$skuVariation) {
+              return [
+                  'success' => false,
+                  'error' => 'Default variation not found'
+              ];
+          }
+
+          return [
+              'success' => true,
+              'sku_variation' => $skuVariation
+          ];
+
+      } catch (PDOException $e) {
+          error_log(
+              'getDefaultVariationByIdProduct error: ' .
+              $e->getMessage()
+          );
+
+          return [
+              'success' => false,
+              'error' => 'DB error'
+          ];
+      }
+  }
 
   public function getVariationChildrenById(): array
   {

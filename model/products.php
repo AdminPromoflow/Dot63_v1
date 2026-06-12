@@ -15,6 +15,7 @@ class Products {
   private $email; // string|null
   private $group_id;    // int
   private $groups = []; // array
+  
 
   public function __construct($connection) {
     $this->connection = $connection;
@@ -23,6 +24,11 @@ class Products {
   /* ===========================
      Setters
      =========================== */
+     public function setProductId($product_id) {
+
+       $this->product_id = (int)$product_id;
+
+     }
   public function setGroupId($id)       { $this->group_id = (int)$id; }
   public function setGroups(array $groups){$this->groups = array_map('intval', $groups);}
   public function setId($id)            { $this->product_id  = (int)$id; }
@@ -40,57 +46,66 @@ class Products {
     $s = is_string($s) ? trim($s) : '';
     return preg_replace('/\s+/', ' ', $s);
   }
-  public function getProductsByGroups() {
-      try {
-          $pdo = $this->connection->getConnection();
 
-          // Validar que groups exista y sea un array con datos
-          if (empty($this->groups) || !is_array($this->groups)) {
-              return [];
-          }
+  public function getProductsByGroupId(): array
+  {
+    try {
+      $pdo = $this->connection->getConnection();
 
-          // Convertir todos los valores a enteros por seguridad
-          $groups = array_map('intval', $this->groups);
+      $groupId = (int)($this->group_id ?? 0);
+      $email   = $this->email ?? null;
 
-          // Eliminar valores repetidos si los hay
-          $groups = array_unique($groups);
-
-          // Crear placeholders dinámicos según la cantidad de grupos
-          $placeholders = implode(',', array_fill(0, count($groups), '?'));
-
-          $stmt = $pdo->prepare("
-              SELECT
-                  products.*,
-
-                  groups.group_id AS group_id,
-                  groups.name AS group_name,
-
-                  categories.category_id AS category_id,
-                  categories.name AS category_name
-
-              FROM products
-
-              INNER JOIN groups
-                  ON products.group_id = groups.group_id
-
-              INNER JOIN categories
-                  ON groups.category_id = categories.category_id
-
-              WHERE products.group_id IN ($placeholders)
-          ");
-
-          $stmt->execute(array_values($groups));
-
-          return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-      } catch (PDOException $e) {
-          error_log('getProductsByGroups error: ' . $e->getMessage());
-          return false;
+      if ($groupId <= 0) {
+        return [
+          'success' => false,
+          'error'   => 'Group ID required'
+        ];
       }
+
+      if (empty($email)) {
+        return [
+          'success' => false,
+          'error'   => 'Email required'
+        ];
+      }
+
+      $sql = "
+        SELECT
+          p.SKU,
+          p.name
+        FROM products p
+        INNER JOIN suppliers s
+          ON p.supplier_id = s.supplier_id
+        WHERE p.group_id = :group_id
+          AND LOWER(s.email) = LOWER(:email)
+        ORDER BY p.product_id DESC
+      ";
+
+      $stmt = $pdo->prepare($sql);
+      $stmt->execute([
+        ':group_id' => $groupId,
+        ':email'    => $email
+      ]);
+
+      $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      return [
+        'success' => true,
+        'result'  => $rows
+      ];
+
+    } catch (PDOException $e) {
+      error_log('getProductsByGroupId error: ' . $e->getMessage());
+
+      return [
+        'success' => false,
+        'error'   => 'DB error'
+      ];
+    }
   }
+
+
   /** Verifica si ya existe un producto con el mismo SKU para el mismo proveedor (case-insensitive) */
-
-
 
   private function existsBySkuForSupplier($sku, $supplierId) {
     try {
@@ -111,6 +126,7 @@ class Products {
       return false;
     }
   }
+
   public function approveProductWithSKU(): bool
   {
   //  echo json_encode ($this->sku);exit;
