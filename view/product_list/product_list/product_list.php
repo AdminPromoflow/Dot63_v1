@@ -21,7 +21,7 @@ $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
     <div class="pl-products-wrapper">
       <div class="pl-products-list" id="product_list" role="list">
 
-        <div class="pl-product" role="listitem">
+        <!-- <div class="pl-product" role="listitem">
           <span class="pl-product-number">1</span>
           <span class="pl-product-name">Classic Lanyard</span>
         </div>
@@ -49,7 +49,7 @@ $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
         <div class="pl-product" role="listitem">
           <span class="pl-product-number">6</span>
           <span class="pl-product-name">ID Card Holder</span>
-        </div>
+        </div> -->
 
       </div>
 
@@ -70,4 +70,3 @@ $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
 </main>
 
 <script src="../../view/product_list/product_list/product_list.js?v=<?= $jsTime ?>"></script>
-
