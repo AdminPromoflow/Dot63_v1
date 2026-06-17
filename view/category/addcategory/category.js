@@ -170,7 +170,16 @@ class ClassCategory {
       //  alert(data);
         var data = JSON.parse(data);
 
-        classCategory.drawListCategories(data);
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get("mode");
+
+        if (mode == "create") {
+          classCategory.drawListCategories(data);
+        }
+        else if (mode == "edit") {
+          alert("uff");
+        }
+
 
 
       })
