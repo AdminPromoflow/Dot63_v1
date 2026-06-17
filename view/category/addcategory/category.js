@@ -78,7 +78,7 @@ class ClassCategory {
         throw new Error("Network error.");
       })
       .then(data => {
-        //alert(data);
+        alert(data);
         var data = JSON.parse(data);
 
         if (data["success"]) {
@@ -176,16 +176,15 @@ class ClassCategory {
           classCategory.drawListCategories(data);
         }
         else if (mode == "edit") {
-          alert("uff");
+          classCategory.drawCategorySelected();
         }
-
-
-
       })
       .catch(error => {
-        // Log any errors to the console.
         console.error("Error:", error);
       });
+  }
+  drawCategorySelected(){
+
   }
 
   drawListCategories(data){
@@ -209,6 +208,7 @@ class ClassCategory {
           '<small class="cp-cat-meta">' + count + ' products</small>' +
         '</div>';
     }
+
     this.getCategorySelected();
 
   }
