@@ -97,6 +97,7 @@ class ClassCategory {
             if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
           }
           else if (mode == "edit") {
+            alert("entramos");
             this.setProductSelected(data["category_id"], data["category_name"]);
           }
 
