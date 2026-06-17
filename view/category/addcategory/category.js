@@ -1,6 +1,11 @@
 class ClassCategory {
   constructor() {
 
+    this.productSelected = {
+      id: null,
+      name: null
+    };
+
     const reset = document.getElementById("reset");
     const save = document.getElementById("save");
 
@@ -78,16 +83,24 @@ class ClassCategory {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
+      //  alert(data);
         var data = JSON.parse(data);
 
         if (data["success"]) {
 
-          const id = Number.parseInt(data["category_id"], 10);
-          if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
-          if (data["category_name"] == "Unassigned Category") {
-          //  alert('Please select a category.');
+
+          const params = new URLSearchParams(window.location.search);
+          const mode = params.get("mode");
+
+          if (mode == "create") {
+            const id = Number.parseInt(data["category_id"], 10);
+            if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
           }
+          else if (mode == "edit") {
+            this.setProductSelected(data["category_id"], data["category_name"]);
+          }
+
+
       }
       })
       .catch(error => {
@@ -95,6 +108,17 @@ class ClassCategory {
         console.error("Error:", error);
       });
   //  alert(sku);
+  }
+
+  setProductSelected(id, name) {
+    this.productSelected = {
+      id,
+      name
+    };
+  }
+
+  getProductSelected() {
+    return this.productSelected;
   }
 
   updatedCategory(goNext = false){
@@ -183,7 +207,36 @@ class ClassCategory {
         console.error("Error:", error);
       });
   }
-  drawCategorySelected(){
+  drawCategorySelected(data){
+      this.getCategorySelected();
+      const product = this.getProductSelected();
+
+      console.log(product.id);
+      console.log(product.name);
+
+      if (!window.category_list) return;
+
+      // 1) Limpiar
+      category_list.innerHTML = "";
+
+      var list = (data && data.success && Array.isArray(data.data)) ? data.data : [];
+
+      // 3) Pintar y asignar onclick con el índice
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].category_id == product.name) {
+          var name  = list[i].name || "";
+          var count = Number(list[i].products_count) || 0;
+          var id = list[i].category_id;
+
+          category_list.innerHTML +=
+            '<div class="cp-cat" role="listitem" id="' + id + '" onclick="classCategory.selectCategory(' + id + ')">' +
+              '<span class="cp-cat-name">' + name + '</span>' +
+              '<small class="cp-cat-meta">' + count + ' products</small>' +
+            '</div>';
+        }
+
+      }
+
 
   }
 
