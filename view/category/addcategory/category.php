@@ -28,7 +28,7 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');   // ejempl
     <!-- Existing categories -->
     <div class="cp-cat-wrapper">
       <div class="cp-cat-grid" id="category_list" role="list">
-        <div class="cp-cat" role="listitem">
+        <!-- <div class="cp-cat" role="listitem">
           <span class="cp-cat-name">Lanyards</span>
           <small class="cp-cat-meta">12 products</small>
         </div>
@@ -39,7 +39,7 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');   // ejempl
         <div class="cp-cat" role="listitem">
           <span class="cp-cat-name">Wristbands</span>
           <small class="cp-cat-meta">3 products</small>
-        </div>
+        </div> -->
       </div>
 
       <p class="cp-cat-hint">Click a category to assign it to this product.</p>
@@ -74,4 +74,3 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');   // ejempl
 </main>
 
 <script src="../../view/category/addcategory/category.js?v=<?= $jsTime ?>"></script>
-
