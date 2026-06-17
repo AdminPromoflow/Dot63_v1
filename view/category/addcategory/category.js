@@ -45,7 +45,6 @@ class ClassCategory {
 
     this.getCategories();
 
-    setTimeout(() => this.getCategorySelected(), 1000);
   }
 
 
@@ -210,6 +209,8 @@ class ClassCategory {
           '<small class="cp-cat-meta">' + count + ' products</small>' +
         '</div>';
     }
+    this.getCategorySelected();
+
   }
 
   selectCategory(divId) {
