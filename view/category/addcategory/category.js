@@ -97,7 +97,6 @@ class ClassCategory {
             if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
           }
           else if (mode == "edit") {
-            alert("entramos");
             this.setProductSelected(data["category_id"], data["category_name"]);
           }
 
@@ -211,6 +210,7 @@ class ClassCategory {
   drawCategorySelected(data){
       this.getCategorySelected();
       const product = this.getProductSelected();
+      alert("2");
 
       console.log(product.id);
       console.log(product.name);
