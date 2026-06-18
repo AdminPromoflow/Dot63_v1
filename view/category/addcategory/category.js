@@ -92,13 +92,9 @@ class ClassCategory {
           const params = new URLSearchParams(window.location.search);
           const mode = params.get("mode");
 
-          if (mode == "create") {
             const id = Number.parseInt(data["category_id"], 10);
             if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
-          }
-          else if (mode == "edit") {
-            this.setProductSelected(data["category_id"], data["category_name"]);
-          }
+
 
 
       }
@@ -248,7 +244,6 @@ class ClassCategory {
   }
 
   drawListCategories(data){
-    alert(JSON.stringify(data));
     if (!window.category_list) return;
 
     // 1) Limpiar
