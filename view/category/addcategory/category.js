@@ -1,11 +1,6 @@
 class ClassCategory {
   constructor() {
 
-    this.productSelected = {
-      id: null,
-      name: null
-    };
-
     const reset = document.getElementById("reset");
     const save = document.getElementById("save");
 
@@ -106,16 +101,7 @@ class ClassCategory {
   //  alert(sku);
   }
 
-  setProductSelected(id, name) {
-    this.productSelected = {
-      id,
-      name
-    };
-  }
 
-  getProductSelected() {
-    return this.productSelected;
-  }
 
   updatedCategory(goNext = false){
     const params = new URLSearchParams(window.location.search);
@@ -211,11 +197,7 @@ class ClassCategory {
   }
   drawCategorySelected(data){
       this.getCategorySelected();
-      const product = this.getProductSelected();
-      alert("2");
 
-      console.log(product.id);
-      console.log(product.name);
 
       if (!window.category_list) return;
 
@@ -226,7 +208,6 @@ class ClassCategory {
 
       // 3) Pintar y asignar onclick con el índice
       for (var i = 0; i < list.length; i++) {
-        if (list[i].category_id == product.name) {
           var name  = list[i].name || "";
           var count = Number(list[i].products_count) || 0;
           var id = list[i].category_id;
@@ -236,7 +217,6 @@ class ClassCategory {
               '<span class="cp-cat-name">' + name + '</span>' +
               '<small class="cp-cat-meta">' + count + ' products</small>' +
             '</div>';
-        }
 
       }
 
