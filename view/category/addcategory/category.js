@@ -83,7 +83,7 @@ class ClassCategory {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
+        // alert(data);
         var data = JSON.parse(data);
 
         if (data["success"]) {
