@@ -169,9 +169,13 @@ class ClassCategory {
   }
 
   getCategories(){
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get('sku');
+
     const url = "../../controller/products/category.php";
     const data = {
-      action: "get_categories"
+      action: "get_categories",
+      sku: sku
     };
     // Make a fetch request to the given URL with the specified data.
     fetch(url, {

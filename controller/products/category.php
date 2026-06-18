@@ -14,7 +14,7 @@ class Category {
           break;
 
       case 'get_categories':
-        $this->getCategories();
+        $this->getCategories($data);
         break;
 
       case 'get_category_selected':
@@ -93,23 +93,23 @@ class Category {
     echo json_encode($response);
   }
 
-  private function getCategories(){
+  private function getCategories($data){
     header('Content-Type: application/json; charset=utf-8');
 
     $connection = new Database();
     $categories   = new Categories($connection);
     $response = $categories->getAllNames();
 
-    echo json_encode(['success' => true, 'data' => $response]);
+    $connection = new Database();
+    $category   = new Categories($connection);
 
-  //  echo json_encode(array('data' => , $response));
+    $category->setSKU($data['sku'] ?? '');
+    $categorySelected = $category->getCategorySelected();
 
-
-    // $connection = new Database();
-    // $category   = new Categories($connection);
-    //
-    // $category->setSKU($data['sku'] ?? '');
-    // $response = $category->getCategorySelected();
+    echo json_encode(['success' => true,
+                      'data' => $response,
+                      'category_selected' => $categorySelected
+                    ]);
 
   }
 
