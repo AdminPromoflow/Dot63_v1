@@ -8,10 +8,7 @@ class ClassCategory {
      headerAddProduct.setCurrentHeader('category');
    });
 
-  /*  this.category_selected = "";
-    btn_create_new_category.addEventListener("click", function(){
-      classCategory.createNewCategory();
-    })*/
+
 
     reset.addEventListener("click", function(){
       const cats = document.querySelectorAll(".cp-cat");
@@ -184,11 +181,11 @@ class ClassCategory {
 
 
 
-        if (mode == "create") {
-          classCategory.drawListCategories(data);
-        }
-        else if (mode == "edit") {
+        if (data['category_selected'] == "Unassigned Category") {
           classCategory.drawListCategories(data['category_selected']);
+        }
+        else (data['category_selected'] == "edit") {
+          classCategory.drawListCategories(data);
         }
       })
       .catch(error => {
