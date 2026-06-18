@@ -345,8 +345,7 @@ class Categories {
        $stmt->execute();
        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-       return json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE);
-
+       return $rows;
      } catch (PDOException $e) {
        error_log('getAllNames error: ' . $e->getMessage());
        return json_encode(['success' => false, 'error' => 'DB error'], JSON_UNESCAPED_UNICODE);

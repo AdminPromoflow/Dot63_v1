@@ -100,7 +100,14 @@ class Category {
     $categories   = new Categories($connection);
     $response = $categories->getAllNames();
 
-    echo ($response);
+    echo json_encode(array('data' => , $response));
+
+
+    // $connection = new Database();
+    // $category   = new Categories($connection);
+    //
+    // $category->setSKU($data['sku'] ?? '');
+    // $response = $category->getCategorySelected();
 
   }
 
