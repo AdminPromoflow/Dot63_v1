@@ -184,7 +184,7 @@ class ClassCategory {
         if (data['category_selected'] == "Unassigned Category") {
           classCategory.drawListCategories(data['category_selected']);
         }
-        else (data['category_selected'] == "edit") {
+        else  {
           classCategory.drawListCategories(data);
         }
       })
