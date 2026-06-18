@@ -214,6 +214,8 @@ class Categories {
 
         // Retorna lo pedido (y extra útil)
         return [
+          'success'  => true;
+          'data'     =>
             [
                 'category_id'    => (int)$row['category_id'],
                 'name'           => $row['category_name'],

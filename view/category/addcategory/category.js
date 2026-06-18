@@ -200,6 +200,8 @@ class ClassCategory {
         const params = new URLSearchParams(window.location.search);
         const mode = params.get("mode");
 
+
+
         if (mode == "create") {
           classCategory.drawListCategories(data);
         }
