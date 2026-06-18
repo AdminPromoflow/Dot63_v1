@@ -181,11 +181,11 @@ class ClassCategory {
 
 
 
-        if (data['category_selected'] == "Unassigned Category") {
-          classCategory.drawListCategories(data['category_selected']);
+        if (data['category_selected'] != "Unassigned Category") {
+          classCategory.drawListCategories(data);
         }
         else  {
-          classCategory.drawListCategories(data);
+          classCategory.drawListCategories(data['category_selected']);
         }
       })
       .catch(error => {
