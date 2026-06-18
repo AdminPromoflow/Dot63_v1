@@ -216,11 +216,11 @@ class Categories {
         return [
           'success'  => true,
           'data'     =>
-            [
+            [[
                 'category_id'    => (int)$row['category_id'],
                 'name'           => $row['category_name'],
                 'products_count' => $productsCount
-            ]
+            ]]
         ];
 
     } catch (PDOException $e) {
