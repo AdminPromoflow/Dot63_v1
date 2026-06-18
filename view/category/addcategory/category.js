@@ -180,8 +180,8 @@ class ClassCategory {
         const mode = params.get("mode");
 
 
-        alert(data['category_selected']['data'][0]['name']);
-        if (data['category_selected']['data'][0]['name'] != "Unassigned Category") {
+      //  alert(data['category_selected']['data'][0]['name']);
+        if (data['category_selected']['data'][0]['name'] == "Unassigned Category") {
           classCategory.drawListCategories(data);
         }
         else  {
