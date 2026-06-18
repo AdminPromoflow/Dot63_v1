@@ -199,11 +199,26 @@ class Categories {
             return null; // no encontró category para ese group
         }
 
+        /* 4) Contar cuántos productos están en esa categoría */
+        $stmt4 = $pdo->prepare("
+            SELECT COUNT(*) AS products_count
+            FROM products p
+            INNER JOIN `groups` g ON g.group_id = p.group_id
+            WHERE g.category_id = :category_id
+        ");
+        $stmt4->execute([
+            ':category_id' => (int)$row['category_id']
+        ]);
+
+        $productsCount = (int)$stmt4->fetchColumn();
+
         // Retorna lo pedido (y extra útil)
         return [
-            'success'       => true,
-            'category_id'   => (int)$row['category_id'],
-            'category_name' => $row['category_name']
+            [
+                'category_id'    => (int)$row['category_id'],
+                'name'           => $row['category_name'],
+                'products_count' => $productsCount
+            ]
         ];
 
     } catch (PDOException $e) {
