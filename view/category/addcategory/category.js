@@ -1,8 +1,8 @@
 class ClassCategory {
   constructor() {
 
-    const reset = document.getElementById("reset");
-    const save = document.getElementById("save");
+    // const reset = document.getElementById("reset");
+    // const save = document.getElementById("save");
 
     document.addEventListener('DOMContentLoaded', () => {
      headerAddProduct.setCurrentHeader('category');
@@ -10,35 +10,35 @@ class ClassCategory {
 
 
 
-    reset.addEventListener("click", function(){
-      const cats = document.querySelectorAll(".cp-cat");
-      if (cats.length > 0) {
-        const firstId = cats[0].id; // <- id del primer .cp-cat
-        classCategory.category_selected = firstId;   // <- lo asignas antes
-        classCategory.updatedCategory(false);
-        alert("Category reset to Unassigned Category");
-        window.location.reload();
-      }
-    })
+    // reset.addEventListener("click", function(){
+    //   const cats = document.querySelectorAll(".cp-cat");
+    //   if (cats.length > 0) {
+    //     const firstId = cats[0].id; // <- id del primer .cp-cat
+    //     classCategory.category_selected = firstId;   // <- lo asignas antes
+    //     classCategory.updatedCategory(false);
+    //     alert("Category reset to Unassigned Category");
+    //     window.location.reload();
+    //   }
+    // })
 
-    save.addEventListener("click", function(){
-      if (Number.isInteger(classCategory.category_selected)) {
-        classCategory.updatedCategory(false);
-        alert("The selected category has been saved.");
-      }
-      else {
-        alert("Select a category first.");
-      }
-    })
+    // save.addEventListener("click", function(){
+    //   if (Number.isInteger(classCategory.category_selected)) {
+    //     classCategory.updatedCategory(false);
+    //     alert("The selected category has been saved.");
+    //   }
+    //   else {
+    //     alert("Select a category first.");
+    //   }
+    // })
 
-    next_category.addEventListener("click", function(){
-      if (Number.isInteger(classCategory.category_selected)) {
-        classCategory.updatedCategory(true);
-      }
-      else {
-        alert("Select a category first.");
-      }
-    })
+    // next_category.addEventListener("click", function(){
+    //   if (Number.isInteger(classCategory.category_selected)) {
+    //     classCategory.updatedCategory(true);
+    //   }
+    //   else {
+    //     alert("Select a category first.");
+    //   }
+    // })
 
     this.getCategories();
 
@@ -176,7 +176,6 @@ class ClassCategory {
     //    alert(data);
         var data = JSON.parse(data);
 
-
         if (data['category_selected']['data'][0]['name'] == "Unassigned Category") {
           classCategory.drawListCategories(data);
         }
@@ -291,8 +290,8 @@ class ClassCategory {
 
 }
 
-const btn_create_new_category = document.getElementById("btn-create-new-category");
-const new_category = document.getElementById("new_category");
-const next_category = document.getElementById("next_category");
+// const btn_create_new_category = document.getElementById("btn-create-new-category");
+// const new_category = document.getElementById("new_category");
+// const next_category = document.getElementById("next_category");
 const category_list = document.getElementById("category_list");
 const classCategory = new ClassCategory();

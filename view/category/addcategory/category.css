@@ -327,7 +327,6 @@ body{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  visibility: hidden;
 }
 
 .cp-footer-actions{
