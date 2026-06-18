@@ -92,7 +92,7 @@ class ClassCategory {
           const params = new URLSearchParams(window.location.search);
           const mode = params.get("mode");
 
-            const id = Number.parseInt(data["category_id"], 10);
+            const id = Number.parseInt(data["data"][0]["category_id"], 10);
             if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
 
 
