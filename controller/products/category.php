@@ -100,7 +100,7 @@ class Category {
     $categories   = new Categories($connection);
     $response = $categories->getAllNames();
 
-    echo json_encode($response);
+    echo json_encode(['success' => true, 'data' => $response]);
 
   //  echo json_encode(array('data' => , $response));
 
