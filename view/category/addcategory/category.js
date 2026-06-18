@@ -173,22 +173,15 @@ class ClassCategory {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
+    //    alert(data);
         var data = JSON.parse(data);
 
-        const params = new URLSearchParams(window.location.search);
-        const mode = params.get("mode");
 
-
-      //  alert(data['category_selected']['data'][0]['name']);
         if (data['category_selected']['data'][0]['name'] == "Unassigned Category") {
           classCategory.drawListCategories(data);
-
-
         }
         else  {
           classCategory.drawListCategories(data['category_selected']);
-
         }
       })
       .catch(error => {
