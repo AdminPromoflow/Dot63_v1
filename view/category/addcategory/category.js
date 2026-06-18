@@ -204,7 +204,7 @@ class ClassCategory {
           classCategory.drawListCategories(data);
         }
         else if (mode == "edit") {
-          classCategory.drawCategorySelected(data['category_selected']);
+          classCategory.drawListCategories(data['category_selected']);
         }
       })
       .catch(error => {
