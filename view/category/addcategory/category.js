@@ -182,11 +182,12 @@ class ClassCategory {
 
       //  alert(data['category_selected']['data'][0]['name']);
         if (data['category_selected']['data'][0]['name'] == "Unassigned Category") {
-          classCategory.drawListCategories(data['category_selected']);
+          classCategory.drawListCategories(data);
+
 
         }
         else  {
-          classCategory.drawListCategories(data);
+          classCategory.drawListCategories(data['category_selected']);
 
         }
       })
