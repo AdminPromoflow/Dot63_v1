@@ -29,7 +29,7 @@ class ClassGroup {
 
     this.getGroups();
 
-    //setTimeout(() => this.getGroupSelected(), 1000);
+    setTimeout(() => this.getGroupSelected(), 1000);
   }
 
   async getGroups(){
