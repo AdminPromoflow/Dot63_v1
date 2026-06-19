@@ -1,50 +1,62 @@
 class ClassCategory {
   constructor() {
 
-    // const reset = document.getElementById("reset");
-    // const save = document.getElementById("save");
-
     document.addEventListener('DOMContentLoaded', () => {
      headerAddProduct.setCurrentHeader('category');
    });
 
 
-
-    // reset.addEventListener("click", function(){
-    //   const cats = document.querySelectorAll(".cp-cat");
-    //   if (cats.length > 0) {
-    //     const firstId = cats[0].id; // <- id del primer .cp-cat
-    //     classCategory.category_selected = firstId;   // <- lo asignas antes
-    //     classCategory.updatedCategory(false);
-    //     alert("Category reset to Unassigned Category");
-    //     window.location.reload();
-    //   }
-    // })
-
-    // save.addEventListener("click", function(){
-    //   if (Number.isInteger(classCategory.category_selected)) {
-    //     classCategory.updatedCategory(false);
-    //     alert("The selected category has been saved.");
-    //   }
-    //   else {
-    //     alert("Select a category first.");
-    //   }
-    // })
-
-    // next_category.addEventListener("click", function(){
-    //   if (Number.isInteger(classCategory.category_selected)) {
-    //     classCategory.updatedCategory(true);
-    //   }
-    //   else {
-    //     alert("Select a category first.");
-    //   }
-    // })
-
     this.getCategories();
 
   }
 
+  getCategories(){
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get('sku');
 
+    const url = "../../controller/products/category.php";
+    const datas = {
+      action: "get_categories",
+      sku: sku
+    };
+  var data = this.makeRequest(url, datas);
+  alert(JSON.stringify(data));
+
+  if (data['category_selected']['data'][0]['name'] == "Unassigned Category") {
+    classCategory.drawListCategories(data);
+  }
+  else  {
+    classCategory.drawListCategories(data['category_selected']);
+  }
+  }
+
+  makeRequest(url, data){
+    // Make a fetch request to the given URL with the specified data.
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+      .then(response => {
+        // Check if the response is okay, if so, return the response text.
+        if (response.ok) {
+          return response.text();
+        }
+        // If the response is not okay, throw an error.
+        throw new Error("Network error.");
+      })
+      .then(data => {
+
+    //    alert(data);
+        var data = JSON.parse(data);
+        return data;
+      })
+      .catch(error => {
+        console.error("Error:", error);
+      });
+  }
 
 
 
@@ -147,46 +159,7 @@ class ClassCategory {
 
   }
 
-  getCategories(){
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
 
-    const url = "../../controller/products/category.php";
-    const data = {
-      action: "get_categories",
-      sku: sku
-    };
-    // Make a fetch request to the given URL with the specified data.
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        // Check if the response is okay, if so, return the response text.
-        if (response.ok) {
-          return response.text();
-        }
-        // If the response is not okay, throw an error.
-        throw new Error("Network error.");
-      })
-      .then(data => {
-    //    alert(data);
-        var data = JSON.parse(data);
-
-        if (data['category_selected']['data'][0]['name'] == "Unassigned Category") {
-          classCategory.drawListCategories(data);
-        }
-        else  {
-          classCategory.drawListCategories(data['category_selected']);
-        }
-      })
-      .catch(error => {
-        console.error("Error:", error);
-      });
-  }
   drawCategorySelected(data){
       this.getCategorySelected();
 
