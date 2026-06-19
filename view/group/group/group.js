@@ -32,7 +32,7 @@ class ClassGroup {
     //setTimeout(() => this.getGroupSelected(), 1000);
   }
 
-  getGroups(){
+  async getGroups(){
     const params = new URLSearchParams(window.location.search);
     const sku = params.get('sku');
 
