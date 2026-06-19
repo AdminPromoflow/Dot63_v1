@@ -28,8 +28,6 @@ class ClassCategory {
 
     if (!response) return;
 
-    alert(JSON.stringify(response));
-
     this.drawListCategories(response);
 
   }
