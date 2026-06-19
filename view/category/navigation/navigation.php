@@ -1,19 +1,10 @@
 <?php
 declare(strict_types=1);
 
-/* Filesystem path for filemtime */
-$navCssFs = __DIR__ . '/view/about_us/navigation/navigation.css';
-
-/* Public path used in HTML */
+$navCssFs = __DIR__ . '/navigation.css';
 $navCssPublic = '../../view/about_us/navigation/navigation.css';
-
-/* Cache-busting version */
 $navCssV = is_file($navCssFs) ? filemtime($navCssFs) : time();
 
-/*
-  Reusable breadcrumb items.
-  If href is null, the item is rendered as the current page.
-*/
 $breadcrumbs = $breadcrumbs ?? [
   ['label' => 'Dashboard Supplier', 'href' => '../../view/dashboard_supplier/index.php'],
   ['label' => 'Category', 'href' => null],
@@ -29,15 +20,12 @@ $breadcrumbs = $breadcrumbs ?? [
         <?php
           $label  = (string)($item['label'] ?? '');
           $href   = $item['href'] ?? null;
-          $isLast = ($i === array_key_last($breadcrumbs));
+          $isLast = ($i === count($breadcrumbs) - 1);
         ?>
 
         <li class="nav-breadcrumbs__item">
           <?php if (!$isLast && is_string($href) && $href !== ''): ?>
-            <a
-              class="nav-breadcrumbs__link"
-              href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>"
-            >
+            <a class="nav-breadcrumbs__link" href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>">
               <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
             </a>
           <?php else: ?>
