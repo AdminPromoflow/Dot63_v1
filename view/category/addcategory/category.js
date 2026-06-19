@@ -1,10 +1,33 @@
 class ClassCategory {
   constructor() {
 
+    const edit_categories = document.getElementById("edit_categories");
+
+    edit_categories.addEventListener("click", function(){
+      this.editCategories();
+    })
+
     document.addEventListener('DOMContentLoaded', () => {
      headerAddProduct.setCurrentHeader('category');
    });
     this.getCategories();
+  }
+
+  async editCategories() {
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    const url = "../../controller/products/category.php";
+
+    const data = {
+      action: "edit_categories",
+      sku: sku
+    };
+
+    const response = await this.makeRequest(url, data);
+
+    this.drawListCategories(response);
+
   }
 
   async getCategories() {
@@ -13,19 +36,19 @@ class ClassCategory {
 
     const url = "../../controller/products/category.php";
 
-    const datas = {
+    const data = {
       action: "get_categories",
       sku: sku
     };
 
-    const data = await this.makeRequest(url, datas);
+    const response = await this.makeRequest(url, data);
 
-    if (!data) return;
+    if (!response) return;
 
-    if (data.category_selected?.data?.[0]?.name === "Unassigned Category") {
-      this.drawListCategories(data);
+    if (response.category_selected?.data?.[0]?.name === "Unassigned Category") {
+      this.drawListCategories(response);
     } else {
-      this.drawListCategories(data.category_selected);
+      this.drawListCategories(response.category_selected);
 
     }
   }
