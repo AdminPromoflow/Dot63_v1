@@ -44,6 +44,8 @@ class ClassGroup {
 
     const response = await this.makeRequest(url, data);
 
+    alert(JSON.stringify(response));
+
     if (!response) return;
 
     // if (response.category_selected?.data?.[0]?.name === "Unassigned Category") {
