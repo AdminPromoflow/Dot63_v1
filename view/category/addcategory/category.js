@@ -10,52 +10,50 @@ class ClassCategory {
 
   }
 
-  getCategories(){
+  async getCategories() {
     const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
+    const sku = params.get("sku");
 
     const url = "../../controller/products/category.php";
+
     const datas = {
       action: "get_categories",
       sku: sku
     };
-  var data = this.makeRequest(url, datas);
-  alert(JSON.stringify(data));
 
-  if (data['category_selected']['data'][0]['name'] == "Unassigned Category") {
-    classCategory.drawListCategories(data);
-  }
-  else  {
-    classCategory.drawListCategories(data['category_selected']);
-  }
+    const data = await this.makeRequest(url, datas);
+
+    if (!data) return;
+
+    alert(JSON.stringify(data));
+
+    if (data.category_selected?.data?.[0]?.name === "Unassigned Category") {
+      this.drawListCategories(data);
+    } else {
+      this.drawListCategories(data.category_selected);
+    }
   }
 
-  makeRequest(url, data){
-    // Make a fetch request to the given URL with the specified data.
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        // Check if the response is okay, if so, return the response text.
-        if (response.ok) {
-          return response.text();
-        }
-        // If the response is not okay, throw an error.
-        throw new Error("Network error.");
-      })
-      .then(data => {
-
-    //    alert(data);
-        var data = JSON.parse(data);
-        return data;
-      })
-      .catch(error => {
-        console.error("Error:", error);
+  async makeRequest(url, data) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
       });
+
+      if (!response.ok) {
+        throw new Error("Network error.");
+      }
+
+      return await response.json();
+
+    } catch (error) {
+      console.error("Error:", error);
+      return null;
+    }
   }
 
 
