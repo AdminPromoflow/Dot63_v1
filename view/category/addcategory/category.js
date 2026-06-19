@@ -4,10 +4,7 @@ class ClassCategory {
     document.addEventListener('DOMContentLoaded', () => {
      headerAddProduct.setCurrentHeader('category');
    });
-
-
     this.getCategories();
-
   }
 
   async getCategories() {
@@ -25,12 +22,11 @@ class ClassCategory {
 
     if (!data) return;
 
-    alert(JSON.stringify(data));
-
     if (data.category_selected?.data?.[0]?.name === "Unassigned Category") {
       this.drawListCategories(data);
     } else {
       this.drawListCategories(data.category_selected);
+
     }
   }
 

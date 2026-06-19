@@ -24,11 +24,9 @@ class HeaderAddProduct {
 
     const sku  = current.searchParams.get('sku');
     const skuv = current.searchParams.get('sku_variation');
-    const mode = current.searchParams.get('mode');
 
     if (sku)  dest.searchParams.set('sku', sku);
     if (skuv) dest.searchParams.set('sku_variation', skuv);
-    if (mode) dest.searchParams.set('mode', mode);
 
     window.location.assign(dest);
   }

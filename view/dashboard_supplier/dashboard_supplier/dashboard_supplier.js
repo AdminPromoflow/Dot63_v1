@@ -45,10 +45,9 @@ class ClassDashboardSupplier{
        const sku_variation = data["all_variation"]["variation"]["SKU"];
 
         if (data["success"]) {
-          const mode = "create";
 
           window.location.href =
-            `../../view/category/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(sku_variation)}&mode=${encodeURIComponent(mode)}`;
+            `../../view/category/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(sku_variation)}`;
         }
 
 
