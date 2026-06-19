@@ -5,6 +5,8 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');
 <link rel="stylesheet" href="../../view/category/addcategory/category.css?v=<?= $cssTime ?>">
 
 <main class="create_product" aria-labelledby="cp-title">
+  <?php include "../../view/category/navigation/navigation.php" ?>
+
   <h1 id="cp-title" class="sr-only">Create Product</h1>
 
   <?php include "../../view/global/header_add_product/header_add_product.php" ?>
