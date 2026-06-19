@@ -1,5 +1,26 @@
 class ClassGroup {
   constructor() {
+    const btn_back_groups = document.getElementById("btn_back_groups");
+    const edit_groups = document.getElementById("edit_groups");
+    const cancel_editing = document.getElementById("cancel_editing");
+    const next_group = document.getElementById("next_group");
+
+    btn_back_groups.addEventListener("click", function(){
+      headerAddProduct.goNext('../../view/category/index.php');
+    });
+
+    edit_groups.addEventListener("click", function(){
+    //  classGroup.editGroups();
+    });
+
+    cancel_editing.addEventListener("click", function(){
+      //classGroup.cancelGroupEdit();
+    });
+
+    next_group.addEventListener("click", function(){
+      headerAddProduct.goNext('../../view/product_list/index.php');
+    });
+    
     document.addEventListener('DOMContentLoaded', () => {
       headerAddProduct.setCurrentHeader('group');
     });
