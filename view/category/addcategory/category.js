@@ -20,11 +20,13 @@ class ClassCategory {
     const url = "../../controller/products/category.php";
 
     const data = {
-      action: "edit_categories",
+      action: "get_categories",
       sku: sku
     };
 
     const response = await this.makeRequest(url, data);
+
+    if (!response) return;
 
     alert(JSON.stringify(response));
 
