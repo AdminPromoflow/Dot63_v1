@@ -1,60 +1,17 @@
 class ClassGroup {
   constructor() {
-
-    const reset = document.getElementById("reset");
-    const save = document.getElementById("save");
-
     document.addEventListener('DOMContentLoaded', () => {
       headerAddProduct.setCurrentHeader('group');
-
-      // Event listener para botón Back
-      const btnBackGroups = document.getElementById("btn_back_groups");
-      if (btnBackGroups) {
-        btnBackGroups.addEventListener("click", () => {
-          headerAddProduct.goNext('../../view/category/index.php');
-        });
-      }
     });
 
     this.group_selected = "";
 
-    // (Opcional) Si luego reactivas crear grupo, ya queda listo:
-    // btn_create_new_group.addEventListener("click", () => {
-    //   classGroup.createNewGroup();
-    // });
-
-    reset.addEventListener("click", function(){
-      const groups = document.querySelectorAll(".cp-group");
-      if (groups.length > 0) {
-        const firstId = groups[0].id;
-        classGroup.group_selected = firstId;
-        classGroup.updateGroup(false);
-        alert("Group reset to Unassigned Group");
-        window.location.reload();
-      }
-    })
-
-    save.addEventListener("click", function(){
-      if (Number.isInteger(classGroup.group_selected)) {
-        classGroup.updateGroup(false);
-        alert("The selected group has been saved.");
-      } else {
-        alert("Please select a group first.");
-      }
-    });
-
-    next_group.addEventListener("click", () => {
-      if (Number.isInteger(classGroup.group_selected)) {
-        classGroup.updateGroup(true);
-      } else {
-        alert("Please select a group first.");
-      }
-    });
-
     this.getGroups();
 
-    setTimeout(() => this.getGroupSelected(), 1000);
+    //setTimeout(() => this.getGroupSelected(), 1000);
   }
+
+
 
   getGroupSelected(){
     const params = new URLSearchParams(window.location.search);
