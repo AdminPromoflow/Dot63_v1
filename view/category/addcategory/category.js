@@ -4,7 +4,7 @@ class ClassCategory {
     const edit_categories = document.getElementById("edit_categories");
 
     edit_categories.addEventListener("click", function(){
-      this.editCategories();
+      classCategory.editCategories();
     })
 
     document.addEventListener('DOMContentLoaded', () => {
