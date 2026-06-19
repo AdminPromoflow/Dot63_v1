@@ -21,7 +21,6 @@
 
 <body class="body_category">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
-  <?php include "../../view/group/navigation/navigation.php" ?>
   <?php include "../../view/group/group/group.php";?>
 
 </body>
