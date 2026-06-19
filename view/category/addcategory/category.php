@@ -33,6 +33,10 @@ $jsTime  = filemtime('../../view/category/addcategory/category.js');
       Edit Categories
     </button>
 
+    <button class="btn btn-cancel-editing" id="cancel_editing" type="button">
+      Cancel Editing
+    </button>
+
     <button class="btn btn-next" id="next_category" type="button">
       Next
     </button>
