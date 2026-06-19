@@ -3,6 +3,11 @@ class ClassCategory {
 
     const edit_categories = document.getElementById("edit_categories");
     const cancel_editing = document.getElementById("cancel_editing");
+    const next_category = document.getElementById("next_category");
+
+    next_category.addEventListener("click", function(){
+      headerAddProduct.goNext('../../view/group/index.php');
+    })
 
     edit_categories.addEventListener("click", function(){
       classCategory.editCategories();
