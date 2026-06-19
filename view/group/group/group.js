@@ -10,7 +10,7 @@ class ClassGroup {
     });
 
     edit_groups.addEventListener("click", function(){
-    //  classGroup.editGroups();
+      classGroup.editGroups();
     });
 
     cancel_editing.addEventListener("click", function(){
@@ -20,7 +20,7 @@ class ClassGroup {
     next_group.addEventListener("click", function(){
       headerAddProduct.goNext('../../view/product_list/index.php');
     });
-    
+
     document.addEventListener('DOMContentLoaded', () => {
       headerAddProduct.setCurrentHeader('group');
     });
@@ -32,8 +32,50 @@ class ClassGroup {
     //setTimeout(() => this.getGroupSelected(), 1000);
   }
 
+  getGroups(){
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get('sku');
 
+    const url = "../../controller/products/group.php";
+    const data = {
+      action: "get_groups",
+      sku: sku
+    };
 
+    const response = await this.makeRequest(url, data);
+
+    if (!response) return;
+
+    // if (response.category_selected?.data?.[0]?.name === "Unassigned Category") {
+    //   this.drawListCategories(response);
+    // } else {
+    //   this.drawListCategories(response.category_selected);
+    //
+    // }
+    classGroup.drawListGroups(response);
+
+  }
+  async makeRequest(url, data) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error("Network error.");
+      }
+
+      return await response.json();
+
+    } catch (error) {
+      console.error("Error:", error);
+      return null;
+    }
+  }
   getGroupSelected(){
     const params = new URLSearchParams(window.location.search);
     const sku = params.get('sku');
@@ -105,34 +147,7 @@ class ClassGroup {
       });
   }
 
-  getGroups(){
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get('sku');
 
-    const url = "../../controller/products/group.php";
-    const data = {
-      action: "get_groups",
-      sku: sku
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        if (response.ok) return response.text();
-        throw new Error("Network error.");
-      })
-      .then(data => {
-      //  alert(data);
-        const res = JSON.parse(data);
-        classGroup.drawListGroups(res);
-      })
-      .catch(error => {
-        console.error("Error:", error);
-      });
-  }
 
   drawListGroups(data){
     if (!window.group_list) return;
