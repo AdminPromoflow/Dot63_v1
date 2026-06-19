@@ -107,8 +107,6 @@ class ClassCategory {
     }
   }
 
-
-
   getCategorySelected(){
     const params = new URLSearchParams(window.location.search);
     const sku = params.get('sku');
@@ -159,8 +157,6 @@ class ClassCategory {
   //  alert(sku);
   }
 
-
-
   updatedCategory(goNext = false){
     const params = new URLSearchParams(window.location.search);
     const sku = params.get('sku');
@@ -207,7 +203,6 @@ class ClassCategory {
       });
 
   }
-
 
   drawCategorySelected(data){
       this.getCategorySelected();
