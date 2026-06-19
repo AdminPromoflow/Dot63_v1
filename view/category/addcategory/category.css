@@ -239,8 +239,6 @@ body{
   padding: 10px 18px;
   font-weight: 700;
   box-shadow: none;
-  display: none;
-
 }
 
 .btn-edit-categories:hover{
@@ -252,6 +250,7 @@ body{
 }
 
 .btn-cancel-editing{
+  display: none;
   background: #ffffff;
   color: #dc2626;
   border: 1px solid #dc2626;
