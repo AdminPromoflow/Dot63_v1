@@ -15,7 +15,6 @@ $navCssV = is_file($navCssFs) ? filemtime($navCssFs) : time();
   If href is null, the item is rendered as the current page.
 */
 $breadcrumbs = $breadcrumbs ?? [
-  ['label' => 'Main', 'href' => '../../view/main/index.php'],
   ['label' => 'Dashboard Supplier', 'href' => '../../view/dashboard_supplier/index.php'],
   ['label' => 'Category', 'href' => null],
 ];
