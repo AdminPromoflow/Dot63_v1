@@ -2,9 +2,14 @@ class ClassCategory {
   constructor() {
 
     const edit_categories = document.getElementById("edit_categories");
+    const cancel_editing = document.getElementById("cancel_editing");
 
     edit_categories.addEventListener("click", function(){
       classCategory.editCategories();
+    })
+
+    cancel_editing.addEventListener("click", function(){
+      classCategory.cancelCategoryEdit()();
     })
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +18,9 @@ class ClassCategory {
     this.getCategories();
   }
 
-  async editCategories() {
+  async cancelCategoryEdit() {
+    const edit_categories = document.getElementById("edit_categories");
+    const cancel_editing = document.getElementById("cancel_editing");
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
 
@@ -27,7 +34,30 @@ class ClassCategory {
     const response = await this.makeRequest(url, data);
 
     if (!response) return;
+    edit_categories.style.display = "block";
+    cancel_editing.style.display = "none";
+    this.drawListCategories(response.category_selected);
 
+  }
+
+  async editCategories() {
+    const edit_categories = document.getElementById("edit_categories");
+    const cancel_editing = document.getElementById("cancel_editing");
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    const url = "../../controller/products/category.php";
+
+    const data = {
+      action: "get_categories",
+      sku: sku
+    };
+
+    const response = await this.makeRequest(url, data);
+
+    if (!response) return;
+    edit_categories.style.display = "none";
+    cancel_editing.style.display = "block";
     this.drawListCategories(response);
 
   }
