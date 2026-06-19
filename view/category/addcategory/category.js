@@ -26,6 +26,8 @@ class ClassCategory {
 
     const response = await this.makeRequest(url, data);
 
+    alert(JSON.stringify(response));
+
     this.drawListCategories(response);
 
   }
