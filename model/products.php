@@ -863,6 +863,7 @@ class Products {
           p.name,
           p.date_status,
           p.is_approved,
+          p.status,
           p.supplier_id,
 
           s.contact_name,
@@ -874,7 +875,6 @@ class Products {
         LEFT JOIN suppliers s
           ON s.supplier_id = p.supplier_id
 
-        -- Primer “hijo” (primera variation) por producto
         LEFT JOIN (
           SELECT v1.product_id, v1.SKU AS variation_sku
           FROM variations v1
@@ -882,14 +882,14 @@ class Products {
             SELECT product_id, MIN(variation_id) AS first_variation_id
             FROM variations
             WHERE product_id IS NOT NULL
-            AND parent_id IS NULL
+              AND parent_id IS NULL
             GROUP BY product_id
           ) fv
             ON fv.first_variation_id = v1.variation_id
         ) vfirst
           ON vfirst.product_id = p.product_id
 
-        WHERE p.is_approved = 0
+        WHERE p.status = '2'
         ORDER BY p.date_status DESC, p.product_id DESC
       ");
 
@@ -897,16 +897,17 @@ class Products {
       $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
       $items = [];
+
       foreach ($rows as $r) {
         $items[] = [
-          // SKU del PRODUCTO (igual al que ya traías)
           'SKU'            => (string)($r['product_sku'] ?? ''),
           'sku_variations' => (string)($r['sku_variations'] ?? ''),
-          'name'        => (string)($r['name'] ?? ''),
-          'date_status' => $r['date_status'],
-          'is_approved' => (int)($r['is_approved'] ?? 0),
-          'supplier_id' => (int)($r['supplier_id'] ?? 0),
-          'supplier'    => [
+          'name'           => (string)($r['name'] ?? ''),
+          'date_status'    => $r['date_status'],
+          'is_approved'    => (int)($r['is_approved'] ?? 0),
+          'status'         => (string)($r['status'] ?? ''),
+          'supplier_id'    => (int)($r['supplier_id'] ?? 0),
+          'supplier'       => [
             'contact_name' => (string)($r['contact_name'] ?? ''),
             'company_name' => (string)($r['company_name'] ?? ''),
           ],
@@ -920,7 +921,11 @@ class Products {
 
     } catch (PDOException $e) {
       error_log('getPendingProducts error: ' . $e->getMessage());
-      return ['success' => false, 'error' => 'DB error'];
+
+      return [
+        'success' => false,
+        'error'   => 'DB error'
+      ];
     }
   }
 
