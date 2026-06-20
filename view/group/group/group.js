@@ -49,7 +49,7 @@ class ClassGroup {
     if (!response) return;
 
     if (response.group_selected?.data?.[0]?.name === "Unassigned Group") {
-      this.drawListGroups(response);
+      this.drawListGroups(response.data);
     } else {
       this.drawListGroups(response.group_selected);
     }
