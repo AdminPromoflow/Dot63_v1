@@ -43,23 +43,24 @@ class ClassProductList {
 
     const response = await this.makeRequest(url, data);
 
-    if (!response) return;
-    alert(JSON.stringify(response));
+    if (!response || !Array.isArray(response.result)) return;
+
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
-
-    alert(sku);
 
     choose_product.style.display = "block";
     cancel_choose_product.style.display = "none";
 
-    for (var i = 0; i < response["result"].length; i++) {
-      if (response["result"][i]["SKU"] ==  sku) {
-        this.drawListProducts([response["result"][i]]);
-      }
+    const productSelected = response.result.find(product => product.SKU === sku);
 
+    if (!productSelected) {
+      this.productList.innerHTML = `
+        <div class="pl-empty">Selected product not found.</div>
+      `;
+      return;
     }
 
+    this.drawListProducts([productSelected]);
   }
 
   async chooseProduct() {
