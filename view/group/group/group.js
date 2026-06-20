@@ -53,8 +53,6 @@ class ClassGroup {
     } else {
       this.drawListGroups(response.group_selected);
     }
-  //  classGroup.drawListGroups(response);
-
   }
   async makeRequest(url, data) {
     try {

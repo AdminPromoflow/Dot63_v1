@@ -69,6 +69,8 @@ class Group {
     $groups->setSKU($data['sku'] ?? '');
     $response = $groups->getAllNames();
 
+    echo json_encode($response);exit;
+
     $connection = new Database();
     $group = new Groups($connection);
     $group->setSKU($data['sku'] ?? '');
