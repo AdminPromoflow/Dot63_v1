@@ -32,6 +32,9 @@ class ClassProductList {
   }
 
   async chooseProduct() {
+    const choose_product = document.getElementById("choose_product");
+    const cancel_choose_product = document.getElementById("cancel_choose_product");
+
     const url = "../../controller/products/product.php";
 
     const data = {
@@ -41,6 +44,9 @@ class ClassProductList {
     const response = await this.makeRequest(url, data);
 
     if (!response) return;
+
+    choose_product.style.display = "none";
+    cancel_choose_product.style.display = "block";
 
     this.drawListProducts(response["result"]);
 
