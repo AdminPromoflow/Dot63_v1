@@ -36,10 +36,6 @@ class ClassProductList {
     const choose_product = document.getElementById("choose_product");
     const cancel_choose_product = document.getElementById("cancel_choose_product");
 
-
-    const choose_product = document.getElementById("choose_product");
-    const cancel_choose_product = document.getElementById("cancel_choose_product");
-
     const url = "../../controller/products/product.php";
 
     const data = {
