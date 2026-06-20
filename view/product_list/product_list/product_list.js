@@ -110,7 +110,6 @@ class ClassProductList {
 
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
-    alert(sku);
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] ==  sku) {
