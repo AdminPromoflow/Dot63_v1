@@ -109,16 +109,19 @@ class ClassProductList {
 
 
     const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
+    const sku = (params.get("sku") || "").trim();
 
-    for (var i = 0; i < response["result"].length; i++) {
+    for (let i = 0; i < response.result.length; i++) {
+      const responseSku = String(response.result[i].SKU || "").trim();
 
-      if (response["result"][i]["SKU"] ==  (sku+"")) {
-        alert(JSON.stringify(response["result"][i])+ sku);
+      console.log("responseSku:", responseSku);
+      console.log("urlSku:", sku);
+      console.log("equals:", responseSku === sku);
 
-        this.drawListProducts([response["result"][i]]);
+      if (responseSku === sku) {
+        this.drawListProducts([response.result[i]]);
+        break;
       }
-
     }
   }
 
