@@ -254,6 +254,8 @@ body{
   border-radius:12px;
   padding:10px 18px;
   font-weight:700;
+  transform:translateY(-1px);
+
   box-shadow:none;
 }
 
