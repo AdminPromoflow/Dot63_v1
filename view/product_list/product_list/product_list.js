@@ -199,15 +199,16 @@ class ClassProductList {
     }
   }
   drawBorderProduct(selectedId) {
-    alert(selectedId);
     const productList = document.getElementById("product_list");
     const products = productList.querySelectorAll(".pl-product");
+
+    const cleanSelectedId = String(selectedId || "").trim();
 
     products.forEach((product) => {
       product.classList.remove("pl-product-selected");
     });
 
-    const selectedProduct = document.getElementById(selectedId);
+    const selectedProduct = document.getElementById(cleanSelectedId);
 
     if (!selectedProduct) return;
 
