@@ -34,7 +34,7 @@ class Group {
     $group->setSKU($data['sku'] ?? '');
     $response = $group->getGroupSelected();
 
-    echo ($response);
+    echo json_encode($response);
   }
 
   private function createNewGroup($data){
