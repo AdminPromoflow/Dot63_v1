@@ -30,7 +30,7 @@ class ClassProductList {
       this.getProducts();
     });
   }
-  getProducts() {
+  async getProducts() {
     const url = "../../controller/products/product.php";
 
     const data = {
