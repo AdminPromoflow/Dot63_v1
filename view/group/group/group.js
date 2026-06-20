@@ -48,13 +48,12 @@ class ClassGroup {
 
     if (!response) return;
 
-    // if (response.category_selected?.data?.[0]?.name === "Unassigned Category") {
-    //   this.drawListCategories(response);
-    // } else {
-    //   this.drawListCategories(response.category_selected);
-    //
-    // }
-    classGroup.drawListGroups(response);
+    if (response.group_selected?.data?.[0]?.name === "Unassigned Group") {
+      this.drawListGroups(response);
+    } else {
+      this.drawListGroups(response.group_selected);
+    }
+  //  classGroup.drawListGroups(response);
 
   }
   async makeRequest(url, data) {

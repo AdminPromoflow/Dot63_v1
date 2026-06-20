@@ -64,15 +64,21 @@ class Group {
   private function getGroups($data){
     header('Content-Type: application/json; charset=utf-8');
 
-
     $connection = new Database();
     $groups     = new Groups($connection);
     $groups->setSKU($data['sku'] ?? '');
-
-
     $response = $groups->getAllNames();
 
-    echo json_encode($response);
+    $connection = new Database();
+    $group = new Groups($connection);
+    $group->setSKU($data['sku'] ?? '');
+    $groupSelected = $group->getGroupSelected();
+
+    echo json_encode([
+      'success' => true,
+      'data' => $response,
+      'group_selected' => $groupSelected
+    ]);
   }
 }
 
