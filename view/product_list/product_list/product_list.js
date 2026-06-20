@@ -46,9 +46,7 @@ class ClassProductList {
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] ==  sku) {
-        alert(response["result"][i]["SKU"] + "      " + sku);
-      //this.drawListProducts(response["result"][i]);
-
+        this.drawListProducts(response["result"][i]);
       }
 
     }
@@ -88,6 +86,8 @@ class ClassProductList {
 
 
   drawListProducts(data) {
+    alert(JSON.stringify(data));
+
     if (!this.productList) return;
 
     this.productList.innerHTML = "";
