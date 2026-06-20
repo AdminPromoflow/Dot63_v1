@@ -48,6 +48,8 @@ class ClassProductList {
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
 
+    alert(sku);
+
     choose_product.style.display = "block";
     cancel_choose_product.style.display = "none";
 
