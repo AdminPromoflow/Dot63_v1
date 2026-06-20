@@ -72,7 +72,7 @@ class ClassProductList {
 
     const productList = document.getElementById("product_list");
     productList.classList.remove("pl-products-list-single");
-    
+
     const url = "../../controller/products/product.php";
 
     const data = {
@@ -91,6 +91,10 @@ class ClassProductList {
   }
 
   async getProducts() {
+    const productList = document.getElementById("product_list");
+    productList.classList.add("pl-products-list-single");
+
+
     const url = "../../controller/products/product.php";
 
     const data = {
