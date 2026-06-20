@@ -41,15 +41,9 @@ class ClassProductList {
 
     if (!response) return;
 
-    alert(response);
     this.drawListProducts(response);
 
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
 
-    if (sku) {
-      this.drawBorderProduct(sku);
-    }
 
   }
 
@@ -113,6 +107,12 @@ class ClassProductList {
           <span class="pl-product-name">${name}</span>
         </div>
       `;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    if (sku) {
+      this.drawBorderProduct(sku);
     }
   }
   drawBorderProduct(selectedId) {
