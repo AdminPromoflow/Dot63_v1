@@ -1,5 +1,26 @@
 class ClassProductList {
   constructor() {
+    const btn_back_products = document.getElementById("btn_back_products");
+    const choose_product = document.getElementById("choose_product");
+    const cancel_choose_product = document.getElementById("cancel_choose_product");
+    const next_product = document.getElementById("next_product");
+
+    btn_back_products.addEventListener("click", function(){
+      headerAddProduct.goNext('../../view/group/index.php');
+    });
+
+    choose_product.addEventListener("click", function(){
+      //classProductList.chooseProduct();
+    });
+
+    cancel_choose_product.addEventListener("click", function(){
+      //classProductList.cancelChooseProduct();
+    });
+
+    next_product.addEventListener("click", function(){
+      headerAddProduct.goNext('../../view/product_details/index.php');
+    });
+
     document.addEventListener("DOMContentLoaded", () => {
       if (window.headerAddProduct) {
         headerAddProduct.setCurrentHeader("Products");
