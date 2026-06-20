@@ -69,12 +69,13 @@ class Group {
     $groups->setSKU($data['sku'] ?? '');
     $response = $groups->getAllNames();
 
-    echo json_encode($response);exit;
 
     $connection = new Database();
     $group = new Groups($connection);
     $group->setSKU($data['sku'] ?? '');
     $groupSelected = $group->getGroupSelected();
+    echo json_encode($groupSelected);exit;
+
 
     echo json_encode([
       'success' => true,
