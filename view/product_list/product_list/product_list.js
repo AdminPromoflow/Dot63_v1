@@ -41,7 +41,18 @@ class ClassProductList {
 
     if (!response) return;
 
-    this.drawListProducts(response);
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    for (var i = 0; i < response["result"].length; i++) {
+      if (response["result"][i]["SKU"] ==  sku) {
+        alert(response["result"][i]["SKU"] + "      " + sku);
+      //this.drawListProducts(response["result"][i]);
+
+      }
+
+    }
+
 
 
 
