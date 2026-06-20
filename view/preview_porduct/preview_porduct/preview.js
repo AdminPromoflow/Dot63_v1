@@ -14,11 +14,6 @@ class PreviewGallery {
     this.init();
 
 
-    const btn_publish = document.getElementById("btn_publish");
-
-    btn_publish.addEventListener("click", function(){
-      alert("diosito gracias por toda tu ayuda y por seguir ayudandome y me ayudas mucho más :P ");
-    })
 
   }
 

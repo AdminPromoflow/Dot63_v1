@@ -15,7 +15,7 @@ class Products {
   private $email; // string|null
   private $group_id;    // int
   private $groups = []; // array
-  
+
 
   public function __construct($connection) {
     $this->connection = $connection;
@@ -104,7 +104,46 @@ class Products {
     }
   }
 
+  public function changeStatusForPending(): array
+  {
+      $sku = trim((string)($this->sku ?? ''));
 
+      if ($sku === '' || mb_strlen($sku) > 50) {
+          return [
+              'success' => false,
+              'error'   => 'SKU required/invalid'
+          ];
+      }
+
+      try {
+          $pdo = $this->connection->getConnection();
+
+          $stmt = $pdo->prepare("
+              UPDATE products
+              SET status = :status
+              WHERE SKU = :sku
+              LIMIT 1
+          ");
+
+          $stmt->execute([
+              ':status' => '2',
+              ':sku'    => $sku
+          ]);
+
+          return [
+              'success' => true,
+              'updated' => $stmt->rowCount()
+          ];
+
+      } catch (PDOException $e) {
+          error_log('changeStatusForPending error: ' . $e->getMessage());
+
+          return [
+              'success' => false,
+              'error'   => 'DB error'
+          ];
+      }
+  }
   /** Verifica si ya existe un producto con el mismo SKU para el mismo proveedor (case-insensitive) */
 
   private function existsBySkuForSupplier($sku, $supplierId) {

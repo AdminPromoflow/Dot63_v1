@@ -115,6 +115,13 @@ class Product {
 
     $result = $product->getDataForSendEmail();
 
+
+    $connection = new Database();
+    $product = new Products($connection);
+    $product->setSku($data['sku']);
+
+    $status = $product->changeStatusForPending();
+
     if (empty($result['success'])) {
         echo json_encode([
             'success' => false,
