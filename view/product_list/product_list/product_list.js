@@ -113,7 +113,7 @@ class ClassProductList {
 
     for (var i = 0; i < response["result"].length; i++) {
 
-      if (response["result"][i]["SKU"] ==  sku) {
+      if (response["result"][i]["SKU"] ==  (sku+"") {
         alert(JSON.stringify(response["result"][i])+ sku);
 
         this.drawListProducts([response["result"][i]]);
