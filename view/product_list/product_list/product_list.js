@@ -149,6 +149,7 @@ class ClassProductList {
   }
 
   drawListProducts(data) {
+    alert(JSON.stringify(data)+ "hahah");
 
     const productList = document.getElementById("product_list");
 
@@ -165,7 +166,6 @@ class ClassProductList {
     productList.innerHTML = "";
 
     const list = Array.isArray(data) ? data : [];
-    alert(JSON.stringify(data)+ "hahah");
 
     if (list.length === 0) {
       productList.innerHTML = `
