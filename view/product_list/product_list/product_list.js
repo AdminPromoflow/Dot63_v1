@@ -55,11 +55,7 @@ class ClassProductList {
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] == sku) {
-
-        setTimeout(() => {
           this.drawListProducts([response["result"][i]]);
-        }, 5000);
-
       }
 
     }
@@ -139,7 +135,7 @@ class ClassProductList {
 
 
   drawListProducts(data) {
-    console.log(data);
+    alert(data);
   //  alert(JSON.stringify(data));
     if (!this.productList) return;
 
