@@ -138,6 +138,14 @@ class ClassProductList {
   //  alert(JSON.stringify(data));
     const productList = document.getElementById("product_list");
 
+    alert("productList:", productList);
+    alert("data received:", data);
+
+    if (!productList) {
+      alert("No existe el div con id product_list");
+      return;
+    }
+
     productList.innerHTML = "";
 
     const list = Array.isArray(data) ? data : [];
