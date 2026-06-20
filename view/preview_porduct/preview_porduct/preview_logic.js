@@ -61,7 +61,7 @@ class PreviewLogic {
       .then((text) => {
         const data = JSON.parse(text);
 
-        if (data.success === true && data.message === "Email sent successfully.") {
+        if (data["success"] === true ) {
           alert(
             `The product ${productName} has been sent for approval.\n\n` +
             "Please wait while our team reviews and approves the product internally.\n\n" +
