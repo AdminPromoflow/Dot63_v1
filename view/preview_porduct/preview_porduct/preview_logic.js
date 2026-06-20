@@ -59,9 +59,15 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-         alert(text);
+        const data = JSON.parse(text);
 
-        const json = JSON.parse(text);
+        if (data.success === true && data.message === "Email sent successfully.") {
+          alert(
+            `The product ${productName} has been sent for approval.\n\n` +
+            "Please wait while our team reviews and approves the product internally.\n\n" +
+            "You will receive an email notification once the approval process has been completed."
+          );
+        }
 
       })
       .catch((error) => {
