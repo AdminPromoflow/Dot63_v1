@@ -106,11 +106,11 @@ class ClassProductList {
 
 
     if (!response) return;
-     alert(JSON.stringify(response)+ "hihi");
 
 
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
+    alert(JSON.stringify(response)+ "hooho");
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] ==  sku) {
