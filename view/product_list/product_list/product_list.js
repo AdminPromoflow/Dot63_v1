@@ -112,9 +112,9 @@ class ClassProductList {
     const sku = params.get("sku");
 
     for (var i = 0; i < response["result"].length; i++) {
-      alert(JSON.stringify(response["result"][i])+ "huhu");
 
       if (response["result"][i]["SKU"] ==  sku) {
+        alert(JSON.stringify(response["result"][i])+ sku);
 
         this.drawListProducts([response["result"][i]]);
       }
