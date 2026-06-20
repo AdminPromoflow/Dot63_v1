@@ -45,11 +45,11 @@ class ClassProductList {
 
     if (!response) return;
 
-    choose_product.style.display = "block";
-    cancel_choose_product.style.display = "none";
-
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
+
+    choose_product.style.display = "block";
+    cancel_choose_product.style.display = "none";
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] ==  sku) {
