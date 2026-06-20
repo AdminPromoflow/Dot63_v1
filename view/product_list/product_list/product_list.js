@@ -138,8 +138,7 @@ class ClassProductList {
   //  alert(JSON.stringify(data));
     const productList = document.getElementById("product_list");
 
-    productList.style.display = "block";
-
+    productList.style.display = "grid";
     productList.style.visibility = "visible";
 
     productList.style.opacity = "1";
@@ -147,7 +146,7 @@ class ClassProductList {
     productList.style.minHeight = "80px";
 
     productList.style.border = "3px solid red";
-    
+
     if (!productList) {
       console.error("No existe el div con id product_list");
       return;
