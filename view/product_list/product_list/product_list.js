@@ -198,7 +198,10 @@ class ClassProductList {
 
     selectedProduct.classList.add("pl-product-selected");
 
-    console.log("Selected product:", selectedId);
+    selectedProduct.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
   }
   selectProduct(selectedId) {
     const url = "../../controller/products/product.php";
