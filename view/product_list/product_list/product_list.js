@@ -141,6 +141,7 @@ class ClassProductList {
 
     productList.style.display = "flex";
     productList.style.flexDirection = "column";
+    productList.style.alignItems = "center";
 ;
 
     if (!productList) {
