@@ -147,57 +147,53 @@ class Groups {
    * Devuelve el group seleccionado del producto por SKU
    * JSON: { success:true, group_id:..., group_name:... }
    */
-  public function getGroupSelected(): string {
-    $sku = trim((string)$this->sku);
-    if ($sku === '' || strlen($sku) > 50) {
-      return (['success' => false, 'error' => 'SKU required/invalid'], JSON_UNESCAPED_UNICODE);
-    }
+   public function getGroupSelected(): array {
+     $sku = trim((string)$this->sku);
 
-    try {
-      $pdo = $this->connection->getConnection();
+     if ($sku === '' || strlen($sku) > 50) {
+       return ['success' => false, 'error' => 'SKU required/invalid'];
+     }
 
-      $sql = "
-        SELECT
-          p.group_id,
-          g.name AS group_name
-        FROM products p
-        LEFT JOIN `groups` g
-          ON g.group_id = p.group_id
-        WHERE p.SKU COLLATE utf8mb4_general_ci = :sku
-        LIMIT 1
-      ";
-      $stmt = $pdo->prepare($sql);
-      $stmt->execute([':sku' => $sku]);
+     try {
+       $pdo = $this->connection->getConnection();
 
-      $row = $stmt->fetch(PDO::FETCH_ASSOC);
-      if ($row === false) {
-        return (['success' => false, 'error' => 'SKU not found'], JSON_UNESCAPED_UNICODE);
-      }
+       $sql = "
+         SELECT
+           p.group_id,
+           g.name AS group_name
+         FROM products p
+         LEFT JOIN `groups` g
+           ON g.group_id = p.group_id
+         WHERE p.SKU COLLATE utf8mb4_general_ci = :sku
+         LIMIT 1
+       ";
 
-      $gid = array_key_exists('group_id', $row) ? $row['group_id'] : null;
+       $stmt = $pdo->prepare($sql);
+       $stmt->execute([':sku' => $sku]);
 
-      return [
-        'success' => true,
-        'data'    => [
-            [
-                'group_id' => ($gid === null ? null : (int)$gid),
-                'name'     => ($row['group_name'] ?? null)
-            ]
-        ]
-    ];
+       $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 
-    // return json_encode([
-    //    'success'    => true,
-    //    'group_id'   => ($gid === null ? null : (int)$gid),
-    //    'group_name' => ($row['group_name'] ?? null)
-    //  ], JSON_UNESCAPED_UNICODE);
+       if ($row === false) {
+         return ['success' => false, 'error' => 'SKU not found'];
+       }
 
-    } catch (PDOException $e) {
-      error_log('getGroupSelected error: '.$e->getMessage());
-      return (['success' => false, 'error' => 'DB error'], JSON_UNESCAPED_UNICODE);
-    }
-  }
+       $gid = array_key_exists('group_id', $row) ? $row['group_id'] : null;
+
+       return [
+         'success' => true,
+         'data' => [
+           [
+             'group_id' => ($gid === null ? null : (int)$gid),
+             'name' => ($row['group_name'] ?? null)
+           ]
+         ]
+       ];
+
+     } catch (PDOException $e) {
+       error_log('getGroupSelected error: '.$e->getMessage());
+       return ['success' => false, 'error' => 'DB error'];
+     }
+   }
 
   /** Verifica duplicado por name (y por category_id si está seteado) */
   private function existsByName($name): bool {
