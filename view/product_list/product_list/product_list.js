@@ -135,7 +135,7 @@ class ClassProductList {
 
 
   drawListProducts(data) {
-    alert(JSON.stringify(data));
+  //  alert(JSON.stringify(data));
     if (!this.productList) return;
 
     this.productList.innerHTML = "";
