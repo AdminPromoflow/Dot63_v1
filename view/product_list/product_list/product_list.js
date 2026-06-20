@@ -114,7 +114,7 @@ class ClassProductList {
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] ==  sku) {
-          alert(JSON.stringify([response["result"][i]]));
+
         this.drawListProducts([response["result"][i]]);
       }
 
@@ -150,6 +150,7 @@ class ClassProductList {
   }
 
   drawListProducts(data) {
+      alert(JSON.stringify(data);
 
     const productList = document.getElementById("product_list");
 
