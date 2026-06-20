@@ -58,7 +58,7 @@ class ClassProductList {
 
         setTimeout(() => {
           this.drawListProducts([response["result"][i]]);
-        }, 1000);
+        }, 5000);
 
       }
 
