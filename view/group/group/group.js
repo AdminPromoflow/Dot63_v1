@@ -139,11 +139,10 @@ class ClassGroup {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
         const res = JSON.parse(data);
 
         if (res["success"]) {
-          const id = Number.parseInt(res["group_id"], 10);
+          const id = Number.parseInt(res["data"][0]["group_id"], 10);
           if (!Number.isNaN(id)) classGroup.selectBorderGroup(id);
 
           if (res["group_name"] === "Unassigned Group") {
