@@ -26,7 +26,7 @@ class ClassProductList {
         headerAddProduct.setCurrentHeader("Products");
       }
 
-      this.productList = document.getElementById("product_list");
+  //    this.productList = document.getElementById("product_list");
       this.getProducts();
     });
   }
@@ -135,15 +135,15 @@ class ClassProductList {
 
 
   drawListProducts(data) {
-    alert(JSON.stringify(data));
-    if (!this.productList) return;
+  //  alert(JSON.stringify(data));
+    const productList = document.getElementById("product_list");
 
-    this.productList.innerHTML = "";
+    productList.innerHTML = "";
 
     const list = Array.isArray(data) ? data : [];
 
     if (list.length === 0) {
-      this.productList.innerHTML = `
+      productList.innerHTML = `
         <div class="pl-empty">No products found.</div>
       `;
       return;
@@ -153,7 +153,7 @@ class ClassProductList {
       const sku = list[i].SKU || "";
       const name = list[i].name || "Unnamed product";
 
-      this.productList.innerHTML += `
+      productList.innerHTML += `
         <div
           id="${sku}"
           class="pl-product"
@@ -174,7 +174,8 @@ class ClassProductList {
     }
   }
   drawBorderProduct(selectedId) {
-    const products = this.productList.querySelectorAll(".pl-product");
+    const productList = document.getElementById("product_list");
+    const products = productList.querySelectorAll(".pl-product");
 
     products.forEach((product) => {
       product.classList.remove("pl-product-selected");
