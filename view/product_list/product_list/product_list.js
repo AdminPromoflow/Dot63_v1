@@ -55,7 +55,7 @@ class ClassProductList {
         throw new Error("Network error.");
       })
       .then(responseText => {
-      //  alert(responseText);
+        alert(responseText);
         const data = JSON.parse(responseText);
         this.drawListProducts(data);
 
