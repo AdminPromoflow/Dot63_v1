@@ -36,6 +36,10 @@ $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
       Choose Product
     </button>
 
+    <button class="btn btn-cancel-choose-product" id="cancel_choose_product" type="button">
+      Cancel Choosing
+    </button>
+
     <button class="btn btn-next" id="next_product" type="button">
       Next
     </button>
