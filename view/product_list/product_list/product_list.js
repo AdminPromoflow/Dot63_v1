@@ -112,7 +112,7 @@ class ClassProductList {
     const sku = params.get("sku");
 
     for (var i = 0; i < response["result"].length; i++) {
-      alert(JSON.stringify(response)+ "huhu");
+      alert(JSON.stringify(response["result"][i])+ "huhu");
 
       if (response["result"][i]["SKU"] ==  sku) {
 
