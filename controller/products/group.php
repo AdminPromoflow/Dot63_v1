@@ -74,7 +74,7 @@ class Group {
     $group = new Groups($connection);
     $group->setSKU($data['sku'] ?? '');
     $groupSelected = $group->getGroupSelected();
-    echo ($groupSelected);exit;
+    //echo ($groupSelected);exit;
 
 
     echo json_encode([
