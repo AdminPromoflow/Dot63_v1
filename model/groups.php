@@ -176,15 +176,22 @@ class Groups {
 
       $gid = array_key_exists('group_id', $row) ? $row['group_id'] : null;
 
-      return [
-        'success' => true,
-        'data'    => [
-            [
-                'group_id' => ($gid === null ? null : (int)$gid),
-                'name'     => ($row['group_name'] ?? null)
-            ]
-        ]
-    ];
+    //   return [
+    //     'success' => true,
+    //     'data'    => [
+    //         [
+    //             'group_id' => ($gid === null ? null : (int)$gid),
+    //             'name'     => ($row['group_name'] ?? null)
+    //         ]
+    //     ]
+    // ];
+
+
+    return json_encode([
+       'success'    => true,
+       'group_id'   => ($gid === null ? null : (int)$gid),
+       'group_name' => ($row['group_name'] ?? null)
+     ], JSON_UNESCAPED_UNICODE);
 
     } catch (PDOException $e) {
       error_log('getGroupSelected error: '.$e->getMessage());
