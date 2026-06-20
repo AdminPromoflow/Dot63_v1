@@ -30,12 +30,6 @@ class ClassProductList {
       this.getProducts();
     });
   }
-  drawProductSelected(){
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
-    this.drawBorderProduct(sku);
-  }
-
   getProducts() {
     const url = "../../controller/products/product.php";
 
@@ -43,33 +37,50 @@ class ClassProductList {
       action: "get_products_by_group"
     };
 
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        if (response.ok) return response.text();
-        throw new Error("Network error.");
-      })
-      .then(responseText => {
-        alert(responseText);
-        const data = JSON.parse(responseText);
-        this.drawListProducts(data);
+    const response = await this.makeRequest(url, data);
 
-        const params = new URLSearchParams(window.location.search);
-        const sku = params.get("sku");
+    if (!response) return;
 
-        if (sku) {
-          this.drawBorderProduct(sku);
-        }
-      })
-      .catch(error => {
-        console.error("Error:", error);
-      });
+    alert(response);
+    this.drawListProducts(response);
+
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    if (sku) {
+      this.drawBorderProduct(sku);
+    }
+
   }
+
+  async makeRequest(url, data) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error("Network error.");
+      }
+
+      return await response.json();
+
+    } catch (error) {
+      console.error("Error:", error);
+      return null;
+    }
+  }
+  drawProductSelected(){
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+    this.drawBorderProduct(sku);
+  }
+
+
 
   drawListProducts(data) {
     if (!this.productList) return;
