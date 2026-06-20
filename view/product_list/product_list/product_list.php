@@ -1,4 +1,3 @@
-
 <?php
 $cssTime = filemtime('../../view/product_list/product_list/product_list.css');
 $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
@@ -21,18 +20,25 @@ $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
     </header>
 
     <div class="pl-products-wrapper">
-      <div class="pl-products-list" id="product_list" role="list">
-
-      </div>
-
+      <div class="pl-products-list" id="product_list" role="list"></div>
       <p class="pl-product-hint">Click a product to view or edit its details.</p>
     </div>
 
     <hr class="pl-sep" aria-hidden="true">
   </section>
 
-<div class="pl-footer">
-  
+  <div class="pl-footer">
+    <button class="btn btn-back" id="btn_back_products" type="button">
+      ← Back
+    </button>
+
+    <button class="btn btn-choose-product" id="choose_product" type="button">
+      Choose Product
+    </button>
+
+    <button class="btn btn-next" id="next_product" type="button">
+      Next
+    </button>
   </div>
 </main>
 
