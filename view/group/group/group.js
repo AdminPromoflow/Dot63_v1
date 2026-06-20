@@ -51,7 +51,7 @@ class ClassGroup {
     edit_groups.style.display = "none";
     cancel_editing.style.display = "block";
 
-    this.drawListGroups(response.group_selected);
+    this.drawListGroups(response.data);
   }
 
   async getGroups(){
