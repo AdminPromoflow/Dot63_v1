@@ -32,8 +32,6 @@ class ClassProductList {
   }
 
   async cancelChooseProduct() {
-    this.productList = document.getElementById("product_list");
-
     const choose_product = document.getElementById("choose_product");
     const cancel_choose_product = document.getElementById("cancel_choose_product");
 
@@ -45,19 +43,27 @@ class ClassProductList {
 
     const response = await this.makeRequest(url, data);
 
-    if (!response || !Array.isArray(response.result)) return;
-
+    if (!response) return;
+  //  alert(JSON.stringify(response));
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
+
+  //  alert(sku);
 
     choose_product.style.display = "block";
     cancel_choose_product.style.display = "none";
 
-    const selectedProduct = response.result.find(product => product.SKU === sku);
+    for (var i = 0; i < response["result"].length; i++) {
+      if (response["result"][i]["SKU"] == sku) {
 
-    if (!selectedProduct) return;
+        setTimeout(() => {
+          this.drawListProducts([response["result"][i]]);
+        }, 1000);
 
-    this.drawListProducts([selectedProduct]);
+      }
+
+    }
+
   }
 
   async chooseProduct() {
