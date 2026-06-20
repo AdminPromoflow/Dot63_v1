@@ -63,7 +63,7 @@ class PreviewLogic {
 
         if (data.success) {
           alert(
-            `The product ${productName} has been sent for approval.\n\n` +
+            "The product has been sent for approval.\n\n" +
             "Please wait while our team reviews and approves the product internally.\n\n" +
             "You will receive an email notification once the approval process has been completed."
           );
