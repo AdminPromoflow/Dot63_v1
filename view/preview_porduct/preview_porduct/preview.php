@@ -15,6 +15,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
 <link rel="stylesheet" href="<?= $cssPath ?>?v=<?= $cssTime ?>">
 
 <main class="sp-amz" aria-labelledby="sp-title">
+  <?php include "../../view/preview_porduct/navigation/navigation.php" ?>
   <div class="sp-shell">
 
     <!-- Breadcrumb -->
