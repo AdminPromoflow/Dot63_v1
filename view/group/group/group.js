@@ -139,7 +139,7 @@ class ClassGroup {
         throw new Error("Network error.");
       })
       .then(data => {
-        alert(data);
+        alert(JSON.stringify(data));
         const res = JSON.parse(data);
 
         if (res["success"]) {
