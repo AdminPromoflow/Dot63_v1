@@ -139,14 +139,8 @@ class ClassProductList {
 
     const productList = document.getElementById("product_list");
 
-    productList.style.display = "grid";
-    productList.style.visibility = "visible";
-
-    productList.style.opacity = "1";
-
-    productList.style.minHeight = "80px";
-
-    productList.style.border = "3px solid red";
+    productList.style.display = "flex";
+;
 
     if (!productList) {
       console.error("No existe el div con id product_list");
