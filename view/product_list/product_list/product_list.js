@@ -150,7 +150,7 @@ class ClassProductList {
   }
 
   drawListProducts(data) {
-      alert(JSON.stringify(data);
+      alert(JSON.stringify(data));
 
     const productList = document.getElementById("product_list");
 
