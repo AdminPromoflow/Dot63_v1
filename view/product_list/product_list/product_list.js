@@ -135,6 +135,7 @@ class ClassProductList {
 
 
   drawListProducts(data) {
+    console.log(data);
   //  alert(JSON.stringify(data));
     if (!this.productList) return;
 
