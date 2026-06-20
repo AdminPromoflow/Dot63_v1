@@ -140,6 +140,8 @@ class ClassProductList {
     const productList = document.getElementById("product_list");
 
     productList.style.display = "flex";
+    productList.style.flexDirection = "row";
+    productList.style.flexWrap = "wrap"
 ;
 
     if (!productList) {
