@@ -319,6 +319,7 @@ body{
 
   .btn-back,
   .btn-choose-product,
+  .btn-cancel-choose-product,
   .btn-next{
     width:100%;
   }
