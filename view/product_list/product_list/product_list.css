@@ -297,6 +297,17 @@ body{
   border:0;
 }
 
+.pl-products-list-single{
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pl-products-list-single .pl-product{
+  width: 100%;
+}
+
 @media (max-width: 768px){
   .product_list{
     width:92vw;

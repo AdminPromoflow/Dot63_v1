@@ -36,6 +36,10 @@ class ClassProductList {
     const choose_product = document.getElementById("choose_product");
     const cancel_choose_product = document.getElementById("cancel_choose_product");
 
+    const productList = document.getElementById("product_list");
+    productList.classList.add("pl-products-list-single");
+
+
     const url = "../../controller/products/product.php";
 
     const data = {
@@ -66,6 +70,9 @@ class ClassProductList {
     const choose_product = document.getElementById("choose_product");
     const cancel_choose_product = document.getElementById("cancel_choose_product");
 
+    const productList = document.getElementById("product_list");
+    productList.classList.remove("pl-products-list-single");
+    
     const url = "../../controller/products/product.php";
 
     const data = {
