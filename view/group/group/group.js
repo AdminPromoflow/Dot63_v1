@@ -14,7 +14,7 @@ class ClassGroup {
     });
 
     cancel_editing.addEventListener("click", function(){
-      //classGroup.cancelGroupEdit();
+      classGroup.cancelGroupEdit();
     });
 
     next_group.addEventListener("click", function(){
@@ -31,6 +31,30 @@ class ClassGroup {
 
     setTimeout(() => this.getGroupSelected(), 1000);
   }
+
+  async cancelGroupEdit() {
+    const edit_groups = document.getElementById("edit_groups");
+    const cancel_editing = document.getElementById("cancel_editing");
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    const url = "../../controller/products/group.php";
+
+    const data = {
+      action: "get_groups",
+      sku: sku
+    };
+
+    const response = await this.makeRequest(url, data);
+
+    if (!response) return;
+
+    edit_groups.style.display = "block";
+    cancel_editing.style.display = "none";
+
+    this.drawListGroups(response.group_selected);
+  }
+
   async editGroups() {
     const edit_groups = document.getElementById("edit_groups");
     const cancel_editing = document.getElementById("cancel_editing");
