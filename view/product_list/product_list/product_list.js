@@ -137,16 +137,14 @@ class ClassProductList {
       return null;
     }
   }
+
   drawProductSelected(){
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
     this.drawBorderProduct(sku);
   }
 
-
-
   drawListProducts(data) {
-  //  alert(JSON.stringify(data));
 
     const productList = document.getElementById("product_list");
 
