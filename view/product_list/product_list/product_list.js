@@ -46,7 +46,7 @@ class ClassProductList {
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] ==  sku) {
-        this.drawListProducts(response["result"][i]);
+        this.drawListProducts([response["result"][i]]);
       }
 
     }
@@ -86,15 +86,11 @@ class ClassProductList {
 
 
   drawListProducts(data) {
-    alert(JSON.stringify(data));
-
     if (!this.productList) return;
 
     this.productList.innerHTML = "";
 
-    const list = data?.success && Array.isArray(data.result)
-      ? data.result
-      : [];
+    const list = Array.isArray(data) ? data : [];
 
     if (list.length === 0) {
       this.productList.innerHTML = `
@@ -119,6 +115,7 @@ class ClassProductList {
         </div>
       `;
     }
+
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
 
