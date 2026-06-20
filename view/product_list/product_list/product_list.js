@@ -110,9 +110,10 @@ class ClassProductList {
 
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
-    alert(JSON.stringify(response)+ "hooho");
 
     for (var i = 0; i < response["result"].length; i++) {
+      alert(JSON.stringify(response)+ "huhu");
+
       if (response["result"][i]["SKU"] ==  sku) {
 
         this.drawListProducts([response["result"][i]]);
