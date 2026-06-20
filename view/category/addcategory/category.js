@@ -209,34 +209,6 @@ class ClassCategory {
 
   }
 
-  drawCategorySelected(data){
-      this.getCategorySelected();
-
-
-      if (!window.category_list) return;
-
-      // 1) Limpiar
-      category_list.innerHTML = "";
-
-      var list = (data && data.success && Array.isArray(data.data)) ? data.data : [];
-
-      // 3) Pintar y asignar onclick con el índice
-      for (var i = 0; i < list.length; i++) {
-          var name  = list[i].name || "";
-          var count = Number(list[i].products_count) || 0;
-          var id = list[i].category_id;
-
-          category_list.innerHTML +=
-            '<div class="cp-cat" role="listitem" id="' + id + '" onclick="classCategory.selectCategory(' + id + ')">' +
-              '<span class="cp-cat-name">' + name + '</span>' +
-              '<small class="cp-cat-meta">' + count + ' products</small>' +
-            '</div>';
-
-      }
-
-
-  }
-
   drawListCategories(data){
     if (!window.category_list) return;
 

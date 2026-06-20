@@ -28,8 +28,6 @@ class ClassGroup {
     this.group_selected = "";
 
     this.getGroups();
-
-    setTimeout(() => this.getGroupSelected(), 1000);
   }
 
   async cancelGroupEdit() {
@@ -141,6 +139,7 @@ class ClassGroup {
         throw new Error("Network error.");
       })
       .then(data => {
+        alert(data);
         const res = JSON.parse(data);
 
         if (res["success"]) {
@@ -217,6 +216,7 @@ class ClassGroup {
           // '<small class="cp-group-meta">' + count + ' products</small>' +
         '</div>';
     }
+    this.getGroupSelected();
   }
 
   selectGroup(divId) {
