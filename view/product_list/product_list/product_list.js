@@ -10,7 +10,7 @@ class ClassProductList {
     });
 
     choose_product.addEventListener("click", function(){
-      //classProductList.chooseProduct();
+      classProductList.chooseProduct();
     });
 
     cancel_choose_product.addEventListener("click", function(){
@@ -30,6 +30,22 @@ class ClassProductList {
       this.getProducts();
     });
   }
+
+  async chooseProduct() {
+    const url = "../../controller/products/product.php";
+
+    const data = {
+      action: "get_products_by_group"
+    };
+
+    const response = await this.makeRequest(url, data);
+
+    if (!response) return;
+
+    this.drawListProducts(response["result"]);
+
+  }
+
   async getProducts() {
     const url = "../../controller/products/product.php";
 
@@ -50,10 +66,6 @@ class ClassProductList {
       }
 
     }
-
-
-
-
   }
 
   async makeRequest(url, data) {
