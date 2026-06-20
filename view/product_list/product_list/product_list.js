@@ -104,9 +104,9 @@ class ClassProductList {
     const response = await this.makeRequest(url, data);
 
 
-    alert(JSON.stringify(response)+ "hahah");
 
     if (!response) return;
+     alert(JSON.stringify(response)+ "hihi");
 
 
     const params = new URLSearchParams(window.location.search);
