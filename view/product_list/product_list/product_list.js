@@ -114,10 +114,6 @@ class ClassProductList {
     for (let i = 0; i < response.result.length; i++) {
       const responseSku = String(response.result[i].SKU || "").trim();
 
-      console.log("responseSku:", responseSku);
-      console.log("urlSku:", sku);
-      console.log("equals:", responseSku === sku);
-
       if (responseSku === sku) {
         this.drawListProducts([response.result[i]]);
         break;
@@ -203,6 +199,7 @@ class ClassProductList {
     }
   }
   drawBorderProduct(selectedId) {
+    alert(selectedId);
     const productList = document.getElementById("product_list");
     const products = productList.querySelectorAll(".pl-product");
 
