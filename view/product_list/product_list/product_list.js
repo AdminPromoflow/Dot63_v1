@@ -150,23 +150,22 @@ class ClassProductList {
   }
 
   drawListProducts(data) {
-      alert(JSON.stringify(data));
-
     const productList = document.getElementById("product_list");
-
-    productList.style.display = "flex";
-    productList.style.flexDirection = "column";
-    productList.style.alignItems = "center";
-;
 
     if (!productList) {
       console.error("No existe el div con id product_list");
       return;
     }
 
+    productList.style.display = "flex";
+    productList.style.flexDirection = "column";
+    productList.style.alignItems = "center";
+
     productList.innerHTML = "";
 
-    const list = Array.isArray(data) ? data : [];
+    const list = Array.isArray(data)
+      ? data
+      : [{ SKU: data, name: "Unnamed product" }];
 
     if (list.length === 0) {
       productList.innerHTML = `
