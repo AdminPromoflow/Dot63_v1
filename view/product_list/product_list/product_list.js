@@ -138,9 +138,6 @@ class ClassProductList {
   //  alert(JSON.stringify(data));
     const productList = document.getElementById("product_list");
 
-    console.log("productList:", productList);
-    console.log("data received:", data);
-
     if (!productList) {
       console.error("No existe el div con id product_list");
       return;
@@ -172,6 +169,7 @@ class ClassProductList {
           <span class="pl-product-name">${name}</span>
         </div>
       `;
+      console.log("HTML after draw:", productList.innerHTML);
     }
 
     const params = new URLSearchParams(window.location.search);
