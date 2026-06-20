@@ -103,7 +103,10 @@ class ClassProductList {
 
     const response = await this.makeRequest(url, data);
 
+    alert(JSON.stringify(response));
+
     if (!response) return;
+
 
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
