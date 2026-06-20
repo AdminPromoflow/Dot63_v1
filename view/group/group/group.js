@@ -31,6 +31,28 @@ class ClassGroup {
 
     setTimeout(() => this.getGroupSelected(), 1000);
   }
+  async editGroups() {
+    const edit_groups = document.getElementById("edit_groups");
+    const cancel_editing = document.getElementById("cancel_editing");
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
+    const url = "../../controller/products/group.php";
+
+    const data = {
+      action: "get_groups",
+      sku: sku
+    };
+
+    const response = await this.makeRequest(url, data);
+
+    if (!response) return;
+
+    edit_groups.style.display = "none";
+    cancel_editing.style.display = "block";
+
+    this.drawListGroups(response.data);
+  }
 
   async getGroups(){
     const params = new URLSearchParams(window.location.search);
@@ -44,8 +66,6 @@ class ClassGroup {
 
     const response = await this.makeRequest(url, data);
 
-    alert(JSON.stringify(response));
-
     if (!response) return;
 
     if (response.group_selected?.data?.[0]?.name === "Unassigned Group") {
@@ -54,6 +74,8 @@ class ClassGroup {
       this.drawListGroups(response.group_selected);
     }
   }
+
+
   async makeRequest(url, data) {
     try {
       const response = await fetch(url, {
