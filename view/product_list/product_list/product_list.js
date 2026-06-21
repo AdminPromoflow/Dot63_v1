@@ -31,41 +31,7 @@ class ClassProductList {
     });
   }
 
-  async cancelChooseProduct() {
 
-    const choose_product = document.getElementById("choose_product");
-    const cancel_choose_product = document.getElementById("cancel_choose_product");
-
-    const productList = document.getElementById("product_list");
-    productList.classList.add("pl-products-list-single");
-
-
-    const url = "../../controller/products/product.php";
-
-    const data = {
-      action: "get_products_by_group"
-    };
-
-    const response = await this.makeRequest(url, data);
-
-    if (!response) return;
-  //  alert(JSON.stringify(response));
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
-
-    choose_product.style.display = "block";
-    cancel_choose_product.style.display = "none";
-
-
-    for (var i = 0; i < response["result"].length; i++) {
-      if (response["result"][i]["SKU"] == sku) {
-
-          this.drawListProducts([response["result"][i]]);
-      }
-
-    }
-
-  }
 
   async chooseProduct() {
     const choose_product = document.getElementById("choose_product");
@@ -91,6 +57,42 @@ class ClassProductList {
 
   }
 
+  async cancelChooseProduct() {
+
+    const choose_product = document.getElementById("choose_product");
+    const cancel_choose_product = document.getElementById("cancel_choose_product");
+
+    const productList = document.getElementById("product_list");
+    productList.classList.add("pl-products-list-single");
+
+
+    const url = "../../controller/products/product.php";
+
+    const data = {
+      action: "get_products_by_group"
+    };
+
+    const response = await this.makeRequest(url, data);
+
+    if (!response) return;
+   alert(response);
+    // const params = new URLSearchParams(window.location.search);
+    // const sku = params.get("sku");
+    //
+    // choose_product.style.display = "block";
+    // cancel_choose_product.style.display = "none";
+    //
+    //
+    // for (var i = 0; i < response["result"].length; i++) {
+    //   if (response["result"][i]["SKU"] == sku) {
+    //
+    //       this.drawListProducts([response["result"][i]]);
+    //   }
+    //
+    // }
+
+  }
+
   async getProducts() {
     const productList = document.getElementById("product_list");
     productList.classList.add("pl-products-list-single");
@@ -109,21 +111,21 @@ class ClassProductList {
     if (!response) return;
 
 
-    //  alert(JSON.stringify(response));
-      const params = new URLSearchParams(window.location.search);
-      const sku = params.get("sku");
-
-      choose_product.style.display = "block";
-      cancel_choose_product.style.display = "none";
-
-
-      for (var i = 0; i < response["result"].length; i++) {
-        if (response["result"][i]["SKU"] == sku) {
-
-            this.drawListProducts([response["result"][i]]);
-        }
-
-      }
+      alert((response));
+      // const params = new URLSearchParams(window.location.search);
+      // const sku = params.get("sku");
+      //
+      // choose_product.style.display = "block";
+      // cancel_choose_product.style.display = "none";
+      //
+      //
+      // for (var i = 0; i < response["result"].length; i++) {
+      //   if (response["result"][i]["SKU"] == sku) {
+      //
+      //       this.drawListProducts([response["result"][i]]);
+      //   }
+      //
+      // }
   }
 
   async makeRequest(url, data) {
