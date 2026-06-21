@@ -56,6 +56,8 @@ class ClassProductList {
     choose_product.style.display = "block";
     cancel_choose_product.style.display = "none";
 
+    alert(response["result"][i]["SKU"]);
+
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] == sku) {
 
