@@ -56,7 +56,6 @@ class ClassProductList {
     choose_product.style.display = "block";
     cancel_choose_product.style.display = "none";
 
-    alert(response["result"][i]["SKU"]);
 
     for (var i = 0; i < response["result"].length; i++) {
       if (response["result"][i]["SKU"] == sku) {
@@ -110,17 +109,21 @@ class ClassProductList {
     if (!response) return;
 
 
-    const params = new URLSearchParams(window.location.search);
-    const sku = (params.get("sku") || "").trim();
+    //  alert(JSON.stringify(response));
+      const params = new URLSearchParams(window.location.search);
+      const sku = params.get("sku");
 
-    for (let i = 0; i < response.result.length; i++) {
-      const responseSku = String(response.result[i].SKU || "").trim();
+      choose_product.style.display = "block";
+      cancel_choose_product.style.display = "none";
 
-      if (responseSku === sku) {
-        this.drawListProducts([response.result[i]]);
-        break;
+
+      for (var i = 0; i < response["result"].length; i++) {
+        if (response["result"][i]["SKU"] == sku) {
+
+            this.drawListProducts([response["result"][i]]);
+        }
+
       }
-    }
   }
 
   async makeRequest(url, data) {
