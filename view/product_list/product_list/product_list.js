@@ -75,7 +75,7 @@ class ClassProductList {
     const response = await this.makeRequest(url, data);
 
     if (!response) return;
-   alert(response);
+   alert(response["result"][0]["SKU"]);
     // const params = new URLSearchParams(window.location.search);
     // const sku = params.get("sku");
     //
@@ -111,7 +111,7 @@ class ClassProductList {
     if (!response) return;
 
 
-      alert((response));
+    alert(response["result"][0]["SKU"]);
       // const params = new URLSearchParams(window.location.search);
       // const sku = params.get("sku");
       //
