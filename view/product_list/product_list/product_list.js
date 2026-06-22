@@ -56,10 +56,13 @@ class ClassProductList {
 
     alert(JSON.stringify(response));
 
-    choose_product.style.display = "none";
-    cancel_choose_product.style.display = "block";
+              choose_product.style.display = "block";
+              cancel_choose_product.style.display = "none";
 
-    this.drawListProducts(response["result"]);
+
+
+                    this.drawListProducts(response["result"]);
+
 
   }
 
