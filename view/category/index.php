@@ -22,6 +22,7 @@
 
 <body class="body_category">
   <script src="../../view/global/security/security_helper.js" type="text/javascript">
+  </script>
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/category/addcategory/category.php";?>
@@ -29,7 +30,6 @@
 </body>
 
 
-</script>
 
 
 </html>

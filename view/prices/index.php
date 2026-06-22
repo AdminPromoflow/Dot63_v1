@@ -28,6 +28,8 @@
 </head>
 
 <body class="body_product_details">
+  <script src="../../view/global/security/security_helper.js" type="text/javascript"></script>
+
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/prices/prices/prices.php";?>
 </body>
