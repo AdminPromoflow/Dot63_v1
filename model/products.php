@@ -52,39 +52,48 @@ class Products {
     try {
       $pdo = $this->connection->getConnection();
 
-      $groupId = (int)($this->group_id ?? 0);
-      $email   = $this->email ?? null;
+      $sku = trim((string)($this->sku ?? ''));
 
-      if ($groupId <= 0) {
+      if ($sku === '' || mb_strlen($sku) > 50) {
         return [
           'success' => false,
-          'error'   => 'Group ID required'
+          'error'   => 'SKU required/invalid'
         ];
       }
 
-      if (empty($email)) {
+      /* 1) Consultar el group_id del producto según el SKU */
+      $stmtGroup = $pdo->prepare("
+        SELECT group_id
+        FROM products
+        WHERE SKU = :sku
+        LIMIT 1
+      ");
+
+      $stmtGroup->execute([
+        ':sku' => $sku
+      ]);
+
+      $groupId = $stmtGroup->fetchColumn();
+
+      if ($groupId === false || empty($groupId)) {
         return [
           'success' => false,
-          'error'   => 'Email required'
+          'error'   => 'Group ID not found for this SKU'
         ];
       }
 
-      $sql = "
+      /* 2) Consultar todos los productos de ese group_id */
+      $stmt = $pdo->prepare("
         SELECT
           p.SKU,
           p.name
         FROM products p
-        INNER JOIN suppliers s
-          ON p.supplier_id = s.supplier_id
         WHERE p.group_id = :group_id
-          AND LOWER(s.email) = LOWER(:email)
         ORDER BY p.product_id DESC
-      ";
+      ");
 
-      $stmt = $pdo->prepare($sql);
       $stmt->execute([
-        ':group_id' => $groupId,
-        ':email'    => $email
+        ':group_id' => (int)$groupId
       ]);
 
       $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

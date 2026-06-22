@@ -37,13 +37,17 @@ class ClassProductList {
     const choose_product = document.getElementById("choose_product");
     const cancel_choose_product = document.getElementById("cancel_choose_product");
 
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
     const productList = document.getElementById("product_list");
     productList.classList.remove("pl-products-list-single");
 
     const url = "../../controller/products/product.php";
 
     const data = {
-      action: "get_products_by_group"
+      action: "get_products_by_group",
+      sku: sku
     };
 
     const response = await this.makeRequest(url, data);
@@ -62,6 +66,9 @@ class ClassProductList {
     const choose_product = document.getElementById("choose_product");
     const cancel_choose_product = document.getElementById("cancel_choose_product");
 
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
     const productList = document.getElementById("product_list");
     productList.classList.add("pl-products-list-single");
 
@@ -69,15 +76,15 @@ class ClassProductList {
     const url = "../../controller/products/product.php";
 
     const data = {
-      action: "get_products_by_group"
+      action: "get_products_by_group",
+      sku: sku
     };
 
     const response = await this.makeRequest(url, data);
 
     if (!response) return;
    alert(response["result"][0]["SKU"]);
-    // const params = new URLSearchParams(window.location.search);
-    // const sku = params.get("sku");
+
     //
     // choose_product.style.display = "block";
     // cancel_choose_product.style.display = "none";
@@ -97,22 +104,23 @@ class ClassProductList {
     const productList = document.getElementById("product_list");
     productList.classList.add("pl-products-list-single");
 
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
+
 
     const url = "../../controller/products/product.php";
 
     const data = {
-      action: "get_products_by_group"
+      action: "get_products_by_group",
+      sku: sku
     };
 
     const response = await this.makeRequest(url, data);
 
-
-
     if (!response) return;
 
 
-      const params = new URLSearchParams(window.location.search);
-      const sku = params.get("sku");
+
 
       choose_product.style.display = "block";
       cancel_choose_product.style.display = "none";

@@ -16,7 +16,7 @@ class Product {
         break;
 
       case 'get_products_by_group':
-        $this->getProductsByGroup();
+        $this->getProductsByGroup($data);
         break;
 
       case 'update_products':
@@ -77,20 +77,20 @@ class Product {
   }
 
 
-  private function getProductsByGroup(){
+  private function getProductsByGroup($data){
     header('Content-Type: application/json; charset=utf-8');
 
     if (session_status() !== PHP_SESSION_ACTIVE) {
       session_start();
     }
 
-    $group_id = $_SESSION['group_id'] ?? null;
     $email    = $_SESSION['email'] ?? null;
+    $sku     = $data["sku"];
 
     $connection = new Database();
     $products   = new Products($connection);
 
-    $products->setGroupId($group_id);
+    $products->setSku($sku);
     $products->setEmail($email);
 
     $response = $products->getProductsByGroupId();
