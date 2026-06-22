@@ -160,11 +160,15 @@ class Groups {
        $sql = "
          SELECT
            p.group_id,
-           g.name AS group_name
+           g.name AS group_name,
+           COUNT(p2.product_id) AS products_count
          FROM products p
          LEFT JOIN `groups` g
            ON g.group_id = p.group_id
+         LEFT JOIN products p2
+           ON p2.group_id = g.group_id
          WHERE p.SKU COLLATE utf8mb4_general_ci = :sku
+         GROUP BY p.group_id, g.name
          LIMIT 1
        ";
 
@@ -183,8 +187,9 @@ class Groups {
          'success' => true,
          'data' => [
            [
-             'group_id' => ($gid === null ? null : (int)$gid),
-             'name' => ($row['group_name'] ?? null)
+             'group_id'       => ($gid === null ? null : (int)$gid),
+             'name'           => ($row['group_name'] ?? null),
+             'products_count' => (int)($row['products_count'] ?? 0)
            ]
          ]
        ];
