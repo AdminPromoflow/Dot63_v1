@@ -119,7 +119,7 @@ class ClassProductList {
 
     if (!response) return;
 
-    alert(JSON.stringify(response));
+  //  alert(JSON.stringify(response));
 
 
       choose_product.style.display = "block";
