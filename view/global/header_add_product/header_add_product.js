@@ -20,13 +20,15 @@ class HeaderAddProduct {
     if (!url) return;
 
     const current = new URL(window.location.href);
-    const dest    = new URL(url, current);
+    const dest = new URL(url, current);
 
-    const sku  = current.searchParams.get('sku');
-    const skuv = current.searchParams.get('sku_variation');
+    const sku = (current.searchParams.get("sku") || "").trim();
+    const skuv = (current.searchParams.get("sku_variation") || "").trim();
+    const mode = (current.searchParams.get("mode") || "").trim();
 
-    if (sku)  dest.searchParams.set('sku', sku);
-    if (skuv) dest.searchParams.set('sku_variation', skuv);
+    if (sku) dest.searchParams.set("sku", sku);
+    if (skuv) dest.searchParams.set("sku_variation", skuv);
+    if (mode) dest.searchParams.set("mode", mode);
 
     window.location.assign(dest);
   }
