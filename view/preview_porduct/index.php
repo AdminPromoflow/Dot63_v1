@@ -19,7 +19,9 @@
   <link rel="stylesheet" href="../../view/product_details/style.css?v=<?php echo filemtime("../../view/product_details/style.css"); ?>">
 </head>
 
-<body style="background: black!important" class="body_product_details">
+<body  class="body_product_details">
+  <script src="../../view/global/security/security_helper.js" type="text/javascript">
+
   <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>

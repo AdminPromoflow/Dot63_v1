@@ -20,6 +20,8 @@
 </head>
 
 <body style="background: black!important" class="body_product_details">
+  <script src="../../view/global/security/security_helper.js" type="text/javascript">
+
   <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
 
   <?php include "../../view/global/menu_general/menu_general.php"; ?>

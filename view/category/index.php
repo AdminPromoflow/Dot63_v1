@@ -17,6 +17,7 @@
   <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
 
   <link rel="stylesheet" href="../../view/category/style.css?v=<?php echo filemtime("../../view/category/style.css"); ?>">
+
 </head>
 
 <body class="body_category">

@@ -20,12 +20,12 @@
 </head>
 
 <body class="body_category">
+  <script src="../../view/global/security/security_helper.js" type="text/javascript">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/group/group/group.php";?>
 
 </body>
 
-<script src="../../view/global/security/security_helper.js" type="text/javascript">
 
 </script>
 

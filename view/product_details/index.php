@@ -19,6 +19,8 @@
 </head>
 
 <body class="body_product_details">
+  <script src="../../view/global/security/security_helper.js" type="text/javascript">
+
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/product_details/product_details/product_details.php";?>
   <?php include "../../view/product_details/navigation/navigation.php" ?>
