@@ -118,6 +118,8 @@ class ClassProductList {
 
     if (!response) return;
 
+    alert(JSON.stringify(response));
+
       choose_product.style.display = "block";
       cancel_choose_product.style.display = "none";
 
