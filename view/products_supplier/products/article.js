@@ -222,8 +222,9 @@ class ProductsSupplierClass {
 
     for (let i = 0; i < list.length; i++) {
       const p = list[i] || {};
-
       const sku = (p.sku || "").toString();
+      alert(sku);
+
       const skuVariation = (p.first_variation_sku || "").toString();
       const name = (p.product_name || "Untitled product").toString();
       const category = (p.category_name || "—").toString();
