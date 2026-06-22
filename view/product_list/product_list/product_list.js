@@ -165,7 +165,7 @@ class ClassProductList {
   }
 
   drawListProducts(data) {
-    alert(data);
+    //alert(data);
 
     const productList = document.getElementById("product_list");
 
