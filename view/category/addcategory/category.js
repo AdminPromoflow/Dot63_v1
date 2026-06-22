@@ -14,7 +14,7 @@ class ClassCategory {
     })
 
     cancel_editing.addEventListener("click", function(){
-      classCategory.cancelCategoryEdit()();
+      classCategory.cancelCategoryEdit();
     })
 
     document.addEventListener('DOMContentLoaded', () => {
