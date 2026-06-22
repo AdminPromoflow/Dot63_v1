@@ -108,6 +108,11 @@ class ClassCategory {
 
     } catch (error) {
       console.error("Error:", error);
+      alert(
+      "Connection error.\n\n" +
+      "The page will be refreshed automatically in a few seconds."
+
+    );
       return null;
     }
   }
