@@ -29,7 +29,6 @@
 
 <body class="body_product_details">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
-  <?php include "../../view/prices/navigation/navigation.php" ?>
   <?php include "../../view/prices/prices/prices.php";?>
 </body>
 </html>

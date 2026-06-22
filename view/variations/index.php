@@ -22,7 +22,5 @@
   <script src="../../view/global/security/security_helper.js" type="text/javascript">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/variations/varia/variations.php";?>
-  <?php include "../../view/variations/navigation/navigation.php" ?>
-
 </body>
 </html>

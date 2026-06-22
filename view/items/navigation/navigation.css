@@ -1,133 +1,106 @@
-/* =========================================================
-   Navigation / Breadcrumbs
-   Clean premium style matching the product page UI
-   ========================================================= */
-
-:root {
-  --nav-bg: #f8f9fb;
-  --nav-card: #ffffff;
-
-  --nav-ink: #111827;
-  --nav-muted: #6b7280;
-  --nav-blue: #20364f;
-  --nav-blue-soft: rgba(32, 54, 79, 0.08);
-
-  --nav-border: rgba(15, 23, 42, 0.08);
-  --nav-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-
-  --nav-radius: 16px;
-  --nav-container: 1480px;
-  --nav-gutter: clamp(1rem, 4vw, 3rem);
+:root{
+  --nav-bg:#f7f7fb;
+  --nav-card:#ffffff;
+  --nav-text:#111827;
+  --nav-muted:#6b7280;
+  --nav-border:#e5e7eb;
+  --nav-brand:#005548;
+  --nav-shadow:0 10px 30px rgba(17,24,39,.08);
+  --nav-radius:16px;
+  --nav-container:1100px;
+  --nav-menu-height:80px;
 }
 
-/* Main wrapper */
-.nav-section {
-  width: 100%;
-  background: var(--nav-bg);
-  padding: clamp(1rem, 2.5vw, 1.8rem) var(--nav-gutter);
-  box-sizing: border-box;
+.nav-section{
+  width:100%;
+  background:transparent;
+  padding:calc(var(--nav-menu-height) + 18px) 20px 0;
+  box-sizing:border-box;
 }
 
-/* Breadcrumb container */
-.nav-breadcrumbs {
-  width: min(100%, var(--nav-container));
-  margin: 0 auto;
+.nav-breadcrumbs{
+  max-width:var(--nav-container);
+  width:80vw;
+  margin:0 auto;
 }
 
-/* Breadcrumb list */
-.nav-breadcrumbs__list {
-  width: fit-content;
-  max-width: 100%;
-  margin: 0;
-  padding: 12px 16px;
-
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-
-  list-style: none;
-  box-sizing: border-box;
+.nav-breadcrumbs__list{
+  margin:0;
+  padding:12px 16px;
+  list-style:none;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  background:var(--nav-card);
+  border:1px solid var(--nav-border);
+  border-radius:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  box-sizing:border-box;
 }
 
-/* Breadcrumb item */
-.nav-breadcrumbs__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-
-  color: var(--nav-muted);
-  font-size: clamp(0.88rem, 1.4vw, 0.98rem);
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
+.nav-breadcrumbs__item{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  color:var(--nav-muted);
+  font-size:.9rem;
+  font-weight:600;
+  line-height:1.2;
+  white-space:nowrap;
 }
 
-/* Divider */
-.nav-breadcrumbs__item:not(:last-child)::after {
-  content: "›";
-  color: #000;
-  font-size: 1.15rem;
-  font-weight: 700;
+.nav-breadcrumbs__item:not(:last-child)::after{
+  content:"›";
+  color:var(--nav-muted);
+  font-size:1.1rem;
+  font-weight:800;
 }
 
-/* Links */
-.nav-breadcrumbs__link {
-  color: #000;
-  text-decoration: none;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
+.nav-breadcrumbs__link{
+  color:#2c3e50;
+  text-decoration:none;
+  padding:7px 10px;
+  border-radius:8px;
+  transition:all .2s ease;
 }
 
-.nav-breadcrumbs__link:hover {
-  color: var(--nav-blue);
+.nav-breadcrumbs__link:hover{
+  background:#f8f9fa;
+  color:var(--nav-brand);
 }
 
-/* Current page */
-.nav-breadcrumbs__current {
-  display: inline-flex;
-  align-items: center;
-
-  padding: 7px 14px;
-  color: #fafafa;
-  background: var(--nav-blue);
-  border-radius: 10px;
+.nav-breadcrumbs__current{
+  display:inline-flex;
+  align-items:center;
+  padding:7px 14px;
+  color:#ffffff;
+  background:linear-gradient(135deg,#005548 0%,#006b5a 100%);
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,85,72,0.22);
 }
 
-/* Focus state */
-.nav-breadcrumbs__link:focus-visible {
-  outline: 3px solid rgba(32, 54, 79, 0.25);
-  outline-offset: 3px;
-  border-radius: 999px;
+.nav-breadcrumbs__link:focus-visible{
+  outline:3px solid rgba(0,85,72,0.18);
+  outline-offset:3px;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .nav-section {
-    padding-inline: 14px;
+@media (max-width:768px){
+  .nav-section{
+    padding:calc(var(--nav-menu-height) + 14px) 16px 0;
   }
 
-  .nav-breadcrumbs__list {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 14px;
-    overflow-x: auto;
-    flex-wrap: nowrap;
+  .nav-breadcrumbs{
+    width:92vw;
   }
 
-  .nav-breadcrumbs__item {
-    font-size: 0.88rem;
+  .nav-breadcrumbs__list{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    padding:10px 12px;
   }
 
-  .nav-breadcrumbs__current {
-    padding: 6px 12px;
-  }
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .nav-breadcrumbs__link {
-    transition: none;
+  .nav-breadcrumbs__item{
+    font-size:.85rem;
   }
 }

@@ -16,7 +16,7 @@ $jsLogicVer  = file_exists($jsLogicPath)  ? md5_file($jsLogicPath)  : time();
 <link rel="stylesheet" href="../../view/items/items/items.css?v=<?= $cssVer ?>">
 
 <main class="create_product" aria-labelledby="it-title">
-<!--  <h1 id="it-title" class="sr-only">Create Product — Items</h1>-->
+  <?php include "../../view/items/navigation/navigation.php" ?>
 
   <!-- Tabs -->
   <?php include "../../view/global/header_add_product/header_add_product.php" ?>

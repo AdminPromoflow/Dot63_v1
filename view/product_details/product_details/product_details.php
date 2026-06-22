@@ -9,6 +9,7 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
 
 <!-- =============== Create Product: Product Details Tab =============== -->
 <main class="create_product" aria-labelledby="pd-title">
+  <?php include "../../view/product_details/navigation/navigation.php" ?>
   <h1 id="pd-title" class="sr-only">Create Product — Product Details</h1>
   <!-- Tabs (mismo panel) -->
   <!-- Tabs (promotions removed) -->

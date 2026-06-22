@@ -12,7 +12,7 @@ $jsTime  = filemtime('../../view/variations/varia/variations.js');
 <body>
 
  <main class="create_product" aria-labelledby="var-title">
-  <!--  <h1 id="var-title" class="sr-only">Create Product — Variations</h1> -->
+   <?php include "../../view/variations/navigation/navigation.php" ?>
 
   <!-- Tabs / Header -->
   <?php include "../../view/global/header_add_product/header_add_product.php"; ?>

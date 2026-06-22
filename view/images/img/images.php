@@ -8,6 +8,7 @@ $jsLogicTime  = filemtime('../../view/images/img/image_logic.js');
 <link rel="stylesheet" href="../../view/images/img/images.css?v=<?= $cssTime ?>">
 
 <main class="create_product" aria-labelledby="vi-title">
+  <?php include "../../view/images/navigation/navigation.php" ?>
   <h1 id="vi-title" class="sr-only">Create Product — Variation Images</h1>
 
   <!-- Tabs / Header -->

@@ -12,6 +12,8 @@ $jsVer  = file_exists($jsPath)  ? md5_file($jsPath) : time();
 <link rel="stylesheet" href="../../view/prices/prices/prices.css?v=<?= $cssVer ?>">
 
 <main class="create_product" aria-labelledby="it-title">
+  <?php include "../../view/prices/navigation/navigation.php" ?>
+
   <h1 id="it-title" class="sr-only">Create Product — Items</h1>
 
   <!-- Tabs -->
