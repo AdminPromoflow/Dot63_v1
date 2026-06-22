@@ -40,6 +40,10 @@ class ClassSecurityHelper {
         var data = JSON.parse(data);
 
         if (!data["success"]) {
+          alert(
+            "We couldn't verify this link.\n\n" +
+            "You will be redirected to the dashboard. Please select the product again."
+          );
           window.location.replace("../../view/dashboard_supplier/index.php");
           return;
         }
