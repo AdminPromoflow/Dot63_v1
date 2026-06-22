@@ -90,7 +90,6 @@ class ClassGroup {
 
     if (!response) return;
 
-    alert(JSON.stringify(response));
 
     if (response.group_selected?.data?.[0]?.name === "Unassigned Group") {
       this.drawListGroups(response.data);
@@ -195,31 +194,39 @@ class ClassGroup {
 
 
   drawListGroups(data){
+
     if (!window.group_list) return;
 
-    // 1) Limpiar
     group_list.innerHTML = "";
 
-    // 2) Arreglo de grupos
-    const list = (data && data.success && Array.isArray(data.data)) ? data.data : [];
+    const list = (data && data.success && Array.isArray(data.data))
+      ? data.data
+      : [];
 
-    // 3) Pintar (usa cp-group, cp-group-name, cp-group-meta, y contenedor group_list)
     for (let i = 0; i < list.length; i++) {
+
       const name  = list[i].name || "";
       const count = Number(list[i].products_count) || 0;
+      const id    = list[i].group_id;
 
-      // IMPORTANTE: aquí usas group_id (equivalente a category_id)
-      const id = list[i].group_id;
-
-      group_list.innerHTML +=
-        '<div class="cp-group" role="listitem" id="' + id + '" onclick="classGroup.selectGroup(' + id + ')">' +
-          '<span class="cp-group-name">' + name + '</span>' +
-          // '<small class="cp-group-meta">' + count + ' products</small>' +
-        '</div>';
+      group_list.innerHTML += `
+        <div
+          class="cp-group"
+          role="listitem"
+          id="${id}"
+          onclick="classGroup.selectGroup(${id})"
+        >
+          <div>
+            <div class="cp-group-name">${name}</div>
+            <small class="cp-group-meta">${count} product${count !== 1 ? 's' : ''}</small>
+          </div>
+        </div>
+      `;
     }
+
     this.getGroupSelected();
   }
-
+  
   selectGroup(divId) {
     if (!window.group_list) return;
 
