@@ -100,6 +100,7 @@ class Products {
 
       return [
         'success' => true,
+        'group_id' => (int)$groupId,
         'result'  => $rows
       ];
 
