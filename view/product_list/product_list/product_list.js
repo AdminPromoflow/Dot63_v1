@@ -53,16 +53,10 @@ class ClassProductList {
     const response = await this.makeRequest(url, data);
 
     if (!response) return;
+      choose_product.style.display = "none";
+      cancel_choose_product.style.display = "block";
 
-    alert(JSON.stringify(response));
-
-              choose_product.style.display = "block";
-              cancel_choose_product.style.display = "none";
-
-
-
-                    this.drawListProducts(response["result"]);
-
+      this.drawListProducts(response["result"]);
 
   }
 
