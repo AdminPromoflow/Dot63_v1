@@ -90,6 +90,8 @@ class ClassGroup {
 
     if (!response) return;
 
+    alert(JSON.stringify(response));
+
     if (response.group_selected?.data?.[0]?.name === "Unassigned Group") {
       this.drawListGroups(response.data);
     } else {

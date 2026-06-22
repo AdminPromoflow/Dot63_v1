@@ -359,6 +359,7 @@ class Groups {
    public function getAllNames(): array {
      // 1) SKU requerido
      $sku = trim((string)$this->sku);
+
      if ($sku === '' || strlen($sku) > 50) {
        return ['success' => false, 'error' => 'SKU required/invalid'];
      }
@@ -383,9 +384,11 @@ class Groups {
        }
 
        $groupId = $product['group_id'] ?? null;
+
        if ($groupId === null) {
          return ['success' => false, 'error' => 'Product has no group assigned'];
        }
+
        $groupId = (int)$groupId;
 
        /* =========================
@@ -403,29 +406,41 @@ class Groups {
        if ($categoryId === false || $categoryId === null) {
          return ['success' => false, 'error' => 'Category not found for this group'];
        }
+
        $categoryId = (int)$categoryId;
 
        /* =========================
-          3) category_id -> ALL groups in that category
-          (solo group_id y name)
+          3) category_id -> ALL groups + products_count
           ========================= */
        $stmt = $pdo->prepare("
          SELECT
            g.group_id,
-           g.name
+           g.name,
+           COUNT(p.product_id) AS products_count
          FROM `groups` g
+         LEFT JOIN products p
+           ON p.group_id = g.group_id
          WHERE g.category_id = :category_id
            AND g.approved IN (1, TRUE)
+         GROUP BY g.group_id, g.name
          ORDER BY g.group_id ASC
        ");
+
        $stmt->execute([':category_id' => $categoryId]);
        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-       return ['success' => true, 'data' => $rows];
+       return [
+         'success' => true,
+         'data' => $rows
+       ];
 
      } catch (PDOException $e) {
        error_log('getAllNames groups error: ' . $e->getMessage());
-       return ['success' => false, 'error' => 'DB error'];
+
+       return [
+         'success' => false,
+         'error' => 'DB error'
+       ];
      }
    }
 
