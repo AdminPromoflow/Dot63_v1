@@ -85,18 +85,18 @@ class ClassProductList {
     if (!response) return;
    alert(response["result"][0]["SKU"]);
 
-    //
-    // choose_product.style.display = "block";
-    // cancel_choose_product.style.display = "none";
-    //
-    //
-    // for (var i = 0; i < response["result"].length; i++) {
-    //   if (response["result"][i]["SKU"] == sku) {
-    //
-    //       this.drawListProducts([response["result"][i]]);
-    //   }
-    //
-    // }
+
+    choose_product.style.display = "block";
+    cancel_choose_product.style.display = "none";
+
+
+    for (var i = 0; i < response["result"].length; i++) {
+      if (response["result"][i]["SKU"] == sku) {
+
+          this.drawListProducts([response["result"][i]]);
+      }
+
+    }
 
   }
 
@@ -127,7 +127,7 @@ class ClassProductList {
 
 
       for (var i = 0; i < response["result"].length; i++) {
-        alert(response["result"][i]["SKU"] + "  " + sku);
+      //  alert(response["result"][i]["SKU"] + "  " + sku);
         if (response["result"][i]["SKU"] == sku) {
 
             this.drawListProducts([response["result"][i]]);
