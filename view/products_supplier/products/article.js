@@ -215,7 +215,6 @@ class ProductsSupplierClass {
           </td>
         </tr>
       `;
-      // Actualizamos contador
       this.applyFilters();
       return;
     }
@@ -223,26 +222,24 @@ class ProductsSupplierClass {
     for (let i = 0; i < list.length; i++) {
       const p = list[i] || {};
       const sku = (p.sku || "").toString();
-      alert(sku);
-
       const skuVariation = (p.first_variation_sku || "").toString();
       const name = (p.product_name || "Untitled product").toString();
       const category = (p.category_name || "—").toString();
       const statusRaw = (p.status || "draft").toString().toLowerCase();
 
       const statusMap = {
-        active:   { text: "Active",   cls: "badge-success" },
-        draft:    { text: "Draft",    cls: "badge-warning" },
+        active: { text: "Active", cls: "badge-success" },
+        draft: { text: "Draft", cls: "badge-warning" },
         inactive: { text: "Inactive", cls: "badge-info" },
         archived: { text: "Archived", cls: "badge-info" },
       };
-      const st =
-        statusMap[statusRaw] || { text: statusRaw || "Draft", cls: "badge-warning" };
 
-      // ✅ URL exacta como pediste, con sku + sku_variation
+      const st = statusMap[statusRaw] || {
+        text: statusRaw || "Draft",
+        cls: "badge-warning"
+      };
 
-      const href = `../../view/category/index.php?sku=${encodeURIComponent(sku)}
-      &sku_variation=${encodeURIComponent(skuVariation)}`;
+      const href = `../../view/category/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(skuVariation)}&mode=edit`;
 
       tbody.innerHTML += `
         <tr class="row-link"
@@ -269,10 +266,8 @@ class ProductsSupplierClass {
       `;
     }
 
-    // Después de crear filas, aplicamos sort + filtros según el estado actual del form
     this.applySort();
   }
-
   // =========================
   //   Helpers de escape
   // =========================
