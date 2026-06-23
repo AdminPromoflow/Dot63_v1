@@ -235,7 +235,7 @@ class PreviewLogic {
            }
          }, 500); // Pequeña espera para que se rendericen los botones
 
-         loader.hide();
+         //loader.hide();
 
        }
 
@@ -928,7 +928,7 @@ class PreviewLogic {
 
            if (updateVariationPrice) {
              this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
-        //     loader.hide();
+        //     //loader.hide();
 
            }
 
