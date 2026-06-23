@@ -845,7 +845,7 @@ class PreviewLogic {
   renderPrices(pricesOnlyOfType = [], typeVariation) {
 
   //  alert(JSON.stringify(pricesOnlyOfType) + " " + JSON.stringify(typeVariation));
-    loader.show();
+  //  loader.show();
 
 
   //  alert("Acá se muestran los datos de price" + JSON.stringify(pricesOnlyOfType));
