@@ -59,20 +59,14 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        const data = JSON.parse(text);
+         alert(text);
 
-        if (data.success) {
-          alert(
-            "The product has been sent for approval.\n\n" +
-            "Please wait while our team reviews and approves the product internally.\n\n" +
-            "You will receive an email notification once the approval process has been completed."
-          );
-        } else {
-          alert(data.message || "The product could not be sent for approval.");
-        }
+        const json = JSON.parse(text);
+
       })
       .catch((error) => {
-        console.error("Error:", error);
+        console.error("Error fetching preview:", error);
+        // alert("Error loading preview data.");
       });
   }
 
