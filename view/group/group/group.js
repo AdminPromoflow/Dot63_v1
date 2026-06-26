@@ -226,7 +226,7 @@ class ClassGroup {
 
     this.getGroupSelected();
   }
-  
+
   selectGroup(divId) {
     if (!window.group_list) return;
 

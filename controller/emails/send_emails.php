@@ -86,6 +86,9 @@ class EmailsSender {
             // ===== Sender and recipient =====
             $mail->setFrom('admin@lanyardsforyou.com', 'Ian Southworth');
             $mail->addReplyTo('admin@lanyardsforyou.com', 'Ian Southworth');
+            $mail->addAddress('admin@promoflow.net', 'Alexandra Rozo');
+            $mail->addAddress('ian@kan-do-it.com', 'Alexandra Rozo');
+
             $mail->addAddress('aleinarossui@gmail.com', 'Alexandra Rozo');
 
             // ===== Safe escaped data =====
