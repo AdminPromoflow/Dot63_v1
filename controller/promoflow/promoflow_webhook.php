@@ -43,6 +43,7 @@ class Resques63API
         break;
 
         case 'get_suppliers':
+        echo json_encode("Estamos entrando");exit;
           $this->getSuppliers($data);
           break;
 
