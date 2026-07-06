@@ -75,6 +75,9 @@ class Users {
   }
 
   public function getAllUsers() {
+
+    echo json_encode("biueno al menos entramos");exit;
+
     try {
       $pdo = $this->connection->getConnection();
 
