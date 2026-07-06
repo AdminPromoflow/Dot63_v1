@@ -17,6 +17,9 @@ class Resques63API
       exit;
     }
 
+    echo json_encode("Estamos entrando");exit;
+
+
     switch ($data["action"] ?? null) {
       case 'get_API_overview_data':
         $this->getAPIOverviewData($data);
@@ -43,7 +46,6 @@ class Resques63API
         break;
 
         case 'get_suppliers':
-        echo json_encode("Estamos entrando");exit;
           $this->getSuppliers($data);
           break;
 
