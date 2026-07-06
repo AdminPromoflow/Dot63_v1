@@ -42,6 +42,10 @@ class Resques63API
         $this->getVariationPrices($data);
         break;
 
+        case 'get_suppliers':
+          $this->getSuppliers($data);
+          break;
+
       default:
         echo json_encode([
           'success' => false,
@@ -50,6 +54,17 @@ class Resques63API
         break;
     }
 
+    exit;
+  }
+
+  private function getSuppliers($data)
+  {
+    $connection = new Database();
+    $user = new Users($connection);
+
+    $result = $user->getAllUsers();
+
+    echo json_encode($result);
     exit;
   }
 

@@ -74,6 +74,43 @@ class Users {
       $this->postcode = $postcode;
   }
 
+  public function getAllUsers() {
+    try {
+      $pdo = $this->connection->getConnection();
+
+      $sql = $pdo->prepare("
+        SELECT
+          `idSupplier`,
+          `contact_name`,
+          `email`,
+          `company_name`,
+          `country`,
+          `city`
+        FROM `suppliers`
+        ORDER BY `contact_name` ASC
+      ");
+
+      $sql->execute();
+
+      $rows = $sql->fetchAll(PDO::FETCH_ASSOC);
+
+      $this->connection->closeConnection();
+
+      return [
+        'response' => true,
+        'result' => $rows
+      ];
+
+    } catch (PDOException $e) {
+      error_log('getAllUsers error: ' . $e->getMessage());
+
+      return [
+        'response' => false,
+        'error' => 'DB error'
+      ];
+    }
+  }
+
   public function getPasswordUserByEmail() {
     if (empty($this->email)) {
       return null; // Asegúrate de llamar antes a setEmail($email)
@@ -262,6 +299,6 @@ class Users {
     }
     }
 
-  
+
 }
 ?>
