@@ -59,6 +59,7 @@ class Resques63API
 
   private function getSuppliers($data)
   {
+    echo json_encode("biueno al menos entramos");exit;
     $connection = new Database();
     $user = new Users($connection);
 
