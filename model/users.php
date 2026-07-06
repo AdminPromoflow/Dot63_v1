@@ -75,20 +75,14 @@ class Users {
   }
 
   public function getAllUsers() {
-
-    echo json_encode("biueno al menos entramos");exit;
-
     try {
       $pdo = $this->connection->getConnection();
 
       $sql = $pdo->prepare("
         SELECT
-          `idSupplier`,
+          `supplier_id`,
           `contact_name`,
-          `email`,
-          `company_name`,
-          `country`,
-          `city`
+          `email`
         FROM `suppliers`
         ORDER BY `contact_name` ASC
       ");
@@ -96,8 +90,6 @@ class Users {
       $sql->execute();
 
       $rows = $sql->fetchAll(PDO::FETCH_ASSOC);
-
-      $this->connection->closeConnection();
 
       return [
         'response' => true,
