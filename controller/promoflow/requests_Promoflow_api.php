@@ -1,5 +1,8 @@
 <?php
+
+include "../../controller/config/database.php";
 include "../../model/users.php";
+
 class ResquesPromoflowAPI
 {
     private $dot63WebhookUrl = "https://promoflow.net/controller/dot63/promoflow_webhook.php";
@@ -136,12 +139,19 @@ class ResquesPromoflowAPI
 
     private function getCases($data)
     {
-
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
 
         $email = $_SESSION['email'] ?? null;
+
+        if (!$email) {
+            echo json_encode([
+                "response" => false,
+                "message" => "No email found in session."
+            ]);
+            exit;
+        }
 
         $connection = new Database();
 
@@ -149,6 +159,14 @@ class ResquesPromoflowAPI
         $user->setEmail($email);
 
         $user_id = $user->getIdSupplierByEmail();
+
+        if (!$user_id) {
+            echo json_encode([
+                "response" => false,
+                "message" => "Supplier user not found."
+            ]);
+            exit;
+        }
 
         $payload = [
             "action" => "get_cases",
@@ -191,20 +209,7 @@ class ResquesPromoflowAPI
     }
 }
 
-$payload = json_decode(file_get_contents("php://input"), true);
-
-if (is_array($payload)) {
-    $apiHandler = new ResquesPromoflowAPI();
-    $apiHandler->handleResques63API();
-} else {
-    header('Content-Type: application/json; charset=utf-8');
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'No valid payload received.'
-    ]);
-
-    exit;
-}
+$apiHandler = new ResquesPromoflowAPI();
+$apiHandler->handleResques63API();
 
 ?>
