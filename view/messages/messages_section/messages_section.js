@@ -313,6 +313,7 @@ class CreateCaseModal {
   }
 
   async readCases() {
+    alert("entre");
     const data = {
       action: "get_cases"
     };
