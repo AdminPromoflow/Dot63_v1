@@ -322,6 +322,8 @@ class CreateCaseModal {
 
     if (!response) return;
 
+    alert(JSON.stringify(response));
+
     if (response.response === true) {
       this.drawCases(response.result || []);
     }

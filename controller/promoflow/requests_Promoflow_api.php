@@ -91,6 +91,7 @@ class ResquesPromoflowAPI
     }
     private function getCases($data)
     {
+      echo json_encode("buenas");exit;
         $payload = [
             "action" => "get_cases"
         ];
