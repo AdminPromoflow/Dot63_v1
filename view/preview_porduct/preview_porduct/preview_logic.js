@@ -2,7 +2,7 @@
 
 class PreviewLogic {
   constructor() {
-    console.log("hihihihih");
+    alert("hihihihih");
 
     // Initialise the product data once the DOM is ready.
     if (document.readyState === "loading") {
