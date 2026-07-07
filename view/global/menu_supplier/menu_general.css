@@ -1,13 +1,10 @@
 :root{
-  /* ===== THEME "OVERVIEW" (mismo look que tu preview) ===== */
-  --ov-bg: #2F4560;                       /* rgb(47,69,96) */
+  /* ===== THEME "OVERVIEW" ===== */
+  --ov-bg: #2F4560;
   --ov-panel: rgba(255,255,255,.06);
   --ov-border: rgba(255,255,255,.12);
   --ov-text: rgba(255,255,255,.92);
   --ov-muted: rgba(255,255,255,.72);
-
-  /* ✅ Color que combina perfecto con #2F4560 para header/nav */
-  --ov-header: #1F3551;                   /* más profundo, elegante */
 
   --ov-shadow: 0 16px 40px rgba(0,0,0,.28);
   --radius: 18px;
@@ -20,26 +17,35 @@
   --text: var(--ov-text);
   --muted: var(--ov-muted);
   --border: var(--ov-border);
-  --brand: var(--ov-header);              /* antes: verde */
+  --brand: #1F3551;
   --brand-soft: rgba(0,0,0,.14);
   --shadow-soft: var(--ov-shadow);
   --price: rgba(255,255,255,.95);
-  --buy: var(--ov-header);
+  --buy: #1F3551;
   --buy-hover: #192f49;
-
-  /* altura aprox. del header para compensar el contenido */
-  --header-height: 64px;
 }
 
 /* ===== Reset mínimo + body ===== */
+
 *,
 *::before,
-*::after{ box-sizing: border-box; }
+*::after{
+  box-sizing: border-box;
+}
 
-ul{ margin: 0; padding: 0; list-style: none; }
-a{ text-decoration: none; color: inherit; }
+ul{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
-html, body{
+a{
+  text-decoration: none;
+  color: inherit;
+}
+
+html,
+body{
   margin: 0;
   padding: 0;
 }
@@ -48,176 +54,4 @@ body{
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
-  /* deja espacio para el header fijo, para que no se tape el contenido */
-  padding-top: var(--header-height);
-}
-
-
-/* Marca */
-.brand{
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  font-weight: 700;
-  font-size: 1.25rem;
-}
-.brand-text{
-  letter-spacing: .5px;
-  color: rgba(255,255,255,.92);
-}
-.brand-logo{
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  display: block;
-}
-
-/* Botón hamburguesa */
-.burger{
-  width: 36px;
-  height: 28px;
-  display: inline-block;
-  position: relative;
-  cursor: pointer;
-  z-index: 1010;
-}
-.burger::before,
-.burger::after{
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(255,255,255,.92);        /* ✅ blanco suave */
-  transition: transform .25s ease, top .25s ease, opacity .25s ease;
-}
-.burger::before{ top: 6px; }
-.burger::after{ top: 19px; }
-
-/* línea central */
-.burger{
-  background: linear-gradient(rgba(255,255,255,.92) 0 0) center 50%/100% 3px no-repeat;
-}
-
-/* Navegación: móvil -> panel deslizante */
-.nav{
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-
-  width: min(80vw, 300px);
-  transform: translateX(100%);
-  transition: transform .3s ease;
-
-  background: var(--brand);                /* ✅ mismo azul del header */
-  border-left: 1px solid var(--border);
-  padding: 5rem 1.25rem 2rem;
-
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-
-  z-index: 1005;
-}
-
-.nav-list{
-  display: flex;
-  flex-direction: column;
-  gap: .25rem;
-  width: 100%;
-}
-
-.nav-list a{
-  display: block;
-  padding: .9rem 1rem;
-  color: rgba(0,0,0,.92);
-  border-radius: 10px;
-  transition: background .2s ease, transform .2s ease, filter .2s ease;
-}
-.nav-list a:hover{
-  background: rgba(255,255,255,.08);
-  transform: translateX(2px);
-  filter: brightness(1.06);
-}
-
-.nav-list .cta{
-  background: rgba(255,255,255,.92);
-  color: rgba(0,0,0,.7);
-  font-weight: 650;
-}
-.nav-list .cta:hover{
-  background: #ffffff;
-}
-
-/* Abrir menú cuando el checkbox está marcado */
-.nav-toggle:checked ~ .nav{
-  transform: translateX(0);
-}
-
-/* Animación hamburguesa -> X */
-.nav-toggle:checked + .burger{
-  background: none;
-}
-.nav-toggle:checked + .burger::before{
-  top: 50%;
-  transform: translateY(-50%) rotate(45deg);
-}
-.nav-toggle:checked + .burger::after{
-  top: 50%;
-  transform: translateY(-50%) rotate(-45deg);
-}
-
-/* ====== Tablet y Desktop ====== */
-@media (min-width: 768px){
-  body{
-    padding-top: calc(var(--header-height) - 4px);
-  }
-
-  .site-header{
-    padding: 0.75rem 2rem;
-  }
-
-  .burger{
-    display: none;
-  }
-
-  .nav{
-    position: static;
-    transform: none;
-    background: transparent;
-    border-left: none;
-    padding: 0;
-    width: auto;
-    height: auto;
-  }
-
-  .nav-list{
-    flex-direction: row;
-    align-items: center;
-    gap: .75rem;
-  }
-
-  .nav-list a{
-    color: rgba(255,255,255,.92);
-    padding: .5rem .9rem;
-    border-radius: 999px;
-  }
-
-  .nav-list a:hover{
-    background: rgba(0,0,0,.22);           /* ✅ hover tipo overview */
-    transform: none;
-  }
-
-  .nav-list .cta{
-    background: rgba(255,255,255,.92);
-    color: rgba(0,0,0,.7);
-    border-radius: 999px;
-    padding-inline: 1.25rem;
-  }
-  .nav-list .cta:hover{
-    background: #ffffff;
-  }
 }
