@@ -1,7 +1,5 @@
 <?php
-echo json_encode(["buenas"]);exit;
-
-include "../../model/users.php"
+include "../../model/users.php";
 class ResquesPromoflowAPI
 {
     private $dot63WebhookUrl = "https://promoflow.net/controller/dot63/promoflow_webhook.php";
