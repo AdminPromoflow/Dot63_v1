@@ -27,6 +27,7 @@ class ResquesPromoflowAPI
             case 'get_cases':
                 $this->getCases($data);
                 break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -89,16 +90,18 @@ class ResquesPromoflowAPI
 
         $this->sendToDotPromoflow($payload);
     }
+
     private function getCases($data)
     {
-      echo json_encode("buenas");exit;
+        echo json_encode("buenas");
+        exit;
+
         $payload = [
             "action" => "get_cases"
         ];
 
         $this->sendToDotPromoflow($payload);
     }
-
 }
 
 $payload = json_decode(file_get_contents("php://input"), true);
