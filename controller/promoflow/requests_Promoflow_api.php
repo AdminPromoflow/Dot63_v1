@@ -1,4 +1,5 @@
 <?php
+echo json_encode(["ok"=> true]);exit;
 
 include "../../model/users.php"
 class ResquesPromoflowAPI
@@ -137,7 +138,6 @@ class ResquesPromoflowAPI
 
     private function getCases($data)
     {
-      echo json_encode(["ok"=> true]);exit;
 
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
