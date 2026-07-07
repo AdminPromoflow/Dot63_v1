@@ -2,7 +2,6 @@
 
 class PreviewGallery {
   constructor(options = {}) {
-    alert("jdjdjdj");
     this.rootId = options.rootId || "wrap-images-group";
     this.thumbsId = options.thumbsId || "sp_thumbs";
     this.intervalMs = Number(options.intervalMs || 5000);
