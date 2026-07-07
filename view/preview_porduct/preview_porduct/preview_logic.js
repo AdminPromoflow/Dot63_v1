@@ -122,7 +122,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        // alert("1. " + text);
+         alert("1. " + text);
 
         const json = JSON.parse(text);
 
