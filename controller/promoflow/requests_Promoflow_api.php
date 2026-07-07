@@ -28,6 +28,18 @@ class ResquesPromoflowAPI
                 $this->getCases($data);
                 break;
 
+            case 'create_case':
+                $this->createCase($data);
+                break;
+
+            case 'send_message':
+                $this->sendMessage($data);
+                break;
+
+            case 'get_suppliers':
+                $this->getSuppliers($data);
+                break;
+
             default:
                 echo json_encode([
                     'success' => false,
@@ -85,7 +97,8 @@ class ResquesPromoflowAPI
     private function getCasesAndMessages($data)
     {
         $payload = [
-            "action" => "get_cases_and_messages"
+            "action" => "get_cases_and_messages",
+            "caseId" => $data["caseId"] ?? null
         ];
 
         $this->sendToDotPromoflow($payload);
@@ -93,9 +106,40 @@ class ResquesPromoflowAPI
 
     private function getCases($data)
     {
-        
         $payload = [
             "action" => "get_cases"
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
+
+    private function createCase($data)
+    {
+        $payload = [
+            "action" => "create_case",
+            "caseName" => $data["caseName"] ?? null,
+            "supplierId" => $data["supplierId"] ?? null
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
+
+    private function sendMessage($data)
+    {
+        $payload = [
+            "action" => "send_message",
+            "caseId" => $data["caseId"] ?? null,
+            "message" => $data["message"] ?? null
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
+
+    private function getSuppliers($data)
+    {
+        $payload = [
+            "action" => "get_suppliers",
+            "sku" => $data["sku"] ?? null
         ];
 
         $this->sendToDotPromoflow($payload);
