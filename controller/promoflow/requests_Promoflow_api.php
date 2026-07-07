@@ -137,6 +137,7 @@ class ResquesPromoflowAPI
 
     private function getCases($data)
     {
+      echo json_encode(["ok"=> true]);exit;
 
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
@@ -156,7 +157,6 @@ class ResquesPromoflowAPI
             "user_id" => $user_id
         ];
 
-        echo json_encode(["ok"=> true]);exit;
 
 
         $this->sendToDotPromoflow($payload);
