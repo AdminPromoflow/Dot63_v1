@@ -53,34 +53,6 @@ body{
   padding-top: var(--header-height);
 }
 
-/* ===== Header ===== */
-.site-header{
-  position: fixed;
-  top: 200px;
-  left: 0;
-  right: 0;
-
-  z-index: 1000;
-  background: #1F3551!important;                 /* ✅ ahora azul */
-  border-bottom: 1px solid var(--border);   /* ✅ look overview */
-  padding: 0.75rem 1.25rem;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  box-sizing: border-box;
-  overflow: hidden;
-
-  color: var(--ov-text);
-  box-shadow: 0 14px 32px rgba(0,0,0,.26);
-  transition: transform .25s ease;
-}
-
-/* Ocultar header cuando se hace scroll hacia abajo */
-.site-header--hidden{
-  transform: translateY(-100%);
-}
 
 /* Marca */
 .brand{
