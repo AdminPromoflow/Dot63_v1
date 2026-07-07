@@ -18,7 +18,7 @@
 </head>
 
 <body class="body_directory">
-  <?php include "../../view/global/menu/menu.php"; ?>
+  <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/messages/messages_section/messages_section.php"; ?>
   <?php //include "../../view/directory/section_sidebar_navigation/section_sidebar_navigation.php" ?>
 </body>
