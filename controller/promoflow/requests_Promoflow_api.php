@@ -1,165 +1,131 @@
 <?php
 
-class ResquesPromoflowAPI
+class PromoflowWebhook
 {
-    private $dot63WebhookUrl = "https://promoflow.net/controller/dot63/promoflow_webhook.php";
+  public function handleResques()
+  {
+    header('Content-Type: application/json; charset=utf-8');
 
-    public function handleResques63API()
-    {
-        header('Content-Type: application/json; charset=utf-8');
+    $input = file_get_contents('php://input');
+    $data  = json_decode($input, true);
 
-        $input = file_get_contents('php://input');
-        $data  = json_decode($input, true);
-
-        if (!is_array($data)) {
-            echo json_encode([
-                'success' => false,
-                'error' => 'Invalid JSON payload.'
-            ]);
-            exit;
-        }
-
-        switch ($data["action"] ?? null) {
-            case 'get_cases_and_messages':
-                $this->getCasesAndMessages($data);
-                break;
-
-            case 'get_cases':
-                $this->getCases($data);
-                break;
-
-            case 'create_case':
-                $this->createCase($data);
-                break;
-
-            case 'send_message':
-                $this->sendMessage($data);
-                break;
-
-            case 'get_suppliers':
-                $this->getSuppliers($data);
-                break;
-
-            default:
-                echo json_encode([
-                    'success' => false,
-                    'error' => 'Unsupported action.'
-                ]);
-                break;
-        }
-
-        exit;
+    if (!is_array($data)) {
+      echo json_encode([
+        'success' => false,
+        'error' => 'Invalid JSON payload.'
+      ]);
+      exit;
     }
 
-    public function sendToDotPromoflow($payload)
-    {
-        $ch = curl_init($this->dot63WebhookUrl);
+    switch ($data["action"] ?? null) {
+      case 'get_cases_and_messages':
+        $this->getCasesAndMessages($data);
+        break;
 
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json; charset=utf-8',
-            ],
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_TIMEOUT => 20,
+      case 'get_cases':
+        $this->getCases($data);
+        break;
+
+      case 'create_case':
+        $this->createCase($data);
+        break;
+
+      case 'send_message':
+        $this->sendMessage($data);
+        break;
+
+      case 'get_suppliers':
+        $this->getSuppliers($data);
+        break;
+
+      default:
+        echo json_encode([
+          'success' => false,
+          'error' => 'Unsupported action.'
         ]);
-
-        $response = curl_exec($ch);
-        $curlError = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        curl_close($ch);
-
-        if ($response === false || !empty($curlError)) {
-            echo json_encode([
-                'success' => false,
-                'error' => 'Could not connect to DOT63 API.',
-                'curl_error' => $curlError
-            ]);
-            exit;
-        }
-
-        if ($httpCode < 200 || $httpCode >= 300) {
-            echo json_encode([
-                'success' => false,
-                'error' => 'DOT63 API returned an invalid HTTP response.',
-                'http_code' => $httpCode,
-                'response' => $response
-            ]);
-            exit;
-        }
-
-        echo $response;
-        exit;
+        break;
     }
 
-    private function getCasesAndMessages($data)
-    {
-        $payload = [
-            "action" => "get_cases_and_messages",
-            "caseId" => $data["caseId"] ?? null
-        ];
+    exit;
+  }
 
-        $this->sendToDotPromoflow($payload);
-    }
+  private function getCasesAndMessages($data)
+  {
+    echo json_encode([
+      "response" => true,
+      "message" => "hola Cases and Messages",
+      "data_received" => $data
+    ]);
+    exit;
+  }
 
-    private function getCases($data)
-    {
-        $payload = [
-            "action" => "get_cases"
-        ];
+  private function getCases($data)
+  {
+    echo json_encode([
+      "response" => true,
+      "message" => "hola solo Cases",
+      "data_received" => $data
+    ]);
+    exit;
+  }
 
-        $this->sendToDotPromoflow($payload);
-    }
+  private function createCase($data)
+  {
+    echo json_encode([
+      "response" => true,
+      "message" => "hola Create Case",
+      "data_received" => $data
+    ]);
+    exit;
+  }
 
-    private function createCase($data)
-    {
-        $payload = [
-            "action" => "create_case",
-            "caseName" => $data["caseName"] ?? null,
-            "supplierId" => $data["supplierId"] ?? null
-        ];
+  private function sendMessage($data)
+  {
+    echo json_encode([
+      "response" => true,
+      "message" => "hola Send Message",
+      "data_received" => $data
+    ]);
+    exit;
+  }
 
-        $this->sendToDotPromoflow($payload);
-    }
-
-    private function sendMessage($data)
-    {
-        $payload = [
-            "action" => "send_message",
-            "caseId" => $data["caseId"] ?? null,
-            "message" => $data["message"] ?? null
-        ];
-
-        $this->sendToDotPromoflow($payload);
-    }
-
-    private function getSuppliers($data)
-    {
-        $payload = [
-            "action" => "get_suppliers",
-            "sku" => $data["sku"] ?? null
-        ];
-
-        $this->sendToDotPromoflow($payload);
-    }
+  private function getSuppliers($data)
+  {
+    echo json_encode([
+      "response" => true,
+      "message" => "hola Get Suppliers",
+      "data_received" => $data
+    ]);
+    exit;
+  }
 }
+
+include "../../controller/config/database.php";
+
+// include "../../model/products.php";
+// include "../../model/users.php";
+// include "../../model/categories.php";
+// include "../../model/groups.php";
+// include "../../model/variations.php";
+// include "../../model/prices.php";
+//
+// include "../../controller/products/variations.php";
+// include "../../controller/emails/emails_sender.php";
 
 $payload = json_decode(file_get_contents("php://input"), true);
 
 if (is_array($payload)) {
-    $apiHandler = new ResquesPromoflowAPI();
-    $apiHandler->handleResques63API();
+  $apiHandler = new PromoflowWebhook();
+  $apiHandler->handleResques();
 } else {
-    header('Content-Type: application/json; charset=utf-8');
+  header('Content-Type: application/json; charset=utf-8');
 
-    echo json_encode([
-        'success' => false,
-        'error' => 'No valid payload received.'
-    ]);
+  echo json_encode([
+    'success' => false,
+    'error' => 'No valid payload received.'
+  ]);
 
-    exit;
+  exit;
 }
 
 ?>
