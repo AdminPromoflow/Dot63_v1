@@ -510,10 +510,15 @@ class CreateCaseModal {
         throw new Error("Network error.");
       }
 
-      return await response.json();
+      const result = await response.json();
+
+      alert(JSON.stringify(result));
+
+      return result;
 
     } catch (error) {
       console.error("Error:", error);
+      alert("Error: " + error.message);
       return null;
     }
   }
