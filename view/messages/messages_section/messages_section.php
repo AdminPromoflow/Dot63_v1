@@ -19,9 +19,9 @@ $jsVLogic  = is_file($jsPathLogic)  ? filemtime($jsPathLogic)  : time();
       <p>Live conversation</p>
     </div>
 
-    <button id="open-create-case" class="msg-btn msg-btn-primary" type="button">
+    <!-- <button id="open-create-case" class="msg-btn msg-btn-primary" type="button">
       + Create Case
-    </button>
+    </button> -->
 
     <nav id="group_cases" class="msg-folders" aria-label="Conversations">
       <p class="msg-empty">Loading cases...</p>
@@ -108,9 +108,9 @@ $jsVLogic  = is_file($jsPathLogic)  ? filemtime($jsPathLogic)  : time();
           Cancel
         </button>
 
-        <button id="create_case_btn" class="msg-btn msg-btn-primary" type="submit">
+        <!-- <button id="create_case_btn" class="msg-btn msg-btn-primary" type="submit">
           Create Case
-        </button>
+        </button> -->
       </div>
 
     </form>

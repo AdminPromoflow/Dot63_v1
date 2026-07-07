@@ -228,9 +228,9 @@ class CreateCaseModal {
   }
 
   init() {
-    this.openButton?.addEventListener("click", () => {
-      this.openModal();
-    });
+    // this.openButton?.addEventListener("click", () => {
+    //   this.openModal();
+    // });
 
     this.closeButton?.addEventListener("click", () => {
       this.closeModal();

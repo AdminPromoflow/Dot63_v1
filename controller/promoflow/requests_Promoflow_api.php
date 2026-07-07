@@ -189,10 +189,23 @@ class ResquesPromoflowAPI
 
     private function sendMessage($data)
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        $email = $_SESSION['email'] ?? null;
+        $connection = new Database();
+
+        $user = new Users($connection);
+        $user->setEmail($email);
+
+        $user_id = $user->getIdSupplierByEmail();
+
         $payload = [
             "action" => "send_message",
             "caseId" => $data["caseId"] ?? null,
-            "message" => $data["message"] ?? null
+            "message" => $data["message"] ?? null,
+            "user_id" => $user_id
         ];
 
         $this->sendToDotPromoflow($payload);
