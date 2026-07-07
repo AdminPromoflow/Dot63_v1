@@ -212,7 +212,7 @@ class EmailsSender {
 
                     <div style="margin:18px 0;">
 
-                      <a href="{$promoflowUrl}"
+                      <a href="https://promoflow.net"
 
                          target="_blank"
 
