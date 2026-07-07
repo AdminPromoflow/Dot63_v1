@@ -2,6 +2,7 @@
 
 class PreviewLogic {
   constructor() {
+    alert("buenas");
     // Initialise the product data once the DOM is ready.
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => this.getDataProduct());
@@ -122,7 +123,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-         alert("1. " + text);
+         //alert("1. " + text);
 
         const json = JSON.parse(text);
 
