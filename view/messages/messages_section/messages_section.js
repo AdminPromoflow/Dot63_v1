@@ -184,7 +184,7 @@ class MessagesSection {
     }
 
     messages.forEach((messageItem) => {
-      const type = messageItem.sender_type === "admin" ? "mine" : "other";
+      const type = messageItem.sender_type === "supplier" ? "mine" : "other";
       this.addMessageToView(messageItem.message, type);
     });
 
