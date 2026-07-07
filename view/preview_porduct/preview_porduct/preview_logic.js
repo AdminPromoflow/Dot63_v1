@@ -64,6 +64,7 @@ class PreviewLogic {
          alert(text);
 
         const json = JSON.parse(text);
+        location.reload();
 
       })
       .catch((error) => {
