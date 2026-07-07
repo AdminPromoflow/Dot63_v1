@@ -266,7 +266,7 @@ class CreateCaseModal {
       caseId: caseId
     };
 
-    const url = "../../controller/messages/messages.php";
+    const url = "../../controller/promoflow/requests_Promoflow_api.php";
     const response = await this.makeRequest(url, data);
 
     if (!response) return;
