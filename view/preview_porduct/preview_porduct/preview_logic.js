@@ -2,6 +2,8 @@
 
 class PreviewLogic {
   constructor() {
+    alert("hihihihih");
+
     // Initialise the product data once the DOM is ready.
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => this.getDataProduct());
@@ -26,7 +28,6 @@ class PreviewLogic {
 
 
     backBtn.addEventListener("click", function(){
-      alert("hihihihih");
       previewLogic.backBtn();
 
     })
