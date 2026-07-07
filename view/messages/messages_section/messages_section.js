@@ -499,7 +499,6 @@ class CreateCaseModal {
   }
 
   async makeRequest(url, data) {
-    alert("entre 2");
 
     try {
       const response = await fetch(url, {
