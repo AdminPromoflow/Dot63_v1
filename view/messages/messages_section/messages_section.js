@@ -319,7 +319,6 @@ class CreateCaseModal {
 
     const url = "../../controller/promoflow/requests_Promoflow_api.php";
     const response = await this.makeRequest(url, data);
-    alert("entre");
 
     if (!response) return;
 
@@ -500,6 +499,8 @@ class CreateCaseModal {
   }
 
   async makeRequest(url, data) {
+    alert("entre 2");
+
     try {
       const response = await fetch(url, {
         method: "POST",
