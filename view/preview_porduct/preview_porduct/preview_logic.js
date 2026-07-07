@@ -124,7 +124,6 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-         alert("1. " + text);
 
         const json = JSON.parse(text);
 
@@ -137,6 +136,16 @@ class PreviewLogic {
         const product_name = product_details.product_name ?? "";
         const descriptive_tagline = product_details.descriptive_tagline ?? "";
         const description = product_details.description ?? "";
+
+
+        const productDetails = json.find(item => item.product_details)?.product_details;
+
+        const status = productDetails?.status;
+
+        if (status === "2") {
+          publishBtn.style.display = "none";
+          // Aquí haces lo que necesites
+        }
 
         this.renderBreadcrumb(category_name, group_name);
         this.renderSectionLabel(category_name);
