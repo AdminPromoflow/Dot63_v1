@@ -322,6 +322,8 @@ class CreateCaseModal {
 
     if (!response) return;
 
+    alert(JSON.stringify(response));
+
     if (response.response === true) {
       this.drawCases(response.result || []);
     }
@@ -512,7 +514,7 @@ class CreateCaseModal {
 
       const result = await response.json();
 
-      alert(JSON.stringify(result));
+    //  alert(JSON.stringify(result));
 
       return result;
 
