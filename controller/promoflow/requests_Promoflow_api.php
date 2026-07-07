@@ -137,6 +137,7 @@ class ResquesPromoflowAPI
 
     private function getCases($data)
     {
+      echo json_encode("buenas");exit;
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
