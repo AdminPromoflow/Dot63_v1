@@ -112,6 +112,7 @@ class MessagesSection {
     const response = await this.makeRequest(url, data);
 
     if (!response) return;
+    console.log(JSON.stringify(response));
 
     // alert(JSON.stringify(response));
 
