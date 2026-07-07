@@ -3,9 +3,9 @@
 // Product Preview — Asset Versioning + Markup
 // -----------------------------------------------------------------------------
 
-$cssPath = '../../view/preview_product_customers/preview_porduct/preview.css';
-$jsPath  = '../../view/preview_product_customers/preview_porduct/preview.js';
-$jsPath2 = '../../view/preview_product_customers/preview_porduct/preview_logic.js';
+$cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
+$jsPath  = '../../view/preview_porduct/preview_porduct/preview.js';
+$jsPath2 = '../../view/preview_porduct/preview_porduct/preview_logic.js';
 
 $cssTime = @filemtime($cssPath) ?: time();
 $jsTime  = @filemtime($jsPath)  ?: time();
