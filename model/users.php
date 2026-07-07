@@ -133,6 +133,38 @@ class Users {
     }
   }
 
+  public function getIdSupplierByEmail() {
+    if (empty($this->email)) {
+      return null; // Asegúrate de llamar antes a setEmail($email)
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      $sql = $pdo->prepare("
+        SELECT `supplier_id`
+        FROM `suppliers`
+        WHERE `email` = :email
+        LIMIT 1
+      ");
+
+      $sql->bindParam(':email', $this->email, PDO::PARAM_STR);
+      $sql->execute();
+
+      $row = $sql->fetch(PDO::FETCH_ASSOC);
+
+      if (!$row || empty($row['supplier_id'])) {
+        return null;
+      }
+
+      return $row['supplier_id'];
+
+    } catch (PDOException $e) {
+      error_log('getIdSupplierByEmail error (' . $this->email . '): ' . $e->getMessage());
+      return null;
+    }
+  }
+
    public function createUser() {
      try {
        // Si ya existe, responde y corta

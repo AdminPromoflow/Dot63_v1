@@ -1,131 +1,210 @@
 <?php
 
-class PromoflowWebhook
+include "../../model/users.php"
+class ResquesPromoflowAPI
 {
-  public function handleResques()
-  {
-    header('Content-Type: application/json; charset=utf-8');
+    private $dot63WebhookUrl = "https://promoflow.net/controller/dot63/promoflow_webhook.php";
 
-    $input = file_get_contents('php://input');
-    $data  = json_decode($input, true);
+    public function handleResques63API()
+    {
+        header('Content-Type: application/json; charset=utf-8');
 
-    if (!is_array($data)) {
-      echo json_encode([
-        'success' => false,
-        'error' => 'Invalid JSON payload.'
-      ]);
-      exit;
+        $input = file_get_contents('php://input');
+        $data  = json_decode($input, true);
+
+        if (!is_array($data)) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Invalid JSON payload.'
+            ]);
+            exit;
+        }
+
+        switch ($data["action"] ?? null) {
+            case 'get_cases_and_messages':
+                $this->getCasesAndMessages($data);
+                break;
+
+            case 'get_cases':
+                $this->getCases($data);
+                break;
+
+            case 'create_case':
+                $this->createCase($data);
+                break;
+
+            case 'send_message':
+                $this->sendMessage($data);
+                break;
+
+            case 'get_suppliers':
+                $this->getSuppliers($data);
+                break;
+
+            default:
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Unsupported action.'
+                ]);
+                break;
+        }
+
+        exit;
     }
 
-    switch ($data["action"] ?? null) {
-      case 'get_cases_and_messages':
-        $this->getCasesAndMessages($data);
-        break;
+    public function sendToDotPromoflow($payload)
+    {
+        $ch = curl_init($this->dot63WebhookUrl);
 
-      case 'get_cases':
-        $this->getCases($data);
-        break;
-
-      case 'create_case':
-        $this->createCase($data);
-        break;
-
-      case 'send_message':
-        $this->sendMessage($data);
-        break;
-
-      case 'get_suppliers':
-        $this->getSuppliers($data);
-        break;
-
-      default:
-        echo json_encode([
-          'success' => false,
-          'error' => 'Unsupported action.'
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json; charset=utf-8',
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_TIMEOUT => 20,
         ]);
-        break;
+
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        curl_close($ch);
+
+        if ($response === false || !empty($curlError)) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Could not connect to DOT63 API.',
+                'curl_error' => $curlError
+            ]);
+            exit;
+        }
+
+        if ($httpCode < 200 || $httpCode >= 300) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'DOT63 API returned an invalid HTTP response.',
+                'http_code' => $httpCode,
+                'response' => $response
+            ]);
+            exit;
+        }
+
+        echo $response;
+        exit;
     }
 
-    exit;
-  }
+    private function getCasesAndMessages($data)
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
 
-  private function getCasesAndMessages($data)
-  {
-    echo json_encode([
-      "response" => true,
-      "message" => "hola Cases and Messages",
-      "data_received" => $data
-    ]);
-    exit;
-  }
+        $email = $_SESSION['email'] ?? null;
 
-  private function getCases($data)
-  {
-    echo json_encode([
-      "response" => true,
-      "message" => "hola solo Cases",
-      "data_received" => $data
-    ]);
-    exit;
-  }
+        if (!$email) {
+            echo json_encode([
+                "response" => false,
+                "message" => "No email found in session."
+            ]);
+            exit;
+        }
 
-  private function createCase($data)
-  {
-    echo json_encode([
-      "response" => true,
-      "message" => "hola Create Case",
-      "data_received" => $data
-    ]);
-    exit;
-  }
+        $connection = new Database();
 
-  private function sendMessage($data)
-  {
-    echo json_encode([
-      "response" => true,
-      "message" => "hola Send Message",
-      "data_received" => $data
-    ]);
-    exit;
-  }
+        $user = new Users($connection);
+        $user->setEmail($email);
 
-  private function getSuppliers($data)
-  {
-    echo json_encode([
-      "response" => true,
-      "message" => "hola Get Suppliers",
-      "data_received" => $data
-    ]);
-    exit;
-  }
+        $user_id = $user->getIdSupplierByEmail();
+
+        if (!$user_id) {
+            echo json_encode([
+                "response" => false,
+                "message" => "Supplier user not found."
+            ]);
+            exit;
+        }
+
+        $payload = [
+            "action" => "get_cases_and_messages",
+            "caseId" => $data["caseId"] ?? null,
+            "user_id" => $user_id
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
+
+    private function getCases($data)
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        $email = $_SESSION['email'] ?? null;
+
+        $connection = new Database();
+
+        $user = new Users($connection);
+        $user->setEmail($email);
+
+        $user_id = $user->getIdSupplierByEmail();
+
+        $payload = [
+            "action" => "get_cases",
+            "user_id" => $user_id
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
+
+    private function createCase($data)
+    {
+        $payload = [
+            "action" => "create_case",
+            "caseName" => $data["caseName"] ?? null,
+            "supplierId" => $data["supplierId"] ?? null
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
+
+    private function sendMessage($data)
+    {
+        $payload = [
+            "action" => "send_message",
+            "caseId" => $data["caseId"] ?? null,
+            "message" => $data["message"] ?? null
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
+
+    private function getSuppliers($data)
+    {
+        $payload = [
+            "action" => "get_suppliers",
+            "sku" => $data["sku"] ?? null
+        ];
+
+        $this->sendToDotPromoflow($payload);
+    }
 }
-
-include "../../controller/config/database.php";
-
-// include "../../model/products.php";
-// include "../../model/users.php";
-// include "../../model/categories.php";
-// include "../../model/groups.php";
-// include "../../model/variations.php";
-// include "../../model/prices.php";
-//
-// include "../../controller/products/variations.php";
-// include "../../controller/emails/emails_sender.php";
 
 $payload = json_decode(file_get_contents("php://input"), true);
 
 if (is_array($payload)) {
-  $apiHandler = new PromoflowWebhook();
-  $apiHandler->handleResques();
+    $apiHandler = new ResquesPromoflowAPI();
+    $apiHandler->handleResques63API();
 } else {
-  header('Content-Type: application/json; charset=utf-8');
+    header('Content-Type: application/json; charset=utf-8');
 
-  echo json_encode([
-    'success' => false,
-    'error' => 'No valid payload received.'
-  ]);
+    echo json_encode([
+        'success' => false,
+        'error' => 'No valid payload received.'
+    ]);
 
-  exit;
+    exit;
 }
 
 ?>
