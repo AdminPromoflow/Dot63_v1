@@ -1,5 +1,4 @@
 <?php
-echo json_encode(["ok"=> true]);exit;
 
 include "../../model/users.php"
 class ResquesPromoflowAPI
@@ -156,6 +155,9 @@ class ResquesPromoflowAPI
             "action" => "get_cases",
             "user_id" => $user_id
         ];
+
+        echo json_encode(["ok"=> true]);exit;
+
 
         $this->sendToDotPromoflow($payload);
     }
