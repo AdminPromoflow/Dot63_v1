@@ -9,50 +9,54 @@ class Product {
     switch ($data["action"] ?? null) {
       case 'create_new_product':
         $this->createNewProduct();
-        break;
+      break;
 
       case 'get_products':
         $this->getProducts();
-        break;
+      break;
 
       case 'get_products_by_group':
         $this->getProductsByGroup($data);
-        break;
+      break;
 
       case 'update_products':
         $this->getUpdate();
-        break;
+      break;
 
       case 'update_category':
         $this->updateCategory($data);
-        break;
+      break;
 
       case 'update_group':
         $this->updateGroup($data);
-        break;
+      break;
 
       case 'save_product_details':
         $this->saveProductDetails($data);
-        break;
+      break;
 
       case 'get_all_products_supplier':
         $this->getProductsBasicBySupplierEmail($data);
-        break;
+      break;
 
       case 'get_product_details':
         $this->getProductBasicBySKU($data);
-        break;
+      break;
 
       case 'get_preview_product_details':
         $this->getPreviewProductDetails($data);
-        break;
+      break;
 
       case 'publish_product':
         $this->publishProduct($data);
-        break;
+      break;
 
       case 'get_default_variation_by_sku':
       $this->getDefaultVariationBySKU($data);
+      break;
+
+      case 'delete_product':
+      $this->deleteProduct($data);
       break;
 
       default:
@@ -60,6 +64,20 @@ class Product {
         echo json_encode(['response' => false, 'error' => 'Unsupported action']);
         break;
     }
+  }
+
+  private function deleteProduct($data){
+    header('Content-Type: application/json; charset=utf-8');
+
+    $connection = new Database();
+    $product   = new Product($connection);
+
+
+    //$product->setSku($data['sku'] ?? '');
+
+    // $response = $product->getDefaultVariationBySKU();
+
+    echo json_encode($data['sku']);
   }
 
   private function getDefaultVariationBySKU($data){

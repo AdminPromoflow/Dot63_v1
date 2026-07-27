@@ -282,7 +282,52 @@ class ClassAddProductDetails {
    * can be added here.
    */
   deleteProduct() {
-    alert("Delete product");
+    const params =
+      new URLSearchParams(window.location.search);
+
+    const sku = params.get("sku");
+
+    const url =
+      "../../controller/products/product.php";
+
+    const data = {
+      action: "delete_product",
+      sku: sku,
+    };
+
+    fetch(url, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(data),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.text();
+        }
+
+        throw new Error("Network error.");
+      })
+      .then((responseText) => {
+        alert(responseText);
+        const responseData =
+          JSON.parse(responseText);
+
+        if (responseData.success) {
+
+        }
+
+
+      })
+      .catch((error) => {
+        console.error(
+          "Error loading product details:",
+          error
+        );
+      });
   }
 }
 
