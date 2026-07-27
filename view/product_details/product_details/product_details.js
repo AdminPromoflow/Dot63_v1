@@ -281,54 +281,124 @@ class ClassAddProductDetails {
    * Later, the request to the PHP controller
    * can be added here.
    */
-  deleteProduct() {
-    const params =
-      new URLSearchParams(window.location.search);
+   deleteProduct() {
+     /*
+      * Ask the user to confirm the deletion
+      * before sending the request.
+      */
+     const isConfirmed = window.confirm(
+       "Are you sure you want to delete this product? This action cannot be undone."
+     );
 
-    const sku = params.get("sku");
+     /*
+      * Stop the function if the user clicks Cancel.
+      */
+     if (!isConfirmed) {
+       return;
+     }
 
-    const url =
-      "../../controller/products/product.php";
+     /*
+      * Get the SKU from the page URL.
+      */
+     const params =
+       new URLSearchParams(window.location.search);
 
-    const data = {
-      action: "delete_product",
-      sku: sku,
-    };
+     const sku = params.get("sku");
 
-    fetch(url, {
-      method: "POST",
+     /*
+      * Validate that the SKU exists.
+      */
+     if (!sku) {
+       alert("The product SKU could not be found.");
+       return;
+     }
 
-      headers: {
-        "Content-Type": "application/json",
-      },
+     /*
+      * Controller URL.
+      */
+     const url =
+       "../../controller/products/product.php";
 
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.text();
-        }
+     /*
+      * Data sent to the controller.
+      */
+     const data = {
+       action: "delete_product",
+       sku: sku,
+     };
 
-        throw new Error("Network error.");
-      })
-      .then((responseText) => {
-        alert(responseText);
-        const responseData =
-          JSON.parse(responseText);
+     /*
+      * Send the deletion request.
+      */
+     fetch(url, {
+       method: "POST",
 
-        if (responseData.success) {
+       headers: {
+         "Content-Type": "application/json",
+       },
 
-        }
+       body: JSON.stringify(data),
+     })
+       .then((response) => {
+         if (response.ok) {
+           return response.text();
+         }
 
+         throw new Error("Network error.");
+       })
+       .then((responseText) => {
+         /*
+          * Display the raw response temporarily
+          * while testing the controller.
+          */
+         alert(responseText);
 
-      })
-      .catch((error) => {
-        console.error(
-          "Error loading product details:",
-          error
-        );
-      });
-  }
+         /*
+          * Convert the JSON response into an object.
+          */
+         const responseData =
+           JSON.parse(responseText);
+
+         /*
+          * Product deleted successfully.
+          */
+         if (responseData.success) {
+           alert(
+             responseData.message ||
+             "The product has been deleted successfully."
+           );
+
+           /*
+            * Redirect the user to the products page.
+            *
+            * Change this path if your products list
+            * is located somewhere else.
+            */
+           window.location.href =
+             "../../view/products/index.php";
+
+           return;
+         }
+
+         /*
+          * The controller returned an error.
+          */
+         alert(
+           responseData.error ||
+           "The product could not be deleted."
+         );
+       })
+       .catch((error) => {
+         console.error(
+           "Error deleting product:",
+           error
+         );
+
+         alert(
+           "An error occurred while deleting the product."
+         );
+       });
+   }
 }
 
 /*

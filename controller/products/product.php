@@ -69,15 +69,16 @@ class Product {
   private function deleteProduct($data){
     header('Content-Type: application/json; charset=utf-8');
 
-    $connection = new Database();
-    $product   = new Product($connection);
+    $database = new Database();
+    $product = new Products($database);
+    $product->setSku($data['sku'] ?? '');
+    $result = $product->deleteProduct();
 
+    echo json_encode(
+        $result,
+        JSON_UNESCAPED_UNICODE
+    );
 
-    //$product->setSku($data['sku'] ?? '');
-
-    // $response = $product->getDefaultVariationBySKU();
-
-    echo json_encode($data['sku']);
   }
 
   private function getDefaultVariationBySKU($data){

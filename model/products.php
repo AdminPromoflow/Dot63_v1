@@ -1031,5 +1031,524 @@ class Products {
            ];
        }
    }
+
+
+
+
+
+
+
+
+
+
+   /* ===========================
+      DELETE PRODUCT
+      =========================== */
+
+   /**
+    * Delete a product and all its dependent records.
+    *
+    * The product is identified using the SKU
+    * stored in the current Products object.
+    *
+    * @return array
+    */
+   public function deleteProduct(): array
+   {
+       $sku = trim((string)($this->sku ?? ''));
+
+       /*
+        * Validate that the SKU exists.
+        */
+       if ($sku === '') {
+           return [
+               'success' => false,
+               'error'   => 'SKU required'
+           ];
+       }
+
+       $pdo = null;
+
+       try {
+           /*
+            * Get the database connection.
+            */
+           $pdo = $this->connection->getConnection();
+
+           /*
+            * Start the transaction.
+            */
+           $pdo->beginTransaction();
+
+           /*
+            * Get the product ID using the SKU.
+            */
+           $productId = $this->getProductIdBySku(
+               $pdo,
+               $sku
+           );
+
+           /*
+            * Stop if the product does not exist.
+            */
+           if ($productId === null) {
+               $pdo->rollBack();
+
+               return [
+                   'success' => false,
+                   'error'   => 'Product not found'
+               ];
+           }
+
+           /*
+            * Get all variations connected to the product.
+            */
+           $variationIds = $this->getVariationIdsByProductId(
+               $pdo,
+               $productId
+           );
+
+           /*
+            * Delete the records connected to the variations.
+            */
+           if (!empty($variationIds)) {
+               $this->deleteVariationPromotions(
+                   $pdo,
+                   $variationIds
+               );
+
+               $this->deletePrices(
+                   $pdo,
+                   $variationIds
+               );
+
+               $this->deleteImages(
+                   $pdo,
+                   $variationIds
+               );
+
+               $this->deleteItems(
+                   $pdo,
+                   $variationIds
+               );
+
+               $this->deleteJobDetails(
+                   $pdo,
+                   $variationIds
+               );
+
+               /*
+                * Remove variation parent relationships
+                * before deleting the variations.
+                */
+               $this->removeVariationParentRelationships(
+                   $pdo,
+                   $productId
+               );
+
+               /*
+                * Delete all product variations.
+                */
+               $this->deleteVariations(
+                   $pdo,
+                   $productId
+               );
+           }
+
+           /*
+            * Delete the main product record.
+            */
+           $deletedProducts = $this->deleteProductRecord(
+               $pdo,
+               $productId
+           );
+
+           /*
+            * Confirm that the product was deleted.
+            */
+           if ($deletedProducts === 0) {
+               $pdo->rollBack();
+
+               return [
+                   'success' => false,
+                   'error'   => 'The product could not be deleted'
+               ];
+           }
+
+           /*
+            * Confirm all deletions.
+            */
+           $pdo->commit();
+
+           return [
+               'success'            => true,
+               'message'            => 'Product deleted successfully',
+               'product_id'         => $productId,
+               'sku'                => $sku,
+               'deleted_variations' => count($variationIds)
+           ];
+
+       } catch (PDOException $e) {
+           /*
+            * Cancel all queries if a database error occurs.
+            */
+           if (
+               $pdo instanceof PDO &&
+               $pdo->inTransaction()
+           ) {
+               $pdo->rollBack();
+           }
+
+           error_log(
+               'deleteProduct database error for SKU ' .
+               $sku .
+               ': ' .
+               $e->getMessage()
+           );
+
+           return [
+               'success' => false,
+               'error'   => 'DB error'
+           ];
+
+       } catch (Throwable $e) {
+           /*
+            * Cancel all queries if another error occurs.
+            */
+           if (
+               $pdo instanceof PDO &&
+               $pdo->inTransaction()
+           ) {
+               $pdo->rollBack();
+           }
+
+           error_log(
+               'deleteProduct unexpected error for SKU ' .
+               $sku .
+               ': ' .
+               $e->getMessage()
+           );
+
+           return [
+               'success' => false,
+               'error'   => 'Unexpected error'
+           ];
+       }
+   }
+
+   /**
+    * Get the product ID using its SKU.
+    *
+    * @param PDO    $pdo
+    * @param string $sku
+    *
+    * @return int|null
+    */
+   private function getProductIdBySku(
+       PDO $pdo,
+       string $sku
+   ): ?int {
+       $statement = $pdo->prepare("
+           SELECT product_id
+           FROM products
+           WHERE SKU = :sku
+           LIMIT 1
+       ");
+
+       $statement->execute([
+           ':sku' => $sku
+       ]);
+
+       $productId = $statement->fetchColumn();
+
+       if ($productId === false) {
+           return null;
+       }
+
+       return (int)$productId;
+   }
+
+   /**
+    * Get all variation IDs connected to a product.
+    *
+    * @param PDO $pdo
+    * @param int $productId
+    *
+    * @return array
+    */
+   private function getVariationIdsByProductId(
+       PDO $pdo,
+       int $productId
+   ): array {
+       $statement = $pdo->prepare("
+           SELECT variation_id
+           FROM variations
+           WHERE product_id = :product_id
+       ");
+
+       $statement->execute([
+           ':product_id' => $productId
+       ]);
+
+       $variationIds = $statement->fetchAll(
+           PDO::FETCH_COLUMN
+       );
+
+       return array_map(
+           'intval',
+           $variationIds
+       );
+   }
+
+   /**
+    * Delete relationships between variations and promotions.
+    *
+    * @param PDO   $pdo
+    * @param array $variationIds
+    *
+    * @return int
+    */
+   private function deleteVariationPromotions(
+       PDO $pdo,
+       array $variationIds
+   ): int {
+       if (empty($variationIds)) {
+           return 0;
+       }
+
+       $placeholders = $this->createSqlPlaceholders(
+           count($variationIds)
+       );
+
+       $statement = $pdo->prepare("
+           DELETE FROM variation_promotions
+           WHERE variation_id IN ($placeholders)
+       ");
+
+       $statement->execute($variationIds);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Delete prices connected to the variations.
+    *
+    * @param PDO   $pdo
+    * @param array $variationIds
+    *
+    * @return int
+    */
+   private function deletePrices(
+       PDO $pdo,
+       array $variationIds
+   ): int {
+       if (empty($variationIds)) {
+           return 0;
+       }
+
+       $placeholders = $this->createSqlPlaceholders(
+           count($variationIds)
+       );
+
+       $statement = $pdo->prepare("
+           DELETE FROM prices
+           WHERE variation_id IN ($placeholders)
+       ");
+
+       $statement->execute($variationIds);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Delete images connected to the variations.
+    *
+    * This deletes only the database records.
+    * It does not delete image files from the server.
+    *
+    * @param PDO   $pdo
+    * @param array $variationIds
+    *
+    * @return int
+    */
+   private function deleteImages(
+       PDO $pdo,
+       array $variationIds
+   ): int {
+       if (empty($variationIds)) {
+           return 0;
+       }
+
+       $placeholders = $this->createSqlPlaceholders(
+           count($variationIds)
+       );
+
+       $statement = $pdo->prepare("
+           DELETE FROM images
+           WHERE variation_id IN ($placeholders)
+       ");
+
+       $statement->execute($variationIds);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Delete items connected to the variations.
+    *
+    * @param PDO   $pdo
+    * @param array $variationIds
+    *
+    * @return int
+    */
+   private function deleteItems(
+       PDO $pdo,
+       array $variationIds
+   ): int {
+       if (empty($variationIds)) {
+           return 0;
+       }
+
+       $placeholders = $this->createSqlPlaceholders(
+           count($variationIds)
+       );
+
+       $statement = $pdo->prepare("
+           DELETE FROM items
+           WHERE variation_id IN ($placeholders)
+       ");
+
+       $statement->execute($variationIds);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Delete job details connected to the variations.
+    *
+    * @param PDO   $pdo
+    * @param array $variationIds
+    *
+    * @return int
+    */
+   private function deleteJobDetails(
+       PDO $pdo,
+       array $variationIds
+   ): int {
+       if (empty($variationIds)) {
+           return 0;
+       }
+
+       $placeholders = $this->createSqlPlaceholders(
+           count($variationIds)
+       );
+
+       $statement = $pdo->prepare("
+           DELETE FROM job_details
+           WHERE variation_id IN ($placeholders)
+       ");
+
+       $statement->execute($variationIds);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Remove parent-child relationships between variations.
+    *
+    * @param PDO $pdo
+    * @param int $productId
+    *
+    * @return int
+    */
+   private function removeVariationParentRelationships(
+       PDO $pdo,
+       int $productId
+   ): int {
+       $statement = $pdo->prepare("
+           UPDATE variations
+           SET parent_id = NULL
+           WHERE product_id = :product_id
+       ");
+
+       $statement->execute([
+           ':product_id' => $productId
+       ]);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Delete all variations connected to the product.
+    *
+    * @param PDO $pdo
+    * @param int $productId
+    *
+    * @return int
+    */
+   private function deleteVariations(
+       PDO $pdo,
+       int $productId
+   ): int {
+       $statement = $pdo->prepare("
+           DELETE FROM variations
+           WHERE product_id = :product_id
+       ");
+
+       $statement->execute([
+           ':product_id' => $productId
+       ]);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Delete the main product record.
+    *
+    * @param PDO $pdo
+    * @param int $productId
+    *
+    * @return int
+    */
+   private function deleteProductRecord(
+       PDO $pdo,
+       int $productId
+   ): int {
+       $statement = $pdo->prepare("
+           DELETE FROM products
+           WHERE product_id = :product_id
+           LIMIT 1
+       ");
+
+       $statement->execute([
+           ':product_id' => $productId
+       ]);
+
+       return $statement->rowCount();
+   }
+
+   /**
+    * Create placeholders for an SQL IN clause.
+    *
+    * Example:
+    *
+    * createSqlPlaceholders(3)
+    *
+    * Returns:
+    *
+    * ?,?,?
+    *
+    * @param int $quantity
+    *
+    * @return string
+    */
+   private function createSqlPlaceholders(
+       int $quantity
+   ): string {
+       return implode(
+           ',',
+           array_fill(0, $quantity, '?')
+       );
+   }
 }
 ?>
