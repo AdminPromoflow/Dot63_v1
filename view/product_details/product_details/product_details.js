@@ -351,7 +351,7 @@ class ClassAddProductDetails {
           * Display the raw response temporarily
           * while testing the controller.
           */
-         alert(responseText);
+        // alert(responseText);
 
          /*
           * Convert the JSON response into an object.
@@ -375,7 +375,7 @@ class ClassAddProductDetails {
             * is located somewhere else.
             */
            window.location.href =
-             "../../view/products/index.php";
+             "../../view/dashboard_supplier/index.php";
 
            return;
          }
