@@ -1,70 +1,156 @@
 class ClassAddProductDetails {
   constructor() {
-    const reset = document.getElementById("reset");
-    const save  = document.getElementById("save");
+    /*
+     * Capture the page buttons.
+     */
+    const resetButton = document.getElementById("reset");
+    const saveButton = document.getElementById("save");
 
+    /*
+     * Capture the new Delete product button.
+     */
+    const deleteProductButton =
+      document.getElementById("delete_product");
+
+    /*
+     * Configure the page after the HTML has loaded.
+     */
     document.addEventListener("DOMContentLoaded", () => {
       headerAddProduct.setCurrentHeader("product details");
-      
-      // Event listener para botón Back
-      const btnBackProductDetails = document.getElementById("btn_back_product_details");
-      if (btnBackProductDetails) {
-        btnBackProductDetails.addEventListener("click", () => {
-          headerAddProduct.goNext('../../view/group/index.php');
+
+      /*
+       * Capture the Back button.
+       */
+      const backButton =
+        document.getElementById("btn_back_product_details");
+
+      /*
+       * Return to the Groups page.
+       */
+      if (backButton) {
+        backButton.addEventListener("click", () => {
+          headerAddProduct.goNext(
+            "../../view/group/index.php"
+          );
         });
       }
     });
 
-
+    /*
+     * Controls whether the name length alert
+     * has already been displayed.
+     */
     let pdNameAlertShown = false;
 
+    /*
+     * Validate the product name length.
+     */
     pd_name.addEventListener("input", () => {
-      const len = pd_name.value.length;
+      const length = pd_name.value.length;
 
-      // Si pasa de 150, recorta (por si pega texto)
-      if (len > 150) {
+      /*
+       * Cut the text if it exceeds 150 characters.
+       */
+      if (length > 150) {
         pd_name.value = pd_name.value.slice(0, 150);
       }
 
-      // Alert cuando cruza 150 (solo una vez)
-      if (len > 149 && !pdNameAlertShown) {
-        alert("Name must be 150 characters or fewer.");
+      /*
+       * Display the warning only once
+       * when the user reaches the limit.
+       */
+      if (length > 149 && !pdNameAlertShown) {
+        alert(
+          "Name must be 150 characters or fewer."
+        );
+
         pdNameAlertShown = true;
       }
 
-      // Si vuelve a 150 o menos, permitimos que vuelva a alertar si vuelve a pasar
-      if (len <= 149) {
+      /*
+       * Allow the warning to be displayed again
+       * when the user reduces the text length.
+       */
+      if (length <= 149) {
         pdNameAlertShown = false;
       }
     });
 
-    reset.addEventListener("click", function () {
-      pd_name.value = "";
-      pd_status.value = "";
-      pd_desc.value = "";
-      pd_tagline.value = "";
+    /*
+     * Reset all product fields.
+     */
+    if (resetButton) {
+      resetButton.addEventListener("click", () => {
+        pd_name.value = "";
+        pd_status.value = "";
+        pd_desc.value = "";
+        pd_tagline.value = "";
 
-      classAddProductDetails.saveProductDetails(false);
-      alert("The product fields have been reset.");
-    });
+        this.saveProductDetails(false);
 
-    save.addEventListener("click", () => {
-      classAddProductDetails.saveProductDetails(false);
-      alert("The product details have been saved.");
-    });
+        alert(
+          "The product fields have been reset."
+        );
+      });
+    }
 
-    next_product_details.addEventListener("click", () => {
-      classAddProductDetails.saveProductDetails(true);
-    });
+    /*
+     * Save the product details without changing page.
+     */
+    if (saveButton) {
+      saveButton.addEventListener("click", () => {
+        this.saveProductDetails(false);
 
+        alert(
+          "The product details have been saved."
+        );
+      });
+    }
+
+    /*
+     * Save the product details and continue
+     * to the Variations page.
+     */
+    if (next_product_details) {
+      next_product_details.addEventListener(
+        "click",
+        () => {
+          this.saveProductDetails(true);
+        }
+      );
+    }
+
+    /*
+     * Delete product button event.
+     */
+    if (deleteProductButton) {
+      deleteProductButton.addEventListener(
+        "click",
+        () => {
+          this.deleteProduct();
+        }
+      );
+    }
+
+    /*
+     * Load the current product details.
+     */
     this.getProductDetails();
   }
 
+  /*
+   * Get the current product information
+   * using the SKU from the page URL.
+   */
   getProductDetails() {
-    const params = new URLSearchParams(window.location.search);
+    const params =
+      new URLSearchParams(window.location.search);
+
     const sku = params.get("sku");
 
-    const url = "../../controller/products/product.php";
+    const url =
+      "../../controller/products/product.php";
+
     const data = {
       action: "get_product_details",
       sku: sku,
@@ -72,40 +158,79 @@ class ClassAddProductDetails {
 
     fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
       body: JSON.stringify(data),
     })
       .then((response) => {
-        if (response.ok) return response.text();
+        if (response.ok) {
+          return response.text();
+        }
+
         throw new Error("Network error.");
       })
-      .then((data) => {
-      //  alert(data)
-        data = JSON.parse(data);
+      .then((responseText) => {
+        const responseData =
+          JSON.parse(responseText);
 
-        if (data.success) {
-          pd_name.value = data.data.name;
-          pd_desc.value = data.data.description;
-          pd_status.value = data.data.status;
-          pd_tagline.value = data.data.descriptive_tagline;
+        if (responseData.success) {
+          pd_name.value =
+            responseData.data.name ?? "";
+
+          pd_desc.value =
+            responseData.data.description ?? "";
+
+          pd_status.value =
+            responseData.data.status ?? "";
+
+          pd_tagline.value =
+            responseData.data.descriptive_tagline ?? "";
         }
-        classAddProductDetails.toggleProductActiveStatus(data.data.is_approved != 0);
+
+        const isApproved =
+          responseData.data?.is_approved != 0;
+
+        this.toggleProductActiveStatus(
+          isApproved
+        );
       })
       .catch((error) => {
-        console.error("Error:", error);
+        console.error(
+          "Error loading product details:",
+          error
+        );
       });
   }
 
+  /*
+   * Enable or disable the Active status option.
+   */
   toggleProductActiveStatus(active) {
-    const active_product = document.getElementById("active_product");
-    active_product.disabled = !active;
+    const activeProductOption =
+      document.getElementById("active_product");
+
+    if (!activeProductOption) {
+      return;
+    }
+
+    activeProductOption.disabled = !active;
   }
 
+  /*
+   * Save the current product details.
+   */
   saveProductDetails(goNext = false) {
-    const params = new URLSearchParams(window.location.search);
+    const params =
+      new URLSearchParams(window.location.search);
+
     const sku = params.get("sku");
 
-    const url = "../../controller/products/product.php";
+    const url =
+      "../../controller/products/product.php";
+
     const data = {
       action: "save_product_details",
       name: pd_name.value,
@@ -117,30 +242,70 @@ class ClassAddProductDetails {
 
     fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
       body: JSON.stringify(data),
     })
       .then((response) => {
-        if (response.ok) return response.text();
+        if (response.ok) {
+          return response.text();
+        }
+
         throw new Error("Network error.");
       })
-      .then((data) => {
-        data = JSON.parse(data);
+      .then((responseText) => {
+        const responseData =
+          JSON.parse(responseText);
 
-        if (data.success && goNext) {
-          headerAddProduct.goNext("../../view/variations/index.php");
+        if (responseData.success && goNext) {
+          headerAddProduct.goNext(
+            "../../view/variations/index.php"
+          );
         }
       })
       .catch((error) => {
-        console.error("Error:", error);
+        console.error(
+          "Error saving product details:",
+          error
+        );
       });
+  }
+
+  /*
+   * Delete the current product.
+   *
+   * For now, this method only displays an alert.
+   * Later, the request to the PHP controller
+   * can be added here.
+   */
+  deleteProduct() {
+    alert("Delete product");
   }
 }
 
-const pd_name = document.getElementById("pd_name");
-const pd_status = document.getElementById("pd_status");
-const pd_desc = document.getElementById("pd_desc");
-const pd_tagline = document.getElementById("pd_tagline");
-const next_product_details = document.getElementById("next_product_details");
+/*
+ * Capture the product form elements.
+ */
+const pd_name =
+  document.getElementById("pd_name");
 
-const classAddProductDetails = new ClassAddProductDetails();
+const pd_status =
+  document.getElementById("pd_status");
+
+const pd_desc =
+  document.getElementById("pd_desc");
+
+const pd_tagline =
+  document.getElementById("pd_tagline");
+
+const next_product_details =
+  document.getElementById("next_product_details");
+
+/*
+ * Create the Product Details class instance.
+ */
+const classAddProductDetails =
+  new ClassAddProductDetails();

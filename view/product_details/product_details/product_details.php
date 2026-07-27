@@ -5,29 +5,46 @@ $jsFs  = __DIR__ . '/../../view/product_details/product_details/product_details.
 $cssTime = is_file($cssFs) ? filemtime($cssFs) : time();
 $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
 ?>
-<link rel="stylesheet" href="../../view/product_details/product_details/product_details.css?v=<?= $cssTime ?>">
+
+<link
+  rel="stylesheet"
+  href="../../view/product_details/product_details/product_details.css?v=<?= $cssTime ?>"
+>
 
 <!-- =============== Create Product: Product Details Tab =============== -->
 <main class="create_product" aria-labelledby="pd-title">
-  <?php include "../../view/product_details/navigation/navigation.php" ?>
-  <h1 id="pd-title" class="sr-only">Create Product — Product Details</h1>
-  <!-- Tabs (mismo panel) -->
-  <!-- Tabs (promotions removed) -->
-  <?php include "../../view/global/header_add_product/header_add_product.php" ?>
 
+  <?php include "../../view/product_details/navigation/navigation.php"; ?>
 
-  <!-- Contenido -->
+  <h1 id="pd-title" class="sr-only">
+    Create Product — Product Details
+  </h1>
+
+  <!-- Product creation tabs -->
+  <?php include "../../view/global/header_add_product/header_add_product.php"; ?>
+
+  <!-- Product details content -->
   <section class="cp-card" aria-labelledby="cp-pd-title">
+
     <header class="cp-card-header">
       <h2 id="cp-pd-title">Product details</h2>
     </header>
 
-    <!-- Formulario de detalles -->
-    <!-- Formulario de detalles -->
-    <form id="productDetailsForm" class="cp-form" autocomplete="off" novalidate>
-      <!-- Nombre -->
+    <!-- Product details form -->
+    <form
+      id="productDetailsForm"
+      class="cp-form"
+      autocomplete="off"
+      novalidate
+    >
+
+      <!-- Product name -->
       <div class="cp-field">
-        <label class="cp-label" for="pd_name">Name</label>
+
+        <label class="cp-label" for="pd_name">
+          Name
+        </label>
+
         <input
           id="pd_name"
           name="name"
@@ -35,26 +52,53 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
           maxlength="150"
           placeholder="e.g., Premium Polyester Lanyard"
           aria-describedby="pd_name_help"
-        />
-        <small id="pd_name_help" class="cp-hint">Up to 150 characters.</small>
+        >
+
+        <small id="pd_name_help" class="cp-hint">
+          Up to 150 characters.
+        </small>
+
       </div>
 
-      <!-- Status -->
+      <!-- Product status -->
       <div class="cp-field">
-        <label class="cp-label" for="pd_status">Status</label>
-        <select id="pd_status" name="status" aria-describedby="pd_status_help">
+
+        <label class="cp-label" for="pd_status">
+          Status
+        </label>
+
+        <select
+          id="pd_status"
+          name="status"
+          aria-describedby="pd_status_help"
+        >
           <option value="">Select status…</option>
           <option value="draft">Draft</option>
-          <option id="active_product" value="active">Active</option>
+
+          <option
+            id="active_product"
+            value="active"
+          >
+            Active
+          </option>
+
           <option value="inactive">Inactive</option>
           <option value="archived">Archived</option>
         </select>
-        <small id="pd_status_help" class="cp-hint">Choose how the product should be treated in listings.</small>
+
+        <small id="pd_status_help" class="cp-hint">
+          Choose how the product should be treated in listings.
+        </small>
+
       </div>
 
-      <!-- Descriptive tagline (ocupa ancho completo) -->
+      <!-- Descriptive tagline -->
       <div class="cp-field cp-field-full">
-        <label class="cp-label" for="pd_tagline">Descriptive tagline</label>
+
+        <label class="cp-label" for="pd_tagline">
+          Descriptive tagline
+        </label>
+
         <input
           id="pd_tagline"
           name="descriptive_tagline"
@@ -62,15 +106,22 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
           maxlength="160"
           placeholder="e.g., Ideal for events, offices and schools with full colour printing."
           aria-describedby="pd_tagline_help"
-        />
+        >
+
         <small id="pd_tagline_help" class="cp-hint">
-          Short tagline shown in product cards and listings. Up to 160 characters.
+          Short tagline shown in product cards and listings.
+          Up to 160 characters.
         </small>
+
       </div>
 
-      <!-- Descripción (ocupa ancho completo) -->
+      <!-- Product description -->
       <div class="cp-field cp-field-full">
-        <label class="cp-label" for="pd_desc">Description</label>
+
+        <label class="cp-label" for="pd_desc">
+          Description
+        </label>
+
         <textarea
           id="pd_desc"
           name="description"
@@ -78,26 +129,71 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
           placeholder="Short, compelling summary of the product features and materials…"
           aria-describedby="pd_desc_help pd_desc_count"
         ></textarea>
-        <!-- <div class="cp-field-row">
-          <small id="pd_desc_help" class="cp-hint">Optional.</small>
-          <small id="pd_desc_count" class="cp-hint">0 characters</small>
-        </div> -->
+
       </div>
+
     </form>
 
   </section>
 
-  <!-- Footer: Next -->
+  <!-- Footer buttons -->
   <div class="cp-footer">
-    <button id="btn_back_product_details" class="btn-back" type="button" aria-label="Back to Groups">
-      ← Back
-    </button>
-    <button class="btn btn-danger" id="reset" type="button">Reset</button>
-    <div class="cp-footer-actions">
-      <button class="btn btn-primary" id="save" type="button">Save</button>
-      <button class="btn" id="next_product_details" type="button">Save & Next</button>
+
+    <!-- Left footer section -->
+    <div class="cp-footer-left">
+
+      <button
+        id="btn_back_product_details"
+        class="btn-back"
+        type="button"
+        aria-label="Back to Groups"
+      >
+        ← Back
+      </button>
+
+      <button
+        id="delete_product"
+        class="btn btn-delete-product"
+        type="button"
+      >
+        Delete product
+      </button>
+
     </div>
+
+    <!-- Right footer section -->
+    <div class="cp-footer-actions">
+
+      <button
+        id="reset"
+        class="btn btn-danger"
+        type="button"
+      >
+        Reset
+      </button>
+
+      <button
+        id="save"
+        class="btn btn-primary"
+        type="button"
+      >
+        Save
+      </button>
+
+      <button
+        id="next_product_details"
+        class="btn"
+        type="button"
+      >
+        Save &amp; Next
+      </button>
+
+    </div>
+
   </div>
+
 </main>
 
-<script src="../../view/product_details/product_details/product_details.js?v=<?= $jsTime ?>"></script>
+<script
+  src="../../view/product_details/product_details/product_details.js?v=<?= $jsTime ?>"
+></script>
