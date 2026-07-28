@@ -1417,6 +1417,26 @@ class Variation {
           }
 
           /*
+           * Get the product SKU and the Default variation SKU
+           * before deleting any information.
+           */
+          $skuInformation = $this->getProductAndDefaultVariationSkus(
+              $pdo,
+              $variationId
+          );
+
+          if (!$skuInformation['success']) {
+              $pdo->rollBack();
+
+              return $skuInformation;
+          }
+
+          $skuProduct = $skuInformation['sku_product'];
+
+          $skuDefaultVariation =
+              $skuInformation['sku_default_variation'];
+
+          /*
            * 3. Find all child variations and descendants.
            *
            * They are returned from the deepest variation
@@ -1443,6 +1463,8 @@ class Variation {
                   return $childDefaultProtection;
               }
           }
+
+
 
           /*
            * 5. Create one array containing the main variation
@@ -1558,7 +1580,9 @@ class Variation {
               'success' => true,
               'message' => 'The variation was deleted successfully',
               'variation_id' => $variationId,
-              'sku_variation' => $targetSku,
+              'sku_variation_deleted' => $targetSku,
+              'sku_product' => $skuProduct,
+              'sku_default_variation' => $skuDefaultVariation,
               'deleted' => [
                   'child_variations' => $deletedChildVariations,
                   'main_variation' => $deletedMainVariation,
@@ -1588,6 +1612,59 @@ class Variation {
               'error' => 'Database error while deleting the variation'
           ];
       }
+  }
+
+
+  /* =========================================================
+     Get product SKU and Default variation SKU
+  ========================================================= */
+
+  private function getProductAndDefaultVariationSkus(
+      PDO $pdo,
+      int $variationId
+  ): array {
+      $stmt = $pdo->prepare("
+          SELECT
+              products.SKU AS sku_product,
+              default_variation.SKU AS sku_default_variation
+          FROM variations AS selected_variation
+
+          INNER JOIN products
+              ON products.product_id = selected_variation.product_id
+
+          LEFT JOIN variations AS default_variation
+              ON default_variation.product_id = selected_variation.product_id
+              AND LOWER(TRIM(default_variation.name)) = 'default'
+
+          WHERE selected_variation.variation_id = :variation_id
+
+          LIMIT 1
+      ");
+
+      $stmt->execute([
+          ':variation_id' => $variationId
+      ]);
+
+      $result = $stmt->fetch(
+          PDO::FETCH_ASSOC
+      );
+
+      if (!$result) {
+          return [
+              'success' => false,
+              'error' => 'Product information could not be found'
+          ];
+      }
+
+      return [
+          'success' => true,
+          'sku_product' => trim(
+              (string)($result['sku_product'] ?? '')
+          ),
+          'sku_default_variation' => trim(
+              (string)($result['sku_default_variation'] ?? '')
+          )
+      ];
   }
 
   /* =========================================================

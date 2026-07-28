@@ -194,15 +194,18 @@ class Variations {
         return response.text();
       })
       .then((responseText) => {
-        alert("Response text: " + responseText);
+        // alert("Response text: " + responseText);
+
         const json = this.safeJsonParse(responseText);
 
-        // if (json.success) {
-        //   return;
-        // }
+        if (json.success) {
+          const dest = new URL("../../view/variations/index.php", window.location.href);
 
+          dest.searchParams.set("sku", json.sku_product);
+          dest.searchParams.set("sku_variation", json.sku_default_variation);
 
-
+          window.location.assign(dest);
+        }
       })
       .catch((error) => {
         console.error("Error loading variation details:", error);
