@@ -1,834 +1,1997 @@
-// Variations page controller (no globals, no "create new group" logic).
+// Variations page controller.
 class Variations {
   constructor() {
-    // --- Cache DOM references (single source of truth) ---
-    this.form         = document.getElementById('variationForm');
+    // Main form.
+    this.form = document.getElementById("variationForm");
 
-    this.variationsNoRadio  = document.getElementById('variations_no');
-    this.variationsYesRadio = document.getElementById('variations_yes');
-    this.noVariationsTip    = document.getElementById('no_variations_tip');
+    // Decision controls.
+    this.variationsNoRadio =
+      document.getElementById("variations_no");
 
-    this.parentSelect = document.getElementById('parent_variations');
-    this.nameInput    = document.getElementById('variation_name');
+    this.variationsYesRadio =
+      document.getElementById("variations_yes");
 
-    this.imgInput     = document.getElementById('variation_image');
-    this.imgPreview   = document.getElementById('img_preview');
-    this.clearImgBtn  = document.getElementById('clear_image');
+    this.noVariationsTip =
+      document.getElementById("no_variations_tip");
 
-    this.pdfInput     = document.getElementById('variation_pdf');
-    this.pdfPreview   = document.getElementById('pdf_preview');
-    this.clearPdfBtn  = document.getElementById('clear_pdf');
+    // Variation fields.
+    this.parentSelect =
+      document.getElementById("parent_variations");
 
-    this.menuBtn      = document.getElementById('menu_btn');
-    this.menuList     = document.getElementById('menu_list');
+    this.nameInput =
+      document.getElementById("variation_name");
 
-    this.addBtn       = document.getElementById('add_variation');
-    this.saveBtn      = document.getElementById('save_variation');
-    this.nextBtn      = document.getElementById('next_variations');
-    this.resetBtn     = document.getElementById('reset_form');
+    this.typeSelect =
+      document.getElementById("group");
 
-    // IMPORTANT: This select now renders "type_variations" (type_id/type_name).
-    // Keep the HTML id as "group" if you want, but conceptually this is "type".
-    this.typeSelect   = document.getElementById('group');
+    this.namePdfInput =
+      document.getElementById("name_pdf_artwork");
 
-    // Optional input used by your PHP for naming the PDF artwork
-    this.namePdfInput = document.getElementById('name_pdf_artwork');
+    // Image fields.
+    this.imgInput =
+      document.getElementById("variation_image");
 
-    // --- State flags sent to backend ---
-    // They indicate whether the user attached NEW files in this session.
+    this.imgPreview =
+      document.getElementById("img_preview");
+
+    this.clearImgBtn =
+      document.getElementById("clear_image");
+
+    // PDF fields.
+    this.pdfInput =
+      document.getElementById("variation_pdf");
+
+    this.pdfPreview =
+      document.getElementById("pdf_preview");
+
+    this.clearPdfBtn =
+      document.getElementById("clear_pdf");
+
+    // Variation menu.
+    this.menuBtn =
+      document.getElementById("menu_btn");
+
+    this.menuList =
+      document.getElementById("menu_list");
+
+    // Buttons.
+    this.addBtn =
+      document.getElementById("add_variation");
+
+    this.saveBtn =
+      document.getElementById("save_variation");
+
+    this.nextBtn =
+      document.getElementById("next_variations");
+
+    this.resetBtn =
+      document.getElementById("reset_form");
+
+    this.backBtn =
+      document.getElementById("btn_back_variations");
+
+    // Delete variation button.
+    this.deleteVariationBtn =
+      document.getElementById("delete_variation");
+
+    // File state.
     this.attachImage = false;
-    this.attachPDF   = false;
+    this.attachPDF = false;
 
-    // Used to revoke ObjectURL (avoid memory leaks)
+    // Used to remove old image preview URLs.
     this.currentImageObjectUrl = null;
 
-    // --- Boot ---
     this.init();
   }
 
   /* =========================
-     Init + bindings
-     ========================= */
+     Initialisation
+  ========================= */
 
   init() {
-    // Tell the wizard header where we are
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.headerAddProduct?.setCurrentHeader) {
-        window.headerAddProduct.setCurrentHeader('variations');
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+        if (
+          window.headerAddProduct
+            ?.setCurrentHeader
+        ) {
+          window.headerAddProduct
+            .setCurrentHeader(
+              "variations"
+            );
+        }
       }
-      
-      // Event listener para botón Back
-      const btnBackVariations = document.getElementById("btn_back_variations");
-      if (btnBackVariations) {
-        btnBackVariations.addEventListener("click", () => {
-          window.headerAddProduct.goNext('../../view/product_details/index.php');
-        });
-      }
-    });
+    );
 
-    // Initialize the "Type" select with ONLY a placeholder (no create-group option)
     if (this.typeSelect) {
-      this.typeSelect.innerHTML = `<option value="" disabled selected>Select a variation type</option>`;
-      this.typeSelect.value = '';
+      this.typeSelect.innerHTML = `
+        <option value="" disabled selected>
+          Select a variation type
+        </option>
+      `;
+
+      this.typeSelect.value = "";
     }
 
-    // Bind UI events (kept minimal and focused)
     this.bindDecisionUi();
     this.bindFileInputs();
     this.bindMenu();
     this.bindButtons();
 
-    // Initial load from backend
     this.getVariationDetails();
   }
 
+  /* =========================
+     Decision interface
+  ========================= */
+
   bindDecisionUi() {
-    const noChoice = this.variationsNoRadio?.closest('.cp-choice');
-    const yesChoice = this.variationsYesRadio?.closest('.cp-choice');
+    const noChoice =
+      this.variationsNoRadio
+        ?.closest(".cp-choice");
+
+    const yesChoice =
+      this.variationsYesRadio
+        ?.closest(".cp-choice");
 
     const updateUi = () => {
-      const isNo = !!this.variationsNoRadio?.checked;
+      const isNo =
+        Boolean(
+          this.variationsNoRadio
+            ?.checked
+        );
 
       if (this.noVariationsTip) {
-        this.noVariationsTip.hidden = !isNo;
+        this.noVariationsTip.hidden =
+          !isNo;
       }
 
-      if (noChoice) noChoice.classList.toggle('is-selected', isNo);
-      if (yesChoice) yesChoice.classList.toggle('is-selected', !isNo);
+      if (noChoice) {
+        noChoice.classList.toggle(
+          "is-selected",
+          isNo
+        );
+      }
+
+      if (yesChoice) {
+        yesChoice.classList.toggle(
+          "is-selected",
+          !isNo
+        );
+      }
 
       if (this.form) {
-        this.form.classList.toggle('is-hidden', isNo);
+        this.form.classList.toggle(
+          "is-hidden",
+          isNo
+        );
       }
     };
 
-    if (this.variationsNoRadio) this.variationsNoRadio.addEventListener('change', updateUi);
-    if (this.variationsYesRadio) this.variationsYesRadio.addEventListener('change', updateUi);
+    if (this.variationsNoRadio) {
+      this.variationsNoRadio
+        .addEventListener(
+          "change",
+          updateUi
+        );
+    }
+
+    if (this.variationsYesRadio) {
+      this.variationsYesRadio
+        .addEventListener(
+          "change",
+          updateUi
+        );
+    }
 
     updateUi();
   }
 
+  /* =========================
+     Button events
+  ========================= */
+
   bindButtons() {
-    // Reset (pending)
+    // Back.
+    if (this.backBtn) {
+      this.backBtn.addEventListener(
+        "click",
+        () => {
+          const destination =
+            "../../view/product_details/index.php";
+
+          if (
+            window.headerAddProduct
+              ?.goNext
+          ) {
+            window.headerAddProduct
+              .goNext(destination);
+
+            return;
+          }
+
+          window.location.href =
+            destination;
+        }
+      );
+    }
+
+    // Reset.
     if (this.resetBtn) {
-      this.resetBtn.addEventListener('click', (e) => {
-        if (e && typeof e.preventDefault === 'function') e.preventDefault();
-        alert('(pending implementation).');
-      });
+      this.resetBtn.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+
+          alert(
+            "(pending implementation)."
+          );
+        }
+      );
     }
 
-    // Save & Next
+    // Save and next.
     if (this.nextBtn) {
-      this.nextBtn.addEventListener('click', () => {
-        // Basic validation: name required
-        const name = (this.nameInput?.value || '').trim();
-        if (!name) {
-          alert('Please add a name to the variation.');
-          return;
+      this.nextBtn.addEventListener(
+        "click",
+        () => {
+          const name =
+            String(
+              this.nameInput
+                ?.value || ""
+            ).trim();
+
+          if (!name) {
+            alert(
+              "Please add a name to the variation."
+            );
+
+            this.nameInput?.focus();
+
+            return;
+          }
+
+          this.saveVariationDetails(
+            true
+          );
         }
-        this.saveVariationDetails(true);
-      });
+      );
     }
 
-    // Save (no next)
+    // Save.
     if (this.saveBtn) {
-      this.saveBtn.addEventListener('click', () => {
-        const name = (this.nameInput?.value || '').trim();
-        if (!name) {
-          alert('Please add a name to the variation.');
-          return;
-        }
+      this.saveBtn.addEventListener(
+        "click",
+        async () => {
+          const name =
+            String(
+              this.nameInput
+                ?.value || ""
+            ).trim();
 
-        this.saveVariationDetails(false);
-        this.getDefaultVariation();
-        // const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
-        // const skuDefVar =
-        //
-        // setTimeout(() => {
-        //   alert("Ya casi casi.." + skuDefVar);
-        //
-        //   if (skuDefVar) {
-        //     window.location.href =
-        //       `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuDefVar)}`;
-        //   }
-        // }, 3000);
-      });
+          if (!name) {
+            alert(
+              "Please add a name to the variation."
+            );
+
+            this.nameInput?.focus();
+
+            return;
+          }
+
+          const wasSaved =
+            await this
+              .saveVariationDetails(
+                false
+              );
+
+          if (wasSaved) {
+            await this
+              .getDefaultVariation();
+          }
+        }
+      );
     }
 
-    // Create new variation
+    // New variation.
     if (this.addBtn) {
-      this.addBtn.addEventListener('click', () => this.addNewVariation());
+      this.addBtn.addEventListener(
+        "click",
+        () => {
+          this.addNewVariation();
+        }
+      );
+    }
+
+    // Delete variation.
+    if (this.deleteVariationBtn) {
+      this.deleteVariationBtn
+        .addEventListener(
+          "click",
+          () => {
+            this.deleteVariation();
+          }
+        );
     }
   }
+
+  /* =========================
+     Delete variation
+  ========================= */
+
+  deleteVariation() {
+    const {
+      skuProduct,
+      skuVariation
+    } = this.readSkuParamsFromUrl();
+
+    alert(
+      "Delete variation clicked.\n\n" +
+      `Product SKU: ${skuProduct}\n` +
+      `Variation SKU: ${skuVariation}`
+    );
+  }
+
+  /* =========================
+     Variation menu
+  ========================= */
 
   bindMenu() {
-    if (!this.menuBtn || !this.menuList) return;
+    if (
+      !this.menuBtn ||
+      !this.menuList
+    ) {
+      return;
+    }
 
-    // Toggle menu open/close
-    this.menuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const willOpen = this.menuList.hidden === true;
-      this.menuList.hidden = !willOpen;
-      this.menuBtn.setAttribute('aria-expanded', String(willOpen));
-    });
+    this.menuBtn.addEventListener(
+      "click",
+      (event) => {
+        event.stopPropagation();
 
-    // Close menu on outside click
-    document.addEventListener('click', (e) => {
-      if (!this.menuBtn.contains(e.target) && !this.menuList.contains(e.target)) {
-        this.menuList.hidden = true;
-        this.menuBtn.setAttribute('aria-expanded', 'false');
+        const willOpen =
+          this.menuList.hidden;
+
+        this.menuList.hidden =
+          !willOpen;
+
+        this.menuBtn.setAttribute(
+          "aria-expanded",
+          String(willOpen)
+        );
       }
-    });
+    );
 
-    // Close menu on ESC
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !this.menuList.hidden) {
-        this.menuList.hidden = true;
-        this.menuBtn.setAttribute('aria-expanded', 'false');
-        this.menuBtn.focus();
+    document.addEventListener(
+      "click",
+      (event) => {
+        const clickedButton =
+          this.menuBtn.contains(
+            event.target
+          );
+
+        const clickedMenu =
+          this.menuList.contains(
+            event.target
+          );
+
+        if (
+          !clickedButton &&
+          !clickedMenu
+        ) {
+          this.menuList.hidden =
+            true;
+
+          this.menuBtn.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+        }
       }
-    });
+    );
 
-    // Navigate when clicking an item
-    this.menuList.addEventListener('click', (e) => {
-      const li = e.target.closest('li');
-      if (!li || !this.menuList.contains(li)) return;
+    document.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          event.key === "Escape" &&
+          !this.menuList.hidden
+        ) {
+          this.menuList.hidden =
+            true;
 
-      // Update selection UI
-      this.menuList.querySelectorAll('.is-selected').forEach(x => x.classList.remove('is-selected'));
-      li.classList.add('is-selected');
+          this.menuBtn.setAttribute(
+            "aria-expanded",
+            "false"
+          );
 
-      // SKU variation should always be stored in data-sku
-      const skuVariation = String(li.dataset?.sku || '').trim();
-      if (!skuVariation) return;
+          this.menuBtn.focus();
+        }
+      }
+    );
 
-      // Close menu
-      this.menuList.hidden = true;
-      this.menuBtn.setAttribute('aria-expanded', 'false');
+    this.menuList.addEventListener(
+      "click",
+      (event) => {
+        const listItem =
+          event.target.closest("li");
 
-      // Keep sku product from URL and replace sku_variation
-      const { skuProduct } = this.readSkuParamsFromUrl();
-      window.location.href =
-        `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVariation)}`;
-    });
+        if (
+          !listItem ||
+          !this.menuList.contains(
+            listItem
+          )
+        ) {
+          return;
+        }
+
+        this.menuList
+          .querySelectorAll(
+            ".is-selected"
+          )
+          .forEach((item) => {
+            item.classList.remove(
+              "is-selected"
+            );
+          });
+
+        listItem.classList.add(
+          "is-selected"
+        );
+
+        const skuVariation =
+          String(
+            listItem.dataset?.sku ||
+            ""
+          ).trim();
+
+        if (!skuVariation) {
+          return;
+        }
+
+        this.menuList.hidden = true;
+
+        this.menuBtn.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+        const { skuProduct } =
+          this.readSkuParamsFromUrl();
+
+        window.location.href =
+          "../../view/variations/index.php" +
+          `?sku=${encodeURIComponent(
+            skuProduct
+          )}` +
+          `&sku_variation=${encodeURIComponent(
+            skuVariation
+          )}`;
+      }
+    );
   }
+
+  /* =========================
+     File inputs
+  ========================= */
 
   bindFileInputs() {
-    // ---- Image preview + attach flag ----
-    if (this.imgInput && this.imgPreview) {
-      this.imgInput.addEventListener('change', () => {
-        const file = this.imgInput.files?.[0];
-        this.imgPreview.innerHTML = '';
+    // Image preview.
+    if (
+      this.imgInput &&
+      this.imgPreview
+    ) {
+      this.imgInput.addEventListener(
+        "change",
+        () => {
+          const file =
+            this.imgInput.files?.[0];
 
-        // If user cleared the selection, treat as "not attaching a new file"
-        if (!file) {
-          this.attachImage = false;
-          return;
+          this.imgPreview.innerHTML =
+            "";
+
+          if (!file) {
+            this.attachImage =
+              false;
+
+            return;
+          }
+
+          if (
+            !file.type.startsWith(
+              "image/"
+            )
+          ) {
+            alert(
+              "The selected image file is not valid."
+            );
+
+            this.imgInput.value =
+              "";
+
+            this.attachImage =
+              false;
+
+            return;
+          }
+
+          this.attachImage = true;
+
+          if (
+            this
+              .currentImageObjectUrl
+          ) {
+            URL.revokeObjectURL(
+              this
+                .currentImageObjectUrl
+            );
+
+            this
+              .currentImageObjectUrl =
+              null;
+          }
+
+          const imageUrl =
+            URL.createObjectURL(
+              file
+            );
+
+          this
+            .currentImageObjectUrl =
+            imageUrl;
+
+          const image =
+            document.createElement(
+              "img"
+            );
+
+          image.src = imageUrl;
+
+          image.alt =
+            "Selected variation image preview";
+
+          image.loading = "lazy";
+          image.decoding = "async";
+
+          this.imgPreview
+            .appendChild(image);
         }
-
-        // Validate type
-        if (!file.type.startsWith('image/')) {
-          alert('The selected image file is not valid.');
-          this.imgInput.value = '';
-          this.attachImage = false;
-          return;
-        }
-
-        // Mark that user is attaching a NEW image
-        this.attachImage = true;
-
-        // Revoke old ObjectURL (avoid memory leaks)
-        if (this.currentImageObjectUrl) {
-          URL.revokeObjectURL(this.currentImageObjectUrl);
-          this.currentImageObjectUrl = null;
-        }
-
-        // Create preview
-        const url = URL.createObjectURL(file);
-        this.currentImageObjectUrl = url;
-
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = 'Selected variation image preview (icon)';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        this.imgPreview.appendChild(img);
-      });
+      );
     }
 
-    // Clear image
-    if (this.clearImgBtn && this.imgInput && this.imgPreview) {
-      this.clearImgBtn.addEventListener('click', () => {
-        this.imgInput.value = '';
-        this.imgPreview.innerHTML = '';
-        this.attachImage = false;
+    // Remove image.
+    if (
+      this.clearImgBtn &&
+      this.imgInput &&
+      this.imgPreview
+    ) {
+      this.clearImgBtn
+        .addEventListener(
+          "click",
+          () => {
+            this.imgInput.value =
+              "";
 
-        if (this.currentImageObjectUrl) {
-          URL.revokeObjectURL(this.currentImageObjectUrl);
-          this.currentImageObjectUrl = null;
-        }
-      });
+            this.imgPreview.innerHTML =
+              "";
+
+            this.attachImage =
+              false;
+
+            if (
+              this
+                .currentImageObjectUrl
+            ) {
+              URL.revokeObjectURL(
+                this
+                  .currentImageObjectUrl
+              );
+
+              this
+                .currentImageObjectUrl =
+                null;
+            }
+          }
+        );
     }
 
-    // ---- PDF preview + attach flag ----
-    if (this.pdfInput && this.pdfPreview) {
-      this.pdfInput.addEventListener('change', () => {
-        const file = this.pdfInput.files?.[0];
-        this.pdfPreview.innerHTML = '';
+    // PDF preview.
+    if (
+      this.pdfInput &&
+      this.pdfPreview
+    ) {
+      this.pdfInput.addEventListener(
+        "change",
+        () => {
+          const file =
+            this.pdfInput.files?.[0];
 
-        // If user cleared the selection, treat as "not attaching a new file"
-        if (!file) {
-          this.attachPDF = false;
-          return;
+          this.pdfPreview.innerHTML =
+            "";
+
+          if (!file) {
+            this.attachPDF = false;
+
+            return;
+          }
+
+          if (!this.isValidPdf(file)) {
+            alert(
+              "Please select a valid PDF file."
+            );
+
+            this.pdfInput.value =
+              "";
+
+            this.attachPDF =
+              false;
+
+            return;
+          }
+
+          this.attachPDF = true;
+
+          const pill =
+            document.createElement(
+              "div"
+            );
+
+          pill.className =
+            "cp-file-pill";
+
+          const name =
+            document.createElement(
+              "span"
+            );
+
+          name.className =
+            "cp-file-pill-main";
+
+          name.textContent =
+            file.name;
+
+          const size =
+            document.createElement(
+              "small"
+            );
+
+          size.textContent =
+            `(${Math.round(
+              file.size / 1024
+            )} KB)`;
+
+          pill.appendChild(name);
+          pill.appendChild(size);
+
+          this.pdfPreview
+            .appendChild(pill);
         }
-
-        // Validate type - more permissive for PDF MIME types
-        const isPdf = file.type === 'application/pdf'
-                   || file.type === 'application/x-pdf'
-                   || file.type === 'application/acrobat'
-                   || file.type === 'application/x-bzpdf'
-                   || file.name.toLowerCase().endsWith('.pdf');
-
-        if (!isPdf) {
-          alert('Please select a valid PDF file.');
-          this.pdfInput.value = '';
-          this.attachPDF = false;
-          return;
-        }
-
-        // Mark that user is attaching a NEW PDF
-        this.attachPDF = true;
-
-        // Simple "pill" preview
-        const pill = document.createElement('div');
-        pill.className = 'cp-file-pill';
-
-        const name = document.createElement('span');
-        name.textContent = file.name;
-
-        const size = document.createElement('small');
-        size.textContent = `(${Math.round(file.size / 1024)} KB)`;
-
-        pill.appendChild(name);
-        pill.appendChild(size);
-        this.pdfPreview.appendChild(pill);
-      });
+      );
     }
 
-    // Clear PDF
-    if (this.clearPdfBtn && this.pdfInput && this.pdfPreview) {
-      this.clearPdfBtn.addEventListener('click', () => {
-        this.pdfInput.value = '';
-        this.pdfPreview.innerHTML = '';
-        this.attachPDF = false;
-      });
+    // Remove PDF.
+    if (
+      this.clearPdfBtn &&
+      this.pdfInput &&
+      this.pdfPreview
+    ) {
+      this.clearPdfBtn
+        .addEventListener(
+          "click",
+          () => {
+            this.pdfInput.value =
+              "";
+
+            this.pdfPreview.innerHTML =
+              "";
+
+            this.attachPDF =
+              false;
+          }
+        );
     }
   }
 
+  /* =========================
+     Default variation
+  ========================= */
+
   async getDefaultVariation() {
-    const { skuProduct } = (this.readSkuParamsFromUrl?.() ?? {});
+    const { skuProduct } =
+      this.readSkuParamsFromUrl();
 
     try {
-      const res = await fetch("../../controller/products/variations.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "get_sku_default_variation",
-          sku: String(skuProduct).trim()
-        })
-      });
+      const response =
+        await fetch(
+          "../../controller/products/variations.php",
+          {
+            method: "POST",
 
-      if (!res.ok) throw new Error(`Network error (${res.status})`);
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-      // Intenta JSON; si el backend responde texto, intenta parsearlo
-      let data;
-      const ct = res.headers.get("content-type") || "";
-      if (ct.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        try {
-          data = JSON.parse(text);
-        } catch {
-          data = { success: false, message: text };
-        }
-      }
-      if (data?.success) {
-        const skuVar = data?.sku_default_variation;
-        if (skuVar) {
-          alert('The variation details have been saved successfully.');
-          window.location.href =
-            `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVar)}`;
-        }
+            body: JSON.stringify({
+              action:
+                "get_sku_default_variation",
+
+              sku:
+                String(
+                  skuProduct
+                ).trim()
+            })
+          }
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          `Network error (${response.status})`
+        );
       }
 
-      console.warn("getDefaultVariation: unexpected response", data);
+      const data =
+        await this.parseResponse(
+          response
+        );
 
-    } catch (err) {
-      console.error("getDefaultVariation Error:", err);
+      if (!data?.success) {
+        console.warn(
+          "Unexpected response:",
+          data
+        );
+
+        return;
+      }
+
+      const skuVariation =
+        String(
+          data
+            ?.sku_default_variation ||
+          ""
+        ).trim();
+
+      if (!skuVariation) {
+        return;
+      }
+
+      alert(
+        "The variation details have been saved successfully."
+      );
+
+      window.location.href =
+        "../../view/variations/index.php" +
+        `?sku=${encodeURIComponent(
+          skuProduct
+        )}` +
+        `&sku_variation=${encodeURIComponent(
+          skuVariation
+        )}`;
+    } catch (error) {
+      console.error(
+        "getDefaultVariation error:",
+        error
+      );
     }
   }
 
   /* =========================
      Data loading
-     ========================= */
+  ========================= */
 
   getVariationDetails() {
-    // Read current context from URL
-    const { skuProduct, skuVariation } = this.readSkuParamsFromUrl();
+    const {
+      skuProduct,
+      skuVariation
+    } = this.readSkuParamsFromUrl();
 
-    // Prepare backend request
-    const url = "../../controller/products/variations.php";
     const payload = {
-      action: "get_variation_details",
-      sku: skuProduct,
-      sku_variation: skuVariation
+      action:
+        "get_variation_details",
+
+      sku:
+        skuProduct,
+
+      sku_variation:
+        skuVariation
     };
 
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-      .then(r => {
-        if (!r.ok) throw new Error("Network error.");
-        return r.text(); // backend returns text; we parse JSON manually
+    fetch(
+      "../../controller/products/variations.php",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify(payload)
+      }
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            "Network error."
+          );
+        }
+
+        return response.text();
       })
-      .then(text => {
-        console.log("Response text: " + text);
-        const json = this.safeJsonParse(text);
-        if (!json?.success) return;
+      .then((responseText) => {
+        console.log(
+          "Response text:",
+          responseText
+        );
 
-  //      alert(JSON.stringify(json.variations) + "  " + JSON.stringify(json.current));
+        const json =
+          this.safeJsonParse(
+            responseText
+          );
 
-    //  alert(JSON.stringify(json.variations));
-      //  Render page sections (each method does one job)
-        this.renderTopMenu(json.variations, skuVariation);
-        this.renderCurrentNameAndDefaultRules(json.current);
-        this.renderParentSelect(json.variations, json.current, json.parent, json.product);
-        this.renderTypeVariationsSelect(json.type_variations, json.current?.type_id);
-        this.renderServerPreviews(json.current);
+        if (!json?.success) {
+          return;
+        }
 
-        // IMPORTANT: On initial load, user has not attached new files yet
+        this.renderTopMenu(
+          json.variations,
+          skuVariation
+        );
+
+        this
+          .renderCurrentNameAndDefaultRules(
+            json.current
+          );
+
+        this.renderParentSelect(
+          json.variations,
+          json.current,
+          json.parent,
+          json.product
+        );
+
+        this
+          .renderTypeVariationsSelect(
+            json.type_variations,
+            json.current?.type_id
+          );
+
+        this.renderServerPreviews(
+          json.current
+        );
+
         this.attachImage = false;
-        this.attachPDF   = false;
+        this.attachPDF = false;
       })
-      .catch(err => console.error("Error:", err));
+      .catch((error) => {
+        console.error(
+          "Error loading variation details:",
+          error
+        );
+      });
   }
 
   /* =========================
      Rendering
-     ========================= */
+  ========================= */
 
-     renderTopMenu(variationsRaw, skuVariation) {
-      // alert("renderTopMenu" + JSON.stringify(variationsRaw));
-       //console.log(JSON.stringify(variationsRaw));
-       if (!this.menuList) return;
+  renderTopMenu(
+    variationsRaw,
+    skuVariation
+  ) {
+    if (!this.menuList) {
+      return;
+    }
 
-       // Clear menu list
-       this.menuList.innerHTML = '';
+    this.menuList.innerHTML = "";
 
-       // Normalize array input
-       const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
+    const variations =
+      Array.isArray(
+        variationsRaw
+      )
+        ? variationsRaw
+        : [];
 
-       // 🎨 Colores por nivel
-       const levelColors = [
-         '#0f2140', // level 0
-         '#0b6b6b', // level 1
-         '#7a4d0f', // level 2
-         '#5a2d82', // level 3
-         '#1d6b2a', // level 4+
-       ];
+    const levelColors = [
+      "#0f2140",
+      "#0b6b6b",
+      "#7a4d0f",
+      "#5a2d82",
+      "#1d6b2a"
+    ];
 
-       // Highlight target
-       const wanted = String(skuVariation || '').trim().toUpperCase();
+    const selectedSku =
+      String(
+        skuVariation || ""
+      )
+        .trim()
+        .toUpperCase();
 
-       // Use a fragment to reduce reflows (faster)
-       const frag = document.createDocumentFragment();
+    const fragment =
+      document
+        .createDocumentFragment();
 
-       for (let i = 0; i < variations.length; i++) {
-         const v = variations[i] || {};
+    for (
+      let index = 0;
+      index < variations.length;
+      index += 1
+    ) {
+      const variation =
+        variations[index] || {};
 
-         const name  = String(v?.name ?? '(unnamed)');
-         const sku   = String(v?.SKU ?? v?.sku ?? '');
-         const level = Number(v?.level ?? 0) || 0;
+      const name =
+        String(
+          variation?.name ??
+          "(unnamed)"
+        );
 
-         const color = levelColors[level] || levelColors[levelColors.length - 1];
+      const sku =
+        String(
+          variation?.SKU ??
+          variation?.sku ??
+          ""
+        );
 
-         // ✅ +1 sangría global para todos + sangría por nivel
-         const indent = 28 + (level * 18);
+      const level =
+        Number(
+          variation?.level ?? 0
+        ) || 0;
 
-         const li = document.createElement('li');
-         li.dataset.sku = sku;
+      const color =
+        levelColors[level] ||
+        levelColors[
+          levelColors.length - 1
+        ];
 
-         // Base style
-         li.style.position = 'relative';
-         li.style.padding = '8px 10px';
-         li.style.paddingLeft = `${indent}px`;
-         li.style.borderRadius = '10px';
-         li.style.cursor = 'default';
-         li.style.marginBottom = '6px';
+      const indentation =
+        28 + level * 18;
 
-         // Level style
-         li.style.borderLeft = `4px solid ${color}`;
-         li.style.background = 'rgba(255,255,255,0.03)';
+      const listItem =
+        document.createElement(
+          "li"
+        );
 
-         // Dot aligned with indent
-         li.insertAdjacentHTML(
-           'afterbegin',
-           `<span aria-hidden="true" style="
-             position:absolute;
-             left:${Math.max(8, indent - 14)}px;
-             top:50%;
-             transform:translateY(-50%);
-             width:8px;height:8px;border-radius:999px;
-             background:${color};opacity:.85;
-           "></span>`
-         );
+      listItem.dataset.sku = sku;
 
-         // ✅ SKU invisible (pero existe en el DOM para parse/uso si lo necesitas)
-         const skuHidden = sku
-           ? `<span style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">${sku}</span>`
-           : '';
+      listItem.style.position =
+        "relative";
 
-         li.innerHTML += `<strong>${name}</strong>${skuHidden}`;
+      listItem.style.padding =
+        "8px 10px";
 
-         // ✅ Selected style
-         const candidate = String(sku || '').trim().toUpperCase();
-         if (candidate && candidate === wanted) {
-           li.classList.add('is-selected');
-           li.setAttribute('aria-selected', 'true');
-           li.style.background = 'rgba(255,255,255,0.10)';
-           li.style.outline = '2px solid rgba(255,255,255,0.28)';
-           li.style.boxShadow = '0 10px 22px rgba(0,0,0,0.18)';
-           li.style.borderLeft = `6px solid ${color}`;
+      listItem.style.paddingLeft =
+        `${indentation}px`;
 
-           li.insertAdjacentHTML(
-             'beforeend',
-             `<span aria-hidden="true" style="
-               position:absolute;
-               right:10px;top:50%;
-               transform:translateY(-50%);
-               width:18px;height:18px;border-radius:999px;
-               border:2px solid ${color};
-               display:flex;align-items:center;justify-content:center;
-               font-size:12px;line-height:1;color:${color};
-               background: rgba(255,255,255,0.06);
-             ">✓</span>`
-           );
-         } else {
-           li.setAttribute('aria-selected', 'false');
-         }
+      listItem.style.borderRadius =
+        "10px";
 
-         frag.appendChild(li);
-       }
+      listItem.style.cursor =
+        "pointer";
 
-       this.menuList.appendChild(frag);
+      listItem.style.marginBottom =
+        "6px";
 
-       // Keep menu closed by default
-       this.menuList.hidden = true;
-       if (this.menuBtn) this.menuBtn.setAttribute('aria-expanded', 'false');
-     }
-  renderCurrentNameAndDefaultRules(current) {
-    const currentName = String(current?.name ?? '');
+      listItem.style.borderLeft =
+        `4px solid ${color}`;
 
-    // Set name input
-    if (this.nameInput) this.nameInput.value = currentName;
+      listItem.style.background =
+        "rgba(255,255,255,0.03)";
 
-    // Apply "Default" restrictions
-    if (currentName === 'Default') {
-      if (this.form) this.form.style.display = 'none';
-    } else {
-      if (this.form) this.form.style.display = 'block';
+      const dot =
+        document.createElement(
+          "span"
+        );
+
+      dot.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+      dot.style.position =
+        "absolute";
+
+      dot.style.left =
+        `${Math.max(
+          8,
+          indentation - 14
+        )}px`;
+
+      dot.style.top = "50%";
+
+      dot.style.transform =
+        "translateY(-50%)";
+
+      dot.style.width = "8px";
+      dot.style.height = "8px";
+
+      dot.style.borderRadius =
+        "999px";
+
+      dot.style.background =
+        color;
+
+      dot.style.opacity = ".85";
+
+      const nameElement =
+        document.createElement(
+          "strong"
+        );
+
+      nameElement.textContent =
+        name;
+
+      const hiddenSku =
+        document.createElement(
+          "span"
+        );
+
+      hiddenSku.textContent = sku;
+
+      hiddenSku.style.position =
+        "absolute";
+
+      hiddenSku.style.left =
+        "-9999px";
+
+      hiddenSku.style.width =
+        "1px";
+
+      hiddenSku.style.height =
+        "1px";
+
+      hiddenSku.style.overflow =
+        "hidden";
+
+      listItem.appendChild(dot);
+      listItem.appendChild(
+        nameElement
+      );
+      listItem.appendChild(
+        hiddenSku
+      );
+
+      const candidateSku =
+        String(sku)
+          .trim()
+          .toUpperCase();
+
+      if (
+        candidateSku &&
+        candidateSku === selectedSku
+      ) {
+        listItem.classList.add(
+          "is-selected"
+        );
+
+        listItem.setAttribute(
+          "aria-selected",
+          "true"
+        );
+
+        listItem.style.background =
+          "rgba(255,255,255,0.10)";
+
+        listItem.style.outline =
+          "2px solid rgba(255,255,255,0.28)";
+
+        listItem.style.boxShadow =
+          "0 10px 22px rgba(0,0,0,0.18)";
+
+        listItem.style.borderLeft =
+          `6px solid ${color}`;
+
+        const selectedIcon =
+          document.createElement(
+            "span"
+          );
+
+        selectedIcon.textContent =
+          "✓";
+
+        selectedIcon.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+        selectedIcon.style.position =
+          "absolute";
+
+        selectedIcon.style.right =
+          "10px";
+
+        selectedIcon.style.top =
+          "50%";
+
+        selectedIcon.style.transform =
+          "translateY(-50%)";
+
+        selectedIcon.style.width =
+          "18px";
+
+        selectedIcon.style.height =
+          "18px";
+
+        selectedIcon.style.borderRadius =
+          "999px";
+
+        selectedIcon.style.border =
+          `2px solid ${color}`;
+
+        selectedIcon.style.display =
+          "flex";
+
+        selectedIcon.style.alignItems =
+          "center";
+
+        selectedIcon.style.justifyContent =
+          "center";
+
+        selectedIcon.style.fontSize =
+          "12px";
+
+        selectedIcon.style.color =
+          color;
+
+        listItem.appendChild(
+          selectedIcon
+        );
+      } else {
+        listItem.setAttribute(
+          "aria-selected",
+          "false"
+        );
+      }
+
+      fragment.appendChild(
+        listItem
+      );
+    }
+
+    this.menuList.appendChild(
+      fragment
+    );
+
+    this.menuList.hidden = true;
+
+    this.menuBtn?.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+
+  renderCurrentNameAndDefaultRules(
+    current
+  ) {
+    const currentName =
+      String(
+        current?.name ?? ""
+      );
+
+    if (this.nameInput) {
+      this.nameInput.value =
+        currentName;
+    }
+
+    if (!this.form) {
+      return;
+    }
+
+    const isDefault =
+      currentName === "Default";
+
+    this.form.style.display =
+      isDefault
+        ? "none"
+        : "grid";
+
+    if (
+      this.deleteVariationBtn
+    ) {
+      this.deleteVariationBtn.hidden =
+        isDefault;
     }
   }
 
-  renderParentSelect(variationsRaw, current, parent, product) {
-    if (!this.parentSelect) return;
-    // ✅ Respeta EXACTAMENTE el orden en que viene de la BD (no sort)
-    const variations = Array.isArray(variationsRaw) ? variationsRaw : [];
-
-    const currentSku = String(current?.sku ?? current?.SKU ?? '').trim();
-
-    // Reset select with placeholder
-    this.parentSelect.innerHTML = '<option value="" disabled selected>Select a parent</option>';
-
-    const frag = document.createDocumentFragment();
-
-    // ✅ Add all variations except the current one
-    for (let i = 0; i < variations.length; i++) {
-      const sku = String(variations[i]?.SKU ?? variations[i]?.sku ?? '').trim();
-      if (!sku || sku === currentSku) continue;
-
-      const name = String(variations[i]?.name ?? '(unnamed variation)');
-
-      const opt = document.createElement('option');
-      opt.value = sku;
-      opt.dataset.sku = sku;
-
-      // ✅ NO mostrar SKU en el texto visible
-      opt.textContent = name;
-
-      frag.appendChild(opt);
+  renderParentSelect(
+    variationsRaw,
+    current,
+    parent,
+    product
+  ) {
+    if (!this.parentSelect) {
+      return;
     }
 
-    this.parentSelect.appendChild(frag);
+    const variations =
+      Array.isArray(
+        variationsRaw
+      )
+        ? variationsRaw
+        : [];
 
-    // Try to select parent if provided; otherwise keep placeholder
+    const currentSku =
+      String(
+        current?.sku ??
+        current?.SKU ??
+        ""
+      ).trim();
+
+    this.parentSelect.innerHTML = `
+      <option value="" disabled selected>
+        Select a parent
+      </option>
+    `;
+
+    const fragment =
+      document
+        .createDocumentFragment();
+
+    for (
+      let index = 0;
+      index < variations.length;
+      index += 1
+    ) {
+      const variation =
+        variations[index] || {};
+
+      const sku =
+        String(
+          variation?.SKU ??
+          variation?.sku ??
+          ""
+        ).trim();
+
+      if (
+        !sku ||
+        sku === currentSku
+      ) {
+        continue;
+      }
+
+      const name =
+        String(
+          variation?.name ??
+          "(unnamed variation)"
+        );
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value = sku;
+      option.dataset.sku = sku;
+      option.textContent = name;
+
+      fragment.appendChild(
+        option
+      );
+    }
+
+    this.parentSelect.appendChild(
+      fragment
+    );
+
     const targetParent =
-      String(parent?.sku ?? parent?.SKU ?? '') ||
-      String(product?.product_sku ?? '');
+      String(
+        parent?.sku ??
+        parent?.SKU ??
+        ""
+      ) ||
+      String(
+        product?.product_sku ??
+        ""
+      );
 
-    const wanted = String(targetParent).trim().toUpperCase();
-    if (!wanted) return;
+    const wanted =
+      targetParent
+        .trim()
+        .toUpperCase();
 
-    for (const opt of this.parentSelect.options) {
-      const byValue = String(opt.value || '').trim().toUpperCase();
-      const byData  = String(opt.getAttribute('data-sku') || '').trim().toUpperCase();
-      if ((byValue && byValue === wanted) || (byData && byData === wanted)) {
-        opt.selected = true;
-        this.parentSelect.value = opt.value;
+    if (!wanted) {
+      return;
+    }
+
+    for (
+      const option of
+      this.parentSelect.options
+    ) {
+      const value =
+        String(
+          option.value || ""
+        )
+          .trim()
+          .toUpperCase();
+
+      const dataSku =
+        String(
+          option.dataset?.sku ||
+          ""
+        )
+          .trim()
+          .toUpperCase();
+
+      if (
+        value === wanted ||
+        dataSku === wanted
+      ) {
+        option.selected = true;
+
+        this.parentSelect.value =
+          option.value;
+
         break;
       }
     }
   }
-  renderTypeVariationsSelect(typeVariationsRaw, type_id_selected) {
-    if (!this.typeSelect) return;
-    if (!Array.isArray(typeVariationsRaw)) return;
 
-    // Reset select (placeholder only)
-    this.typeSelect.innerHTML = '<option value="" disabled selected>Select type variation</option>';
-
-    // Append options
-    for (let i = 0; i < typeVariationsRaw.length; i++) {
-      const typeId   = String(typeVariationsRaw[i]?.type_id ?? '').trim();
-      const typeName = String(typeVariationsRaw[i]?.type_name ?? '').trim();
-      if (!typeId || !typeName) continue;
-
-      const opt = document.createElement('option');
-      opt.value = typeId;         // IMPORTANT: sent to backend as type_id
-      opt.id    = `type_${typeId}`; // DOM id requested (safe prefix)
-      opt.textContent = typeName;
-
-      this.typeSelect.appendChild(opt);
+  renderTypeVariationsSelect(
+    typeVariationsRaw,
+    selectedTypeId
+  ) {
+    if (
+      !this.typeSelect ||
+      !Array.isArray(
+        typeVariationsRaw
+      )
+    ) {
+      return;
     }
 
-    // Apply selection rules
-    const selected = (type_id_selected === null || type_id_selected === undefined)
-      ? ''
-      : String(type_id_selected).trim();
+    this.typeSelect.innerHTML = `
+      <option value="" disabled selected>
+        Select type variation
+      </option>
+    `;
 
-    this.typeSelect.value = selected || '';
+    for (
+      let index = 0;
+      index <
+      typeVariationsRaw.length;
+      index += 1
+    ) {
+      const type =
+        typeVariationsRaw[index] ||
+        {};
 
-    //alert(this.typeSelect.value);
+      const typeId =
+        String(
+          type?.type_id ?? ""
+        ).trim();
 
-    // If selected doesn't exist => fallback to empty (placeholder)
-    if (selected && this.typeSelect.value !== selected) {
-      this.typeSelect.value = '';
+      const typeName =
+        String(
+          type?.type_name ?? ""
+        ).trim();
+
+      if (
+        !typeId ||
+        !typeName
+      ) {
+        continue;
+      }
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value = typeId;
+      option.id =
+        `type_${typeId}`;
+
+      option.textContent =
+        typeName;
+
+      this.typeSelect.appendChild(
+        option
+      );
+    }
+
+    const selected =
+      selectedTypeId === null ||
+      selectedTypeId === undefined
+        ? ""
+        : String(
+            selectedTypeId
+          ).trim();
+
+    this.typeSelect.value =
+      selected || "";
+
+    if (
+      selected &&
+      this.typeSelect.value !==
+        selected
+    ) {
+      this.typeSelect.value = "";
     }
   }
-  renderServerPreviews(current) {
-    const toAssetUrl = (p) => {
-      const raw = String(p ?? '').trim();
-      if (!raw) return '';
-      if (raw.startsWith('http') || raw.startsWith('data:') || raw.startsWith('blob:')) return raw;
 
-      const rel = raw.replace(/^\/+/, '');
-      // If backend already returns a controller-relative path, just go up to project root.
-      if (rel.startsWith('controller/')) {
-        return '../../' + rel;
+  renderServerPreviews(
+    current
+  ) {
+    const toAssetUrl = (
+      path
+    ) => {
+      const raw =
+        String(path ?? "").trim();
+
+      if (!raw) {
+        return "";
       }
-      // Our uploads currently live under /controller/..., so serve them via that base.
-      return '../../controller/' + rel;
+
+      if (
+        raw.startsWith("http") ||
+        raw.startsWith("data:") ||
+        raw.startsWith("blob:")
+      ) {
+        return raw;
+      }
+
+      const relativePath =
+        raw.replace(/^\/+/, "");
+
+      if (
+        relativePath.startsWith(
+          "controller/"
+        )
+      ) {
+        return (
+          "../../" +
+          relativePath
+        );
+      }
+
+      return (
+        "../../controller/" +
+        relativePath
+      );
     };
 
-    // Server image preview
+    // Image.
     if (this.imgPreview) {
-      const serverImage = String(current?.image ?? '').trim();
+      const serverImage =
+        String(
+          current?.image ?? ""
+        ).trim();
 
-      const src = serverImage
-        ? (toAssetUrl(serverImage) || '../../view/variations/images/add_image.png')
-        : '../../view/variations/images/add_image.png';
+      const imageSource =
+        serverImage
+          ? (
+              toAssetUrl(
+                serverImage
+              ) ||
+              "../../view/variations/images/add_image.png"
+            )
+          : "../../view/variations/images/add_image.png";
 
       this.imgPreview.innerHTML =
-        `<img alt="Selected variation image preview (icon)" loading="lazy" decoding="async" src="${src}">`;
+        "";
+
+      const image =
+        document.createElement(
+          "img"
+        );
+
+      image.alt =
+        "Selected variation image preview";
+
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.src = imageSource;
+
+      this.imgPreview.appendChild(
+        image
+      );
     }
 
-    // Server PDF preview + optional pdf name input
+    // PDF name.
     if (this.namePdfInput) {
-      this.namePdfInput.value = String(current?.name_pdf_artwork ?? '');
+      this.namePdfInput.value =
+        String(
+          current
+            ?.name_pdf_artwork ??
+          ""
+        );
     }
 
-    if (this.pdfPreview) {
-      const serverPdf = String(current?.pdf_artwork ?? '').trim();
-      if (!serverPdf) {
-        this.pdfPreview.innerHTML = '';
-      } else {
-        // Usar name_pdf_artwork si existe, sino extraer del path o usar "artwork.pdf"
-        const pdfName = String(current?.name_pdf_artwork ?? '').trim();
-        const displayName = pdfName || serverPdf.split('/').pop() || 'artwork.pdf';
-        const downloadName = displayName.endsWith('.pdf') ? displayName : displayName + '.pdf';
+    if (!this.pdfPreview) {
+      return;
+    }
 
-        const href = toAssetUrl(serverPdf);
+    const serverPdf =
+      String(
+        current?.pdf_artwork ??
+        ""
+      ).trim();
 
-        const pill = document.createElement('div');
-        pill.className = 'cp-file-pill';
+    if (!serverPdf) {
+      this.pdfPreview.innerHTML =
+        "";
 
-        pill.innerHTML = `
-          <a href="${href}" target="_blank" class="cp-file-pill-main" style="color: var(--primary); text-decoration: none;">
-            ${displayName}
-          </a>
-          <a href="${href}" download="${downloadName}" style="margin-left: 8px; font-size: 0.85em; color: var(--muted);">
-            ↓ Download
-          </a>
-        `;
-        this.pdfPreview.innerHTML = '';
-        this.pdfPreview.appendChild(pill);
+      return;
+    }
+
+    const pdfName =
+      String(
+        current
+          ?.name_pdf_artwork ??
+        ""
+      ).trim();
+
+    const displayName =
+      pdfName ||
+      serverPdf
+        .split("/")
+        .pop() ||
+      "artwork.pdf";
+
+    const downloadName =
+      displayName
+        .toLowerCase()
+        .endsWith(".pdf")
+        ? displayName
+        : `${displayName}.pdf`;
+
+    const href =
+      toAssetUrl(serverPdf);
+
+    const pill =
+      document.createElement(
+        "div"
+      );
+
+    pill.className =
+      "cp-file-pill";
+
+    const openLink =
+      document.createElement(
+        "a"
+      );
+
+    openLink.href = href;
+    openLink.target = "_blank";
+    openLink.rel =
+      "noopener noreferrer";
+
+    openLink.className =
+      "cp-file-pill-main";
+
+    openLink.textContent =
+      displayName;
+
+    openLink.style.color =
+      "var(--brand)";
+
+    openLink.style.textDecoration =
+      "none";
+
+    const downloadLink =
+      document.createElement(
+        "a"
+      );
+
+    downloadLink.href = href;
+
+    downloadLink.download =
+      downloadName;
+
+    downloadLink.textContent =
+      "↓ Download";
+
+    downloadLink.style.marginLeft =
+      "8px";
+
+    downloadLink.style.fontSize =
+      "0.85em";
+
+    downloadLink.style.color =
+      "var(--muted)";
+
+    pill.appendChild(openLink);
+
+    pill.appendChild(
+      downloadLink
+    );
+
+    this.pdfPreview.innerHTML = "";
+
+    this.pdfPreview.appendChild(
+      pill
+    );
+  }
+
+  /* =========================
+     Save variation
+  ========================= */
+
+  async saveVariationDetails(
+    goNext = true
+  ) {
+    const {
+      skuProduct,
+      skuVariation
+    } = this.readSkuParamsFromUrl();
+
+    let skuParentVariation = "";
+
+    const selectedParent =
+      this.parentSelect
+        ?.selectedOptions?.[0];
+
+    if (selectedParent) {
+      skuParentVariation =
+        String(
+          selectedParent.dataset
+            ?.sku ||
+          selectedParent.value ||
+          ""
+        ).trim();
+    }
+
+    const typeId =
+      String(
+        this.typeSelect?.value ||
+        ""
+      ).trim();
+
+    const imageFile =
+      this.imgInput
+        ?.files?.[0] ||
+      null;
+
+    const pdfFile =
+      this.pdfInput
+        ?.files?.[0] ||
+      null;
+
+    if (
+      imageFile &&
+      !imageFile.type.startsWith(
+        "image/"
+      )
+    ) {
+      alert(
+        "The selected image file is not valid."
+      );
+
+      return false;
+    }
+
+    if (
+      pdfFile &&
+      !this.isValidPdf(pdfFile)
+    ) {
+      alert(
+        "Please select a valid PDF file."
+      );
+
+      return false;
+    }
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      "action",
+      "save_variation_details"
+    );
+
+    formData.append(
+      "sku_product",
+      skuProduct
+    );
+
+    formData.append(
+      "sku_variation",
+      skuVariation
+    );
+
+    formData.append(
+      "isAttachAnImage",
+      imageFile ? "1" : "0"
+    );
+
+    formData.append(
+      "isAttachAPDF",
+      pdfFile ? "1" : "0"
+    );
+
+    formData.append(
+      "name",
+      String(
+        this.nameInput?.value ||
+        ""
+      ).trim()
+    );
+
+    formData.append(
+      "name_pdf_artwork",
+      String(
+        this.namePdfInput
+          ?.value || ""
+      ).trim()
+    );
+
+    formData.append(
+      "type_id",
+      typeId
+    );
+
+    if (skuParentVariation) {
+      formData.append(
+        "sku_parent_variation",
+        skuParentVariation
+      );
+    }
+
+    if (imageFile) {
+      formData.append(
+        "imageFile",
+        imageFile
+      );
+    }
+
+    if (pdfFile) {
+      formData.append(
+        "pdfFile",
+        pdfFile
+      );
+    }
+
+    try {
+      const response =
+        await fetch(
+          "../../controller/products/variations.php",
+          {
+            method: "POST",
+
+            headers: {
+              "X-Requested-With":
+                "XMLHttpRequest"
+            },
+
+            body: formData
+          }
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          `Network error (${response.status})`
+        );
       }
+
+      const data =
+        await response.json();
+
+      if (!data?.success) {
+        console.error(
+          "Save failed:",
+          data
+        );
+
+        alert(
+          data?.message ||
+          "Could not save the variation."
+        );
+
+        return false;
+      }
+
+      if (goNext) {
+        const destination =
+          "../../view/images/index.php";
+
+        if (
+          window.headerAddProduct
+            ?.goNext
+        ) {
+          window.headerAddProduct
+            .goNext(destination);
+        } else {
+          window.location.href =
+            destination;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error(
+        "Save error:",
+        error
+      );
+
+      alert(
+        "Network/server error while saving."
+      );
+
+      return false;
     }
   }
 
   /* =========================
-     Save + create variation
-     ========================= */
-
-     saveVariationDetails(goNext = true) {
-       // Read URL context
-       const { skuProduct, skuVariation } = this.readSkuParamsFromUrl();
-
-       // Read selected parent sku (if any)
-       let skuParentVariation = '';
-       if (this.parentSelect?.selectedOptions?.[0]) {
-         const opt = this.parentSelect.selectedOptions[0];
-         skuParentVariation = String(opt.dataset?.sku || opt.value || '').trim();
-       }
-
-       // Read selected type_id
-       const typeId = String(this.typeSelect?.value || '').trim();
-
-       // Read files DIRECTLY from inputs (source of truth)
-       const imageFile = this.imgInput?.files?.[0] || null;
-       const pdfFile   = this.pdfInput?.files?.[0] || null;
-
-       // Validate only if present
-       if (imageFile && !imageFile.type.startsWith('image/')) {
-         alert('The selected image file is not valid.');
-         return;
-       }
-
-       // More permissive PDF validation
-       if (pdfFile) {
-         const isPdf = pdfFile.type === 'application/pdf'
-                    || pdfFile.type === 'application/x-pdf'
-                    || pdfFile.type === 'application/acrobat'
-                    || pdfFile.type === 'application/x-bzpdf'
-                    || pdfFile.name.toLowerCase().endsWith('.pdf');
-         if (!isPdf) {
-           alert('Please select a valid PDF file.');
-           return;
-         }
-       }
-
-       // Build FormData
-       const fd = new FormData();
-       fd.append('action',        'save_variation_details');
-       fd.append('sku_product',   skuProduct);
-       fd.append('sku_variation', skuVariation);
-
-       // CRITICAL: Determine attach flags based on ACTUAL file presence at save time
-       // This ensures flag is always in sync with actual file
-       const hasImageFile = imageFile !== null;
-       const hasPdfFile = pdfFile !== null;
-
-       fd.append('isAttachAnImage', hasImageFile ? '1' : '0');
-       fd.append('isAttachAPDF',    hasPdfFile ? '1' : '0');
-
-       // Core fields
-       fd.append('name', (this.nameInput?.value || '').trim());
-       fd.append('name_pdf_artwork', (this.namePdfInput?.value || '').trim());
-
-       // IMPORTANT: Save type_id (or empty string => backend converts to NULL)
-       fd.append('type_id', typeId);
-
-       // Parent sku (optional)
-       if (skuParentVariation) fd.append('sku_parent_variation', skuParentVariation);
-
-       // Files (only if actually present)
-       if (hasImageFile) fd.append('imageFile', imageFile);
-       if (hasPdfFile) fd.append('pdfFile', pdfFile);
-
-       // Send request
-       fetch("../../controller/products/variations.php", {
-         method: "POST",
-         headers: { "X-Requested-With": "XMLHttpRequest" },
-         body: fd
-       })
-         .then(r => {
-           if (!r.ok) throw new Error("Network error.");
-           return r.json();
-         })
-         .then(data => {
-           if (!data?.success) {
-             console.error("Save failed:", data);
-             alert(data?.message || "Could not save the variation.");
-             return;
-           }
-
-           // Go next step in wizard
-           if (goNext && window.headerAddProduct?.goNext) {
-             window.headerAddProduct.goNext('../../view/images/index.php');
-           }
-         })
-         .catch(err => {
-           console.error("Error:", err);
-           alert("Network/server error while saving.");
-         });
-     }
+     Create variation
+  ========================= */
 
   addNewVariation() {
-    // Create a new variation and redirect to it
-    const { skuProduct } = this.readSkuParamsFromUrl();
-    if (!skuProduct) return;
+    const { skuProduct } =
+      this.readSkuParamsFromUrl();
 
-    fetch("../../controller/products/variations.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "create_new_variation", sku: skuProduct })
-    })
-      .then(r => {
-        if (!r.ok) throw new Error("Network error.");
-        return r.text();
+    if (!skuProduct) {
+      alert(
+        "The product SKU was not found."
+      );
+
+      return;
+    }
+
+    fetch(
+      "../../controller/products/variations.php",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          action:
+            "create_new_variation",
+
+          sku:
+            skuProduct
+        })
+      }
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            "Network error."
+          );
+        }
+
+        return response.text();
       })
-      .then(text => {
-        const json = this.safeJsonParse(text);
-        if (!json?.success) return;
+      .then((responseText) => {
+        const json =
+          this.safeJsonParse(
+            responseText
+          );
 
-        const skuVariation = String(json.sku_variation || '').trim();
-        if (!skuVariation) return;
+        if (!json?.success) {
+          alert(
+            json?.message ||
+            "The variation could not be created."
+          );
 
-        alert("The new variation has been successfully created. Please fill in the details and save once you’ve finished.");
+          return;
+        }
+
+        const skuVariation =
+          String(
+            json.sku_variation ||
+            ""
+          ).trim();
+
+        if (!skuVariation) {
+          return;
+        }
+
+        alert(
+          "The new variation has been successfully created. " +
+          "Please fill in the details and save once you have finished."
+        );
+
         window.location.href =
-          `../../view/variations/index.php?sku=${encodeURIComponent(skuProduct)}&sku_variation=${encodeURIComponent(skuVariation)}`;
+          "../../view/variations/index.php" +
+          `?sku=${encodeURIComponent(
+            skuProduct
+          )}` +
+          `&sku_variation=${encodeURIComponent(
+            skuVariation
+          )}`;
       })
-      .catch(err => console.error("Error:", err));
+      .catch((error) => {
+        console.error(
+          "Create variation error:",
+          error
+        );
+      });
   }
 
   /* =========================
-     Tiny helpers
-     ========================= */
+     Helpers
+  ========================= */
 
   readSkuParamsFromUrl() {
-    const params = new URLSearchParams(window.location.search);
+    const parameters =
+      new URLSearchParams(
+        window.location.search
+      );
+
     return {
-      skuProduct: params.get('sku') || '',
-      skuVariation: params.get('sku_variation') || ''
+      skuProduct:
+        parameters.get("sku") ||
+        "",
+
+      skuVariation:
+        parameters.get(
+          "sku_variation"
+        ) || ""
+    };
+  }
+
+  isValidPdf(file) {
+    if (!file) {
+      return false;
+    }
+
+    return (
+      file.type ===
+        "application/pdf" ||
+      file.type ===
+        "application/x-pdf" ||
+      file.type ===
+        "application/acrobat" ||
+      file.type ===
+        "application/x-bzpdf" ||
+      file.name
+        .toLowerCase()
+        .endsWith(".pdf")
+    );
+  }
+
+  async parseResponse(
+    response
+  ) {
+    const contentType =
+      response.headers.get(
+        "content-type"
+      ) || "";
+
+    if (
+      contentType.includes(
+        "application/json"
+      )
+    ) {
+      return response.json();
+    }
+
+    const responseText =
+      await response.text();
+
+    const parsed =
+      this.safeJsonParse(
+        responseText
+      );
+
+    if (parsed) {
+      return parsed;
+    }
+
+    return {
+      success: false,
+      message: responseText
     };
   }
 
   safeJsonParse(text) {
-    try { return JSON.parse(text); }
-    catch (e) { console.error("Invalid JSON:", e); return null; }
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      console.error(
+        "Invalid JSON:",
+        error
+      );
+
+      return null;
+    }
   }
 }
 
-// Instantiate once (only code outside the class)
+// Create one instance.
 new Variations();
