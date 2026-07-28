@@ -194,8 +194,7 @@ class Variations {
         return response.text();
       })
       .then((responseText) => {
-        alert("Response text:", responseText);
-
+        alert("Response text: " + responseText);
         const json = this.safeJsonParse(responseText);
 
         // if (json.success) {
