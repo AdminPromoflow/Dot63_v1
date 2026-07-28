@@ -194,18 +194,31 @@ class Variations {
         return response.text();
       })
       .then((responseText) => {
-        // alert("Response text: " + responseText);
-
         const json = this.safeJsonParse(responseText);
 
+        if (!json) {
+          alert("Invalid server response.");
+          return;
+        }
+
         if (json.success) {
+          alert("The variation was deleted successfully.");
+
           const dest = new URL("../../view/variations/index.php", window.location.href);
 
           dest.searchParams.set("sku", json.sku_product);
           dest.searchParams.set("sku_variation", json.sku_default_variation);
 
           window.location.assign(dest);
+          return;
         }
+
+        if (json.error === "The Default variation cannot be deleted") {
+          alert("The Default variation cannot be deleted.");
+          return;
+        }
+
+        alert(json.error || "The variation could not be deleted.");
       })
       .catch((error) => {
         console.error("Error loading variation details:", error);
