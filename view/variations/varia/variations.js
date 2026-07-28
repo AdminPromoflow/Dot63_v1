@@ -198,9 +198,9 @@ class Variations {
 
         const json = this.safeJsonParse(responseText);
 
-        if (json.success) {
-          return;
-        }
+        // if (json.success) {
+        //   return;
+        // }
 
 
 
