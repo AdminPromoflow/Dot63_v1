@@ -1186,12 +1186,6 @@ class Variations {
         ? "none"
         : "grid";
 
-    if (
-      this.deleteVariationBtn
-    ) {
-      this.deleteVariationBtn.hidden =
-        isDefault;
-    }
   }
 
   renderParentSelect(
