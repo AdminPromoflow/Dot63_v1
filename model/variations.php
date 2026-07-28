@@ -1365,7 +1365,6 @@ class Variation {
     }
   }
   public function deleteVariation(){
-    echo json_encode("buenas");exit;
   }
 
 }
