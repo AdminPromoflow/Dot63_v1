@@ -1364,7 +1364,556 @@ class Variation {
       return ['success' => false, 'error' => 'DB error'];
     }
   }
-  public function deleteVariation(){
+  /* =========================================================
+     Delete variation
+  ========================================================= */
+
+  public function deleteVariation(): array
+  {
+      $validation = $this->validateVariationSkuForDeletion();
+
+      if (!$validation['success']) {
+          return $validation;
+      }
+
+      $targetSku = $validation['sku'];
+      $pdo = null;
+
+      try {
+          $pdo = $this->connection->getConnection();
+
+          $pdo->beginTransaction();
+
+          /*
+           * 1. Find the main variation ID using its SKU.
+           */
+          $variationId = $this->getVariationIdBySku(
+              $pdo,
+              $targetSku
+          );
+
+          if ($variationId <= 0) {
+              $pdo->rollBack();
+
+              return [
+                  'success' => false,
+                  'error' => 'Variation not found'
+              ];
+          }
+
+          /*
+           * 2. Prevent the main Default variation
+           * from being deleted.
+           */
+          $defaultProtection = $this->protectDefaultVariation(
+              $pdo,
+              $variationId
+          );
+
+          if (!$defaultProtection['success']) {
+              $pdo->rollBack();
+
+              return $defaultProtection;
+          }
+
+          /*
+           * 3. Find all child variations and descendants.
+           *
+           * They are returned from the deepest variation
+           * to the closest child.
+           */
+          $childVariationIds = $this->getChildVariationIds(
+              $pdo,
+              $variationId
+          );
+
+          /*
+           * 4. Prevent any child variation named Default
+           * from being deleted.
+           */
+          foreach ($childVariationIds as $childVariationId) {
+              $childDefaultProtection = $this->protectDefaultVariation(
+                  $pdo,
+                  $childVariationId
+              );
+
+              if (!$childDefaultProtection['success']) {
+                  $pdo->rollBack();
+
+                  return $childDefaultProtection;
+              }
+          }
+
+          /*
+           * 5. Create one array containing the main variation
+           * and every child variation.
+           */
+          $allVariationIds = array_merge(
+              [$variationId],
+              $childVariationIds
+          );
+
+          /*
+           * 6. Check whether any variation is being used
+           * in job_details.
+           *
+           * job_details uses ON DELETE RESTRICT.
+           */
+          $jobDetailsValidation = $this->validateJobDetailsBeforeDeletion(
+              $pdo,
+              $allVariationIds
+          );
+
+          if (!$jobDetailsValidation['success']) {
+              $pdo->rollBack();
+
+              return $jobDetailsValidation;
+          }
+
+          /*
+           * 7. Delete the related information belonging
+           * to each child variation.
+           */
+          foreach ($childVariationIds as $childVariationId) {
+              $this->deleteItemsByVariationId(
+                  $pdo,
+                  $childVariationId
+              );
+
+              $this->deletePromotionsByVariationId(
+                  $pdo,
+                  $childVariationId
+              );
+
+              $this->deleteImagesByVariationId(
+                  $pdo,
+                  $childVariationId
+              );
+
+              $this->deletePricesByVariationId(
+                  $pdo,
+                  $childVariationId
+              );
+          }
+
+          /*
+           * 8. Delete all child variations.
+           */
+          $deletedChildVariations = $this->deleteChildVariations(
+              $pdo,
+              $childVariationIds
+          );
+
+          /*
+           * 9. Delete the related information belonging
+           * to the main variation.
+           */
+          $deletedMainItems = $this->deleteItemsByVariationId(
+              $pdo,
+              $variationId
+          );
+
+          $deletedMainPromotions = $this->deletePromotionsByVariationId(
+              $pdo,
+              $variationId
+          );
+
+          $deletedMainImages = $this->deleteImagesByVariationId(
+              $pdo,
+              $variationId
+          );
+
+          $deletedMainPrices = $this->deletePricesByVariationId(
+              $pdo,
+              $variationId
+          );
+
+          /*
+           * 10. Finally, delete the main variation.
+           */
+          $stmt = $pdo->prepare("
+              DELETE FROM variations
+              WHERE variation_id = :variation_id
+              LIMIT 1
+          ");
+
+          $stmt->execute([
+              ':variation_id' => $variationId
+          ]);
+
+          $deletedMainVariation = $stmt->rowCount();
+
+          if ($deletedMainVariation !== 1) {
+              $pdo->rollBack();
+
+              return [
+                  'success' => false,
+                  'error' => 'The main variation could not be deleted'
+              ];
+          }
+
+          $pdo->commit();
+
+          return [
+              'success' => true,
+              'message' => 'The variation was deleted successfully',
+              'variation_id' => $variationId,
+              'sku_variation' => $targetSku,
+              'deleted' => [
+                  'child_variations' => $deletedChildVariations,
+                  'main_variation' => $deletedMainVariation,
+                  'main_items' => $deletedMainItems,
+                  'main_promotions' => $deletedMainPromotions,
+                  'main_images' => $deletedMainImages,
+                  'main_prices' => $deletedMainPrices
+              ]
+          ];
+      } catch (Throwable $error) {
+          if (
+              $pdo instanceof PDO &&
+              $pdo->inTransaction()
+          ) {
+              $pdo->rollBack();
+          }
+
+          error_log(
+              'deleteVariation error for SKU ' .
+              $targetSku .
+              ': ' .
+              $error->getMessage()
+          );
+
+          return [
+              'success' => false,
+              'error' => 'Database error while deleting the variation'
+          ];
+      }
+  }
+
+  /* =========================================================
+     Validate variation SKU
+  ========================================================= */
+
+  private function validateVariationSkuForDeletion(): array
+  {
+      $targetSku = trim(
+          (string)($this->sku_variation ?? '')
+      );
+
+      if ($targetSku === '') {
+          return [
+              'success' => false,
+              'error' => 'Variation SKU required'
+          ];
+      }
+
+      /*
+       * The variations.SKU column is VARCHAR(100).
+       */
+      if (mb_strlen($targetSku) > 100) {
+          return [
+              'success' => false,
+              'error' => 'Invalid variation SKU'
+          ];
+      }
+
+      return [
+          'success' => true,
+          'sku' => $targetSku
+      ];
+  }
+
+  /* =========================================================
+     Find variation ID by SKU
+  ========================================================= */
+
+  private function getVariationIdBySku(
+      PDO $pdo,
+      string $targetSku
+  ): int {
+      $stmt = $pdo->prepare("
+          SELECT variation_id
+          FROM variations
+          WHERE LOWER(SKU) = LOWER(:sku)
+          LIMIT 1
+      ");
+
+      $stmt->execute([
+          ':sku' => $targetSku
+      ]);
+
+      $variationId = $stmt->fetchColumn();
+
+      if ($variationId === false) {
+          return 0;
+      }
+
+      return (int)$variationId;
+  }
+
+  /* =========================================================
+     Protect Default variation
+  ========================================================= */
+
+  private function protectDefaultVariation(
+      PDO $pdo,
+      int $variationId
+  ): array {
+      $stmt = $pdo->prepare("
+          SELECT name
+          FROM variations
+          WHERE variation_id = :variation_id
+          LIMIT 1
+      ");
+
+      $stmt->execute([
+          ':variation_id' => $variationId
+      ]);
+
+      $variationName = $stmt->fetchColumn();
+
+      if ($variationName === false) {
+          return [
+              'success' => false,
+              'error' => 'Variation not found'
+          ];
+      }
+
+      $variationName = trim(
+          (string)$variationName
+      );
+
+      if (mb_strtolower($variationName) === 'default') {
+          return [
+              'success' => false,
+              'error' => 'The Default variation cannot be deleted'
+          ];
+      }
+
+      return [
+          'success' => true
+      ];
+  }
+
+  /* =========================================================
+     Find child and descendant variation IDs
+  ========================================================= */
+
+  private function getChildVariationIds(
+      PDO $pdo,
+      int $parentVariationId
+  ): array {
+      $stmt = $pdo->prepare("
+          WITH RECURSIVE variation_tree AS (
+              SELECT
+                  variation_id,
+                  parent_id,
+                  1 AS variation_level
+              FROM variations
+              WHERE parent_id = :parent_variation_id
+
+              UNION ALL
+
+              SELECT
+                  child.variation_id,
+                  child.parent_id,
+                  parent.variation_level + 1
+              FROM variations AS child
+
+              INNER JOIN variation_tree AS parent
+                  ON child.parent_id = parent.variation_id
+          )
+
+          SELECT variation_id
+          FROM variation_tree
+          ORDER BY variation_level DESC
+      ");
+
+      $stmt->execute([
+          ':parent_variation_id' => $parentVariationId
+      ]);
+
+      $variationIds = $stmt->fetchAll(
+          PDO::FETCH_COLUMN
+      );
+
+      if (!$variationIds) {
+          return [];
+      }
+
+      return array_map(
+          'intval',
+          $variationIds
+      );
+  }
+
+  /* =========================================================
+     Validate job details
+  ========================================================= */
+
+  private function validateJobDetailsBeforeDeletion(
+      PDO $pdo,
+      array $variationIds
+  ): array {
+      if (empty($variationIds)) {
+          return [
+              'success' => true
+          ];
+      }
+
+      $placeholders = implode(
+          ',',
+          array_fill(0, count($variationIds), '?')
+      );
+
+      $stmt = $pdo->prepare("
+          SELECT
+              variation_id,
+              COUNT(*) AS total_jobs
+          FROM job_details
+          WHERE variation_id IN ($placeholders)
+          GROUP BY variation_id
+      ");
+
+      $stmt->execute(
+          array_map('intval', $variationIds)
+      );
+
+      $jobDetails = $stmt->fetchAll(
+          PDO::FETCH_ASSOC
+      );
+
+      if (!empty($jobDetails)) {
+          $usedVariationIds = array_map(
+              'intval',
+              array_column($jobDetails, 'variation_id')
+          );
+
+          return [
+              'success' => false,
+              'error' => 'The variation cannot be deleted because it is being used in one or more jobs',
+              'variation_ids_in_use' => $usedVariationIds
+          ];
+      }
+
+      return [
+          'success' => true
+      ];
+  }
+
+  /* =========================================================
+     Delete items by variation ID
+  ========================================================= */
+
+  private function deleteItemsByVariationId(
+      PDO $pdo,
+      int $variationId
+  ): int {
+      $stmt = $pdo->prepare("
+          DELETE FROM items
+          WHERE variation_id = :variation_id
+      ");
+
+      $stmt->execute([
+          ':variation_id' => $variationId
+      ]);
+
+      return $stmt->rowCount();
+  }
+
+  /* =========================================================
+     Delete promotions by variation ID
+  ========================================================= */
+
+  private function deletePromotionsByVariationId(
+      PDO $pdo,
+      int $variationId
+  ): int {
+      $stmt = $pdo->prepare("
+          DELETE FROM variation_promotions
+          WHERE variation_id = :variation_id
+      ");
+
+      $stmt->execute([
+          ':variation_id' => $variationId
+      ]);
+
+      return $stmt->rowCount();
+  }
+
+  /* =========================================================
+     Delete images by variation ID
+  ========================================================= */
+
+  private function deleteImagesByVariationId(
+      PDO $pdo,
+      int $variationId
+  ): int {
+      $stmt = $pdo->prepare("
+          DELETE FROM images
+          WHERE variation_id = :variation_id
+      ");
+
+      $stmt->execute([
+          ':variation_id' => $variationId
+      ]);
+
+      return $stmt->rowCount();
+  }
+
+  /* =========================================================
+     Delete prices by variation ID
+  ========================================================= */
+
+  private function deletePricesByVariationId(
+      PDO $pdo,
+      int $variationId
+  ): int {
+      $stmt = $pdo->prepare("
+          DELETE FROM prices
+          WHERE variation_id = :variation_id
+      ");
+
+      $stmt->execute([
+          ':variation_id' => $variationId
+      ]);
+
+      return $stmt->rowCount();
+  }
+
+  /* =========================================================
+     Delete child variations
+  ========================================================= */
+
+  private function deleteChildVariations(
+      PDO $pdo,
+      array $variationIds
+  ): int {
+      if (empty($variationIds)) {
+          return 0;
+      }
+
+      $deletedVariations = 0;
+
+      $stmt = $pdo->prepare("
+          DELETE FROM variations
+          WHERE variation_id = :variation_id
+          LIMIT 1
+      ");
+
+      /*
+       * The IDs arrive ordered from the deepest descendant
+       * to the closest child.
+       */
+      foreach ($variationIds as $variationId) {
+          $stmt->execute([
+              ':variation_id' => (int)$variationId
+          ]);
+
+          $deletedVariations += $stmt->rowCount();
+      }
+
+      return $deletedVariations;
   }
 
 }
