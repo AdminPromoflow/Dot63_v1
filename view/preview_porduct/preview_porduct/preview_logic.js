@@ -668,7 +668,6 @@ class PreviewLogic {
   renderImages(imagesOnlyOfType = [], typeVariation) {
     const id_variation = Number(String(this.getSelectVariation() ?? "").replace("variation_id_", ""));
     const parent = document.getElementById("wrap-images-group");
-
     if (!parent) return;
 
     const typeId = String(typeVariation?.type_id ?? "null");
@@ -680,6 +679,11 @@ class PreviewLogic {
     wrapper.className = "wrap-images";
     wrapper.id = wrapId;
     wrapper.dataset.typeId = typeId;
+
+    wrapper.style.width = "100%";
+    wrapper.style.display = "grid";
+    wrapper.style.gridTemplateColumns = "repeat(auto-fit, minmax(min(100%, 420px), 1fr))";
+    wrapper.style.gap = "20px";
 
     let renderedImages = 0;
 
@@ -707,6 +711,13 @@ class PreviewLogic {
       img.loading = "lazy";
       img.decoding = "async";
       img.draggable = false;
+
+      img.style.display = "block";
+      img.style.width = "100%";
+      img.style.height = "clamp(380px, 52vw, 680px)";
+      img.style.objectFit = "contain";
+      img.style.objectPosition = "center";
+      img.style.borderRadius = "14px";
 
       wrapper.appendChild(img);
       renderedImages++;
