@@ -1367,8 +1367,6 @@ class Variation {
 
 
 
-
-
   /* =========================================================
      Delete variation
   ========================================================= */
@@ -1407,7 +1405,8 @@ class Variation {
           }
 
           /*
-           * 2. Prevent the Default variation from being deleted.
+           * 2. Prevent the main Default variation
+           * from being deleted.
            */
           $defaultProtection = $this->protectDefaultVariation(
               $pdo,
@@ -1421,9 +1420,9 @@ class Variation {
           }
 
           /*
-           * 3. Find all child variations and their descendants.
+           * 3. Find all child variations and descendants.
            *
-           * The result is ordered from the deepest variation
+           * They are returned from the deepest variation
            * to the closest child.
            */
           $childVariationIds = $this->getChildVariationIds(
@@ -1432,8 +1431,51 @@ class Variation {
           );
 
           /*
-           * 4. Delete all information belonging to each
-           * child variation.
+           * 4. Prevent any child variation named Default
+           * from being deleted.
+           */
+          foreach ($childVariationIds as $childVariationId) {
+              $childDefaultProtection = $this->protectDefaultVariation(
+                  $pdo,
+                  $childVariationId
+              );
+
+              if (!$childDefaultProtection['success']) {
+                  $pdo->rollBack();
+
+                  return $childDefaultProtection;
+              }
+          }
+
+          /*
+           * 5. Create one array containing the main variation
+           * and every child variation.
+           */
+          $allVariationIds = array_merge(
+              [$variationId],
+              $childVariationIds
+          );
+
+          /*
+           * 6. Check whether any variation is being used
+           * in job_details.
+           *
+           * job_details uses ON DELETE RESTRICT.
+           */
+          $jobDetailsValidation = $this->validateJobDetailsBeforeDeletion(
+              $pdo,
+              $allVariationIds
+          );
+
+          if (!$jobDetailsValidation['success']) {
+              $pdo->rollBack();
+
+              return $jobDetailsValidation;
+          }
+
+          /*
+           * 7. Delete the related information belonging
+           * to each child variation.
            */
           foreach ($childVariationIds as $childVariationId) {
               $this->deleteItemsByVariationId(
@@ -1458,7 +1500,7 @@ class Variation {
           }
 
           /*
-           * 5. Delete all child variations.
+           * 8. Delete all child variations.
            */
           $deletedChildVariations = $this->deleteChildVariations(
               $pdo,
@@ -1466,8 +1508,8 @@ class Variation {
           );
 
           /*
-           * 6. Delete all information belonging to the
-           * main variation.
+           * 9. Delete the related information belonging
+           * to the main variation.
            */
           $deletedMainItems = $this->deleteItemsByVariationId(
               $pdo,
@@ -1490,10 +1532,7 @@ class Variation {
           );
 
           /*
-           * 7. Finally, delete the main variation.
-           *
-           * This final DELETE remains directly inside
-           * deleteVariation(), as requested.
+           * 10. Finally, delete the main variation.
            */
           $stmt = $pdo->prepare("
               DELETE FROM variations
@@ -1571,6 +1610,9 @@ class Variation {
           ];
       }
 
+      /*
+       * The variations.SKU column is VARCHAR(100).
+       */
       if (mb_strlen($targetSku) > 100) {
           return [
               'success' => false,
@@ -1644,7 +1686,7 @@ class Variation {
           (string)$variationName
       );
 
-      if (strtolower($variationName) === 'default') {
+      if (mb_strtolower($variationName) === 'default') {
           return [
               'success' => false,
               'error' => 'The Default variation cannot be deleted'
@@ -1706,6 +1748,60 @@ class Variation {
           'intval',
           $variationIds
       );
+  }
+
+  /* =========================================================
+     Validate job details
+  ========================================================= */
+
+  private function validateJobDetailsBeforeDeletion(
+      PDO $pdo,
+      array $variationIds
+  ): array {
+      if (empty($variationIds)) {
+          return [
+              'success' => true
+          ];
+      }
+
+      $placeholders = implode(
+          ',',
+          array_fill(0, count($variationIds), '?')
+      );
+
+      $stmt = $pdo->prepare("
+          SELECT
+              variation_id,
+              COUNT(*) AS total_jobs
+          FROM job_details
+          WHERE variation_id IN ($placeholders)
+          GROUP BY variation_id
+      ");
+
+      $stmt->execute(
+          array_map('intval', $variationIds)
+      );
+
+      $jobDetails = $stmt->fetchAll(
+          PDO::FETCH_ASSOC
+      );
+
+      if (!empty($jobDetails)) {
+          $usedVariationIds = array_map(
+              'intval',
+              array_column($jobDetails, 'variation_id')
+          );
+
+          return [
+              'success' => false,
+              'error' => 'The variation cannot be deleted because it is being used in one or more jobs',
+              'variation_ids_in_use' => $usedVariationIds
+          ];
+      }
+
+      return [
+          'success' => true
+      ];
   }
 
   /* =========================================================
@@ -1809,8 +1905,8 @@ class Variation {
       ");
 
       /*
-       * The IDs already arrive ordered from the deepest
-       * descendant to the closest child.
+       * The IDs arrive ordered from the deepest descendant
+       * to the closest child.
        */
       foreach ($variationIds as $variationId) {
           $stmt->execute([
