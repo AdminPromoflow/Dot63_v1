@@ -201,9 +201,11 @@ class PreviewGallery {
       return;
     }
 
-    this.currentIndex = keepIndex
-      ? this.normaliseIndex(this.currentIndex, items.length)
-      : 0;
+    if (keepIndex) {
+      this.currentIndex = this.normaliseIndex(this.currentIndex, items.length);
+    } else {
+      this.currentIndex = 0;
+    }
 
     this.renderThumbs();
     this.showCurrentMedia();
@@ -228,12 +230,17 @@ class PreviewGallery {
       media.hidden = !isActive;
       media.style.display = isActive ? "block" : "none";
 
-      if (media.tagName === "VIDEO" && !isActive) {
-        media.pause();
+      if (media.tagName === "VIDEO") {
+        if (isActive) {
+          media.currentTime = 0;
+        } else {
+          media.pause();
+        }
       }
     });
 
     this.updateThumbStates();
+    this.updateNavigationVisibility();
   }
 
   nextImage() {
@@ -289,6 +296,7 @@ class PreviewGallery {
       button.className = "sp-thumb";
       button.setAttribute("role", "listitem");
       button.setAttribute("aria-label", `Show media ${index + 1}`);
+      button.setAttribute("aria-pressed", "false");
 
       if (media.tagName === "IMG") {
         const thumbnail = document.createElement("img");
@@ -335,6 +343,21 @@ class PreviewGallery {
       thumbnail.classList.toggle("is-active", isActive);
       thumbnail.setAttribute("aria-pressed", String(isActive));
     });
+  }
+
+  updateNavigationVisibility() {
+    const items = this.getMediaItems();
+    const previousButton = document.querySelector(".sp-nav-prev");
+    const nextButton = document.querySelector(".sp-nav-next");
+    const shouldShow = items.length > 1;
+
+    if (previousButton) {
+      previousButton.hidden = !shouldShow;
+    }
+
+    if (nextButton) {
+      nextButton.hidden = !shouldShow;
+    }
   }
 
   updatePrice(preferredButton = null) {

@@ -27,7 +27,7 @@ $logicTime = is_file($logicPath) ? filemtime($logicPath) : time();
       <aside class="sp-col sp-gallery" aria-label="Product media">
         <div class="sp-gallery-inner">
 
-          <div class="sp-main-wrapper js-parallax">
+          <div class="sp-main-wrapper">
             <button type="button" class="sp-nav sp-nav-prev" aria-label="Previous media" onclick="previewGallery.prevImage()">‹</button>
 
             <div class="sp-main wrap-images-group" id="wrap-images-group" aria-live="polite"></div>
@@ -39,6 +39,15 @@ $logicTime = is_file($logicPath) ? filemtime($logicPath) : time();
 
           <small class="cp-hint">Hover to zoom · Media changes every 5 seconds</small>
         </div>
+
+        <section class="sp-variations js-fade-up" aria-label="Product configuration">
+          <div class="sp-section-heading">
+            <span class="sp-section-eyebrow">Configuration</span>
+            <h2>Choose your options</h2>
+          </div>
+
+          <div id="wrap-variations-group" class="wrap-variations-group"></div>
+        </section>
       </aside>
 
       <section class="sp-col sp-details js-fade-up">
@@ -62,39 +71,13 @@ $logicTime = is_file($logicPath) ? filemtime($logicPath) : time();
           <span id="sp_unit_hint" class="sp-unit-hint">per 100 units</span>
         </div>
 
-        <section class="sp-variations js-fade-up" aria-label="Product configuration">
-          <div id="wrap-variations-group" class="wrap-variations-group"></div>
+        <section class="sp-items-note js-fade-up" id="sp-items-note" aria-label="Items information">
+          <div class="sp-items-list wrap-items-group" id="wrap-items-group"></div>
         </section>
       </section>
 
-      <section class="sp-packsize js-fade-up" id="sp-packsize" aria-label="Pack sizes and bundle pricing">
-        <div class="var-group var-group-pack" aria-labelledby="var_label_quantity">
-
-          <div class="var-label">
-            <span class="var-name">Pack size</span>
-            <strong id="var_label_quantity">0 units</strong>
-          </div>
-
-          <div class="var-options wrap-prices-group" id="wrap-prices-group"></div>
-        </div>
-      </section>
-
-      <section class="sp-artwork-downloads js-fade-up" aria-label="Artwork templates">
-        <h2 class="sp-artwork-heading">Download artwork templates</h2>
-
-        <div class="sp-artwork-grid wrap-artworks-group" id="wrap-artworks-group"></div>
-
-        <p class="sp-artwork-note">
-          If you do not have a designer, you can place your order and request artwork support during checkout.
-        </p>
-      </section>
-
-      <section class="sp-items-note js-fade-up" id="sp-items-note" aria-label="Items information">
-        <div class="sp-items-list wrap-items-group" id="wrap-items-group"></div>
-      </section>
-
       <aside class="sp-col sp-buybox" aria-label="Purchase options">
-        <div class="box js-fade-up js-scale-in js-parallax">
+        <div class="box js-fade-up js-scale-in">
 
           <div class="price-group">
             <div class="price-row price-row--head">
@@ -146,6 +129,28 @@ $logicTime = is_file($logicPath) ? filemtime($logicPath) : time();
           <button type="button" class="btn btn-ghost btn-buy js-scale-in" id="bb_buy" disabled>Buy now</button>
         </div>
       </aside>
+
+      <section class="sp-packsize js-fade-up" id="sp-packsize" aria-label="Pack sizes and bundle pricing">
+        <div class="var-group var-group-pack" aria-labelledby="var_label_quantity">
+
+          <div class="var-label">
+            <span class="var-name">Pack size</span>
+            <strong id="var_label_quantity">0 units</strong>
+          </div>
+
+          <div class="var-options wrap-prices-group" id="wrap-prices-group"></div>
+        </div>
+      </section>
+
+      <section class="sp-artwork-downloads js-fade-up" aria-label="Artwork templates">
+        <h2 class="sp-artwork-heading">Download artwork templates</h2>
+
+        <div class="sp-artwork-grid wrap-artworks-group" id="wrap-artworks-group"></div>
+
+        <p class="sp-artwork-note">
+          If you do not have a designer, you can place your order and request artwork support during checkout.
+        </p>
+      </section>
 
     </section>
 

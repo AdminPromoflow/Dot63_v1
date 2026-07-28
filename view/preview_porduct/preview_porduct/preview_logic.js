@@ -4,6 +4,7 @@ class PreviewLogic {
     this.maxQuantity = null;
     this.shouldDeleteItems = false;
     this.priceSelected = null;
+    this.loadedVariationIds = new Set();
 
     this.init();
   }
@@ -48,18 +49,6 @@ class PreviewLogic {
     parent.dataset.variationBound = "1";
 
     parent.addEventListener("click", (event) => {
-      const header = event.target.closest(".var-collapse-header");
-
-      if (header && parent.contains(header)) {
-        const group = header.closest(".wrap-variations");
-
-        if (group) {
-          this.toggleVariationGroup(group);
-        }
-
-        return;
-      }
-
       const option = event.target.closest(".var-option[id^='variation_id_']");
 
       if (!option || !parent.contains(option)) {
@@ -68,54 +57,6 @@ class PreviewLogic {
 
       this.SelectVariation(option.id);
     });
-  }
-
-  toggleVariationGroup(group) {
-    const isOpen = group.classList.contains("is-open");
-
-    if (isOpen) {
-      group.classList.remove("is-open");
-
-      const header = group.querySelector(".var-collapse-header");
-
-      if (header) {
-        header.setAttribute("aria-expanded", "false");
-      }
-
-      return;
-    }
-
-    this.openVariationGroup(group);
-  }
-
-  openVariationGroup(group) {
-    if (!group) {
-      return;
-    }
-
-    const allGroups = document.querySelectorAll("#wrap-variations-group .wrap-variations.is-collapsible");
-
-    allGroups.forEach((item) => {
-      if (item === group) {
-        return;
-      }
-
-      item.classList.remove("is-open");
-
-      const header = item.querySelector(".var-collapse-header");
-
-      if (header) {
-        header.setAttribute("aria-expanded", "false");
-      }
-    });
-
-    group.classList.add("is-open");
-
-    const header = group.querySelector(".var-collapse-header");
-
-    if (header) {
-      header.setAttribute("aria-expanded", "true");
-    }
   }
 
   updateVariationHeader(group, selectedText) {
@@ -271,17 +212,25 @@ class PreviewLogic {
   }
 
   async fetchChildVariationsById(variationId) {
-    if (!variationId) {
+    const cleanVariationId = String(variationId ?? "").trim();
+
+    if (!cleanVariationId) {
       console.warn("No variation ID was provided.");
       return;
     }
+
+    if (this.loadedVariationIds.has(cleanVariationId)) {
+      return;
+    }
+
+    this.loadedVariationIds.add(cleanVariationId);
 
     const url = this.buildControllerUrl("../../controller/order/product.php");
 
     try {
       const json = await this.postJson(url, {
         action: "get_variation_children_by_id",
-        variation_id: variationId
+        variation_id: cleanVariationId
       });
 
       const variationTypes = Array.isArray(json.variationTypes) ? json.variationTypes : [];
@@ -294,13 +243,19 @@ class PreviewLogic {
       this.organizeCurrentVariation(currentVariationData);
 
       if (childVariations.length > 0 && variationTypes.length > 0) {
-        this.organizeVariationsForRender(childVariations, variationTypes);
+        const firstChildIds = this.organizeVariationsForRender(childVariations, variationTypes);
+
+        for (const firstChildId of firstChildIds) {
+          await this.fetchChildVariationsById(firstChildId);
+        }
+
         return;
       }
 
       this.updateVariationPrices();
       this.selectFirstPriceButton();
     } catch (error) {
+      this.loadedVariationIds.delete(cleanVariationId);
       console.error("Error fetching variation data:", error);
     }
   }
@@ -310,6 +265,12 @@ class PreviewLogic {
       const firstPriceButton = document.querySelector("#wrap-prices-group .js-price-option");
 
       if (!firstPriceButton) {
+        return;
+      }
+
+      const selectedButton = document.querySelector("#wrap-prices-group .js-price-option.is-selected");
+
+      if (selectedButton) {
         return;
       }
 
@@ -337,6 +298,7 @@ class PreviewLogic {
       }
     });
 
+    this.loadedVariationIds.clear();
     window.previewGallery?.clearGallery?.();
   }
 
@@ -409,9 +371,7 @@ class PreviewLogic {
         return false;
       }
 
-      const currentDomId = `variation_id_${variationId}`;
-
-      this.setSelectVariation(currentDomId);
+      this.setSelectVariation(`variation_id_${variationId}`);
 
       const typeVariation = {
         type_id: typeId,
@@ -485,8 +445,10 @@ class PreviewLogic {
   }
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
+    const firstChildIds = [];
+
     if (!childVariations.length || !variationTypes.length) {
-      return;
+      return firstChildIds;
     }
 
     for (const typeVariation of variationTypes) {
@@ -552,11 +514,14 @@ class PreviewLogic {
         continue;
       }
 
-      const rendered = this.renderVariations(variations, typeVariation);
+      const renderedVariationId = this.renderVariations(variations, typeVariation);
 
-      if (!rendered) {
+      if (!renderedVariationId) {
         continue;
       }
+
+      firstChildIds.push(renderedVariationId);
+      this.setSelectVariation(`variation_id_${renderedVariationId}`);
 
       if (images.length > 0) {
         this.renderImages(images, typeVariation);
@@ -574,6 +539,8 @@ class PreviewLogic {
         this.renderArtwork(artworks, typeVariation);
       }
     }
+
+    return firstChildIds;
   }
 
   renderVariations(childVariations = [], typeVariation = {}) {
@@ -581,21 +548,21 @@ class PreviewLogic {
       const parent = document.getElementById("wrap-variations-group");
 
       if (!parent || !childVariations.length) {
-        return false;
+        return null;
       }
 
       const typeId = String(typeVariation.type_id ?? "null");
       const typeName = String(typeVariation.type_name ?? "").trim();
       const labelId = `variation-label-${typeId}`;
-      const bodyId = `variation-body-${typeId}`;
 
       if (!typeName) {
-        return false;
+        return null;
       }
 
       parent.querySelector(`.wrap-variations[data-type-id="${CSS.escape(typeId)}"]`)?.remove();
 
       const firstVariation = childVariations[0];
+      const firstVariationId = String(firstVariation.variation_id ?? "").trim();
       const firstLabel = String(firstVariation.name ?? "").trim();
 
       const buttonsHtml = childVariations.map((variation, index) => {
@@ -617,46 +584,22 @@ class PreviewLogic {
       }).join("");
 
       const groupHtml = `
-        <div class="wrap-variations is-collapsible" data-type-id="${this.escapeHtml(typeId)}" aria-labelledby="${labelId}">
-          <button type="button" class="var-collapse-header" aria-expanded="false" aria-controls="${bodyId}">
-            <span class="var-collapse-left">
-              <span class="var-collapse-title">
-                <span class="var-name">${this.escapeHtml(typeName)}</span>
-                <strong id="${labelId}" class="js-selected-variation-label">${this.escapeHtml(firstLabel || "Select option")}</strong>
-              </span>
-
-              <span class="variation-summary-pill">${this.escapeHtml(firstLabel || "Select an option")}</span>
-              <span class="var-collapse-hint">Click to view available options</span>
-            </span>
-
-            <span class="var-collapse-icon" aria-hidden="true"></span>
-          </button>
-
-          <div class="var-collapse-body" id="${bodyId}">
-            <div class="var-collapse-inner">
-              <div class="var-options">${buttonsHtml}</div>
-            </div>
+        <div class="wrap-variations" data-type-id="${this.escapeHtml(typeId)}" aria-labelledby="${labelId}">
+          <div class="var-label">
+            <span class="var-name">${this.escapeHtml(typeName)}</span>
+            <strong id="${labelId}" class="js-selected-variation-label">${this.escapeHtml(firstLabel || "Select option")}</strong>
           </div>
+
+          <div class="var-options">${buttonsHtml}</div>
         </div>
       `;
 
       parent.insertAdjacentHTML("beforeend", groupHtml);
 
-      const newGroup = parent.querySelector(`.wrap-variations[data-type-id="${CSS.escape(typeId)}"]`);
-      const firstButton = newGroup?.querySelector(".var-option");
-
-      if (parent.querySelectorAll(".wrap-variations.is-collapsible").length === 1) {
-        this.openVariationGroup(newGroup);
-      }
-
-      if (firstButton) {
-        this.setSelectVariation(firstButton.id);
-      }
-
-      return true;
+      return firstVariationId || null;
     } catch (error) {
       console.error("Error rendering variations:", error);
-      return false;
+      return null;
     }
   }
 
@@ -692,9 +635,23 @@ class PreviewLogic {
       return false;
     }
 
+    this.removeVariationGroupsAfter(group);
     this.fetchChildVariationsById(variationId);
 
     return true;
+  }
+
+  removeVariationGroupsAfter(currentGroup) {
+    let nextGroup = currentGroup.nextElementSibling;
+
+    while (nextGroup) {
+      const groupToRemove = nextGroup;
+      nextGroup = nextGroup.nextElementSibling;
+
+      if (groupToRemove.classList.contains("wrap-variations")) {
+        groupToRemove.remove();
+      }
+    }
   }
 
   setSelectVariation(domId) {
@@ -884,10 +841,12 @@ class PreviewLogic {
       });
     });
 
-    if (this.selectPriceButton(buttons[0], scope)) {
-      window.setTimeout(() => {
-        this.updateProductSummaryBox(buttons[0].dataset.minQuantity, buttons[0].value);
-      }, 300);
+    if (!document.querySelector("#wrap-prices-group .js-price-option.is-selected")) {
+      if (this.selectPriceButton(buttons[0], scope)) {
+        window.setTimeout(() => {
+          this.updateProductSummaryBox(buttons[0].dataset.minQuantity, buttons[0].value);
+        }, 300);
+      }
     }
 
     return true;
@@ -960,7 +919,7 @@ class PreviewLogic {
       return false;
     }
 
-    container.querySelectorAll(".js-price-option").forEach((item) => {
+    document.querySelectorAll("#wrap-prices-group .js-price-option").forEach((item) => {
       item.classList.remove("is-selected");
       item.setAttribute("aria-pressed", "false");
     });
