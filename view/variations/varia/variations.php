@@ -476,19 +476,20 @@ $jsVersion =
       id="variation_actions_section"
     >
 
-      <button
-        class="btn-back"
-        id="btn_back_variations"
-        type="button"
-        aria-label="Return to product details"
-      >
-        ← Back
-      </button>
-
-      <div class="cp-footer-actions">
+      <!-- Left footer buttons -->
+      <div class="cp-footer-left">
 
         <button
-          class="btn btn-danger"
+          class="btn-back"
+          id="btn_back_variations"
+          type="button"
+          aria-label="Return to product details"
+        >
+          ← Back
+        </button>
+
+        <button
+          class="btn btn-delete-variation"
           id="delete_variation"
           type="button"
           aria-label="Delete the selected variation"
@@ -496,8 +497,13 @@ $jsVersion =
           Delete variation
         </button>
 
+      </div>
+
+      <!-- Right footer buttons -->
+      <div class="cp-footer-actions">
+
         <button
-          class="btn"
+          class="btn btn-danger"
           id="reset_form"
           type="button"
         >
