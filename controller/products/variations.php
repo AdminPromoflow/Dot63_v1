@@ -27,34 +27,49 @@ class Variations {
               // Si necesitas archivos opcionales en esta acción:
               $data['_files'] = $_FILES ?? [];
               $this->getVariationDetails($data);
-              break;
+          break;
 
           case 'create_new_variation':
               $data['_files'] = $_FILES ?? [];
               $this->createNewVariation($data);
-              break;
+          break;
 
           case 'save_variation_details':
               // Aquí sí esperas archivos image/pdf desde FormData
               $data['_files'] = $_FILES ?? [];
               $this->saveVariationDetails($data);
-              break;
+          break;
 
           case 'update_group_name':
               // Aquí sí esperas archivos image/pdf desde FormData
               $this->updateGroupName($data);
-              break;
+          break;
           case 'get_sku_default_variation':
               // Aquí sí esperas archivos image/pdf desde FormData
               $this->getSKUDefaultVariation($data);
-              break;
+          break;
+          case 'delete_variation':
+              // Aquí sí esperas archivos image/pdf desde FormData
+              $this->deleteVariation($data);
+          break;
+
           default:
               header('Content-Type: application/json; charset=utf-8');
               echo json_encode(['success' => false, 'error' => 'Unsupported action']);
-              break;
+          break;
       }
   }
 
+  private function deleteVariation($data){
+
+    $connection = new Database();
+    $variation = new Variation($connection);
+    $variation->setSKUVariation($sku);
+    $response->deleteVariation();
+
+    echo json_encode ($response);
+
+  }
 
   private function saveVariationDetails(array $data): void
   {
