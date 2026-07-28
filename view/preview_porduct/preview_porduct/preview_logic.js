@@ -1,63 +1,108 @@
+// preview_logic.js
+
 class PreviewLogic {
   constructor() {
     this.variationSelected = null;
-    this.maxQuantity = null;
+    this.max_quantity = null;
     this.shouldDeleteItems = false;
     this.priceSelected = null;
-    this.loadedVariationIds = new Set();
-    this.loadingVariationIds = new Set();
 
-    this.init();
-  }
-
-  init() {
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => this.start());
-      return;
+      document.addEventListener("DOMContentLoaded", () => {
+        this.bindMainButtons();
+        this.bindVariationCollapse();
+        this.getDataProduct();
+      });
+    } else {
+      this.bindMainButtons();
+      this.bindVariationCollapse();
+      this.getDataProduct();
     }
-
-    this.start();
-  }
-
-  start() {
-    this.bindMainButtons();
-    this.bindVariationEvents();
-    this.getDataProduct();
   }
 
   bindMainButtons() {
-    const backButton = document.getElementById("btn_back_edit");
-    const publishButton = document.getElementById("btn_publish");
+    const backBtn = document.getElementById("btn_back_edit");
+    const publishBtn = document.getElementById("btn_publish");
 
-    if (backButton && backButton.dataset.bound !== "1") {
-      backButton.dataset.bound = "1";
-      backButton.addEventListener("click", () => this.backBtn());
+    if (backBtn && backBtn.dataset.bound !== "1") {
+      backBtn.dataset.bound = "1";
+
+      backBtn.addEventListener("click", () => {
+        this.backBtn();
+      });
     }
 
-    if (publishButton && publishButton.dataset.bound !== "1") {
-      publishButton.dataset.bound = "1";
-      publishButton.addEventListener("click", () => this.publishBtn());
+    if (publishBtn && publishBtn.dataset.bound !== "1") {
+      publishBtn.dataset.bound = "1";
+
+      publishBtn.addEventListener("click", () => {
+        this.publishBtn();
+      });
     }
   }
 
-  bindVariationEvents() {
+  bindVariationCollapse() {
     const parent = document.getElementById("wrap-variations-group");
+    if (!parent) return;
 
-    if (!parent || parent.dataset.variationBound === "1") {
-      return;
-    }
-
-    parent.dataset.variationBound = "1";
+    if (parent.dataset.collapseBound === "1") return;
+    parent.dataset.collapseBound = "1";
 
     parent.addEventListener("click", (event) => {
-      const option = event.target.closest(".var-option[id^='variation_id_']");
+      const header = event.target.closest(".var-collapse-header");
+      if (!header || !parent.contains(header)) return;
 
-      if (!option || !parent.contains(option)) {
-        return;
-      }
+      const group = header.closest(".wrap-variations");
+      if (!group) return;
 
-      this.selectVariation(option.id);
+      const isOpen = group.classList.contains("is-open");
+
+      group.classList.toggle("is-open", !isOpen);
+      header.setAttribute("aria-expanded", String(!isOpen));
     });
+  }
+
+  openVariationGroup(group) {
+    if (!group) return;
+
+    const allGroups = document.querySelectorAll(
+      "#wrap-variations-group .wrap-variations.is-collapsible"
+    );
+
+    allGroups.forEach((item) => {
+      if (item !== group) {
+        item.classList.remove("is-open");
+
+        const button = item.querySelector(".var-collapse-header");
+        if (button) {
+          button.setAttribute("aria-expanded", "false");
+        }
+      }
+    });
+
+    group.classList.add("is-open");
+
+    const header = group.querySelector(".var-collapse-header");
+    if (header) {
+      header.setAttribute("aria-expanded", "true");
+    }
+  }
+
+  updateVariationHeader(group, selectedText) {
+    if (!group) return;
+
+    const selectedLabel = group.querySelector(".js-selected-variation-label");
+    const summaryPill = group.querySelector(".variation-summary-pill");
+
+    if (selectedLabel) {
+      selectedLabel.textContent = selectedText || "Select option";
+    }
+
+    if (summaryPill) {
+      summaryPill.textContent = selectedText
+        ? `Selected: ${selectedText}`
+        : "Select an option";
+    }
   }
 
   escapeHtml(value) {
@@ -69,708 +114,636 @@ class PreviewLogic {
       .replaceAll("'", "&#039;");
   }
 
-  buildControllerUrl(path) {
-    return new URL(path, window.location.href).toString();
-  }
+  publishBtn() {
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
 
-  buildMediaSource(rawPath, fallback = "") {
-    const path = String(rawPath ?? "").trim().replace(/^\/+/, "");
-
-    if (!path) {
-      return fallback;
+    if (!sku) {
+      console.warn("No SKU in URL");
+      return;
     }
 
-    if (
-      path.startsWith("http") ||
-      path.startsWith("data:") ||
-      path.startsWith("blob:")
-    ) {
-      return path;
-    }
+    const url = "../../controller/products/product.php";
 
-    if (path.startsWith("controller/")) {
-      return `../../${path}`;
-    }
+    const data = {
+      action: "publish_product",
+      sku: sku
+    };
 
-    return `../../controller/${path}`;
-  }
-
-  async postJson(url, data) {
-    const response = await fetch(url, {
+    fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(data)
-    });
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+        alert(text);
 
-    const responseText = await response.text();
-
-    if (!response.ok) {
-      throw new Error(responseText || "Network error.");
-    }
-
-    try {
-      return JSON.parse(responseText);
-    } catch (error) {
-      throw new Error("Invalid JSON response.");
-    }
-  }
-
-  async publishBtn() {
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
-
-    if (!sku) {
-      alert("No product SKU was found.");
-      return;
-    }
-
-    const url = this.buildControllerUrl("../../controller/products/product.php");
-
-    try {
-      const json = await this.postJson(url, {
-        action: "publish_product",
-        sku: sku
+        try {
+          JSON.parse(text);
+          location.reload();
+        } catch (error) {
+          console.error("Invalid JSON:", error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error publishing product:", error);
       });
-
-      if (json.success) {
-        alert(json.message || "The product was published successfully.");
-        window.location.reload();
-        return;
-      }
-
-      alert(json.error || json.message || "The product could not be published.");
-    } catch (error) {
-      console.error("Error publishing product:", error);
-      alert(error.message || "The product could not be published.");
-    }
   }
 
   backBtn() {
-    const currentUrl = new URL(window.location.href);
-    const destinationUrl = new URL(
-      "../../view/product_details/index.php",
-      currentUrl
-    );
+    const url = "../../view/product_details/index.php";
 
-    const sku = currentUrl.searchParams.get("sku");
-    const skuVariation = currentUrl.searchParams.get("sku_variation");
+    const current = new URL(window.location.href);
+    const dest = new URL(url, current);
 
-    if (sku) {
-      destinationUrl.searchParams.set("sku", sku);
-    }
+    const sku = current.searchParams.get("sku");
+    const skuv = current.searchParams.get("sku_variation");
 
-    if (skuVariation) {
-      destinationUrl.searchParams.set("sku_variation", skuVariation);
-    }
+    if (sku) dest.searchParams.set("sku", sku);
+    if (skuv) dest.searchParams.set("sku_variation", skuv);
 
-    window.location.assign(destinationUrl);
+    window.location.assign(dest);
   }
 
-  async getDataProduct() {
+  getDataProduct() {
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
 
     if (!sku) {
-      console.warn("No SKU in URL.");
+      console.warn("No SKU in URL");
       return;
     }
 
-    const url = this.buildControllerUrl("../../controller/order/product.php");
+    const url = "../../controller/order/product.php";
 
-    try {
-      const json = await this.postJson(url, {
-        action: "get_preview_product_details",
-        sku: sku
-      });
+    const data = {
+      action: "get_preview_product_details",
+      sku: sku
+    };
 
-      if (!Array.isArray(json)) {
-        throw new Error("Invalid product data.");
-      }
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+        const json = JSON.parse(text);
 
-      const companyName =
-        json.find((item) => item.company_name)?.company_name ?? "";
+        const company_name = json.find((x) => x.company_name)?.company_name ?? "";
+        const category_name = json.find((x) => x.category_name)?.category_name ?? "";
+        const group_name = json.find((x) => x.group_name)?.group_name ?? "";
+        const default_variation_id =
+          json.find((x) => x.default_variation_id)?.default_variation_id ?? "";
 
-      const categoryName =
-        json.find((item) => item.category_name)?.category_name ?? "";
+        const product_details =
+          json.find((x) => x.product_details)?.product_details ?? {};
 
-      const groupName =
-        json.find((item) => item.group_name)?.group_name ?? "";
+        const product_name = product_details.product_name ?? "";
+        const descriptive_tagline = product_details.descriptive_tagline ?? "";
+        const description = product_details.description ?? "";
+        const status = product_details.status ?? "";
 
-      const defaultVariationId =
-        json.find((item) => item.default_variation_id)?.default_variation_id ??
-        "";
+        const publishBtn = document.getElementById("btn_publish");
 
-      const productDetails =
-        json.find((item) => item.product_details)?.product_details ?? {};
-
-      const productName = productDetails.product_name ?? "";
-      const descriptiveTagline = productDetails.descriptive_tagline ?? "";
-      const description = productDetails.description ?? "";
-      const status = String(productDetails.status ?? "");
-
-      const publishButton = document.getElementById("btn_publish");
-
-      if (publishButton) {
-        publishButton.hidden = status === "2";
-      }
-
-      this.renderBreadcrumb(categoryName, groupName);
-      this.renderSectionLabel(categoryName);
-      this.renderProductTitle(productName);
-      this.renderBrandName(companyName);
-      this.renderTagline(descriptiveTagline);
-      this.renderDescription(description);
-
-      this.deleteGroupsContent();
-
-      await this.fetchChildVariationsById(defaultVariationId, true);
-    } catch (error) {
-      console.error("Error fetching preview:", error);
-    }
-  }
-
-  async fetchChildVariationsById(variationId, autoLoadFirstChild = false) {
-    const cleanVariationId = String(variationId ?? "").trim();
-
-    if (!cleanVariationId) {
-      console.warn("No variation ID was provided.");
-      return;
-    }
-
-    if (this.loadingVariationIds.has(cleanVariationId)) {
-      return;
-    }
-
-    this.loadingVariationIds.add(cleanVariationId);
-
-    const url = this.buildControllerUrl("../../controller/order/product.php");
-
-    try {
-      const json = await this.postJson(url, {
-        action: "get_variation_children_by_id",
-        variation_id: cleanVariationId
-      });
-
-      const variationTypes = Array.isArray(json.variationTypes)
-        ? json.variationTypes
-        : [];
-
-      const childVariations = Array.isArray(json.childVariations)
-        ? json.childVariations
-        : [];
-
-      const variationTypesForDelete = Array.isArray(
-        json.variationTypesForDelete
-      )
-        ? json.variationTypesForDelete
-        : [];
-
-      const currentVariationData = json.currentVariationData ?? {};
-
-      this.shouldDeleteItems = variationTypesForDelete.length > 0;
-
-      this.organizeCurrentVariation(currentVariationData);
-
-      if (childVariations.length > 0 && variationTypes.length > 0) {
-        const firstChildIds = this.organizeVariationsForRender(
-          childVariations,
-          variationTypes
-        );
-
-        if (autoLoadFirstChild) {
-          for (const childId of firstChildIds) {
-            if (!childId || this.loadedVariationIds.has(childId)) {
-              continue;
-            }
-
-            this.loadedVariationIds.add(childId);
-            await this.fetchChildVariationsById(childId, true);
-          }
+        if (status === "2" && publishBtn) {
+          publishBtn.style.display = "none";
         }
 
-        return;
-      }
+        this.renderBreadcrumb(category_name, group_name);
+        this.renderSectionLabel(category_name);
+        this.renderProductTitle(product_name);
+        this.renderBrandName(company_name);
+        this.renderTagline(descriptive_tagline);
+        this.renderDescription(description);
 
-      this.updateVariationPrices();
-      this.selectFirstPriceButton();
-    } catch (error) {
-      console.error("Error fetching variation data:", error);
-    } finally {
-      this.loadingVariationIds.delete(cleanVariationId);
+        this.deleteGroupsContent();
+        this.fetchChildVariationsById(default_variation_id);
+      })
+      .catch((error) => {
+        console.error("Error fetching preview:", error);
+      });
+  }
+
+  fetchChildVariationsById(variation_id) {
+    if (!variation_id) {
+      console.warn("No variation_id provided");
+      return;
     }
+
+    const url = "../../controller/order/product.php";
+
+    const data = {
+      action: "get_variation_children_by_id",
+      variation_id: variation_id
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+        const json = JSON.parse(text);
+
+        const variationTypes = json.variationTypes || [];
+        const childVariations = json.childVariations || [];
+        const variationTypesForDelete = json.variationTypesForDelete || [];
+        const currentVariationData = json.currentVariationData || {};
+
+        if (variationTypesForDelete?.length > 0) {
+          this.shouldDeleteItems = true;
+        } else {
+          this.shouldDeleteItems = false;
+        }
+
+        this.organizeCurrentVariation(currentVariationData);
+
+        if (childVariations.length && variationTypes.length) {
+          this.organizeVariationsForRender(childVariations, variationTypes);
+        } else if (
+          childVariations == null ||
+          childVariations.length == null ||
+          childVariations.length === 0
+        ) {
+          this.updateVariationPrices();
+
+          setTimeout(() => {
+            const firstPriceButton = document.querySelector(
+              "#wrap-prices-group .js-price-option"
+            );
+
+            if (firstPriceButton) {
+              const allPriceButtons = document.querySelectorAll(
+                "#wrap-prices-group .js-price-option"
+              );
+
+              allPriceButtons.forEach((btn) => {
+                btn.classList.remove("is-selected");
+              });
+
+              this.updateProductSummaryBox(
+                firstPriceButton.dataset.minQuantity,
+                firstPriceButton.value
+              );
+
+              firstPriceButton.classList.add("is-selected");
+
+              const payload = {
+                price_id: String(firstPriceButton.dataset.priceId ?? ""),
+                min_quantity: String(firstPriceButton.dataset.minQuantity ?? ""),
+                max_quantity: String(firstPriceButton.dataset.maxQuantity ?? ""),
+                price: String(firstPriceButton.dataset.price ?? ""),
+                value: String(firstPriceButton.value ?? "")
+              };
+
+              this.setSelectedPrice(payload);
+              this.setMaxQuantity(payload["max_quantity"]);
+            }
+          }, 500);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching preview:", error);
+      });
   }
 
   deleteGroupsContent() {
-    const selectors = [
-      "#wrap-variations-group",
-      "#wrap-images-group",
-      "#wrap-items-group",
-      "#wrap-prices-group",
-      "#wrap-artworks-group"
-    ];
+    const wrapVariationsGroup = document.querySelector("#wrap-variations-group");
+    const wrapImagesGroup = document.querySelector("#wrap-images-group");
+    const wrapItemsGroup = document.querySelector("#wrap-items-group");
+    const wrapPricesGroup = document.querySelector("#wrap-prices-group");
+    const wrapArtworksGroup = document.querySelector("#wrap-artworks-group");
 
-    selectors.forEach((selector) => {
-      const element = document.querySelector(selector);
-
-      if (element) {
-        element.innerHTML = "";
-      }
-    });
-
-    this.loadedVariationIds.clear();
-    this.loadingVariationIds.clear();
-    this.variationSelected = null;
-    this.priceSelected = null;
-    this.maxQuantity = null;
+    if (wrapVariationsGroup) wrapVariationsGroup.innerHTML = "";
+    if (wrapImagesGroup) wrapImagesGroup.innerHTML = "";
+    if (wrapItemsGroup) wrapItemsGroup.innerHTML = "";
+    if (wrapPricesGroup) wrapPricesGroup.innerHTML = "";
+    if (wrapArtworksGroup) wrapArtworksGroup.innerHTML = "";
 
     window.previewGallery?.clearGallery?.();
   }
 
-  renderBreadcrumb(categoryName, groupName) {
-    const breadcrumbs = document.getElementById("sp_breadcrumbs");
+  renderBreadcrumb(category_name, group_name) {
+    const sp_breadcrumbs = document.getElementById("sp_breadcrumbs");
+    if (!sp_breadcrumbs) return;
 
-    if (!breadcrumbs) {
-      return;
-    }
-
-    breadcrumbs.innerHTML = `
-      <li><a href="#">${this.escapeHtml(categoryName)}</a></li>
-      <li><a href="#">${this.escapeHtml(groupName)}</a></li>
+    sp_breadcrumbs.innerHTML = `
+      <li><a href="#">${this.escapeHtml(category_name || "")}</a></li>
+      <li><a href="#">${this.escapeHtml(group_name || "")}</a></li>
     `;
   }
 
-  renderSectionLabel(categoryName) {
-    const category = document.getElementById("sp_category");
+  renderSectionLabel(category_name) {
+    const sp_category = document.getElementById("sp_category");
+    if (!sp_category) return;
 
-    if (category) {
-      category.textContent = categoryName || "";
-    }
+    sp_category.textContent = category_name || "";
   }
 
-  renderProductTitle(productName) {
-    const title = document.getElementById("sp-title");
+  renderProductTitle(product_name) {
+    const sp_title = document.getElementById("sp-title");
+    if (!sp_title) return;
 
-    if (title) {
-      title.textContent = productName || "";
-    }
+    sp_title.textContent = product_name || "";
   }
 
-  renderBrandName(companyName) {
-    const brand = document.getElementById("sp-brand");
+  renderBrandName(company_name) {
+    const sp_brand = document.getElementById("sp-brand");
+    if (!sp_brand) return;
 
-    if (brand) {
-      brand.textContent = companyName || "";
-    }
+    sp_brand.textContent = company_name || "";
   }
 
-  renderTagline(descriptiveTagline) {
-    const subtitle = document.getElementById("sp_subtitle");
+  renderTagline(descriptive_tagline) {
+    const sp_subtitle = document.getElementById("sp_subtitle");
+    if (!sp_subtitle) return;
 
-    if (subtitle) {
-      subtitle.textContent = descriptiveTagline || "";
-    }
+    sp_subtitle.textContent = descriptive_tagline || "";
   }
 
   renderDescription(description) {
-    const descriptionElement = document.getElementById("sp_desc");
+    const sp_desc = document.getElementById("sp_desc");
+    if (!sp_desc) return;
 
-    if (descriptionElement) {
-      descriptionElement.textContent = description || "";
-    }
+    sp_desc.textContent = description || "";
   }
 
   organizeCurrentVariation(currentVariationData = {}) {
     try {
-      const variation = currentVariationData.variation ?? null;
+      const variation = currentVariationData?.variation ?? null;
+      if (!variation) return false;
 
-      if (!variation) {
-        return false;
-      }
+      const variationId = String(variation?.variation_id ?? "").trim();
+      const typeId = String(variation?.type_id ?? "null").trim();
+      const typeName = String(variation?.type_name ?? "").trim();
 
-      const variationId = String(variation.variation_id ?? "").trim();
-      const typeId = String(variation.type_id ?? "null").trim();
-      const typeName = String(variation.type_name ?? "").trim();
+      if (!variationId || !typeId || !typeName) return false;
 
-      if (!variationId || !typeName) {
-        return false;
-      }
-
-      this.setSelectVariation(`variation_id_${variationId}`);
+      const currentDomId = `variation_id_${variationId}`;
+      this.setSelectVariation(currentDomId);
 
       const typeVariation = {
         type_id: typeId,
         type_name: typeName
       };
 
-      const images = Array.isArray(currentVariationData.images)
+      const imagesOnlyOfType = Array.isArray(currentVariationData?.images)
         ? currentVariationData.images.map((image) => ({
             ...image,
             variation_id: variationId
           }))
         : [];
 
-      const items = Array.isArray(currentVariationData.items)
+      const itemsOnlyOfType = Array.isArray(currentVariationData?.items)
         ? currentVariationData.items.map((item) => ({
             ...item,
             variation_id: variationId
           }))
         : [];
 
-      const prices = Array.isArray(currentVariationData.prices)
+      const pricesOnlyOfType = Array.isArray(currentVariationData?.prices)
         ? currentVariationData.prices.map((price) => ({
             ...price,
             variation_id: variationId,
-            price_display_mode: variation.price_display_mode ?? null
+            price_display_mode: variation?.price_display_mode ?? null
           }))
         : [];
 
-      const artworks = [];
-      const artwork = currentVariationData.artwork ?? null;
+      const artworksOnlyOfType = [];
+      const artwork = currentVariationData?.artwork ?? null;
 
       if (artwork) {
-        const pdf = String(artwork.pdf_artwork ?? "").trim();
-        const name = String(artwork.name_pdf_artwork ?? "").trim();
+        const pdf = String(artwork?.pdf_artwork ?? "").trim();
+        const name = String(artwork?.name_pdf_artwork ?? "").trim();
 
         if (pdf || name) {
-          artworks.push({
+          artworksOnlyOfType.push({
             ...artwork,
             variation_id: variationId
           });
         }
       }
 
-      this.removeTypeContent(typeId);
+      const itemEl = document.getElementById(`wrap-items-${typeId}`);
+      if (itemEl) this.deleteItems(typeId);
 
-      if (images.length > 0) {
-        this.renderImages(images, typeVariation);
+      const imageEl = document.getElementById(`wrap-images-${typeId}`);
+      if (imageEl) this.deleteImages(typeId);
+
+      const priceEl = document.getElementById(`wrap-price-${typeId}`);
+      if (priceEl) this.deletePrices(typeId);
+
+      const artworkEl = document.getElementById(`wrap-artworks-${typeId}`);
+      if (artworkEl) this.deleteArtwork(typeId);
+
+      if (imagesOnlyOfType.length > 0) {
+        this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
-      if (items.length > 0) {
-        this.renderItems(items, typeVariation);
+      if (itemsOnlyOfType.length > 0) {
+        this.renderItems(itemsOnlyOfType, typeVariation);
       }
 
-      if (prices.length > 0) {
-        this.renderPrices(prices, typeVariation);
+      if (pricesOnlyOfType.length > 0) {
+        this.renderPrices(pricesOnlyOfType, typeVariation);
       }
 
-      if (artworks.length > 0) {
-        this.renderArtwork(artworks, typeVariation);
+      if (artworksOnlyOfType.length > 0) {
+        this.renderArtwork(artworksOnlyOfType, typeVariation);
       }
 
       return true;
     } catch (error) {
-      console.error("Error organising current variation:", error);
+      console.error("Error in organizeCurrentVariation:", error);
       return false;
     }
   }
 
-  removeTypeContent(typeId) {
-    const ids = [
-      `wrap-items-${typeId}`,
-      `wrap-images-${typeId}`,
-      `wrap-price-${typeId}`,
-      `wrap-artworks-${typeId}`
-    ];
-
-    ids.forEach((id) => {
-      document.getElementById(id)?.remove();
-    });
-  }
-
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
-    const firstChildIds = [];
-
-    if (!childVariations.length || !variationTypes.length) {
-      return firstChildIds;
-    }
+    if (!Array.isArray(childVariations) || childVariations.length === 0) return;
+    if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
 
     for (const typeVariation of variationTypes) {
-      const typeName = String(typeVariation.type_name ?? "").trim();
+      const typeName = String(typeVariation?.type_name ?? "").trim();
+      if (!typeName) continue;
 
-      if (!typeName) {
-        continue;
-      }
-
-      const variations = [];
-      const items = [];
-      const images = [];
-      const prices = [];
-      const artworks = [];
+      const variationsOnlyOfType = [];
+      const itemsOnlyOfType = [];
+      const imagesOnlyOfType = [];
+      const pricesOnlyOfType = [];
+      const artworksOnlyOfType = [];
 
       for (const row of childVariations) {
-        const variation = row.variation;
+        const variation = row?.variation;
+        if (!variation) continue;
 
-        if (!variation) {
-          continue;
-        }
+        const variationTypeName = String(variation?.type_name ?? "").trim();
+        if (variationTypeName !== typeName) continue;
 
-        const variationTypeName = String(
-          variation.type_name ?? ""
-        ).trim();
+        variationsOnlyOfType.push(variation);
 
-        if (variationTypeName !== typeName) {
-          continue;
-        }
-
-        variations.push(variation);
-
-        if (Array.isArray(row.items)) {
-          items.push(
+        if (Array.isArray(row?.items) && row.items.length > 0) {
+          itemsOnlyOfType.push(
             ...row.items.map((item) => ({
               ...item,
-              variation_id: variation.variation_id
+              variation_id: variation?.variation_id ?? null
             }))
           );
         }
 
-        if (Array.isArray(row.images)) {
-          images.push(
+        if (Array.isArray(row?.images) && row.images.length > 0) {
+          imagesOnlyOfType.push(
             ...row.images.map((image) => ({
               ...image,
-              variation_id: variation.variation_id
+              variation_id: variation?.variation_id ?? null
             }))
           );
         }
 
-        if (Array.isArray(row.prices)) {
-          prices.push(
+        if (Array.isArray(row?.prices) && row.prices.length > 0) {
+          pricesOnlyOfType.push(
             ...row.prices.map((price) => ({
               ...price,
-              variation_id: variation.variation_id,
-              price_display_mode: variation.price_display_mode ?? null
+              variation_id: variation?.variation_id ?? null,
+              price_display_mode: variation?.price_display_mode ?? null
             }))
           );
         }
 
-        const artwork = row.artwork ?? null;
+        const artwork = row?.artwork ?? null;
 
         if (artwork) {
-          const pdf = String(artwork.pdf_artwork ?? "").trim();
-          const name = String(artwork.name_pdf_artwork ?? "").trim();
+          const pdf = String(artwork?.pdf_artwork ?? "").trim();
+          const name = String(artwork?.name_pdf_artwork ?? "").trim();
 
           if (pdf || name) {
-            artworks.push({
+            artworksOnlyOfType.push({
               ...artwork,
-              variation_id: variation.variation_id
+              variation_id: variation?.variation_id ?? null
             });
           }
         }
       }
 
-      if (!variations.length) {
-        continue;
-      }
+      if (!variationsOnlyOfType.length) continue;
 
-      const firstVariationId = this.renderVariations(
-        variations,
+      const variationsFinished = this.renderVariations(
+        variationsOnlyOfType,
         typeVariation
       );
 
-      if (!firstVariationId) {
-        continue;
+      if (!variationsFinished) continue;
+
+      if (imagesOnlyOfType.length > 0) {
+        this.renderImages(imagesOnlyOfType, typeVariation);
       }
 
-      firstChildIds.push(firstVariationId);
-
-      this.setSelectVariation(`variation_id_${firstVariationId}`);
-
-      if (images.length > 0) {
-        this.renderImages(images, typeVariation);
+      if (itemsOnlyOfType.length > 0) {
+        this.renderItems(itemsOnlyOfType, typeVariation);
       }
 
-      if (items.length > 0) {
-        this.renderItems(items, typeVariation);
+      if (pricesOnlyOfType.length > 0) {
+        this.renderPrices(pricesOnlyOfType, typeVariation);
       }
 
-      if (prices.length > 0) {
-        this.renderPrices(prices, typeVariation);
-      }
-
-      if (artworks.length > 0) {
-        this.renderArtwork(artworks, typeVariation);
+      if (artworksOnlyOfType.length > 0) {
+        this.renderArtwork(artworksOnlyOfType, typeVariation);
       }
     }
-
-    return firstChildIds;
   }
 
-  renderVariations(childVariations = [], typeVariation = {}) {
+  renderVariations(childVariationsOfType = [], typeVariation) {
     try {
       const parent = document.getElementById("wrap-variations-group");
+      if (!parent) return false;
 
-      if (!parent || !childVariations.length) {
-        return null;
-      }
+      const typeId = String(typeVariation?.type_id ?? "null");
+      const labelId = `var_label_size_${typeId}`;
+      const optionsId = `var-options-${typeId}`;
+      const bodyId = `var-collapse-body-${typeId}`;
 
-      const typeId = String(typeVariation.type_id ?? "null");
-      const typeName = String(typeVariation.type_name ?? "").trim();
-      const labelId = `variation-label-${typeId}`;
-
-      if (!typeName) {
-        return null;
-      }
-
-      const existingGroup = parent.querySelector(
+      const existing = parent.querySelector(
         `.wrap-variations[data-type-id="${CSS.escape(typeId)}"]`
       );
 
-      if (existingGroup) {
-        existingGroup.remove();
+      if (existing) existing.remove();
+
+      const typeName = String(typeVariation?.type_name ?? "").trim();
+      if (!typeName) return false;
+
+      if (!Array.isArray(childVariationsOfType) || childVariationsOfType.length === 0) {
+        return false;
       }
 
-      const firstVariation = childVariations[0];
-      const firstVariationId = String(
-        firstVariation.variation_id ?? ""
-      ).trim();
+      const firstLabel = String(childVariationsOfType?.[0]?.name ?? "").trim();
 
-      const firstLabel = String(firstVariation.name ?? "").trim();
+      let buttonsHtml = "";
+      let firstDomId = "";
 
-      const buttonsHtml = childVariations
-        .map((variation, index) => {
-          const variationId = String(
-            variation.variation_id ?? ""
-          ).trim();
+      for (let i = 0; i < childVariationsOfType.length; i++) {
+        const v = childVariationsOfType[i];
 
-          const label = String(variation.name ?? "").trim();
-          const rawImage = String(variation.image ?? "").trim();
+        const variationId = String(v?.variation_id ?? "").trim();
+        const rawImg = String(v?.image ?? "").trim().replace(/^\/+/, "");
 
-          const imageSource = this.buildMediaSource(
-            rawImage,
-            "../../view/preview_porduct/img/icon_product.png"
-          );
+        const imgSrc = rawImg
+          ? rawImg.startsWith("http") ||
+            rawImg.startsWith("data:") ||
+            rawImg.startsWith("blob:")
+            ? rawImg
+            : rawImg.startsWith("controller/")
+              ? "../../" + rawImg
+              : "../../controller/" + rawImg
+          : "../../view/preview_porduct/img/icon_product.png";
 
-          const selectedClass = index === 0 ? " is-selected" : "";
-          const pressed = index === 0 ? "true" : "false";
+        const label = String(v?.name ?? "").trim();
+        const selectedClass = i === 0 ? " is-selected" : "";
+        const domId = variationId ? `variation_id_${variationId}` : "";
 
-          return `
-            <button type="button" class="var-option js-scale-in${selectedClass}" id="variation_id_${this.escapeHtml(variationId)}" data-variation-label="${this.escapeHtml(label)}" aria-pressed="${pressed}">
-              <img class="var-thumb" src="${this.escapeHtml(imageSource)}" alt="${this.escapeHtml(label || "Variation option")}">
-              <span class="opt-copy">
-                <span class="opt-main">${this.escapeHtml(label)}</span>
+        if (i === 0) {
+          firstDomId = domId;
+        }
+
+        buttonsHtml += `
+          <button
+            type="button"
+            class="var-option js-scale-in${selectedClass}"
+            ${domId ? `id="${domId}"` : ""}
+            data-variation-label="${this.escapeHtml(label)}"
+            ${domId ? `onclick="previewLogic.SelectVariation('${domId}')"` : ""}
+          >
+            <img class="var-thumb" src="${imgSrc}" alt="Option sample">
+            <span class="opt-main">${this.escapeHtml(label)}</span>
+          </button>
+        `;
+      }
+
+      const blockHtml = `
+        <div
+          class="wrap-variations is-collapsible"
+          aria-labelledby="${labelId}"
+          data-type-id="${this.escapeHtml(typeId)}"
+        >
+          <button
+            type="button"
+            class="var-collapse-header"
+            aria-expanded="false"
+            aria-controls="${bodyId}"
+          >
+            <span class="var-collapse-left">
+              <span class="var-collapse-title">
+                <span class="var-name">${this.escapeHtml(typeName)}</span>
+                <strong id="${labelId}" class="js-selected-variation-label">
+                  ${this.escapeHtml(firstLabel || "Select option")}
+                </strong>
               </span>
-            </button>
-          `;
-        })
-        .join("");
 
-      const groupHtml = `
-        <section class="wrap-variations" data-type-id="${this.escapeHtml(typeId)}" aria-labelledby="${labelId}">
-          <div class="variation-group-header">
-            <div class="var-label">
-              <span class="var-name">${this.escapeHtml(typeName)}</span>
-              <strong id="${labelId}" class="js-selected-variation-label">${this.escapeHtml(firstLabel || "Select option")}</strong>
+              <span class="variation-summary-pill">
+                ${firstLabel ? `Selected: ${this.escapeHtml(firstLabel)}` : "Select an option"}
+              </span>
+
+              <span class="var-collapse-hint">
+                Click to view available options
+              </span>
+            </span>
+
+            <span class="var-collapse-icon" aria-hidden="true">⌄</span>
+          </button>
+
+          <div class="var-collapse-body" id="${bodyId}">
+            <div class="var-collapse-inner">
+              <div class="var-options" id="${optionsId}">
+                ${buttonsHtml}
+              </div>
             </div>
-
-            <span class="variation-summary-pill">${this.escapeHtml(firstLabel || "Select an option")}</span>
           </div>
-
-          <div class="var-options">${buttonsHtml}</div>
-        </section>
+        </div>
       `;
 
-      parent.insertAdjacentHTML("beforeend", groupHtml);
+      parent.insertAdjacentHTML("beforeend", blockHtml);
 
-      return firstVariationId || null;
+      const newGroup = parent.querySelector(
+        `.wrap-variations[data-type-id="${CSS.escape(typeId)}"]`
+      );
+
+      if (newGroup) {
+        const groupsCount = parent.querySelectorAll(
+          ".wrap-variations.is-collapsible"
+        ).length;
+
+        if (groupsCount === 1) {
+          this.openVariationGroup(newGroup);
+        }
+      }
+
+      if (firstDomId) {
+        const selectVariationResult = this.SelectVariation(firstDomId);
+
+        if (selectVariationResult === false) {
+          return false;
+        }
+      }
+
+      return true;
     } catch (error) {
-      console.error("Error rendering variations:", error);
-      return null;
-    }
-  }
-
-  async selectVariation(domId = "") {
-    const button = document.getElementById(domId);
-
-    if (!button) {
+      console.error("Error in renderVariations:", error);
       return false;
     }
-
-    const group = button.closest(".wrap-variations");
-
-    if (!group) {
-      return false;
-    }
-
-    this.removeVariationGroupsAfter(group);
-
-    group.querySelectorAll(".var-option.is-selected").forEach((item) => {
-      item.classList.remove("is-selected");
-      item.setAttribute("aria-pressed", "false");
-    });
-
-    button.classList.add("is-selected");
-    button.setAttribute("aria-pressed", "true");
-
-    const selectedText =
-      button.dataset.variationLabel ||
-      button.querySelector(".opt-main")?.textContent?.trim() ||
-      "";
-
-    this.updateVariationHeader(group, selectedText);
-    this.setSelectVariation(domId);
-
-    const variationId = String(domId)
-      .replace(/^variation_id_/, "")
-      .trim();
-
-    if (!variationId) {
-      return false;
-    }
-
-    this.loadedVariationIds.clear();
-    this.loadedVariationIds.add(variationId);
-
-    await this.fetchChildVariationsById(variationId, true);
-
-    return true;
   }
 
   SelectVariation(domId = "") {
-    return this.selectVariation(domId);
-  }
+    this.setSelectVariation(domId);
 
-  removeVariationGroupsAfter(currentGroup) {
-    let nextGroup = currentGroup.nextElementSibling;
+    const button = document.getElementById(domId);
 
-    while (nextGroup) {
-      const groupToRemove = nextGroup;
-      nextGroup = nextGroup.nextElementSibling;
+    if (button) {
+      const group = button.closest(".wrap-variations");
 
-      if (!groupToRemove.classList.contains("wrap-variations")) {
-        continue;
+      if (group) {
+        group.querySelectorAll(".var-option.is-selected").forEach((item) => {
+          item.classList.remove("is-selected");
+          item.setAttribute("aria-pressed", "false");
+        });
+
+        button.classList.add("is-selected");
+        button.setAttribute("aria-pressed", "true");
+
+        const selectedText =
+          button.dataset.variationLabel ||
+          button.querySelector(".opt-main")?.textContent?.trim() ||
+          "";
+
+        this.updateVariationHeader(group, selectedText);
       }
-
-      const typeId = String(groupToRemove.dataset.typeId ?? "").trim();
-
-      if (typeId) {
-        this.removeTypeContent(typeId);
-      }
-
-      groupToRemove.remove();
-    }
-  }
-
-  updateVariationHeader(group, selectedText) {
-    if (!group) {
-      return;
     }
 
-    const selectedLabel = group.querySelector(
-      ".js-selected-variation-label"
-    );
+    const id = String(domId || "").trim();
+    if (!id) return false;
 
-    const summaryPill = group.querySelector(
-      ".variation-summary-pill"
-    );
+    const variationId = id.replace(/^variation_id_/, "").trim();
+    if (!variationId) return false;
 
-    if (selectedLabel) {
-      selectedLabel.textContent = selectedText || "Select option";
-    }
+    this.fetchChildVariationsById(variationId);
 
-    if (summaryPill) {
-      summaryPill.textContent = selectedText || "Select an option";
-    }
+    return true;
   }
 
   setSelectVariation(domId) {
@@ -781,567 +754,439 @@ class PreviewLogic {
     return this.variationSelected;
   }
 
-  getSelectedVariationId() {
-    return Number(
-      String(this.getSelectVariation() ?? "").replace(
-        "variation_id_",
-        ""
-      )
+  renderItems(itemsOnlyOfType = [], typeVariation) {
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
-  }
 
-  getOrCreateWrapper(parentId, wrapperId, className, typeId) {
-    const parent = document.getElementById(parentId);
+    const parent = document.getElementById("wrap-items-group");
+    if (!parent) return;
 
-    if (!parent) {
-      return null;
-    }
+    const typeId = String(typeVariation?.type_id ?? "null");
+    const wrapId = `wrap-items-${typeId}`;
 
-    let wrapper = document.getElementById(wrapperId);
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
 
     if (!wrapper) {
       wrapper = document.createElement("div");
-      wrapper.id = wrapperId;
-      wrapper.className = className;
+      wrapper.className = "wrap-items";
+      wrapper.id = wrapId;
       wrapper.dataset.typeId = typeId;
       parent.appendChild(wrapper);
     }
 
     wrapper.innerHTML = "";
 
-    return wrapper;
-  }
+    for (let i = 0; i < itemsOnlyOfType.length; i++) {
+      const it = itemsOnlyOfType[i];
 
-  renderImages(images = [], typeVariation = {}) {
-    const variationId = this.getSelectedVariationId();
-    const typeId = String(typeVariation.type_id ?? "null");
+      if (Number(it?.variation_id) !== id_variation) continue;
 
-    const wrapper = this.getOrCreateWrapper(
-      "wrap-images-group",
-      `wrap-images-${typeId}`,
-      "wrap-images",
-      typeId
-    );
+      const title = String(it?.name ?? "").trim();
+      const desc = String(it?.description ?? "").trim();
 
-    if (!wrapper) {
-      return;
-    }
-
-    images.forEach((imageData, index) => {
-      if (Number(imageData.variation_id) !== variationId) {
-        return;
-      }
-
-      const source = this.buildMediaSource(imageData.link);
-
-      if (!source) {
-        return;
-      }
-
-      const image = document.createElement("img");
-
-      image.className = "preview-media";
-      image.src = source;
-      image.alt = `Preview image ${index + 1}`;
-      image.loading = "lazy";
-      image.decoding = "async";
-
-      wrapper.appendChild(image);
-    });
-  }
-
-  renderItems(items = [], typeVariation = {}) {
-    const variationId = this.getSelectedVariationId();
-    const typeId = String(typeVariation.type_id ?? "null");
-
-    const wrapper = this.getOrCreateWrapper(
-      "wrap-items-group",
-      `wrap-items-${typeId}`,
-      "wrap-items",
-      typeId
-    );
-
-    if (!wrapper) {
-      return;
-    }
-
-    items.forEach((itemData) => {
-      if (Number(itemData.variation_id) !== variationId) {
-        return;
-      }
-
-      const title = String(itemData.name ?? "").trim();
-      const description = String(
-        itemData.description ?? ""
-      ).trim();
-
-      if (!title && !description) {
-        return;
-      }
+      if (!title && !desc) continue;
 
       const item = document.createElement("div");
       item.className = "sp-item";
 
       item.innerHTML = `
         <strong class="sp-item-subtitle">${this.escapeHtml(title)}</strong>
-        <span>${this.escapeHtml(description)}</span>
+        <span>${this.escapeHtml(desc)}</span>
       `;
 
       wrapper.appendChild(item);
-    });
+    }
   }
 
-  renderPrices(prices = [], typeVariation = {}) {
-    const variationId = this.getSelectedVariationId();
-    const typeId = String(typeVariation.type_id ?? "null");
-    const wrapperId = `wrap-price-${typeId}`;
-
-    const wrapper = this.getOrCreateWrapper(
-      "wrap-prices-group",
-      wrapperId,
-      "wrap-price",
-      typeId
+  renderImages(imagesOnlyOfType = [], typeVariation) {
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
 
+    const parent = document.getElementById("wrap-images-group");
+    if (!parent) return;
+
+    const typeId = String(typeVariation?.type_id ?? "null");
+    const wrapId = `wrap-images-${typeId}`;
+
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
+
     if (!wrapper) {
-      return;
+      wrapper = document.createElement("div");
+      wrapper.className = "wrap-images";
+      wrapper.id = wrapId;
+      wrapper.dataset.typeId = typeId;
+      parent.appendChild(wrapper);
     }
 
-    prices.forEach((priceData) => {
-      if (Number(priceData.variation_id) !== variationId) {
-        return;
-      }
+    wrapper.innerHTML = "";
 
-      if (
-        String(priceData.price_display_mode ?? "").trim() !==
-        "prices"
-      ) {
-        return;
-      }
+    for (let i = 0; i < imagesOnlyOfType.length; i++) {
+      const imgObj = imagesOnlyOfType[i];
 
-      const maxQuantity = String(
-        priceData.max_quantity ?? ""
-      ).trim();
+      if (Number(imgObj.variation_id) !== id_variation) continue;
 
-      if (!maxQuantity) {
-        return;
-      }
+      const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
+
+      const src = rawLink
+        ? rawLink.startsWith("http") ||
+          rawLink.startsWith("data:") ||
+          rawLink.startsWith("blob:")
+          ? rawLink
+          : rawLink.startsWith("controller/")
+            ? "../../" + rawLink
+            : "../../controller/" + rawLink
+        : "";
+
+      if (!src) continue;
+
+      const img = document.createElement("img");
+      img.className = "preview-media";
+      img.src = src;
+      img.alt = `Preview image ${i + 1}`;
+      img.loading = "lazy";
+      img.decoding = "async";
+
+      wrapper.appendChild(img);
+    }
+  }
+
+  renderPrices(pricesOnlyOfType = [], typeVariation) {
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
+    );
+
+    const parent = document.getElementById("wrap-prices-group");
+    if (!parent) return;
+
+    const typeId = String(typeVariation?.type_id ?? "null");
+    const wrapId = `wrap-price-${typeId}`;
+
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
+
+    if (!wrapper) {
+      wrapper = document.createElement("div");
+      wrapper.className = "wrap-price";
+      wrapper.id = wrapId;
+      wrapper.dataset.typeId = typeId;
+      parent.appendChild(wrapper);
+    }
+
+    wrapper.innerHTML = "";
+
+    for (let i = 0; i < pricesOnlyOfType.length; i++) {
+      const p = pricesOnlyOfType[i];
+
+      if (Number(p?.variation_id) !== id_variation) continue;
+
+      if (String(p?.price_display_mode ?? "").trim() !== "prices") continue;
+
+      const priceId = String(p?.price_id ?? "").trim();
+      const minQty = String(p?.min_quantity ?? "").trim();
+      const maxQty = String(p?.max_quantity ?? "").trim();
+      const price = String(p?.price ?? "").trim();
+
+      if (maxQty === "") continue;
 
       const button = document.createElement("button");
-
       button.type = "button";
-      button.className =
-        "var-option js-scale-in js-price-option";
-
-      button.value = String(priceData.price ?? "");
-      button.dataset.priceId = String(priceData.price_id ?? "");
-      button.dataset.minQuantity = String(
-        priceData.min_quantity ?? ""
-      );
-      button.dataset.maxQuantity = maxQuantity;
-      button.dataset.price = String(priceData.price ?? "");
-      button.dataset.variationId = String(
-        priceData.variation_id ?? ""
-      );
-      button.setAttribute("aria-pressed", "false");
+      button.className = "var-option js-scale-in js-price-option";
+      button.value = price;
+      button.dataset.priceId = priceId;
+      button.dataset.minQuantity = minQty;
+      button.dataset.maxQuantity = maxQty;
+      button.dataset.price = price;
+      button.dataset.variationId = String(p?.variation_id ?? "");
+      button.dataset.priceDisplayMode = String(p?.price_display_mode ?? "");
 
       button.innerHTML = `
-        <span class="opt-main">${this.escapeHtml(priceData.min_quantity ?? "")}</span>
+        <span class="opt-main">${this.escapeHtml(minQty)}</span>
       `;
 
       wrapper.appendChild(button);
-    });
+    }
 
-    this.bindPriceButtons(`#${wrapperId}`);
+    this.bindPriceButtons(`#${wrapId}`);
   }
 
   bindPriceButtons(scopeSelector) {
     const scope = document.querySelector(scopeSelector);
+    if (!scope) return false;
 
-    if (!scope) {
+    const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
+
+    if (buttons.length === 0) {
       return false;
     }
 
-    const buttons = Array.from(
-      scope.querySelectorAll(".js-price-option")
-    );
+    for (const btn of buttons) {
+      if (btn.dataset.bound === "1") continue;
+      btn.dataset.bound = "1";
 
-    if (!buttons.length) {
-      return false;
-    }
+      btn.addEventListener("click", (e) => {
+        const el = e.currentTarget;
+        const updateVariationPrice = this.selectPriceButton(el, scope);
 
-    buttons.forEach((button) => {
-      if (button.dataset.bound === "1") {
-        return;
-      }
-
-      button.dataset.bound = "1";
-
-      button.addEventListener("click", () => {
-        if (this.selectPriceButton(button, scope)) {
-          this.updateProductSummaryBox(
-            button.dataset.minQuantity,
-            button.value
-          );
+        if (updateVariationPrice) {
+          this.updateProductSummaryBox(el.dataset.minQuantity, el.value);
         }
       });
-    });
+    }
 
-    const currentSelected = document.querySelector(
-      "#wrap-prices-group .js-price-option.is-selected"
-    );
+    const updateVariationPrice = this.selectPriceButton(buttons[0], scope);
 
-    if (!currentSelected) {
-      this.selectPriceButton(buttons[0], scope);
-
-      window.setTimeout(() => {
+    setTimeout(() => {
+      if (updateVariationPrice) {
         this.updateProductSummaryBox(
           buttons[0].dataset.minQuantity,
           buttons[0].value
         );
-      }, 300);
-    }
+      }
+    }, 500);
 
     return true;
   }
 
-  selectFirstPriceButton() {
-    window.setTimeout(() => {
-      const selectedButton = document.querySelector(
-        "#wrap-prices-group .js-price-option.is-selected"
+  updateProductSummaryBox(quantity, price) {
+    const is_selected = document.querySelectorAll(".is-selected");
+    let totalExtraPrice = 0;
+
+    for (let i = 0; i < is_selected.length; i++) {
+      if (!is_selected[i].querySelector(".opt-price-extra")) continue;
+
+      const priceExtraText = is_selected[i].querySelector(".opt-price-extra").innerHTML;
+
+      const priceExtraNumber = Number(
+        priceExtraText.replace("+", "").replace("p/u", "").trim()
       );
 
-      if (selectedButton) {
-        return;
-      }
+      totalExtraPrice = totalExtraPrice + priceExtraNumber;
+    }
 
-      const firstButton = document.querySelector(
-        "#wrap-prices-group .js-price-option"
-      );
+    const bb_unit = document.getElementById("bb_unit");
+    const bb_unit_quantity = document.getElementById("bb_unit_quantity");
+    const bb_unit_total = document.getElementById("bb_unit_total");
 
-      if (!firstButton) {
-        return;
-      }
+    const bb_extra_unit = document.getElementById("bb_extra_unit");
+    const bb_extra_quantity = document.getElementById("bb_extra_quantity");
+    const bb_extra_total = document.getElementById("bb_extra_total");
 
-      const scope =
-        firstButton.closest(".wrap-price") ||
-        document.getElementById("wrap-prices-group");
+    const bb_total = document.getElementById("bb_total");
 
-      if (this.selectPriceButton(firstButton, scope)) {
-        this.updateProductSummaryBox(
-          firstButton.dataset.minQuantity,
-          firstButton.value
-        );
-      }
-    }, 300);
+    const sp_price = document.getElementById("sp_price");
+    const var_label_quantity = document.getElementById("var_label_quantity");
+    const sp_unit_hint = document.getElementById("sp_unit_hint");
+
+    if (bb_unit) bb_unit.innerHTML = "£" + this.formatPrice(price);
+    if (bb_unit_quantity) bb_unit_quantity.innerHTML = quantity;
+    if (bb_unit_total) bb_unit_total.innerHTML = "£" + this.formatPrice(price * quantity);
+
+    if (sp_price) sp_price.innerHTML = this.formatPrice(price);
+    if (var_label_quantity) var_label_quantity.innerHTML = quantity;
+    if (sp_unit_hint) sp_unit_hint.innerHTML = "per " + quantity + " units";
+
+    let quantityExtras;
+
+    if (totalExtraPrice == 0) {
+      quantityExtras = 0;
+    } else {
+      quantityExtras = quantity;
+    }
+
+    if (bb_extra_unit) bb_extra_unit.innerHTML = "£" + this.formatPrice(totalExtraPrice);
+    if (bb_extra_quantity) bb_extra_quantity.innerHTML = quantityExtras;
+    if (bb_extra_total) {
+      bb_extra_total.innerHTML = "£" + this.formatPrice(totalExtraPrice * quantity);
+    }
+
+    if (bb_total) {
+      bb_total.innerHTML =
+        "£" + this.formatPrice(price * quantity + totalExtraPrice * quantity);
+    }
+  }
+
+  formatPrice(value) {
+    return Number(value).toFixed(2);
   }
 
   selectPriceButton(button, scope = null) {
-    if (!button) {
-      return false;
-    }
+    if (!button) return false;
 
     const container = scope || button.closest(".wrap-price");
+    if (!container) return false;
 
-    if (!container) {
-      return false;
+    const buttons = container.querySelectorAll(".js-price-option");
+
+    for (const btn of buttons) {
+      btn.classList.remove("is-selected");
+      btn.setAttribute("aria-pressed", "false");
     }
-
-    document
-      .querySelectorAll(
-        "#wrap-prices-group .js-price-option"
-      )
-      .forEach((item) => {
-        item.classList.remove("is-selected");
-        item.setAttribute("aria-pressed", "false");
-      });
 
     button.classList.add("is-selected");
     button.setAttribute("aria-pressed", "true");
 
     const payload = {
       price_id: String(button.dataset.priceId ?? ""),
-      min_quantity: String(
-        button.dataset.minQuantity ?? ""
-      ),
-      max_quantity: String(
-        button.dataset.maxQuantity ?? ""
-      ),
+      min_quantity: String(button.dataset.minQuantity ?? ""),
+      max_quantity: String(button.dataset.maxQuantity ?? ""),
       price: String(button.dataset.price ?? ""),
       value: String(button.value ?? "")
     };
 
     this.setSelectedPrice(payload);
-    this.setMaxQuantity(payload.max_quantity);
     this.onPriceSelected(payload, button);
+    this.setMaxQuantity(payload["max_quantity"]);
     this.updateVariationPrices();
 
     return true;
-  }
-
-  updateProductSummaryBox(quantity, price) {
-    const selectedOptions = document.querySelectorAll(
-      "#wrap-variations-group .var-option.is-selected"
-    );
-
-    let totalExtraPrice = 0;
-
-    selectedOptions.forEach((option) => {
-      const extraPrice = option.querySelector(
-        ".opt-price-extra"
-      );
-
-      if (!extraPrice) {
-        return;
-      }
-
-      const value = Number(
-        extraPrice.textContent
-          .replace("+", "")
-          .replace("p/u", "")
-          .trim()
-      );
-
-      if (Number.isFinite(value)) {
-        totalExtraPrice += value;
-      }
-    });
-
-    const numericQuantity =
-      Number(String(quantity).replace(/,/g, "")) || 0;
-
-    const numericPrice = Number(price) || 0;
-    const unitTotal = numericPrice * numericQuantity;
-    const extrasTotal = totalExtraPrice * numericQuantity;
-    const finalTotal = unitTotal + extrasTotal;
-    const extrasQuantity =
-      totalExtraPrice > 0 ? numericQuantity : 0;
-
-    this.setText(
-      "bb_unit",
-      `£${this.formatPrice(numericPrice)}`
-    );
-
-    this.setText(
-      "bb_unit_quantity",
-      numericQuantity
-    );
-
-    this.setText(
-      "bb_unit_total",
-      `£${this.formatPrice(unitTotal)}`
-    );
-
-    this.setText(
-      "bb_extra_unit",
-      `£${this.formatPrice(totalExtraPrice)}`
-    );
-
-    this.setText(
-      "bb_extra_quantity",
-      extrasQuantity
-    );
-
-    this.setText(
-      "bb_extra_total",
-      `£${this.formatPrice(extrasTotal)}`
-    );
-
-    this.setText(
-      "bb_total",
-      `£${this.formatPrice(finalTotal)}`
-    );
-
-    this.setText(
-      "var_label_quantity",
-      `${numericQuantity} units`
-    );
-
-    this.setText(
-      "sp_unit_hint",
-      `per ${numericQuantity} units`
-    );
-
-    const priceElement = document.getElementById("sp_price");
-
-    if (priceElement) {
-      const [major, minor] = this.formatPrice(
-        numericPrice
-      ).split(".");
-
-      priceElement.innerHTML = `
-        ${major}<span class="sp-price-minor">.${minor}</span>
-      `;
-    }
-  }
-
-  setText(elementId, value) {
-    const element = document.getElementById(elementId);
-
-    if (element) {
-      element.textContent = value;
-    }
-  }
-
-  formatPrice(value) {
-    const numericValue = Number(value);
-
-    return Number.isFinite(numericValue)
-      ? numericValue.toFixed(2)
-      : "0.00";
   }
 
   setSelectedPrice(payload = null) {
     this.priceSelected = payload;
   }
 
+  setMaxQuantity(max_quantity) {
+    this.max_quantity = max_quantity;
+  }
+
+  getMaxQuantity() {
+    return this.max_quantity;
+  }
+
+  updateVariationPrices() {
+    const variationsWithPrices = document.querySelectorAll(
+      "#wrap-variations-group .var-option[id^='variation_id_']"
+    );
+
+    const ids = Array.from(variationsWithPrices)
+      .map((button) => Number(button.id.replace("variation_id_", "")))
+      .filter((id) => Number.isFinite(id) && id > 0);
+
+    const max_quantity = this.getMaxQuantity();
+
+    const url = "../../controller/order/product.php";
+
+    const data = {
+      action: "get_variation_prices",
+      ids: ids,
+      max_quantity: max_quantity
+    };
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network error.");
+        return response.text();
+      })
+      .then((text) => {
+        const data = JSON.parse(text);
+        this.drawExtraVariationPrices(data["prices"] || []);
+      })
+      .catch((error) => {
+        console.error("Error fetching preview:", error);
+      });
+  }
+
   getSelectedPrice() {
     return this.priceSelected;
   }
 
-  setMaxQuantity(maxQuantity) {
-    this.maxQuantity = maxQuantity;
-  }
-
-  getMaxQuantity() {
-    return this.maxQuantity;
-  }
-
   onPriceSelected(payload, button = null) {
-    return { payload, button };
+    // Optional hook.
   }
 
-  async updateVariationPrices() {
-    const variationButtons = document.querySelectorAll(
-      "#wrap-variations-group .var-option[id^='variation_id_']"
-    );
+  drawExtraVariationPrices(data) {
+    if (!Array.isArray(data)) return;
 
-    const ids = Array.from(variationButtons)
-      .map((button) =>
-        Number(button.id.replace("variation_id_", ""))
-      )
-      .filter(
-        (id) => Number.isFinite(id) && id > 0
-      );
+    for (let i = 0; i < data.length; i++) {
+      const variationId = "variation_id_" + data[i].variation_id;
+      const htmlButton = document.getElementById(variationId);
 
-    if (!ids.length || !this.getMaxQuantity()) {
-      return;
-    }
-
-    const url = this.buildControllerUrl(
-      "../../controller/order/product.php"
-    );
-
-    try {
-      const json = await this.postJson(url, {
-        action: "get_variation_prices",
-        ids: ids,
-        max_quantity: this.getMaxQuantity()
-      });
-
-      this.drawExtraVariationPrices(json.prices || []);
-    } catch (error) {
-      console.error(
-        "Error fetching variation prices:",
-        error
-      );
-    }
-  }
-
-  drawExtraVariationPrices(prices) {
-    if (!Array.isArray(prices)) {
-      return;
-    }
-
-    document
-      .querySelectorAll(
-        "#wrap-variations-group .opt-price-extra"
-      )
-      .forEach((element) => {
-        element.remove();
-      });
-
-    prices.forEach((priceData) => {
-      const button = document.getElementById(
-        `variation_id_${priceData.variation_id}`
-      );
-
-      if (!button || priceData.price?.price == null) {
-        return;
+      if (!htmlButton) {
+        continue;
       }
 
-      const priceExtra = document.createElement("span");
-      priceExtra.className = "opt-price-extra";
-      priceExtra.textContent = `+${priceData.price.price} p/u`;
+      const existingPrice = htmlButton.querySelector(".opt-price-extra");
 
-      const copy =
-        button.querySelector(".opt-copy") || button;
+      if (existingPrice) {
+        existingPrice.remove();
+      }
 
-      copy.appendChild(priceExtra);
-    });
+      htmlButton.innerHTML += `
+        <span class="opt-price-extra">+${this.escapeHtml(data[i].price.price)} p/u</span>
+      `;
+    }
   }
 
-  renderArtwork(artworks = [], typeVariation = {}) {
-    const variationId = this.getSelectedVariationId();
-    const typeId = String(typeVariation.type_id ?? "null");
-
-    const wrapper = this.getOrCreateWrapper(
-      "wrap-artworks-group",
-      `wrap-artworks-${typeId}`,
-      "wrap-artworks",
-      typeId
+  renderArtwork(artworksOnlyOfType = [], typeVariation) {
+    const id_variation = Number(
+      String(this.getSelectVariation() ?? "").replace("variation_id_", "")
     );
+
+    const parent = document.getElementById("wrap-artworks-group");
+    if (!parent) return;
+
+    const typeId = String(typeVariation?.type_id ?? "null");
+    const wrapId = `wrap-artworks-${typeId}`;
+
+    let wrapper = parent.querySelector(`#${CSS.escape(wrapId)}`);
 
     if (!wrapper) {
-      return;
+      wrapper = document.createElement("div");
+      wrapper.className = "wrap-artworks";
+      wrapper.id = wrapId;
+      wrapper.dataset.typeId = typeId;
+      parent.appendChild(wrapper);
     }
 
-    artworks.forEach((artworkData) => {
-      if (
-        Number(artworkData.variation_id) !==
-        variationId
-      ) {
-        return;
-      }
+    wrapper.innerHTML = "";
 
-      const name = String(
-        artworkData.name_pdf_artwork ?? ""
-      ).trim();
+    for (let i = 0; i < artworksOnlyOfType.length; i++) {
+      const a = artworksOnlyOfType[i];
 
-      const pdfSource = this.buildMediaSource(
-        artworkData.pdf_artwork
-      );
+      if (Number(a?.variation_id) !== id_variation) continue;
 
-      if (!name && !pdfSource) {
-        return;
-      }
+      const name = String(a?.name_pdf_artwork ?? "").trim();
+      const rawPdf = String(a?.pdf_artwork ?? "").trim().replace(/^\/+/, "");
+
+      if (!name && !rawPdf) continue;
+
+      const pdfSrc = rawPdf
+        ? rawPdf.startsWith("http") ||
+          rawPdf.startsWith("data:") ||
+          rawPdf.startsWith("blob:")
+          ? rawPdf
+          : rawPdf.startsWith("controller/")
+            ? "../../" + rawPdf
+            : "../../controller/" + rawPdf
+        : "";
 
       const artwork = document.createElement("div");
       artwork.className = "sp-artwork";
 
-      if (name) {
-        const title = document.createElement("strong");
-        title.className = "sp-artwork-name";
-        title.textContent = name;
-        artwork.appendChild(title);
-      }
-
-      if (pdfSource) {
-        const link = document.createElement("a");
-
-        link.className = "btn btn-artwork";
-        link.href = pdfSource;
-        link.target = "_blank";
-        link.rel = "noopener";
-        link.textContent = name || "Open PDF";
-
-        artwork.appendChild(link);
-      }
+      artwork.innerHTML = `
+        ${name ? `<strong class="sp-artwork-name">${this.escapeHtml(name)}</strong>` : ""}
+        ${
+          pdfSrc
+            ? `<a class="sp-artwork-link" href="${pdfSrc}" target="_blank" rel="noopener">Open PDF</a>`
+            : ""
+        }
+      `;
 
       wrapper.appendChild(artwork);
-    });
+    }
   }
 }
 
-const previewLogic = new PreviewLogic();
-window.previewLogic = previewLogic;
+let previewLogic = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  previewLogic = new PreviewLogic();
+  window.previewLogic = previewLogic;
+});
