@@ -67,7 +67,7 @@ class Variations {
     $variation->setSKUVariation($sku);
     $response->deleteVariation();
 
-    echo json_encode ($response);
+  //  echo json_encode ($response);
 
   }
 
