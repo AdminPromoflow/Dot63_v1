@@ -65,7 +65,7 @@ class Variations {
     $connection = new Database();
     $variation = new Variation($connection);
     $variation->setSKUVariation($sku);
-    $response->deleteVariation();
+    $response = $variation->deleteVariation();
 
   //  echo json_encode ($response);
 
