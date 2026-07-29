@@ -114,13 +114,6 @@ class Resques63API
     $product = new Products($connection);
     $product->setSku($data['sku']);
 
-    echo json_encode([
-      'success' => true,
-      'message' => $data['sku']
-    ]);
-    exit;
-
-
 
     $result = $product->approveProductWithSKU();
 
