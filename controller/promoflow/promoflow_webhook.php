@@ -108,15 +108,17 @@ class Resques63API
       ]);
       exit;
     }
-    echo json_encode([
-      'success' => true,
-      'message' => 'entramos'
-    ]);
-    exit;
+
 
     $connection = new Database();
     $product = new Products($connection);
     $product->setSku($data['sku']);
+
+    echo json_encode([
+      'success' => true,
+      'message' => 'vamos bien'
+    ]);
+    exit;
 
     $result = $product->approveProductWithSKU();
 
