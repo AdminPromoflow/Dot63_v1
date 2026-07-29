@@ -446,4 +446,5 @@ $itemsTime   = @filemtime($itemsPath) ?: time();
 <script src="<?= $imagesPath ?>?v=<?= $imagesTime ?>"></script>
 <script src="<?= $artworkPath ?>?v=<?= $artworkTime ?>"></script>
 <script src="<?= $itemsPath ?>?v=<?= $itemsTime ?>"></script>
+<script src="<?= $pricesPath ?>?v=<?= $pricesTime ?>"></script>
 <script src="<?= $jsPath2 ?>?v=<?= $jsTime2 ?>"></script>
