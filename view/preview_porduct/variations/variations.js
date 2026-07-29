@@ -6,6 +6,7 @@ class Variations {
     this.variationSelected = null;
     this.shouldDeleteItems = false;
     this.autoLoadedVariationIds = new Set();
+    this.variationRows = new Map();
   }
 
   init() {
@@ -16,6 +17,7 @@ class Variations {
     this.variationSelected = null;
     this.shouldDeleteItems = false;
     this.autoLoadedVariationIds.clear();
+    this.variationRows.clear();
   }
 
   bindVariationCollapse() {
@@ -44,7 +46,9 @@ class Variations {
   openVariationGroup(group) {
     if (!group) return;
 
-    const groups = document.querySelectorAll("#wrap-variations-group .wrap-variations.is-collapsible");
+    const groups = document.querySelectorAll(
+      "#wrap-variations-group .wrap-variations.is-collapsible"
+    );
 
     groups.forEach((item) => {
       if (item === group) return;
@@ -66,20 +70,29 @@ class Variations {
   updateVariationHeader(group, selectedText) {
     if (!group) return;
 
-    const selectedLabel = group.querySelector(".js-selected-variation-label");
-    const summaryPill = group.querySelector(".variation-summary-pill");
+    const selectedLabel = group.querySelector(
+      ".js-selected-variation-label"
+    );
+
+    const summaryPill = group.querySelector(
+      ".variation-summary-pill"
+    );
 
     if (selectedLabel) {
       selectedLabel.textContent = selectedText || "Select option";
     }
 
     if (summaryPill) {
-      summaryPill.textContent = selectedText ? `Selected: ${selectedText}` : "Select an option";
+      summaryPill.textContent = selectedText
+        ? `Selected: ${selectedText}`
+        : "Select an option";
     }
   }
 
   fetchChildVariationsById(variationId) {
-    const currentVariationId = String(variationId ?? "").trim();
+    const currentVariationId = String(
+      variationId ?? ""
+    ).trim();
 
     if (!currentVariationId) {
       console.warn("No variation_id provided");
@@ -108,38 +121,64 @@ class Variations {
         return response.text();
       })
       .then((text) => {
-        const json = JSON.parse(text);
+        let json;
 
-        const variationTypes = Array.isArray(json?.variationTypes) ? json.variationTypes : [];
-        const childVariations = Array.isArray(json?.childVariations) ? json.childVariations : [];
-        const variationTypesForDelete = Array.isArray(json?.variationTypesForDelete)
-          ? json.variationTypesForDelete
-          : [];
+        try {
+          json = JSON.parse(text);
+        } catch (error) {
+          console.error("Invalid variation JSON:", text);
+          throw error;
+        }
+
+        const variationTypes = this.normalizeArray(
+          json?.variationTypes
+        );
+
+        const childVariations = this.normalizeArray(
+          json?.childVariations
+        );
+
+        const variationTypesForDelete = this.normalizeArray(
+          json?.variationTypesForDelete
+        );
 
         const currentVariationData =
-          json?.currentVariationData && typeof json.currentVariationData === "object"
+          json?.currentVariationData &&
+          typeof json.currentVariationData === "object"
             ? json.currentVariationData
             : {};
 
-        this.shouldDeleteItems = variationTypesForDelete.length > 0;
+        this.shouldDeleteItems =
+          variationTypesForDelete.length > 0;
 
         /*
-         * Muestra los recursos de la variación consultada:
-         * image, item, price y artwork.
+         * Guarda todos los registros recibidos.
          */
-        this.organizeCurrentVariation(currentVariationData);
+        this.cacheVariationRows(childVariations);
 
-        if (childVariations.length > 0 && variationTypes.length > 0) {
-          /*
-           * Dibuja solamente los botones.
-           * No dibuja los recursos de todas las opciones.
-           */
-          this.organizeVariationsForRender(childVariations, variationTypes);
+        /*
+         * Combina la información actual con la información
+         * que ya se había guardado para esa variación.
+         */
+        const mergedCurrentVariation =
+          this.mergeVariationData(
+            currentVariationId,
+            currentVariationData
+          );
 
-          /*
-           * Selecciona automáticamente la primera opción
-           * y muestra sus recursos.
-           */
+        this.organizeCurrentVariation(
+          mergedCurrentVariation
+        );
+
+        if (
+          childVariations.length > 0 &&
+          variationTypes.length > 0
+        ) {
+          this.organizeVariationsForRender(
+            childVariations,
+            variationTypes
+          );
+
           this.autoLoadFirstChildVariation(
             childVariations,
             variationTypes,
@@ -152,289 +191,648 @@ class Variations {
         this.finishPrices();
       })
       .catch((error) => {
-        console.error("Error fetching child variations:", error);
+        console.error(
+          "Error fetching child variations:",
+          error
+        );
       });
   }
 
-  autoLoadFirstChildVariation(childVariations = [], variationTypes = [], currentVariationId = "") {
-    if (!Array.isArray(childVariations) || childVariations.length === 0) {
+  cacheVariationRows(rows = []) {
+    const normalizedRows = this.normalizeArray(rows);
+
+    normalizedRows.forEach((row) => {
+      const variationId = String(
+        row?.variation?.variation_id ?? ""
+      ).trim();
+
+      if (!variationId) return;
+
+      const previousRow =
+        this.variationRows.get(variationId) ?? {};
+
+      this.variationRows.set(
+        variationId,
+        this.mergeRows(previousRow, row)
+      );
+    });
+  }
+
+  mergeVariationData(
+    variationId,
+    currentVariationData = {}
+  ) {
+    const id = String(variationId ?? "").trim();
+
+    const cachedRow =
+      this.variationRows.get(id) ?? {};
+
+    const currentVariation =
+      currentVariationData?.variation ?? null;
+
+    const cachedVariation =
+      cachedRow?.variation ?? null;
+
+    const variation =
+      currentVariation || cachedVariation || {
+        variation_id: id
+      };
+
+    return {
+      variation: variation,
+
+      images: this.preferCollection(
+        currentVariationData?.images,
+        cachedRow?.images
+      ),
+
+      items: this.preferCollection(
+        currentVariationData?.items,
+        cachedRow?.items
+      ),
+
+      prices: this.preferCollection(
+        currentVariationData?.prices,
+        cachedRow?.prices
+      ),
+
+      artwork: this.preferArtwork(
+        currentVariationData?.artwork ??
+          currentVariationData?.artworks,
+        cachedRow?.artwork ??
+          cachedRow?.artworks
+      )
+    };
+  }
+
+  mergeRows(previousRow = {}, newRow = {}) {
+    return {
+      ...previousRow,
+      ...newRow,
+
+      variation:
+        newRow?.variation ??
+        previousRow?.variation ??
+        null,
+
+      images: this.preferCollection(
+        newRow?.images,
+        previousRow?.images
+      ),
+
+      items: this.preferCollection(
+        newRow?.items,
+        previousRow?.items
+      ),
+
+      prices: this.preferCollection(
+        newRow?.prices,
+        previousRow?.prices
+      ),
+
+      artwork: this.preferArtwork(
+        newRow?.artwork ?? newRow?.artworks,
+        previousRow?.artwork ??
+          previousRow?.artworks
+      )
+    };
+  }
+
+  preferCollection(primaryValue, fallbackValue) {
+    const primary = this.normalizeArray(primaryValue);
+
+    if (primary.length > 0) {
+      return primary;
+    }
+
+    return this.normalizeArray(fallbackValue);
+  }
+
+  preferArtwork(primaryValue, fallbackValue) {
+    const primary = this.normalizeArtwork(primaryValue);
+
+    if (primary.length > 0) {
+      return primary;
+    }
+
+    return this.normalizeArtwork(fallbackValue);
+  }
+
+  normalizeArray(value) {
+    if (Array.isArray(value)) {
+      return value.filter(
+        (item) => item !== null && item !== undefined
+      );
+    }
+
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return [];
+    }
+
+    if (typeof value === "string") {
+      const trimmedValue = value.trim();
+
+      if (!trimmedValue) return [];
+
+      try {
+        return this.normalizeArray(
+          JSON.parse(trimmedValue)
+        );
+      } catch (error) {
+        console.warn(
+          "Could not parse collection:",
+          trimmedValue
+        );
+
+        return [];
+      }
+    }
+
+    if (typeof value === "object") {
+      return [value];
+    }
+
+    return [];
+  }
+
+  normalizeArtwork(value) {
+    const artworks = this.normalizeArray(value);
+
+    return artworks.filter((artworkData) => {
+      if (!artworkData || typeof artworkData !== "object") {
+        return false;
+      }
+
+      const pdf = String(
+        artworkData?.pdf_artwork ??
+        artworkData?.pdf ??
+        artworkData?.artwork_pdf ??
+        artworkData?.file ??
+        artworkData?.url ??
+        ""
+      ).trim();
+
+      const name = String(
+        artworkData?.name_pdf_artwork ??
+        artworkData?.name ??
+        artworkData?.filename ??
+        artworkData?.file_name ??
+        ""
+      ).trim();
+
+      return Boolean(pdf || name);
+    });
+  }
+
+  autoLoadFirstChildVariation(
+    childVariations = [],
+    variationTypes = [],
+    currentVariationId = ""
+  ) {
+    const rows = this.normalizeArray(
+      childVariations
+    );
+
+    if (rows.length === 0) {
       return false;
     }
 
-    const currentId = String(currentVariationId ?? "").trim();
-    const firstTypeName = String(variationTypes?.[0]?.type_name ?? "").trim();
+    const currentId = String(
+      currentVariationId ?? ""
+    ).trim();
+
+    const firstTypeId = String(
+      variationTypes?.[0]?.type_id ?? ""
+    ).trim();
+
+    const firstTypeName = String(
+      variationTypes?.[0]?.type_name ?? ""
+    ).trim();
 
     let selectedRow = null;
 
-    /*
-     * Primero intenta encontrar la primera variación
-     * del primer tipo recibido.
-     */
-    for (const row of childVariations) {
+    for (const row of rows) {
       const variation = row?.variation;
 
       if (!variation) continue;
 
-      const variationId = String(variation?.variation_id ?? "").trim();
-      const variationTypeName = String(variation?.type_name ?? "").trim();
+      const variationId = String(
+        variation?.variation_id ?? ""
+      ).trim();
+
+      const variationTypeId = String(
+        variation?.type_id ?? ""
+      ).trim();
+
+      const variationTypeName = String(
+        variation?.type_name ?? ""
+      ).trim();
 
       if (!variationId) continue;
       if (variationId === currentId) continue;
-      if (this.autoLoadedVariationIds.has(variationId)) continue;
-      if (firstTypeName && variationTypeName !== firstTypeName) continue;
+
+      if (
+        this.autoLoadedVariationIds.has(
+          variationId
+        )
+      ) {
+        continue;
+      }
+
+      if (
+        firstTypeId &&
+        variationTypeId &&
+        variationTypeId !== firstTypeId
+      ) {
+        continue;
+      }
+
+      if (
+        !firstTypeId &&
+        firstTypeName &&
+        variationTypeName !== firstTypeName
+      ) {
+        continue;
+      }
 
       selectedRow = row;
       break;
     }
 
-    /*
-     * Si no se encontró por tipo, toma la primera
-     * variación disponible.
-     */
     if (!selectedRow) {
-      for (const row of childVariations) {
-        const variationId = String(row?.variation?.variation_id ?? "").trim();
+      selectedRow = rows.find((row) => {
+        const variationId = String(
+          row?.variation?.variation_id ?? ""
+        ).trim();
 
-        if (!variationId) continue;
-        if (variationId === currentId) continue;
-        if (this.autoLoadedVariationIds.has(variationId)) continue;
-
-        selectedRow = row;
-        break;
-      }
+        return (
+          variationId &&
+          variationId !== currentId &&
+          !this.autoLoadedVariationIds.has(
+            variationId
+          )
+        );
+      });
     }
 
-    if (!selectedRow?.variation) return false;
+    if (!selectedRow?.variation) {
+      return false;
+    }
 
-    const nextVariationId = String(selectedRow.variation.variation_id ?? "").trim();
+    const nextVariationId = String(
+      selectedRow.variation.variation_id ?? ""
+    ).trim();
 
     if (!nextVariationId) return false;
 
-    const domId = `variation_id_${nextVariationId}`;
-    const button = document.getElementById(domId);
+    const domId =
+      `variation_id_${nextVariationId}`;
+
+    const button =
+      document.getElementById(domId);
 
     if (!button) return false;
 
-    this.autoLoadedVariationIds.add(nextVariationId);
+    this.variationRows.set(
+      nextVariationId,
+      this.mergeRows(
+        this.variationRows.get(
+          nextVariationId
+        ) ?? {},
+        selectedRow
+      )
+    );
+
+    this.autoLoadedVariationIds.add(
+      nextVariationId
+    );
 
     window.setTimeout(() => {
-      /*
-       * selectedRow permite mostrar inmediatamente
-       * los recursos de la primera opción.
-       */
-      this.selectVariation(domId, true, selectedRow);
+      this.selectVariation(
+        domId,
+        true,
+        selectedRow
+      );
     }, 0);
 
     return true;
   }
 
-  organizeCurrentVariation(currentVariationData = {}) {
+  organizeCurrentVariation(
+    currentVariationData = {}
+  ) {
     try {
-      const variation = currentVariationData?.variation ?? null;
+      const variation =
+        currentVariationData?.variation ?? null;
 
       if (!variation) return false;
 
-      const variationId = String(variation?.variation_id ?? "").trim();
-      const typeId = String(variation?.type_id ?? "null").trim();
-      const typeName = String(variation?.type_name ?? "").trim();
+      const variationId = String(
+        variation?.variation_id ?? ""
+      ).trim();
 
-      if (!variationId || !typeId || !typeName) {
-        return false;
-      }
+      if (!variationId) return false;
 
-      this.setSelectVariation(`variation_id_${variationId}`);
+      this.setSelectVariation(
+        `variation_id_${variationId}`
+      );
 
-      return this.renderVariationAssets({
-        variation: variation,
-        images: currentVariationData?.images ?? [],
-        items: currentVariationData?.items ?? [],
-        prices: currentVariationData?.prices ?? [],
-        artwork: currentVariationData?.artwork ?? null
-      });
+      return this.renderVariationAssets(
+        currentVariationData
+      );
     } catch (error) {
-      console.error("Error in organizeCurrentVariation:", error);
+      console.error(
+        "Error organizing current variation:",
+        error
+      );
+
       return false;
     }
   }
 
   renderVariationAssets(row = {}) {
-    try {
-      const variation = row?.variation ?? null;
+    const variation = row?.variation ?? null;
 
-      if (!variation) return false;
+    if (!variation) return false;
 
-      const variationId = String(variation?.variation_id ?? "").trim();
-      const typeId = String(variation?.type_id ?? "null").trim();
-      const typeName = String(variation?.type_name ?? "").trim();
+    const variationId = String(
+      variation?.variation_id ?? ""
+    ).trim();
 
-      if (!variationId || !typeId || !typeName) {
-        return false;
-      }
+    const typeId = String(
+      variation?.type_id ?? "null"
+    ).trim();
 
-      const typeVariation = {
-        type_id: typeId,
-        type_name: typeName
-      };
+    const typeName = String(
+      variation?.type_name ?? ""
+    ).trim();
 
-      const imagesOnlyOfType = Array.isArray(row?.images)
-        ? row.images.map((imageData) => ({
-            ...imageData,
-            variation_id: variationId
-          }))
-        : [];
+    if (!variationId || !typeId) {
+      return false;
+    }
 
-      const itemsOnlyOfType = Array.isArray(row?.items)
-        ? row.items.map((itemData) => ({
-            ...itemData,
-            variation_id: variationId
-          }))
-        : [];
+    const typeVariation = {
+      type_id: typeId,
+      type_name: typeName
+    };
 
-      const pricesOnlyOfType = Array.isArray(row?.prices)
-        ? row.prices.map((priceData) => ({
-            ...priceData,
-            variation_id: variationId,
-            price_display_mode: variation?.price_display_mode ?? null
-          }))
-        : [];
+    const imagesData = this.normalizeArray(
+      row?.images
+    ).map((imageData) => ({
+      ...imageData,
+      variation_id: variationId
+    }));
 
-      const artworksOnlyOfType = [];
-      const artworkData = row?.artwork ?? null;
+    const itemsData = this.normalizeArray(
+      row?.items
+    ).map((itemData) => ({
+      ...itemData,
+      variation_id: variationId
+    }));
 
-      if (artworkData) {
-        const pdf = String(artworkData?.pdf_artwork ?? "").trim();
-        const name = String(artworkData?.name_pdf_artwork ?? "").trim();
+    const pricesData = this.normalizeArray(
+      row?.prices
+    ).map((priceData) => ({
+      ...priceData,
+      variation_id: variationId,
+      price_display_mode:
+        priceData?.price_display_mode ??
+        variation?.price_display_mode ??
+        null
+    }));
 
-        if (pdf || name) {
-          artworksOnlyOfType.push({
-            ...artworkData,
-            variation_id: variationId
-          });
+    const artworkData = this.normalizeArtwork(
+      row?.artwork ?? row?.artworks
+    ).map((currentArtwork) => ({
+      ...currentArtwork,
+
+      pdf_artwork:
+        currentArtwork?.pdf_artwork ??
+        currentArtwork?.pdf ??
+        currentArtwork?.artwork_pdf ??
+        currentArtwork?.file ??
+        currentArtwork?.url ??
+        "",
+
+      name_pdf_artwork:
+        currentArtwork?.name_pdf_artwork ??
+        currentArtwork?.name ??
+        currentArtwork?.filename ??
+        currentArtwork?.file_name ??
+        "Download artwork",
+
+      variation_id: variationId
+    }));
+
+    /*
+     * Cada sección se ejecuta independientemente.
+     * Si prices genera un error, images, items y artwork
+     * continúan funcionando.
+     */
+    this.safeRender(
+      "images",
+      () => {
+        const imagesInstance =
+          window.images;
+
+        if (!imagesInstance) return;
+
+        imagesInstance.deleteImages?.(typeId);
+
+        if (imagesData.length > 0) {
+          imagesInstance.renderImages?.(
+            imagesData,
+            typeVariation
+          );
         }
       }
+    );
 
-      /*
-       * Elimina únicamente los recursos anteriores
-       * pertenecientes al mismo tipo.
-       */
-      if (typeof images !== "undefined" && typeof images.deleteImages === "function") {
-        images.deleteImages(typeId);
+    this.safeRender(
+      "items",
+      () => {
+        const itemsInstance =
+          window.items;
+
+        if (!itemsInstance) return;
+
+        itemsInstance.deleteItems?.(typeId);
+
+        if (itemsData.length > 0) {
+          itemsInstance.renderItems?.(
+            itemsData,
+            typeVariation
+          );
+        }
       }
+    );
 
-      if (typeof items !== "undefined" && typeof items.deleteItems === "function") {
-        items.deleteItems(typeId);
+    this.safeRender(
+      "prices",
+      () => {
+        const pricesInstance =
+          window.prices;
+
+        if (!pricesInstance) return;
+
+        pricesInstance.deletePrices?.(typeId);
+
+        if (pricesData.length > 0) {
+          pricesInstance.renderPrices?.(
+            pricesData,
+            typeVariation
+          );
+        }
       }
+    );
 
-      if (typeof prices !== "undefined" && typeof prices.deletePrices === "function") {
-        prices.deletePrices(typeId);
+    this.safeRender(
+      "artwork",
+      () => {
+        const artworkInstance =
+          window.artwork;
+
+        if (!artworkInstance) return;
+
+        artworkInstance.deleteArtwork?.(typeId);
+
+        if (artworkData.length > 0) {
+          artworkInstance.renderArtwork?.(
+            artworkData,
+            typeVariation
+          );
+        }
       }
+    );
 
-      if (typeof artwork !== "undefined" && typeof artwork.deleteArtwork === "function") {
-        artwork.deleteArtwork(typeId);
-      }
+    window.previewGallery?.refreshGallery?.(
+      true
+    );
 
-      /*
-       * Muestra los recursos de la opción seleccionada.
-       */
-      if (
-        imagesOnlyOfType.length > 0 &&
-        typeof images !== "undefined" &&
-        typeof images.renderImages === "function"
-      ) {
-        images.renderImages(imagesOnlyOfType, typeVariation);
-      }
+    return true;
+  }
 
-      if (
-        itemsOnlyOfType.length > 0 &&
-        typeof items !== "undefined" &&
-        typeof items.renderItems === "function"
-      ) {
-        items.renderItems(itemsOnlyOfType, typeVariation);
-      }
-
-      if (
-        pricesOnlyOfType.length > 0 &&
-        typeof prices !== "undefined" &&
-        typeof prices.renderPrices === "function"
-      ) {
-        prices.renderPrices(pricesOnlyOfType, typeVariation);
-      }
-
-      if (
-        artworksOnlyOfType.length > 0 &&
-        typeof artwork !== "undefined" &&
-        typeof artwork.renderArtwork === "function"
-      ) {
-        artwork.renderArtwork(artworksOnlyOfType, typeVariation);
-      }
-
-      window.previewGallery?.refreshGallery?.(true);
-
-      return true;
+  safeRender(sectionName, callback) {
+    try {
+      callback();
     } catch (error) {
-      console.error("Error rendering variation assets:", error);
-      return false;
+      console.error(
+        `Error rendering ${sectionName}:`,
+        error
+      );
     }
   }
 
-  organizeVariationsForRender(childVariations = [], variationTypes = []) {
-    if (!Array.isArray(childVariations) || childVariations.length === 0) {
+  organizeVariationsForRender(
+    childVariations = [],
+    variationTypes = []
+  ) {
+    const rows = this.normalizeArray(
+      childVariations
+    );
+
+    const types = this.normalizeArray(
+      variationTypes
+    );
+
+    if (rows.length === 0 || types.length === 0) {
       return false;
     }
 
-    if (!Array.isArray(variationTypes) || variationTypes.length === 0) {
-      return false;
-    }
+    this.cacheVariationRows(rows);
 
-    for (const typeVariation of variationTypes) {
-      const typeName = String(typeVariation?.type_name ?? "").trim();
+    for (const typeVariation of types) {
+      const typeId = String(
+        typeVariation?.type_id ?? ""
+      ).trim();
 
-      if (!typeName) continue;
+      const typeName = String(
+        typeVariation?.type_name ?? ""
+      ).trim();
 
-      const variationsOnlyOfType = [];
+      if (!typeId && !typeName) continue;
 
-      for (const row of childVariations) {
-        const variation = row?.variation;
+      const variationsOnlyOfType =
+        rows
+          .map((row) => row?.variation)
+          .filter((variation) => {
+            if (!variation) return false;
 
-        if (!variation) continue;
+            const variationTypeId = String(
+              variation?.type_id ?? ""
+            ).trim();
 
-        const variationTypeName = String(variation?.type_name ?? "").trim();
+            const variationTypeName = String(
+              variation?.type_name ?? ""
+            ).trim();
 
-        if (variationTypeName !== typeName) continue;
+            if (typeId && variationTypeId) {
+              return variationTypeId === typeId;
+            }
 
-        variationsOnlyOfType.push(variation);
+            return (
+              typeName &&
+              variationTypeName === typeName
+            );
+          });
+
+      if (
+        variationsOnlyOfType.length === 0
+      ) {
+        continue;
       }
 
-      if (variationsOnlyOfType.length === 0) continue;
-
-      /*
-       * Aquí solamente se dibujan los botones.
-       * Los assets se dibujan cuando la opción queda seleccionada.
-       */
-      this.renderVariations(variationsOnlyOfType, typeVariation);
+      this.renderVariations(
+        variationsOnlyOfType,
+        typeVariation
+      );
     }
 
     return true;
   }
 
-  renderVariations(childVariationsOfType = [], typeVariation = {}) {
+  renderVariations(
+    childVariationsOfType = [],
+    typeVariation = {}
+  ) {
     try {
-      const parent = document.getElementById("wrap-variations-group");
+      const parent = document.getElementById(
+        "wrap-variations-group"
+      );
 
       if (!parent) return false;
 
-      if (!Array.isArray(childVariationsOfType) || childVariationsOfType.length === 0) {
+      if (
+        !Array.isArray(
+          childVariationsOfType
+        ) ||
+        childVariationsOfType.length === 0
+      ) {
         return false;
       }
 
-      const typeId = String(typeVariation?.type_id ?? "null");
-      const typeName = String(typeVariation?.type_name ?? "").trim();
+      const typeId = String(
+        typeVariation?.type_id ?? "null"
+      );
+
+      const typeName = String(
+        typeVariation?.type_name ?? ""
+      ).trim();
 
       if (!typeName) return false;
 
-      const labelId = `var-label-size-${typeId}`;
-      const optionsId = `var-options-${typeId}`;
-      const bodyId = `var-collapse-body-${typeId}`;
+      const labelId =
+        `var-label-size-${typeId}`;
+
+      const optionsId =
+        `var-options-${typeId}`;
+
+      const bodyId =
+        `var-collapse-body-${typeId}`;
 
       const existing = parent.querySelector(
         `.wrap-variations[data-type-id="${CSS.escape(typeId)}"]`
@@ -442,26 +840,49 @@ class Variations {
 
       if (existing) existing.remove();
 
-      const firstLabel = String(childVariationsOfType?.[0]?.name ?? "").trim();
+      const firstLabel = String(
+        childVariationsOfType?.[0]?.name ?? ""
+      ).trim();
 
       let buttonsHtml = "";
 
-      for (let index = 0; index < childVariationsOfType.length; index++) {
-        const variation = childVariationsOfType[index];
-        const variationId = String(variation?.variation_id ?? "").trim();
-        const label = String(variation?.name ?? "").trim();
+      for (
+        let index = 0;
+        index <
+        childVariationsOfType.length;
+        index++
+      ) {
+        const variation =
+          childVariationsOfType[index];
 
-        const rawImage = String(variation?.image ?? "")
+        const variationId = String(
+          variation?.variation_id ?? ""
+        ).trim();
+
+        const label = String(
+          variation?.name ?? ""
+        ).trim();
+
+        const rawImage = String(
+          variation?.image ?? ""
+        )
           .trim()
           .replace(/^\/+/, "");
 
-        const imageSource = this.buildControllerAssetUrl(
-          rawImage,
-          "../../view/preview_porduct/img/icon_product.png"
-        );
+        const imageSource =
+          this.buildControllerAssetUrl(
+            rawImage,
+            "../../view/preview_porduct/img/icon_product.png"
+          );
 
-        const domId = variationId ? `variation_id_${variationId}` : "";
-        const selectedClass = index === 0 ? " is-selected" : "";
+        const domId = variationId
+          ? `variation_id_${variationId}`
+          : "";
+
+        const selectedClass =
+          index === 0
+            ? " is-selected"
+            : "";
 
         buttonsHtml += `
           <button type="button" class="var-option js-scale-in${selectedClass}" ${domId ? `id="${domId}"` : ""} data-variation-label="${this.escapeHtml(label)}" aria-pressed="${index === 0 ? "true" : "false"}" ${domId ? `onclick="previewLogic.selectVariation('${domId}')"` : ""}>
@@ -484,10 +905,14 @@ class Variations {
                 ${firstLabel ? `Selected: ${this.escapeHtml(firstLabel)}` : "Select an option"}
               </span>
 
-              <span class="var-collapse-hint">Click to view available options</span>
+              <span class="var-collapse-hint">
+                Click to view available options
+              </span>
             </span>
 
-            <span class="var-collapse-icon" aria-hidden="true">⌄</span>
+            <span class="var-collapse-icon" aria-hidden="true">
+              ⌄
+            </span>
           </button>
 
           <div class="var-collapse-body" id="${bodyId}">
@@ -500,106 +925,170 @@ class Variations {
         </div>
       `;
 
-      parent.insertAdjacentHTML("beforeend", blockHtml);
+      parent.insertAdjacentHTML(
+        "beforeend",
+        blockHtml
+      );
 
       const newGroup = parent.querySelector(
         `.wrap-variations[data-type-id="${CSS.escape(typeId)}"]`
       );
 
       if (newGroup) {
-        const groupsCount = parent.querySelectorAll(
-          ".wrap-variations.is-collapsible"
-        ).length;
+        const groupsCount =
+          parent.querySelectorAll(
+            ".wrap-variations.is-collapsible"
+          ).length;
 
         if (groupsCount === 1) {
-          this.openVariationGroup(newGroup);
+          this.openVariationGroup(
+            newGroup
+          );
         }
       }
 
       return true;
     } catch (error) {
-      console.error("Error in renderVariations:", error);
+      console.error(
+        "Error rendering variations:",
+        error
+      );
+
       return false;
     }
   }
 
-  selectVariation(domId = "", automatic = false, variationRow = null) {
+  selectVariation(
+    domId = "",
+    automatic = false,
+    variationRow = null
+  ) {
     const id = String(domId ?? "").trim();
 
     if (!id) return false;
 
-    const variationId = id.replace(/^variation_id_/, "").trim();
+    const variationId = id
+      .replace(/^variation_id_/, "")
+      .trim();
 
     if (!variationId) return false;
 
-    const button = document.getElementById(id);
+    const button =
+      document.getElementById(id);
 
     if (!button) return false;
 
-    const group = button.closest(".wrap-variations");
+    const group = button.closest(
+      ".wrap-variations"
+    );
 
     if (group) {
-      const variationButtons = group.querySelectorAll(
-        ".var-option[id^='variation_id_']"
-      );
+      const variationButtons =
+        group.querySelectorAll(
+          ".var-option[id^='variation_id_']"
+        );
 
       variationButtons.forEach((item) => {
-        item.classList.remove("is-selected");
-        item.setAttribute("aria-pressed", "false");
+        item.classList.remove(
+          "is-selected"
+        );
+
+        item.setAttribute(
+          "aria-pressed",
+          "false"
+        );
       });
 
       button.classList.add("is-selected");
-      button.setAttribute("aria-pressed", "true");
+
+      button.setAttribute(
+        "aria-pressed",
+        "true"
+      );
 
       const selectedText =
         button.dataset.variationLabel ||
-        button.querySelector(".opt-main")?.textContent?.trim() ||
+        button
+          .querySelector(".opt-main")
+          ?.textContent?.trim() ||
         "";
 
-      this.updateVariationHeader(group, selectedText);
+      this.updateVariationHeader(
+        group,
+        selectedText
+      );
     }
 
     this.setSelectVariation(id);
 
-    /*
-     * Cuando la selección es automática, variationRow contiene
-     * image, item, price y artwork de la primera opción.
-     */
-    if (variationRow && typeof variationRow === "object") {
-      this.renderVariationAssets(variationRow);
+    const savedRow =
+      variationRow ||
+      this.variationRows.get(
+        variationId
+      ) ||
+      null;
+
+    if (savedRow) {
+      this.renderVariationAssets(
+        savedRow
+      );
     }
 
     if (!automatic) {
       this.autoLoadedVariationIds.clear();
-      this.autoLoadedVariationIds.add(variationId);
+
+      this.autoLoadedVariationIds.add(
+        variationId
+      );
     }
 
-    this.fetchChildVariationsById(variationId);
+    this.fetchChildVariationsById(
+      variationId
+    );
 
     return true;
   }
 
   finishPrices() {
-    if (
-      typeof prices !== "undefined" &&
-      typeof prices.updateVariationPrices === "function"
-    ) {
-      prices.updateVariationPrices();
-    }
+    const pricesInstance =
+      window.prices;
+
+    if (!pricesInstance) return;
+
+    this.safeRender(
+      "price update",
+      () => {
+        pricesInstance
+          .updateVariationPrices?.();
+      }
+    );
 
     window.setTimeout(() => {
-      if (typeof prices === "undefined") return;
+      this.safeRender(
+        "first price",
+        () => {
+          if (
+            typeof pricesInstance
+              .selectFirstAvailablePrice ===
+            "function"
+          ) {
+            pricesInstance
+              .selectFirstAvailablePrice();
 
-      if (typeof prices.selectFirstAvailablePrice === "function") {
-        prices.selectFirstAvailablePrice();
-      } else if (typeof prices.selectFirstPrice === "function") {
-        prices.selectFirstPrice();
-      }
+            return;
+          }
+
+          pricesInstance
+            .selectFirstPrice?.();
+        }
+      );
     }, 500);
   }
 
   setSelectVariation(domId) {
-    this.variationSelected = String(domId ?? "").trim() || null;
+    this.variationSelected =
+      String(domId ?? "").trim() ||
+      null;
   }
 
   getSelectVariation() {
@@ -607,15 +1096,21 @@ class Variations {
   }
 
   getSelectedVariationId() {
-    const selectedVariation = this.getSelectVariation();
+    const selectedVariation =
+      this.getSelectVariation();
 
     if (!selectedVariation) return null;
 
     const variationId = Number(
-      String(selectedVariation).replace(/^variation_id_/, "")
+      String(selectedVariation).replace(
+        /^variation_id_/,
+        ""
+      )
     );
 
-    return Number.isFinite(variationId) ? variationId : null;
+    return Number.isFinite(variationId)
+      ? variationId
+      : null;
   }
 
   getShouldDeleteItems() {
@@ -631,7 +1126,10 @@ class Variations {
       .replaceAll("'", "&#039;");
   }
 
-  buildControllerAssetUrl(rawPath, fallback = "") {
+  buildControllerAssetUrl(
+    rawPath,
+    fallback = ""
+  ) {
     const path = String(rawPath ?? "")
       .trim()
       .replace(/^\/+/, "");
@@ -647,7 +1145,9 @@ class Variations {
       return path;
     }
 
-    if (path.startsWith("controller/")) {
+    if (
+      path.startsWith("controller/")
+    ) {
       return `../../${path}`;
     }
 
