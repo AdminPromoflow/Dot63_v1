@@ -178,23 +178,28 @@ class Products {
 
   public function approveProductWithSKU(): bool
   {
-  //  echo json_encode ($this->sku);exit;
-
       try {
-          if (empty($this->sku)) {
+          $sku = trim((string)($this->sku ?? ''));
+
+          if ($sku === '') {
               return false;
           }
 
           $pdo = $this->connection->getConnection();
 
-          $sql = "UPDATE products
-                     SET is_approved = 1
-                   WHERE LOWER(SKU) = LOWER(:sku)
-                   LIMIT 1";
+          $sql = "
+              UPDATE products
+              SET
+                  is_approved = 1,
+                  status = '2'
+              WHERE LOWER(SKU) = LOWER(:sku)
+              LIMIT 1
+          ";
 
           $stmt = $pdo->prepare($sql);
+
           $stmt->execute([
-              ':sku' => $this->sku,
+              ':sku' => $sku,
           ]);
 
           return $stmt->rowCount() > 0;
