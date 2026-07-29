@@ -826,6 +826,7 @@ class Products {
   {
       // Validar SKU
       $sku = trim((string)($this->sku ?? ''));
+
       if ($sku === '' || mb_strlen($sku) > 50) {
           return null;
       }
@@ -835,11 +836,12 @@ class Products {
 
           $sql = "
               SELECT
-                  p.SKU              AS sku,
-                  p.name             AS product_name,
+                  p.SKU AS sku,
+                  p.name AS product_name,
                   p.description,
                   p.descriptive_tagline,
-                  p.status
+                  p.status,
+                  p.is_approved
               FROM products p
               WHERE p.SKU = :sku
               LIMIT 1
@@ -847,21 +849,24 @@ class Products {
 
           $stmt = $pdo->prepare($sql);
           $stmt->execute([':sku' => $sku]);
+
           $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
           if (!$row) {
-              return null; // SKU no encontrado
+              return null;
           }
 
-          // Envolvemos en product_details como pediste
-          return ['product_details' => $row];
-
+          return [
+              'product_details' => $row
+          ];
       } catch (PDOException $e) {
-          error_log('getProductDetailsBySKU error (SKU '.$sku.'): '.$e->getMessage());
+          error_log(
+              'getProductDetailsBySKU error (SKU '.$sku.'): '.$e->getMessage()
+          );
+
           return null;
       }
   }
-
   public function getPendingProducts() {
 
     try {
