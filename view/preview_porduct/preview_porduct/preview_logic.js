@@ -276,26 +276,12 @@ class PreviewLogic {
   /*
    * Removes the old images belonging to a variation type.
    */
-  deleteImages(typeId) {
-    const wrapper = document.getElementById(`wrap-images-${typeId}`);
-    if (!wrapper) return false;
 
-    wrapper.remove();
-    window.previewGallery?.refreshGallery?.(true);
-
-    return true;
-  }
 
   /*
    * Removes the old items belonging to a variation type.
    */
-  deleteItems(typeId) {
-    const wrapper = document.getElementById(`wrap-items-${typeId}`);
-    if (!wrapper) return false;
 
-    wrapper.remove();
-    return true;
-  }
 
   /*
    * Removes the old prices belonging to a variation type.
@@ -311,13 +297,7 @@ class PreviewLogic {
   /*
    * Removes the old artwork belonging to a variation type.
    */
-  deleteArtwork(typeId) {
-    const wrapper = document.getElementById(`wrap-artworks-${typeId}`);
-    if (!wrapper) return false;
 
-    wrapper.remove();
-    return true;
-  }
 
   renderBreadcrumb(category_name, group_name) {
     const sp_breadcrumbs = document.getElementById("sp_breadcrumbs");
@@ -396,10 +376,10 @@ class PreviewLogic {
         if (pdf || name) artworksOnlyOfType.push({ ...artwork, variation_id: variationId });
       }
 
-      this.deleteItems(typeId);
-      this.deleteImages(typeId);
+      items.deleteItems(typeId);
+      images.deleteImages(typeId);
       this.deletePrices(typeId);
-      this.deleteArtwork(typeId);
+      artwork.deleteArtwork(typeId);
 
       if (imagesOnlyOfType.length > 0) this.renderImages(imagesOnlyOfType, typeVariation);
       if (itemsOnlyOfType.length > 0) this.renderItems(itemsOnlyOfType, typeVariation);
@@ -570,7 +550,7 @@ class PreviewLogic {
       }
 
       if (firstDomId) {
-        const selectVariationResult = this.SelectVariation(firstDomId);
+        const selectVariationResult = this.selectVariation(firstDomId);
         if (selectVariationResult === false) return false;
       }
 
@@ -581,7 +561,7 @@ class PreviewLogic {
     }
   }
 
-  SelectVariation(domId = "") {
+  selectVariation(domId = "") {
     this.setSelectVariation(domId);
 
     const button = document.getElementById(domId);
@@ -631,7 +611,7 @@ class PreviewLogic {
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-items-${typeId}`;
 
-    this.deleteItems(typeId);
+    items.deleteItems(typeId);
 
     const wrapper = document.createElement("div");
     wrapper.className = "wrap-items";
@@ -665,57 +645,7 @@ class PreviewLogic {
     if (renderedItems > 0) parent.appendChild(wrapper);
   }
 
-  renderImages(imagesOnlyOfType = [], typeVariation) {
-    const id_variation = Number(String(this.getSelectVariation() ?? "").replace("variation_id_", ""));
-    const parent = document.getElementById("wrap-images-group");
 
-    if (!parent) return;
-
-    const typeId = String(typeVariation?.type_id ?? "null");
-    const wrapId = `wrap-images-${typeId}`;
-
-    this.deleteImages(typeId);
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "wrap-images";
-    wrapper.id = wrapId;
-    wrapper.dataset.typeId = typeId;
-
-    let renderedImages = 0;
-
-    for (let i = 0; i < imagesOnlyOfType.length; i++) {
-      const imgObj = imagesOnlyOfType[i];
-
-      if (Number(imgObj?.variation_id) !== id_variation) continue;
-
-      const rawLink = String(imgObj?.link ?? "").trim().replace(/^\/+/, "");
-
-      const src = rawLink
-        ? rawLink.startsWith("http") || rawLink.startsWith("data:") || rawLink.startsWith("blob:")
-          ? rawLink
-          : rawLink.startsWith("controller/")
-            ? "../../" + rawLink
-            : "../../controller/" + rawLink
-        : "";
-
-      if (!src) continue;
-
-      const img = document.createElement("img");
-      img.className = "preview-media";
-      img.src = src;
-      img.alt = `Preview image ${renderedImages + 1}`;
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.draggable = false;
-
-      wrapper.appendChild(img);
-      renderedImages++;
-    }
-
-    if (renderedImages > 0) parent.appendChild(wrapper);
-
-    window.previewGallery?.refreshGallery?.(true);
-  }
 
   renderPrices(pricesOnlyOfType = [], typeVariation) {
     const id_variation = Number(String(this.getSelectVariation() ?? "").replace("variation_id_", ""));
@@ -962,7 +892,7 @@ class PreviewLogic {
     const typeId = String(typeVariation?.type_id ?? "null");
     const wrapId = `wrap-artworks-${typeId}`;
 
-    this.deleteArtwork(typeId);
+    artwork.deleteArtwork(typeId);
 
     const wrapper = document.createElement("div");
     wrapper.className = "wrap-artworks";

@@ -3,17 +3,22 @@
 // Product Preview — Asset Versioning + Markup
 // -----------------------------------------------------------------------------
 
-$cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
-$jsPath  = '../../view/preview_porduct/preview_porduct/preview.js';
-$jsPath2 = '../../view/preview_porduct/preview_porduct/preview_logic.js';
+$cssPath     = '../../view/preview_porduct/preview_porduct/preview.css';
+$jsPath      = '../../view/preview_porduct/preview_porduct/preview.js';
+$jsPath2     = '../../view/preview_porduct/preview_porduct/preview_logic.js';
+$artworkPath = '../../view/preview_porduct/artwork/artwork.js';
+$imagesPath  = '../../view/preview_porduct/images/images.js';
+$itemsPath   = '../../view/preview_porduct/items/items.js';
 
-$cssTime = @filemtime($cssPath) ?: time();
-$jsTime  = @filemtime($jsPath)  ?: time();
-$jsTime2 = @filemtime($jsPath2) ?: time();
+$cssTime     = @filemtime($cssPath) ?: time();
+$jsTime      = @filemtime($jsPath) ?: time();
+$jsTime2     = @filemtime($jsPath2) ?: time();
+$artworkTime = @filemtime($artworkPath) ?: time();
+$imagesTime  = @filemtime($imagesPath) ?: time();
+$itemsTime   = @filemtime($itemsPath) ?: time();
 ?>
 
 <link rel="stylesheet" href="<?= $cssPath ?>?v=<?= $cssTime ?>">
-
 <main class="sp-amz" aria-labelledby="sp-title">
   <div class="sp-shell">
 
@@ -437,6 +442,8 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
     <button type="button" class="btn btn-publish-preview" id="btn_publish">Publish</button>
   </div>
 </main>
-
 <script src="<?= $jsPath ?>?v=<?= $jsTime ?>"></script>
+<script src="<?= $imagesPath ?>?v=<?= $imagesTime ?>"></script>
+<script src="<?= $artworkPath ?>?v=<?= $artworkTime ?>"></script>
+<script src="<?= $itemsPath ?>?v=<?= $itemsTime ?>"></script>
 <script src="<?= $jsPath2 ?>?v=<?= $jsTime2 ?>"></script>
