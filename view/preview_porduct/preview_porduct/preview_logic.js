@@ -121,6 +121,7 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
+        alert(text);
         const json = JSON.parse(text);
 
         if (!Array.isArray(json)) {
