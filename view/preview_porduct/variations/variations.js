@@ -69,8 +69,13 @@ class Variations {
     const selectedLabel = group.querySelector(".js-selected-variation-label");
     const summaryPill = group.querySelector(".variation-summary-pill");
 
-    if (selectedLabel) selectedLabel.textContent = selectedText || "Select option";
-    if (summaryPill) summaryPill.textContent = selectedText ? `Selected: ${selectedText}` : "Select an option";
+    if (selectedLabel) {
+      selectedLabel.textContent = selectedText || "Select option";
+    }
+
+    if (summaryPill) {
+      summaryPill.textContent = selectedText ? `Selected: ${selectedText}` : "Select an option";
+    }
   }
 
   fetchChildVariationsById(variationId) {
@@ -96,7 +101,10 @@ class Variations {
       body: JSON.stringify(data)
     })
       .then((response) => {
-        if (!response.ok) throw new Error("Network error.");
+        if (!response.ok) {
+          throw new Error("Network error.");
+        }
+
         return response.text();
       })
       .then((text) => {
@@ -104,7 +112,9 @@ class Variations {
 
         const variationTypes = Array.isArray(json?.variationTypes) ? json.variationTypes : [];
         const childVariations = Array.isArray(json?.childVariations) ? json.childVariations : [];
-        const variationTypesForDelete = Array.isArray(json?.variationTypesForDelete) ? json.variationTypesForDelete : [];
+        const variationTypesForDelete = Array.isArray(json?.variationTypesForDelete)
+          ? json.variationTypesForDelete
+          : [];
 
         const currentVariationData =
           json?.currentVariationData && typeof json.currentVariationData === "object"
@@ -113,27 +123,33 @@ class Variations {
 
         this.shouldDeleteItems = variationTypesForDelete.length > 0;
 
+        /*
+         * Muestra los recursos de la variación consultada:
+         * image, item, price y artwork.
+         */
         this.organizeCurrentVariation(currentVariationData);
 
         if (childVariations.length > 0 && variationTypes.length > 0) {
+          /*
+           * Dibuja solamente los botones.
+           * No dibuja los recursos de todas las opciones.
+           */
           this.organizeVariationsForRender(childVariations, variationTypes);
-          this.autoLoadFirstChildVariation(childVariations, variationTypes, currentVariationId);
+
+          /*
+           * Selecciona automáticamente la primera opción
+           * y muestra sus recursos.
+           */
+          this.autoLoadFirstChildVariation(
+            childVariations,
+            variationTypes,
+            currentVariationId
+          );
+
           return;
         }
 
-        if (typeof prices !== "undefined" && typeof prices.updateVariationPrices === "function") {
-          prices.updateVariationPrices();
-        }
-
-        window.setTimeout(() => {
-          if (typeof prices === "undefined") return;
-
-          if (typeof prices.selectFirstAvailablePrice === "function") {
-            prices.selectFirstAvailablePrice();
-          } else if (typeof prices.selectFirstPrice === "function") {
-            prices.selectFirstPrice();
-          }
-        }, 500);
+        this.finishPrices();
       })
       .catch((error) => {
         console.error("Error fetching child variations:", error);
@@ -141,13 +157,19 @@ class Variations {
   }
 
   autoLoadFirstChildVariation(childVariations = [], variationTypes = [], currentVariationId = "") {
-    if (!Array.isArray(childVariations) || childVariations.length === 0) return false;
+    if (!Array.isArray(childVariations) || childVariations.length === 0) {
+      return false;
+    }
 
     const currentId = String(currentVariationId ?? "").trim();
     const firstTypeName = String(variationTypes?.[0]?.type_name ?? "").trim();
 
-    let nextVariationId = "";
+    let selectedRow = null;
 
+    /*
+     * Primero intenta encontrar la primera variación
+     * del primer tipo recibido.
+     */
     for (const row of childVariations) {
       const variation = row?.variation;
 
@@ -161,11 +183,15 @@ class Variations {
       if (this.autoLoadedVariationIds.has(variationId)) continue;
       if (firstTypeName && variationTypeName !== firstTypeName) continue;
 
-      nextVariationId = variationId;
+      selectedRow = row;
       break;
     }
 
-    if (!nextVariationId) {
+    /*
+     * Si no se encontró por tipo, toma la primera
+     * variación disponible.
+     */
+    if (!selectedRow) {
       for (const row of childVariations) {
         const variationId = String(row?.variation?.variation_id ?? "").trim();
 
@@ -173,10 +199,14 @@ class Variations {
         if (variationId === currentId) continue;
         if (this.autoLoadedVariationIds.has(variationId)) continue;
 
-        nextVariationId = variationId;
+        selectedRow = row;
         break;
       }
     }
+
+    if (!selectedRow?.variation) return false;
+
+    const nextVariationId = String(selectedRow.variation.variation_id ?? "").trim();
 
     if (!nextVariationId) return false;
 
@@ -188,7 +218,11 @@ class Variations {
     this.autoLoadedVariationIds.add(nextVariationId);
 
     window.setTimeout(() => {
-      this.selectVariation(domId, true);
+      /*
+       * selectedRow permite mostrar inmediatamente
+       * los recursos de la primera opción.
+       */
+      this.selectVariation(domId, true, selectedRow);
     }, 0);
 
     return true;
@@ -204,39 +238,68 @@ class Variations {
       const typeId = String(variation?.type_id ?? "null").trim();
       const typeName = String(variation?.type_name ?? "").trim();
 
-      if (!variationId || !typeId || !typeName) return false;
+      if (!variationId || !typeId || !typeName) {
+        return false;
+      }
 
       this.setSelectVariation(`variation_id_${variationId}`);
+
+      return this.renderVariationAssets({
+        variation: variation,
+        images: currentVariationData?.images ?? [],
+        items: currentVariationData?.items ?? [],
+        prices: currentVariationData?.prices ?? [],
+        artwork: currentVariationData?.artwork ?? null
+      });
+    } catch (error) {
+      console.error("Error in organizeCurrentVariation:", error);
+      return false;
+    }
+  }
+
+  renderVariationAssets(row = {}) {
+    try {
+      const variation = row?.variation ?? null;
+
+      if (!variation) return false;
+
+      const variationId = String(variation?.variation_id ?? "").trim();
+      const typeId = String(variation?.type_id ?? "null").trim();
+      const typeName = String(variation?.type_name ?? "").trim();
+
+      if (!variationId || !typeId || !typeName) {
+        return false;
+      }
 
       const typeVariation = {
         type_id: typeId,
         type_name: typeName
       };
 
-      const imagesOnlyOfType = Array.isArray(currentVariationData?.images)
-        ? currentVariationData.images.map((image) => ({
-            ...image,
+      const imagesOnlyOfType = Array.isArray(row?.images)
+        ? row.images.map((imageData) => ({
+            ...imageData,
             variation_id: variationId
           }))
         : [];
 
-      const itemsOnlyOfType = Array.isArray(currentVariationData?.items)
-        ? currentVariationData.items.map((item) => ({
-            ...item,
+      const itemsOnlyOfType = Array.isArray(row?.items)
+        ? row.items.map((itemData) => ({
+            ...itemData,
             variation_id: variationId
           }))
         : [];
 
-      const pricesOnlyOfType = Array.isArray(currentVariationData?.prices)
-        ? currentVariationData.prices.map((price) => ({
-            ...price,
+      const pricesOnlyOfType = Array.isArray(row?.prices)
+        ? row.prices.map((priceData) => ({
+            ...priceData,
             variation_id: variationId,
             price_display_mode: variation?.price_display_mode ?? null
           }))
         : [];
 
       const artworksOnlyOfType = [];
-      const artworkData = currentVariationData?.artwork ?? null;
+      const artworkData = row?.artwork ?? null;
 
       if (artworkData) {
         const pdf = String(artworkData?.pdf_artwork ?? "").trim();
@@ -250,28 +313,78 @@ class Variations {
         }
       }
 
-      images.deleteImages(typeId);
-      items.deleteItems(typeId);
-      prices.deletePrices(typeId);
-      artwork.deleteArtwork(typeId);
+      /*
+       * Elimina únicamente los recursos anteriores
+       * pertenecientes al mismo tipo.
+       */
+      if (typeof images !== "undefined" && typeof images.deleteImages === "function") {
+        images.deleteImages(typeId);
+      }
 
-      if (imagesOnlyOfType.length > 0) images.renderImages(imagesOnlyOfType, typeVariation);
-      if (itemsOnlyOfType.length > 0) items.renderItems(itemsOnlyOfType, typeVariation);
-      if (pricesOnlyOfType.length > 0) prices.renderPrices(pricesOnlyOfType, typeVariation);
-      if (artworksOnlyOfType.length > 0) artwork.renderArtwork(artworksOnlyOfType, typeVariation);
+      if (typeof items !== "undefined" && typeof items.deleteItems === "function") {
+        items.deleteItems(typeId);
+      }
+
+      if (typeof prices !== "undefined" && typeof prices.deletePrices === "function") {
+        prices.deletePrices(typeId);
+      }
+
+      if (typeof artwork !== "undefined" && typeof artwork.deleteArtwork === "function") {
+        artwork.deleteArtwork(typeId);
+      }
+
+      /*
+       * Muestra los recursos de la opción seleccionada.
+       */
+      if (
+        imagesOnlyOfType.length > 0 &&
+        typeof images !== "undefined" &&
+        typeof images.renderImages === "function"
+      ) {
+        images.renderImages(imagesOnlyOfType, typeVariation);
+      }
+
+      if (
+        itemsOnlyOfType.length > 0 &&
+        typeof items !== "undefined" &&
+        typeof items.renderItems === "function"
+      ) {
+        items.renderItems(itemsOnlyOfType, typeVariation);
+      }
+
+      if (
+        pricesOnlyOfType.length > 0 &&
+        typeof prices !== "undefined" &&
+        typeof prices.renderPrices === "function"
+      ) {
+        prices.renderPrices(pricesOnlyOfType, typeVariation);
+      }
+
+      if (
+        artworksOnlyOfType.length > 0 &&
+        typeof artwork !== "undefined" &&
+        typeof artwork.renderArtwork === "function"
+      ) {
+        artwork.renderArtwork(artworksOnlyOfType, typeVariation);
+      }
 
       window.previewGallery?.refreshGallery?.(true);
 
       return true;
     } catch (error) {
-      console.error("Error in organizeCurrentVariation:", error);
+      console.error("Error rendering variation assets:", error);
       return false;
     }
   }
 
   organizeVariationsForRender(childVariations = [], variationTypes = []) {
-    if (!Array.isArray(childVariations) || childVariations.length === 0) return;
-    if (!Array.isArray(variationTypes) || variationTypes.length === 0) return;
+    if (!Array.isArray(childVariations) || childVariations.length === 0) {
+      return false;
+    }
+
+    if (!Array.isArray(variationTypes) || variationTypes.length === 0) {
+      return false;
+    }
 
     for (const typeVariation of variationTypes) {
       const typeName = String(typeVariation?.type_name ?? "").trim();
@@ -279,10 +392,6 @@ class Variations {
       if (!typeName) continue;
 
       const variationsOnlyOfType = [];
-      const itemsOnlyOfType = [];
-      const imagesOnlyOfType = [];
-      const pricesOnlyOfType = [];
-      const artworksOnlyOfType = [];
 
       for (const row of childVariations) {
         const variation = row?.variation;
@@ -293,66 +402,19 @@ class Variations {
 
         if (variationTypeName !== typeName) continue;
 
-        const variationId = variation?.variation_id ?? null;
-
         variationsOnlyOfType.push(variation);
-
-        if (Array.isArray(row?.items) && row.items.length > 0) {
-          itemsOnlyOfType.push(
-            ...row.items.map((item) => ({
-              ...item,
-              variation_id: variationId
-            }))
-          );
-        }
-
-        if (Array.isArray(row?.images) && row.images.length > 0) {
-          imagesOnlyOfType.push(
-            ...row.images.map((image) => ({
-              ...image,
-              variation_id: variationId
-            }))
-          );
-        }
-
-        if (Array.isArray(row?.prices) && row.prices.length > 0) {
-          pricesOnlyOfType.push(
-            ...row.prices.map((price) => ({
-              ...price,
-              variation_id: variationId,
-              price_display_mode: variation?.price_display_mode ?? null
-            }))
-          );
-        }
-
-        const artworkData = row?.artwork ?? null;
-
-        if (artworkData) {
-          const pdf = String(artworkData?.pdf_artwork ?? "").trim();
-          const name = String(artworkData?.name_pdf_artwork ?? "").trim();
-
-          if (pdf || name) {
-            artworksOnlyOfType.push({
-              ...artworkData,
-              variation_id: variationId
-            });
-          }
-        }
       }
 
       if (variationsOnlyOfType.length === 0) continue;
 
-      const variationsFinished = this.renderVariations(variationsOnlyOfType, typeVariation);
-
-      if (!variationsFinished) continue;
-
-      if (imagesOnlyOfType.length > 0) images.renderImages(imagesOnlyOfType, typeVariation);
-      if (itemsOnlyOfType.length > 0) items.renderItems(itemsOnlyOfType, typeVariation);
-      if (pricesOnlyOfType.length > 0) prices.renderPrices(pricesOnlyOfType, typeVariation);
-      if (artworksOnlyOfType.length > 0) artwork.renderArtwork(artworksOnlyOfType, typeVariation);
+      /*
+       * Aquí solamente se dibujan los botones.
+       * Los assets se dibujan cuando la opción queda seleccionada.
+       */
+      this.renderVariations(variationsOnlyOfType, typeVariation);
     }
 
-    window.previewGallery?.refreshGallery?.(true);
+    return true;
   }
 
   renderVariations(childVariationsOfType = [], typeVariation = {}) {
@@ -360,7 +422,10 @@ class Variations {
       const parent = document.getElementById("wrap-variations-group");
 
       if (!parent) return false;
-      if (!Array.isArray(childVariationsOfType) || childVariationsOfType.length === 0) return false;
+
+      if (!Array.isArray(childVariationsOfType) || childVariationsOfType.length === 0) {
+        return false;
+      }
 
       const typeId = String(typeVariation?.type_id ?? "null");
       const typeName = String(typeVariation?.type_name ?? "").trim();
@@ -415,7 +480,10 @@ class Variations {
                 <strong id="${labelId}" class="js-selected-variation-label">${this.escapeHtml(firstLabel || "Select option")}</strong>
               </span>
 
-              <span class="variation-summary-pill">${firstLabel ? `Selected: ${this.escapeHtml(firstLabel)}` : "Select an option"}</span>
+              <span class="variation-summary-pill">
+                ${firstLabel ? `Selected: ${this.escapeHtml(firstLabel)}` : "Select an option"}
+              </span>
+
               <span class="var-collapse-hint">Click to view available options</span>
             </span>
 
@@ -439,9 +507,13 @@ class Variations {
       );
 
       if (newGroup) {
-        const groupsCount = parent.querySelectorAll(".wrap-variations.is-collapsible").length;
+        const groupsCount = parent.querySelectorAll(
+          ".wrap-variations.is-collapsible"
+        ).length;
 
-        if (groupsCount === 1) this.openVariationGroup(newGroup);
+        if (groupsCount === 1) {
+          this.openVariationGroup(newGroup);
+        }
       }
 
       return true;
@@ -451,7 +523,7 @@ class Variations {
     }
   }
 
-  selectVariation(domId = "", automatic = false) {
+  selectVariation(domId = "", automatic = false, variationRow = null) {
     const id = String(domId ?? "").trim();
 
     if (!id) return false;
@@ -467,7 +539,9 @@ class Variations {
     const group = button.closest(".wrap-variations");
 
     if (group) {
-      const variationButtons = group.querySelectorAll(".var-option[id^='variation_id_']");
+      const variationButtons = group.querySelectorAll(
+        ".var-option[id^='variation_id_']"
+      );
 
       variationButtons.forEach((item) => {
         item.classList.remove("is-selected");
@@ -487,6 +561,14 @@ class Variations {
 
     this.setSelectVariation(id);
 
+    /*
+     * Cuando la selección es automática, variationRow contiene
+     * image, item, price y artwork de la primera opción.
+     */
+    if (variationRow && typeof variationRow === "object") {
+      this.renderVariationAssets(variationRow);
+    }
+
     if (!automatic) {
       this.autoLoadedVariationIds.clear();
       this.autoLoadedVariationIds.add(variationId);
@@ -495,6 +577,25 @@ class Variations {
     this.fetchChildVariationsById(variationId);
 
     return true;
+  }
+
+  finishPrices() {
+    if (
+      typeof prices !== "undefined" &&
+      typeof prices.updateVariationPrices === "function"
+    ) {
+      prices.updateVariationPrices();
+    }
+
+    window.setTimeout(() => {
+      if (typeof prices === "undefined") return;
+
+      if (typeof prices.selectFirstAvailablePrice === "function") {
+        prices.selectFirstAvailablePrice();
+      } else if (typeof prices.selectFirstPrice === "function") {
+        prices.selectFirstPrice();
+      }
+    }, 500);
   }
 
   setSelectVariation(domId) {
