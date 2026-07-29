@@ -10,6 +10,7 @@ $artworkPath = '../../view/preview_porduct/artwork/artwork.js';
 $imagesPath  = '../../view/preview_porduct/images/images.js';
 $itemsPath   = '../../view/preview_porduct/items/items.js';
 $pricesPath  = '../../view/preview_porduct/prices/prices.js';
+$variationsPath = '../../view/preview_porduct/variations/variations.js';
 
 $cssTime     = @filemtime($cssPath) ?: time();
 $jsTime      = @filemtime($jsPath) ?: time();
@@ -18,6 +19,7 @@ $artworkTime = @filemtime($artworkPath) ?: time();
 $imagesTime  = @filemtime($imagesPath) ?: time();
 $itemsTime   = @filemtime($itemsPath) ?: time();
 $pricesTime  = @filemtime($pricesPath) ?: time();
+$variationsTime = @filemtime($variationsPath) ?: time();
 ?>
 
 <link rel="stylesheet" href="<?= $cssPath ?>?v=<?= $cssTime ?>">
@@ -449,4 +451,5 @@ $pricesTime  = @filemtime($pricesPath) ?: time();
 <script src="<?= $artworkPath ?>?v=<?= $artworkTime ?>"></script>
 <script src="<?= $itemsPath ?>?v=<?= $itemsTime ?>"></script>
 <script src="<?= $pricesPath ?>?v=<?= $pricesTime ?>"></script>
+<script src="<?= $variationsPath ?>?v=<?= $variationsTime ?>"></script>
 <script src="<?= $jsPath2 ?>?v=<?= $jsTime2 ?>"></script>
