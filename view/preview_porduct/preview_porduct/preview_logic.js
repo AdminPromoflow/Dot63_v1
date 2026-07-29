@@ -140,11 +140,10 @@ class PreviewLogic {
         const is_approved = String(productDetails.is_approved ?? "");
 
         const publishBtn = document.getElementById("btn_publish");
+        const isApproved = Number(is_approved) === 1;
 
-        alert(is_approved);
-
-        if (is_approved == 1) {
-          publishBtn.style.display = "none";
+        if (publishBtn) {
+          publishBtn.style.display = isApproved ? "none" : "";
         }
 
         if (publishBtn) publishBtn.style.display = status === "2" ? "none" : "";
