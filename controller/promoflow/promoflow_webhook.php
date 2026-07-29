@@ -108,6 +108,11 @@ class Resques63API
       ]);
       exit;
     }
+    echo json_encode([
+      'success' => true,
+      'message' => 'entramos'
+    ]);
+    exit;
 
     $connection = new Database();
     $product = new Products($connection);
