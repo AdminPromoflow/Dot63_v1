@@ -381,7 +381,7 @@ class PreviewLogic {
       this.deletePrices(typeId);
       artwork.deleteArtwork(typeId);
 
-      if (imagesOnlyOfType.length > 0) this.renderImages(imagesOnlyOfType, typeVariation);
+      if (imagesOnlyOfType.length > 0) images.renderImages(imagesOnlyOfType, typeVariation);
       if (itemsOnlyOfType.length > 0) this.renderItems(itemsOnlyOfType, typeVariation);
       if (pricesOnlyOfType.length > 0) this.renderPrices(pricesOnlyOfType, typeVariation);
       if (artworksOnlyOfType.length > 0) this.renderArtwork(artworksOnlyOfType, typeVariation);
@@ -460,7 +460,7 @@ class PreviewLogic {
       const variationsFinished = this.renderVariations(variationsOnlyOfType, typeVariation);
       if (!variationsFinished) continue;
 
-      if (imagesOnlyOfType.length > 0) this.renderImages(imagesOnlyOfType, typeVariation);
+      if (imagesOnlyOfType.length > 0) images.renderImages(imagesOnlyOfType, typeVariation);
       if (itemsOnlyOfType.length > 0) this.renderItems(itemsOnlyOfType, typeVariation);
       if (pricesOnlyOfType.length > 0) this.renderPrices(pricesOnlyOfType, typeVariation);
       if (artworksOnlyOfType.length > 0) this.renderArtwork(artworksOnlyOfType, typeVariation);
