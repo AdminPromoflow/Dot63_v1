@@ -9,6 +9,7 @@ $jsPath2     = '../../view/preview_porduct/preview_porduct/preview_logic.js';
 $artworkPath = '../../view/preview_porduct/artwork/artwork.js';
 $imagesPath  = '../../view/preview_porduct/images/images.js';
 $itemsPath   = '../../view/preview_porduct/items/items.js';
+$pricesPath  = '../../view/preview_porduct/prices/prices.js';
 
 $cssTime     = @filemtime($cssPath) ?: time();
 $jsTime      = @filemtime($jsPath) ?: time();
@@ -16,6 +17,7 @@ $jsTime2     = @filemtime($jsPath2) ?: time();
 $artworkTime = @filemtime($artworkPath) ?: time();
 $imagesTime  = @filemtime($imagesPath) ?: time();
 $itemsTime   = @filemtime($itemsPath) ?: time();
+$pricesTime  = @filemtime($pricesPath) ?: time();
 ?>
 
 <link rel="stylesheet" href="<?= $cssPath ?>?v=<?= $cssTime ?>">
