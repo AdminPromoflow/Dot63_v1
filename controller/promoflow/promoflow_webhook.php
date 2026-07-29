@@ -114,16 +114,25 @@ class Resques63API
     $product = new Products($connection);
     $product->setSku($data['sku']);
 
+    echo json_encode([
+      'success' => true,
+      'message' => $data['sku']
+    ]);
+    exit;
+
 
 
     $result = $product->approveProductWithSKU();
 
-    echo json_encode([
-      'success' => true,
-      'message' => 'The product has been approved.',
-      'result' => $result
-    ]);
-    exit;
+    if ($result) {
+      echo json_encode([
+        'success' => true,
+        'message' => 'The product has been approved.'
+      ]);
+      exit;
+    }
+
+
 
     //
     // $result = $product->getDataForSendEmail();
