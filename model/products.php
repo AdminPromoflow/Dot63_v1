@@ -192,17 +192,39 @@ class Products {
               SET
                   is_approved = 1,
                   status = '2'
-              WHERE LOWER(SKU) = LOWER(:sku)
+              WHERE LOWER(TRIM(SKU)) = LOWER(:sku)
               LIMIT 1
           ";
 
           $stmt = $pdo->prepare($sql);
 
           $stmt->execute([
-              ':sku' => $sku,
+              ':sku' => $sku
           ]);
 
-          return $stmt->rowCount() > 0;
+          if ($stmt->rowCount() > 0) {
+              return true;
+          }
+
+          /*
+           * rowCount() can return 0 when the product already
+           * has is_approved = 1 and status = 2.
+           * We therefore verify whether the SKU exists.
+           */
+          $checkSql = "
+              SELECT product_id
+              FROM products
+              WHERE LOWER(TRIM(SKU)) = LOWER(:sku)
+              LIMIT 1
+          ";
+
+          $checkStmt = $pdo->prepare($checkSql);
+
+          $checkStmt->execute([
+              ':sku' => $sku
+          ]);
+
+          return (bool)$checkStmt->fetchColumn();
 
       } catch (PDOException $e) {
           error_log('approveProductWithSKU error: ' . $e->getMessage());
