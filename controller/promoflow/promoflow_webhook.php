@@ -117,6 +117,13 @@ class Resques63API
 
     $result = $product->approveProductWithSKU();
 
+
+    echo json_encode([
+      'success' => true,
+      'message' => $result
+    ]);
+    exit;
+
     if ($result) {
       echo json_encode([
         'success' => true,
