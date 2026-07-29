@@ -1,6 +1,6 @@
 class Artwork {
   constructor() {
-
+    alert("buenas");
   }
   deleteArtwork(typeId) {
     const wrapper = document.getElementById(`wrap-artworks-${typeId}`);
