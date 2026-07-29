@@ -379,7 +379,7 @@ class PreviewLogic {
       items.deleteItems(typeId);
       images.deleteImages(typeId);
       this.deletePrices(typeId);
-      artwork.deleteArtwork(typeId);
+    //  artwork.deleteArtwork(typeId);
 
       if (imagesOnlyOfType.length > 0) images.renderImages(imagesOnlyOfType, typeVariation);
       if (itemsOnlyOfType.length > 0) this.renderItems(itemsOnlyOfType, typeVariation);
