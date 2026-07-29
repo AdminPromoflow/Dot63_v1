@@ -146,7 +146,7 @@ class PreviewLogic {
           publishBtn.style.display = isApproved ? "none" : "";
         }
 
-        if (publishBtn) publishBtn.style.display = status === "2" ? "none" : "";
+        // if (publishBtn) publishBtn.style.display = status === "2" ? "none" : "";
 
         this.renderBreadcrumb(categoryName, groupName);
         this.renderSectionLabel(categoryName);
