@@ -167,11 +167,24 @@ video {
 ============================================================================= */
 
 .sp-grid {
+
   display: grid;
+
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr) minmax(0, 0.9fr);
+
   gap: 24px;
+
   grid-auto-flow: row;
+
   align-items: start;
+
+  overflow: visible;
+
+}
+.sp-amz,
+.sp-shell,
+.sp-grid {
+  overflow: visible;
 }
 
 .sp-col {
@@ -185,6 +198,7 @@ video {
 .sp-gallery {
   grid-column: 1;
   grid-row: 1;
+  align-self: start;
 }
 
 .sp-gallery-inner {
@@ -194,17 +208,20 @@ video {
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
+  max-height: calc(100vh - 110px);
 }
 
 .sp-main-wrapper {
   position: relative;
+  width: 100%;
   will-change: transform;
 }
 
 .sp-main {
   width: 100%;
+  height: 50vh;
   max-height: 520px;
-  aspect-ratio: 4 / 3;
+  min-height: 320px;
   position: relative;
   display: grid;
   place-items: center;
@@ -1400,7 +1417,8 @@ button:focus-visible {
 
   .sp-gallery-inner {
     position: static;
-  }
+
+}
 }
 
 /* =============================================================================
@@ -1486,6 +1504,24 @@ button:focus-visible {
     width: 100%;
     min-width: 100%;
   }
+
+  .sp-gallery-inner {
+
+  position: static;
+
+  max-height: none;
+
+}
+
+.sp-main {
+
+  height: auto;
+
+  min-height: 0;
+
+  aspect-ratio: 1 / 1;
+
+}
 }
 
 @media (max-width: 520px) {
