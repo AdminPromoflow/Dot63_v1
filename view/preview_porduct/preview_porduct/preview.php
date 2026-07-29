@@ -99,6 +99,37 @@ $variationsTime = @filemtime($variationsPath) ?: time();
               </span>
               <span id="sp_unit_hint" class="sp-unit-hint">per 100 units</span>
             </div>
+            <!-- ===============================================================
+              ITEMS NOTE
+            =============================================================== -->
+            <section class="sp-items-note js-fade-up" id="sp-items-note" aria-label="Items information">
+
+              <!-- ✅ 6-8: wrap-items-group agrupa 1 o 2 items (sin ul/li para HTML válido) -->
+              <div class="sp-items-list wrap-items-group" id="wrap-items-group">
+
+                <!-- Grupo 1 (2 items) -->
+                <div class="wrap-items">
+                  <div class="sp-item">
+                    <strong class="sp-item-subtitle">What is one item?</strong>
+                    <span>Each item refers to a single printed lanyard produced with your selected width, pack size and clip type.</span>
+                  </div>
+
+                  <div class="sp-item">
+                    <strong class="sp-item-subtitle">How do pack sizes work?</strong>
+                    <span>Pack quantities indicate the total number of individual lanyards supplied in your order, ready to hand out to staff, visitors or guests.</span>
+                  </div>
+                </div>
+
+                <!-- Grupo 2 (1 item) -->
+                <div class="wrap-items">
+                  <div class="sp-item">
+                    <strong class="sp-item-subtitle">Consistent branding every time</strong>
+                    <span>Your artwork, colours and logos are checked before production so each lanyard looks clean, sharp and on-brand.</span>
+                  </div>
+                </div>
+
+              </div>
+            </section>
 
 
         <!-- VARIATIONS -->
@@ -237,7 +268,7 @@ $variationsTime = @filemtime($variationsPath) ?: time();
       <section id="wrap-variations-group"  class="sp-variations-bottom js-fade-up" aria-label="More configuration options"></section>
 
       <!-- ===============================================================
-        PACK SIZE
+        PRICES
       =============================================================== -->
       <section class="sp-packsize js-fade-up" id="sp-packsize" aria-label="Pack sizes and bundle pricing">
         <div class="var-group var-group-pack" aria-labelledby="var_label_items">
@@ -325,37 +356,7 @@ $variationsTime = @filemtime($variationsPath) ?: time();
         </p>
       </section>
 
-      <!-- ===============================================================
-        ITEMS NOTE
-      =============================================================== -->
-      <section class="sp-items-note js-fade-up" id="sp-items-note" aria-label="Items information">
 
-        <!-- ✅ 6-8: wrap-items-group agrupa 1 o 2 items (sin ul/li para HTML válido) -->
-        <div class="sp-items-list wrap-items-group" id="wrap-items-group">
-
-          <!-- Grupo 1 (2 items) -->
-          <div class="wrap-items">
-            <div class="sp-item">
-              <strong class="sp-item-subtitle">What is one item?</strong>
-              <span>Each item refers to a single printed lanyard produced with your selected width, pack size and clip type.</span>
-            </div>
-
-            <div class="sp-item">
-              <strong class="sp-item-subtitle">How do pack sizes work?</strong>
-              <span>Pack quantities indicate the total number of individual lanyards supplied in your order, ready to hand out to staff, visitors or guests.</span>
-            </div>
-          </div>
-
-          <!-- Grupo 2 (1 item) -->
-          <div class="wrap-items">
-            <div class="sp-item">
-              <strong class="sp-item-subtitle">Consistent branding every time</strong>
-              <span>Your artwork, colours and logos are checked before production so each lanyard looks clean, sharp and on-brand.</span>
-            </div>
-          </div>
-
-        </div>
-      </section>
 
       <!-- ===============================================================
         Col 3: Buy box
