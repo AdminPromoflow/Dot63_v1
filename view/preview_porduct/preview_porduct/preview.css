@@ -226,7 +226,7 @@ video{
 
 .sp-main{
   width: 100%;
-  height: min(62vh, 850px);
+  height: min(50vh, 850px);
   min-height: 420px;
   position: relative;
   display: grid;
