@@ -121,7 +121,6 @@ class PreviewLogic {
         return response.text();
       })
       .then((text) => {
-        alert(text);
         const json = JSON.parse(text);
 
         if (!Array.isArray(json)) {
@@ -141,6 +140,8 @@ class PreviewLogic {
         const is_approved = String(productDetails.is_approved ?? "");
 
         const publishBtn = document.getElementById("btn_publish");
+
+        alert(is_approved);
 
         if (is_approved == 1) {
           publishBtn.style.display = "none";
