@@ -32,7 +32,7 @@ $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard
       <small class="muted">Approval required</small>
     </article>
 
-    <a href="../../view/dashboard_supplier_messages/index.php">
+    <a href="../../view/messages/index.php">
   <article class="card stat">
       <h2>Messages</h2>
       <p class="stat-num">3</p>
