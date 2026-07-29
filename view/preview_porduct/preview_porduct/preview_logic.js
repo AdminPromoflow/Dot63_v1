@@ -137,13 +137,19 @@ class PreviewLogic {
         const descriptiveTagline = productDetails.descriptive_tagline ?? "";
         const description = productDetails.description ?? "";
         const status = String(productDetails.status ?? "");
+
         const is_approved = String(productDetails.is_approved ?? "");
 
         const publishBtn = document.getElementById("btn_publish");
+
         const isApproved = Number(is_approved) === 1;
 
+        const isPublished = Number(status) === 2;
+
         if (publishBtn) {
-          publishBtn.style.display = isApproved ? "none" : "";
+
+          publishBtn.style.display = isApproved || isPublished ? "none" : "";
+
         }
 
         // if (publishBtn) publishBtn.style.display = status === "2" ? "none" : "";
