@@ -343,11 +343,88 @@ video{
 /* =============================================================================
    Details
 ============================================================================= */
-.sp-details{
-  grid-column: 2;
-  grid-row: 1;
+.sp-details {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: stretch;
+
+  gap: 1rem;
+
+  min-width: 0;
+
+}
+.sp-details > * {
+
+  width: 100%;
+
+  min-width: 0;
+
 }
 
+.sp-price-main {
+
+  display: flex;
+
+  flex-direction: row;
+
+  align-items: baseline;
+
+  flex-wrap: wrap;
+
+  gap: 0.3rem;
+
+  width: 100%;
+
+}
+
+.sp-items-note {
+
+  display: block;
+
+  width: 100%;
+
+  margin: 0;
+
+}
+
+.sp-items-list {
+
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+
+  gap: 0.75rem;
+
+}
+
+.wrap-items {
+
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+
+  gap: 0.75rem;
+
+}
+
+.sp-item {
+
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+
+  gap: 0.35rem;
+
+}
 .sp-category{
   font-size: .9rem;
   text-transform: uppercase;
@@ -1271,6 +1348,32 @@ button:focus-visible{
 }
 
 @media (max-width: 760px){
+
+  .sp-details {
+
+   display: flex;
+
+   flex-direction: column;
+
+   align-items: stretch;
+
+   width: 100%;
+
+ }
+
+ .sp-price-main,
+
+ .sp-items-note,
+
+ .sp-items-list,
+
+ .wrap-items,
+
+ .sp-item {
+
+   width: 100%;
+
+ }
   .sp-grid{
     grid-template-columns: 1fr;
   }
