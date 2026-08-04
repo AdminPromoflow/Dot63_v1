@@ -27,6 +27,6 @@
 
   <?php include "../../view/global/menu_general/menu_general.php"; ?>
   <?php //include "../../view/preview_product_customers/navigation/navigation.php" ?>
-  <?php include "../../view/preview_porduct/preview_porduct/preview.php";?>
+  <?php include "../../view/preview_product_customers/preview_porduct/preview.php";?>
 </body>
 </html>

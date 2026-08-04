@@ -1,90 +1,62 @@
-class Artwork {
-  constructor() {}
+export class ArtworkRenderer {
+  constructor(rootId = "wrap-artworks-group") {
+    this.root = document.getElementById(rootId);
+  }
 
-  deleteArtwork(typeId) {
-    const wrapper = document.getElementById(`wrap-artworks-${typeId}`);
-    if (!wrapper) return false;
+  clear() {
+    if (this.root) this.root.innerHTML = "";
+  }
 
-    wrapper.remove();
+  render(row = {}, context = {}) {
+    if (!this.root) return false;
+
+    const name = String(row?.name_pdf_artwork ?? "").trim();
+    const href = this.resolveAssetPath(row?.pdf_artwork);
+    if (!name && !href) return false;
+
+    const card = document.createElement("article");
+    card.className = "sp-artwork-card";
+
+    const icon = document.createElement("span");
+    icon.className = "sp-artwork-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "PDF";
+
+    const copy = document.createElement("div");
+    copy.className = "sp-artwork-copy";
+
+    const title = document.createElement("strong");
+    title.textContent = name || `${context.variationName || "Variation"} artwork template`;
+    copy.appendChild(title);
+
+    if (context.variationName) {
+      const meta = document.createElement("span");
+      meta.textContent = context.variationName;
+      copy.appendChild(meta);
+    }
+
+    card.append(icon, copy);
+
+    if (href) {
+      const link = document.createElement("a");
+      link.className = "btn btn-secondary btn-compact";
+      link.href = href;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Open template";
+      card.appendChild(link);
+    }
+
+    this.root.appendChild(card);
     return true;
   }
 
-  renderArtwork(artworksOnlyOfType = [], typeVariation) {
-    const selectedVariation = window.previewLogic?.getSelectVariation?.() ?? "";
-    const variationId = Number(String(selectedVariation).replace("variation_id_", ""));
-    const parent = document.getElementById("wrap-artworks-group");
+  resolveAssetPath(rawPath = "") {
+    const path = String(rawPath ?? "").trim().replace(/^\/+/, "");
+    if (!path) return "";
 
-    if (!parent) return false;
-
-    const typeId = String(typeVariation?.type_id ?? "null");
-    const wrapId = `wrap-artworks-${typeId}`;
-
-    this.deleteArtwork(typeId);
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "wrap-artworks";
-    wrapper.id = wrapId;
-    wrapper.dataset.typeId = typeId;
-
-    let renderedArtwork = 0;
-
-    for (let i = 0; i < artworksOnlyOfType.length; i++) {
-      const artworkData = artworksOnlyOfType[i];
-
-      if (Number(artworkData?.variation_id) !== variationId) continue;
-
-      const name = String(artworkData?.name_pdf_artwork ?? "").trim();
-      const rawPdf = String(artworkData?.pdf_artwork ?? "").trim().replace(/^\/+/, "");
-      const pdfSrc = this.resolvePdfPath(rawPdf);
-
-      if (!name && !pdfSrc) continue;
-
-      const artworkItem = document.createElement("div");
-      artworkItem.className = "sp-artwork";
-
-      artworkItem.innerHTML = `
-        ${name ? `<strong class="sp-artwork-name">${this.escapeHtml(name)}</strong>` : ""}
-        ${pdfSrc ? `<a class="sp-artwork-link" href="${this.escapeHtml(pdfSrc)}" target="_blank" rel="noopener">Open PDF</a>` : ""}
-      `;
-
-      wrapper.appendChild(artworkItem);
-      renderedArtwork++;
-    }
-
-    if (renderedArtwork > 0) parent.appendChild(wrapper);
-
-    return renderedArtwork > 0;
-  }
-
-  resolvePdfPath(rawPdf = "") {
-    const pdf = String(rawPdf).trim().replace(/^\/+/, "");
-
-    if (!pdf) return "";
-
-    if (
-      pdf.startsWith("http") ||
-      pdf.startsWith("data:") ||
-      pdf.startsWith("blob:")
-    ) {
-      return pdf;
-    }
-
-    if (pdf.startsWith("controller/")) {
-      return "../../" + pdf;
-    }
-
-    return "../../controller/" + pdf;
-  }
-
-  escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    if (path.startsWith("controller/")) return `../../${path}`;
+    return `../../controller/${path}`;
   }
 }
-
-const artwork = new Artwork();
-window.artwork = artwork;

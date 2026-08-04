@@ -120,7 +120,25 @@ class Product {
   private function publishProduct($data){
     header('Content-Type: application/json; charset=utf-8');
 
-    if (empty($data['sku'])) {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+      session_start();
+    }
+
+    $email = strtolower(trim((string)($_SESSION['email'] ?? '')));
+    $isLoggedIn = !empty($_SESSION['login']);
+
+    if (!$isLoggedIn || $email === '') {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Your supplier session has expired. Please sign in again.'
+        ]);
+        exit;
+    }
+
+    $sku = trim((string)($data['sku'] ?? ''));
+    if ($sku === '') {
+        http_response_code(400);
         echo json_encode([
             'success' => false,
             'message' => 'SKU is missing.'
@@ -128,46 +146,151 @@ class Product {
         exit;
     }
 
-    $connection = new Database();
-    $product = new Products($connection);
-    $product->setSku($data['sku']);
+    $database = new Database();
+    $pdo = $database->getConnection();
 
-    $result = $product->getDataForSendEmail();
+    $stmt = $pdo->prepare("
+      SELECT
+        p.product_id,
+        p.name AS product_name,
+        p.description,
+        p.SKU AS product_sku,
+        p.status,
+        p.is_approved,
+        p.group_id,
+        COALESCE(s.company_name, s.contact_name, '') AS supplier_name,
+        s.email AS supplier_email,
+        g.name AS group_name,
+        c.name AS category_name,
+        (
+          SELECT COUNT(*)
+          FROM variations v
+          WHERE v.product_id = p.product_id
+            AND v.type_id IS NOT NULL
+            AND TRIM(COALESCE(v.name, '')) <> ''
+            AND LOWER(TRIM(v.name)) <> 'default'
+        ) AS variations_count,
+        (
+          SELECT COUNT(*)
+          FROM images i
+          INNER JOIN variations v ON v.variation_id = i.variation_id
+          WHERE v.product_id = p.product_id
+            AND TRIM(COALESCE(i.link, '')) <> ''
+        ) AS images_count,
+        (
+          SELECT COUNT(*)
+          FROM prices pr
+          INNER JOIN variations v ON v.variation_id = pr.variation_id
+          WHERE v.product_id = p.product_id
+        ) AS prices_count
+      FROM products p
+      INNER JOIN suppliers s ON s.supplier_id = p.supplier_id
+      LEFT JOIN `groups` g ON g.group_id = p.group_id
+      LEFT JOIN categories c ON c.category_id = g.category_id
+      WHERE LOWER(TRIM(p.SKU)) = LOWER(:sku)
+        AND LOWER(TRIM(s.email)) = LOWER(:email)
+      LIMIT 1
+    ");
+    $stmt->execute([
+      ':sku' => $sku,
+      ':email' => $email,
+    ]);
+    $productData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
-    $connection = new Database();
-    $product = new Products($connection);
-    $product->setSku($data['sku']);
-
-    $status = $product->changeStatusForPending();
-
-    if (empty($result['success'])) {
+    if (!$productData) {
+        http_response_code(403);
         echo json_encode([
             'success' => false,
-            'message' => 'Could not get product data.'
+            'message' => 'This product was not found or does not belong to your account.'
         ]);
         exit;
     }
 
-    $emailData = $result['data'];
+    if ((int)$productData['is_approved'] === 1) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'This product is already approved.',
+            'status' => 'approved',
+        ]);
+        exit;
+    }
+
+    if ((string)$productData['status'] === '2') {
+        echo json_encode([
+            'success' => true,
+            'message' => 'This product has already been submitted for approval.',
+            'status' => 'pending_approval',
+        ]);
+        exit;
+    }
+
+    $missing = [];
+    if (trim((string)$productData['product_name']) === '') $missing[] = 'product name';
+    if (trim((string)$productData['description']) === '') $missing[] = 'product description';
+    if (empty($productData['group_id'])
+        || ($productData['group_name'] ?? '') === 'Unassigned Group'
+        || ($productData['category_name'] ?? '') === 'Unassigned Category') {
+        $missing[] = 'category and group';
+    }
+    if ((int)$productData['variations_count'] <= 0) $missing[] = 'variations';
+    if ((int)$productData['images_count'] <= 0) $missing[] = 'images';
+    if ((int)$productData['prices_count'] <= 0) $missing[] = 'pricing';
+
+    if (!empty($missing)) {
+        http_response_code(422);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Complete the product before submitting it for approval.',
+            'missing' => $missing,
+        ]);
+        exit;
+    }
 
     $emailSender = new EmailsSender();
 
     $emailSender->setRecipientEmail('admin@promoflow.net');
     $emailSender->setRecipientName('Admin');
 
-    $emailSender->setProductName($emailData['product_name']);
-    $emailSender->setProductSku($emailData['product_sku']);
-    $emailSender->setSupplierName($emailData['supplier_name']);
-    $emailSender->setSupplierEmail($emailData['supplier_email']);
+    $emailSender->setProductName($productData['product_name']);
+    $emailSender->setProductSku($productData['product_sku']);
+    $emailSender->setSupplierName($productData['supplier_name']);
+    $emailSender->setSupplierEmail($productData['supplier_email']);
 
     $emailSent = $emailSender->sendEmailProductApprovalNotice();
 
+    if (!$emailSent) {
+      http_response_code(502);
+      echo json_encode([
+          'success' => false,
+          'message' => 'The approval request could not be sent. Your product remains a draft.'
+      ]);
+      exit;
+    }
+
+    $stmt = $pdo->prepare("
+      UPDATE products
+      SET status = '2'
+      WHERE product_id = :product_id
+        AND (status IS NULL OR status <> '2')
+      LIMIT 1
+    ");
+    $updated = $stmt->execute([
+      ':product_id' => (int)$productData['product_id'],
+    ]);
+
+    if (!$updated) {
+      http_response_code(500);
+      echo json_encode([
+          'success' => false,
+          'message' => 'The request was emailed, but the product status could not be updated. Please contact support.'
+      ]);
+      exit;
+    }
+
     echo json_encode([
-        'success' => $emailSent,
-        'message' => $emailSent
-            ? 'Email sent successfully.'
-            : 'Email could not be sent.'
+        'success' => true,
+        'message' => 'Product submitted for approval successfully.',
+        'status' => 'pending_approval',
     ]);
     exit;
   }

@@ -1,3 +1,13 @@
+<?php
+if (session_status() !== PHP_SESSION_ACTIVE) {
+  session_start();
+}
+
+if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
+  header('Location: ../../view/log_inSupplier/index.php');
+  exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +17,7 @@
   <meta name="description" content="" />
   <meta name="author" content="Promoflow" />
   <meta name="keywords" content="" />
-  <title>items</title>
+  <title>Supplier product preview</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,10 +30,6 @@
 </head>
 
 <body  class="body_product_details">
-  <script src="../../view/global/security/security_helper.js" type="text/javascript">
-    
-  </script>
-
   <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>

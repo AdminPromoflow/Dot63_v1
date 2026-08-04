@@ -1,69 +1,44 @@
-class Items {
-  constructor() {}
-
-  deleteItems(typeId) {
-    const wrapper = document.getElementById(`wrap-items-${typeId}`);
-    if (!wrapper) return false;
-
-    wrapper.remove();
-    return true;
+export class ItemsRenderer {
+  constructor(rootId = "wrap-items-group") {
+    this.root = document.getElementById(rootId);
   }
 
-  renderItems(itemsOnlyOfType = [], typeVariation) {
-    const selectedVariation = window.previewLogic?.getSelectVariation?.() ?? "";
-    const variationId = Number(String(selectedVariation).replace("variation_id_", ""));
-    const parent = document.getElementById("wrap-items-group");
+  clear() {
+    if (this.root) this.root.innerHTML = "";
+  }
 
-    if (!parent) return false;
+  render(rows = []) {
+    if (!this.root || !Array.isArray(rows) || rows.length === 0) return 0;
 
-    const typeId = String(typeVariation?.type_id ?? "null");
-    const wrapId = `wrap-items-${typeId}`;
+    let count = 0;
+    const fragment = document.createDocumentFragment();
 
-    this.deleteItems(typeId);
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "wrap-items";
-    wrapper.id = wrapId;
-    wrapper.dataset.typeId = typeId;
-
-    let renderedItems = 0;
-
-    for (let i = 0; i < itemsOnlyOfType.length; i++) {
-      const itemData = itemsOnlyOfType[i];
-
-      if (Number(itemData?.variation_id) !== variationId) continue;
-
-      const title = String(itemData?.name ?? "").trim();
-      const description = String(itemData?.description ?? "").trim();
-
+    for (const row of rows) {
+      const title = String(row?.name ?? "").trim();
+      const description = String(row?.description ?? "").trim();
       if (!title && !description) continue;
 
-      const item = document.createElement("div");
+      const item = document.createElement("article");
       item.className = "sp-item";
 
-      item.innerHTML = `
-        ${title ? `<strong class="sp-item-subtitle">${this.escapeHtml(title)}</strong>` : ""}
-        ${description ? `<span>${this.escapeHtml(description)}</span>` : ""}
-      `;
+      if (title) {
+        const heading = document.createElement("strong");
+        heading.className = "sp-item-subtitle";
+        heading.textContent = title;
+        item.appendChild(heading);
+      }
 
-      wrapper.appendChild(item);
-      renderedItems++;
+      if (description) {
+        const text = document.createElement("span");
+        text.textContent = description;
+        item.appendChild(text);
+      }
+
+      fragment.appendChild(item);
+      count++;
     }
 
-    if (renderedItems > 0) parent.appendChild(wrapper);
-
-    return renderedItems > 0;
-  }
-
-  escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    this.root.appendChild(fragment);
+    return count;
   }
 }
-
-const items = new Items();
-window.items = items;

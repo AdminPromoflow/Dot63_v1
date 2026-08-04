@@ -1,326 +1,229 @@
-class Prices {
-  constructor() {
-    this.maxQuantity = null;
-    this.selectedPrice = null;
+export class PricesController {
+  constructor(options = {}) {
+    this.api = options.api;
+    this.store = options.store;
+    this.getSku = options.getSku || (() => "");
+    this.root = document.getElementById("wrap-prices-group");
+    this.empty = document.getElementById("prices_empty");
+    this.abortController = null;
+    this.extraVersion = 0;
+
+    this.elements = {
+      unit: document.getElementById("bb_unit"),
+      quantity: document.getElementById("bb_unit_quantity"),
+      unitTotal: document.getElementById("bb_unit_total"),
+      extraUnit: document.getElementById("bb_extra_unit"),
+      extraQuantity: document.getElementById("bb_extra_quantity"),
+      extraTotal: document.getElementById("bb_extra_total"),
+      total: document.getElementById("bb_total"),
+      mainPrice: document.getElementById("sp_price"),
+      quantityLabel: document.getElementById("var_label_quantity"),
+      unitHint: document.getElementById("sp_unit_hint")
+    };
   }
 
-  deletePrices(typeId) {
-    const wrapper = document.getElementById(`wrap-price-${typeId}`);
-    if (!wrapper) return false;
-
-    wrapper.remove();
-    return true;
+  clear() {
+    this.abortController?.abort();
+    this.abortController = null;
+    this.extraVersion++;
+    if (this.root) this.root.innerHTML = "";
+    this.store.selectedPrice = null;
+    this.store.selectedQuantity = null;
+    this.setEmptyState(true);
+    this.updateSummary();
   }
 
-  renderPrices(pricesOnlyOfType = [], typeVariation) {
-    const selectedVariation = window.previewLogic?.getSelectVariation?.() ?? "";
-    const variationId = Number(String(selectedVariation).replace("variation_id_", ""));
-    const parent = document.getElementById("wrap-prices-group");
+  render(rows = []) {
+    const preferredQuantity = Number(this.store.selectedQuantity);
+    this.clear();
+    if (!this.root || !Array.isArray(rows) || rows.length === 0) return false;
 
-    if (!parent) return false;
+    const sorted = [...rows]
+      .filter((row) => String(row?.price_display_mode ?? "prices") === "prices")
+      .sort((a, b) => Number(a?.min_quantity) - Number(b?.min_quantity));
 
-    const typeId = String(typeVariation?.type_id ?? "null");
-    const wrapId = `wrap-price-${typeId}`;
+    if (sorted.length === 0) return false;
 
-    this.deletePrices(typeId);
+    const fragment = document.createDocumentFragment();
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "wrap-price";
-    wrapper.id = wrapId;
-    wrapper.dataset.typeId = typeId;
-
-    let renderedPrices = 0;
-
-    for (let i = 0; i < pricesOnlyOfType.length; i++) {
-      const priceData = pricesOnlyOfType[i];
-
-      if (Number(priceData?.variation_id) !== variationId) continue;
-      if (String(priceData?.price_display_mode ?? "").trim() !== "prices") continue;
-
-      const priceId = String(priceData?.price_id ?? "").trim();
-      const minQuantity = String(priceData?.min_quantity ?? "").trim();
-      const maxQuantity = String(priceData?.max_quantity ?? "").trim();
-      const price = String(priceData?.price ?? "").trim();
-
-      if (!maxQuantity) continue;
+    for (const row of sorted) {
+      const min = Number(row?.min_quantity);
+      const max = Number(row?.max_quantity);
+      const price = Number(row?.price);
+      if (!Number.isFinite(min) || min <= 0 || !Number.isFinite(price)) continue;
 
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "var-option js-scale-in js-price-option";
-      button.value = price;
-      button.dataset.priceId = priceId;
-      button.dataset.minQuantity = minQuantity;
-      button.dataset.maxQuantity = maxQuantity;
-      button.dataset.price = price;
-      button.dataset.variationId = String(priceData?.variation_id ?? "");
-      button.dataset.priceDisplayMode = String(priceData?.price_display_mode ?? "");
-      button.innerHTML = `<span class="opt-main">${this.escapeHtml(minQuantity)}</span>`;
+      button.className = "price-tier";
+      button.dataset.priceId = String(row?.price_id ?? "");
+      button.dataset.quantity = String(min);
+      button.dataset.minQuantity = String(min);
+      button.dataset.maxQuantity = Number.isFinite(max) ? String(max) : "";
+      button.dataset.price = String(price);
+      button.setAttribute("aria-pressed", "false");
 
-      wrapper.appendChild(button);
-      renderedPrices++;
+      const quantity = document.createElement("strong");
+      quantity.textContent = min.toLocaleString("en-GB");
+
+      const range = document.createElement("span");
+      range.textContent = Number.isFinite(max) && max >= min
+        ? `${min.toLocaleString("en-GB")}–${max.toLocaleString("en-GB")} units`
+        : `${min.toLocaleString("en-GB")}+ units`;
+
+      const amount = document.createElement("span");
+      amount.className = "price-tier-amount";
+      amount.textContent = `£${this.formatMoney(price)} each`;
+
+      button.append(quantity, range, amount);
+      button.addEventListener("click", () => this.select(button));
+      fragment.appendChild(button);
     }
 
-    if (renderedPrices === 0) return false;
+    this.root.appendChild(fragment);
+    const first = this.root.querySelector(".price-tier");
+    if (!first) return false;
 
-    parent.appendChild(wrapper);
-    this.bindPriceButtons(`#${CSS.escape(wrapId)}`);
+    const preferred = Number.isFinite(preferredQuantity)
+      ? Array.from(this.root.querySelectorAll(".price-tier")).find(
+          (button) => Number(button.dataset.quantity) === preferredQuantity
+        )
+      : null;
 
+    this.setEmptyState(false);
+    this.select(preferred || first);
     return true;
   }
 
-  bindPriceButtons(scopeSelector) {
-    const scope = document.querySelector(scopeSelector);
-    if (!scope) return false;
+  select(button) {
+    if (!button || !this.root) return false;
 
-    const buttons = Array.from(scope.querySelectorAll(".js-price-option"));
-    if (buttons.length === 0) return false;
+    this.root.querySelectorAll(".price-tier").forEach((item) => {
+      const selected = item === button;
+      item.classList.toggle("is-selected", selected);
+      item.setAttribute("aria-pressed", String(selected));
+    });
 
-    for (const button of buttons) {
-      if (button.dataset.bound === "1") continue;
+    const quantity = Number(button.dataset.quantity);
+    const price = Number(button.dataset.price);
 
-      button.dataset.bound = "1";
-
-      button.addEventListener("click", (event) => {
-        const selectedButton = event.currentTarget;
-        const selected = this.selectPriceButton(selectedButton, scope);
-
-        if (selected) {
-          this.updateProductSummaryBox(
-            selectedButton.dataset.minQuantity,
-            selectedButton.value
-          );
-        }
-      });
-    }
-
-    const selected = this.selectPriceButton(buttons[0], scope);
-
-    if (selected) {
-      this.updateProductSummaryBox(
-        buttons[0].dataset.minQuantity,
-        buttons[0].value
-      );
-    }
-
+    this.store.selectedQuantity = Number.isFinite(quantity) ? quantity : null;
+    this.store.selectedPrice = Number.isFinite(price) ? price : null;
+    this.refreshVariationExtras();
+    this.updateSummary();
     return true;
   }
 
-  selectFirstAvailablePrice() {
-    const firstPriceButton = document.querySelector(
-      "#wrap-prices-group .js-price-option"
+  async refreshVariationExtras() {
+    const requestVersion = ++this.extraVersion;
+    document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
+    document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
+      delete button.dataset.extraPrice;
+    });
+
+    const quantity = Number(this.store.selectedQuantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      this.updateSummary();
+      return;
+    }
+
+    const buttons = Array.from(
+      document.querySelectorAll("#wrap-variations-group .var-option[data-variation-id]")
     );
-
-    if (!firstPriceButton) return false;
-
-    const scope = firstPriceButton.closest(".wrap-price");
-    if (!scope) return false;
-
-    const selected = this.selectPriceButton(firstPriceButton, scope);
-
-    if (selected) {
-      this.updateProductSummaryBox(
-        firstPriceButton.dataset.minQuantity,
-        firstPriceButton.value
-      );
-    }
-
-    return selected;
-  }
-
-  selectPriceButton(button, scope = null) {
-    if (!button) return false;
-
-    const container = scope || button.closest(".wrap-price");
-    if (!container) return false;
-
-    const buttons = container.querySelectorAll(".js-price-option");
-
-    for (const item of buttons) {
-      item.classList.remove("is-selected");
-      item.setAttribute("aria-pressed", "false");
-    }
-
-    button.classList.add("is-selected");
-    button.setAttribute("aria-pressed", "true");
-
-    const payload = {
-      price_id: String(button.dataset.priceId ?? ""),
-      min_quantity: String(button.dataset.minQuantity ?? ""),
-      max_quantity: String(button.dataset.maxQuantity ?? ""),
-      price: String(button.dataset.price ?? ""),
-      value: String(button.value ?? "")
-    };
-
-    this.setSelectedPrice(payload);
-    this.setMaxQuantity(payload.max_quantity);
-    this.onPriceSelected(payload, button);
-    this.updateVariationPrices();
-
-    return true;
-  }
-
-  updateProductSummaryBox(quantity, price) {
-    const selectedOptions = document.querySelectorAll(".is-selected");
-    let totalExtraPrice = 0;
-
-    for (let i = 0; i < selectedOptions.length; i++) {
-      const extraPrice = selectedOptions[i].querySelector(".opt-price-extra");
-      if (!extraPrice) continue;
-
-      const priceText = extraPrice.textContent ?? "";
-      const priceNumber = Number(
-        priceText.replace("+", "").replace("p/u", "").trim()
-      );
-
-      if (Number.isFinite(priceNumber)) {
-        totalExtraPrice += priceNumber;
-      }
-    }
-
-    const numericQuantity = Number(quantity);
-    const numericPrice = Number(price);
-
-    const safeQuantity = Number.isFinite(numericQuantity) ? numericQuantity : 0;
-    const safePrice = Number.isFinite(numericPrice) ? numericPrice : 0;
-
-    const unitTotal = safePrice * safeQuantity;
-    const extrasQuantity = totalExtraPrice === 0 ? 0 : safeQuantity;
-    const extrasTotal = totalExtraPrice * safeQuantity;
-    const grandTotal = unitTotal + extrasTotal;
-
-    const bbUnit = document.getElementById("bb_unit");
-    const bbUnitQuantity = document.getElementById("bb_unit_quantity");
-    const bbUnitTotal = document.getElementById("bb_unit_total");
-    const bbExtraUnit = document.getElementById("bb_extra_unit");
-    const bbExtraQuantity = document.getElementById("bb_extra_quantity");
-    const bbExtraTotal = document.getElementById("bb_extra_total");
-    const bbTotal = document.getElementById("bb_total");
-    const spPrice = document.getElementById("sp_price");
-    const quantityLabel = document.getElementById("var_label_quantity");
-    const unitHint = document.getElementById("sp_unit_hint");
-
-    if (bbUnit) bbUnit.textContent = "£" + this.formatPrice(safePrice);
-    if (bbUnitQuantity) bbUnitQuantity.textContent = String(safeQuantity);
-    if (bbUnitTotal) bbUnitTotal.textContent = "£" + this.formatPrice(unitTotal);
-    if (bbExtraUnit) bbExtraUnit.textContent = "£" + this.formatPrice(totalExtraPrice);
-    if (bbExtraQuantity) bbExtraQuantity.textContent = String(extrasQuantity);
-    if (bbExtraTotal) bbExtraTotal.textContent = "£" + this.formatPrice(extrasTotal);
-    if (bbTotal) bbTotal.textContent = "£" + this.formatPrice(grandTotal);
-    if (spPrice) spPrice.textContent = this.formatPrice(safePrice);
-    if (quantityLabel) quantityLabel.textContent = String(safeQuantity);
-    if (unitHint) unitHint.textContent = `per ${safeQuantity} units`;
-  }
-
-  updateVariationPrices() {
-    const variationButtons = document.querySelectorAll(
-      "#wrap-variations-group .var-option[id^='variation_id_']"
-    );
-
-    const ids = Array.from(variationButtons)
-      .map((button) => Number(button.id.replace("variation_id_", "")))
+    const ids = buttons
+      .map((button) => Number(button.dataset.variationId))
       .filter((id) => Number.isFinite(id) && id > 0);
 
-    if (ids.length === 0) return false;
+    if (ids.length === 0) {
+      this.updateSummary();
+      return;
+    }
 
-    const url = "../../controller/order/product.php";
+    this.abortController?.abort();
+    this.abortController = new AbortController();
 
-    const data = {
-      action: "get_variation_prices",
-      ids: ids,
-      max_quantity: this.getMaxQuantity()
-    };
+    try {
+      const result = await this.api.getVariationPrices(
+        this.getSku(),
+        ids,
+        quantity,
+        { signal: this.abortController.signal }
+      );
 
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Network error.");
-        return response.text();
-      })
-      .then((text) => {
-        const responseData = JSON.parse(text);
-        this.drawExtraVariationPrices(responseData.prices || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching variation prices:", error);
+      if (requestVersion !== this.extraVersion) return;
+
+      document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
+      document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
+        delete button.dataset.extraPrice;
       });
 
-    return true;
-  }
+      const priceById = new Map(
+        (result.prices || []).map((row) => [String(row.variation_id), Number(row.price)])
+      );
 
-  drawExtraVariationPrices(data = []) {
-    if (!Array.isArray(data)) return false;
+      for (const button of buttons) {
+        const extra = priceById.get(String(button.dataset.variationId));
+        if (!Number.isFinite(extra)) continue;
 
-    for (let i = 0; i < data.length; i++) {
-      const variationId = `variation_id_${data[i]?.variation_id ?? ""}`;
-      const button = document.getElementById(variationId);
-
-      if (!button) continue;
-
-      const existingPrice = button.querySelector(".opt-price-extra");
-      if (existingPrice) existingPrice.remove();
-
-      const extraPrice = data[i]?.price?.price;
-
-      if (extraPrice === null || extraPrice === undefined || extraPrice === "") {
-        continue;
+        button.dataset.extraPrice = String(extra);
+        const label = document.createElement("span");
+        label.className = "opt-price-extra";
+        label.textContent = `+£${this.formatMoney(extra)} each`;
+        button.appendChild(label);
       }
 
-      const priceElement = document.createElement("span");
-      priceElement.className = "opt-price-extra";
-      priceElement.textContent = `+${extraPrice} p/u`;
-
-      button.appendChild(priceElement);
+      this.updateSummary();
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Unable to load variation prices:", error);
+      }
     }
-
-    const selectedPrice = this.getSelectedPrice();
-
-    if (selectedPrice) {
-      this.updateProductSummaryBox(
-        selectedPrice.min_quantity,
-        selectedPrice.price
-      );
-    }
-
-    return true;
   }
 
-  setSelectedPrice(payload = null) {
-    this.selectedPrice = payload;
+  updateSummary() {
+    const quantity = Number(this.store.selectedQuantity);
+    const basePrice = Number(this.store.selectedPrice);
+    const hasPrice = Number.isFinite(quantity) && quantity > 0 && Number.isFinite(basePrice);
+
+    let extrasPerUnit = 0;
+    document.querySelectorAll("#wrap-variations-group .var-option.is-selected").forEach((button) => {
+      const value = Number(button.dataset.extraPrice);
+      if (Number.isFinite(value)) extrasPerUnit += value;
+    });
+
+    const safeQuantity = hasPrice ? quantity : 0;
+    const safeBase = hasPrice ? basePrice : 0;
+    const baseTotal = safeBase * safeQuantity;
+    const extrasTotal = extrasPerUnit * safeQuantity;
+    const total = baseTotal + extrasTotal;
+
+    this.setText(this.elements.unit, hasPrice ? `£${this.formatMoney(safeBase)}` : "—");
+    this.setText(this.elements.quantity, hasPrice ? safeQuantity.toLocaleString("en-GB") : "—");
+    this.setText(this.elements.unitTotal, hasPrice ? `£${this.formatMoney(baseTotal)}` : "—");
+    this.setText(this.elements.extraUnit, hasPrice ? `£${this.formatMoney(extrasPerUnit)}` : "—");
+    this.setText(this.elements.extraQuantity, hasPrice && extrasPerUnit > 0
+      ? safeQuantity.toLocaleString("en-GB")
+      : "—");
+    this.setText(this.elements.extraTotal, hasPrice ? `£${this.formatMoney(extrasTotal)}` : "—");
+    this.setText(this.elements.total, hasPrice ? `£${this.formatMoney(total)}` : "—");
+    this.setText(this.elements.mainPrice, hasPrice ? this.formatMoney(safeBase) : "—");
+    this.setText(this.elements.quantityLabel, hasPrice
+      ? `${safeQuantity.toLocaleString("en-GB")} units`
+      : "Select a price tier");
+    this.setText(this.elements.unitHint, hasPrice
+      ? `per unit at ${safeQuantity.toLocaleString("en-GB")} units`
+      : "Pricing not configured");
   }
 
-  getSelectedPrice() {
-    return this.selectedPrice;
+  setEmptyState(show) {
+    if (this.empty) this.empty.hidden = !show;
   }
 
-  setMaxQuantity(maxQuantity) {
-    this.maxQuantity = maxQuantity;
+  setText(element, value) {
+    if (element) element.textContent = value;
   }
 
-  getMaxQuantity() {
-    return this.maxQuantity;
-  }
-
-  onPriceSelected(payload, button = null) {
-    // Optional hook.
-  }
-
-  formatPrice(value) {
+  formatMoney(value) {
     const number = Number(value);
     return Number.isFinite(number) ? number.toFixed(2) : "0.00";
   }
-
-  escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
 }
-
-const prices = new Prices();
-window.prices = prices;
