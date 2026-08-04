@@ -281,10 +281,17 @@ export class VariationsController {
       group.querySelectorAll(".var-option[data-variation-id]")
     );
 
-    return buttons.find((button) => {
+    const freeButton = buttons.find((button) => {
       const row = this.rowCache.get(String(button.dataset.variationId));
       return this.isFreeExtra(row);
-    }) || buttons[0] || null;
+    });
+
+    if (freeButton) {
+      freeButton.classList.add("is-selected");
+      freeButton.setAttribute("aria-pressed", "true");
+    }
+
+    return freeButton || buttons[0] || null;
   }
 
   isFreeExtra(row) {
