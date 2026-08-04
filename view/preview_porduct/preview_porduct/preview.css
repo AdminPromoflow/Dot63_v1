@@ -720,12 +720,6 @@
   font-weight: 700;
 }
 
-.opt-price-included {
-  color: var(--success);
-  font-size: 0.6rem;
-  font-weight: 700;
-}
-
 .price-tiers {
   margin-top: 18px;
   display: grid;

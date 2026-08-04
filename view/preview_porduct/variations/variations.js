@@ -283,11 +283,11 @@ export class VariationsController {
 
     return buttons.find((button) => {
       const row = this.rowCache.get(String(button.dataset.variationId));
-      return this.isIncludedExtra(row);
+      return this.isFreeExtra(row);
     }) || buttons[0] || null;
   }
 
-  isIncludedExtra(row) {
+  isFreeExtra(row) {
     const mode = String(row?.variation?.price_display_mode || "prices").toLowerCase();
     if (mode !== "variation") return false;
 

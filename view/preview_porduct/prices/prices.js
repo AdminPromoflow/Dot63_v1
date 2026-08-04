@@ -115,9 +115,7 @@ export class PricesController {
 
   async refreshVariationExtras() {
     const requestVersion = ++this.extraVersion;
-    document.querySelectorAll(
-      "#wrap-variations-group .opt-price-extra, #wrap-variations-group .opt-price-included"
-    ).forEach((node) => node.remove());
+    document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
     document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
       delete button.dataset.extraPrice;
     });
@@ -153,9 +151,7 @@ export class PricesController {
 
       if (requestVersion !== this.extraVersion) return;
 
-      document.querySelectorAll(
-        "#wrap-variations-group .opt-price-extra, #wrap-variations-group .opt-price-included"
-      ).forEach((node) => node.remove());
+      document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
       document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
         delete button.dataset.extraPrice;
       });
@@ -166,21 +162,16 @@ export class PricesController {
 
       for (const button of buttons) {
         const extra = priceById.get(String(button.dataset.variationId));
-        const label = document.createElement("span");
 
         if (Number.isFinite(extra) && extra > 0) {
           button.dataset.extraPrice = String(extra);
+          const label = document.createElement("span");
           label.className = "opt-price-extra";
           label.textContent = `+£${this.formatMoney(extra)} each`;
+          button.appendChild(label);
         } else if (button.dataset.priceDisplayMode === "variation") {
           button.dataset.extraPrice = "0";
-          label.className = "opt-price-included";
-          label.textContent = "Included";
-        } else {
-          continue;
         }
-
-        button.appendChild(label);
       }
 
       this.updateSummary();
