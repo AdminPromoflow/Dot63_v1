@@ -101,7 +101,7 @@ $entryTime = is_file($entryPath) ? filemtime($entryPath) : '1';
               <span class="section-kicker">Configuration</span>
               <h2 id="variations_heading">Product options</h2>
             </div>
-            <span class="section-helper">A default path is selected automatically.</span>
+            <span class="section-helper">A default option is selected for each variation type.</span>
           </div>
 
           <div id="wrap-variations-group" class="variations-stack"></div>

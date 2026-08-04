@@ -176,7 +176,9 @@ class SupplierPreviewApp {
     let renderedItems = 0;
     let renderedArtwork = 0;
 
-    for (const row of this.store.selectedPath) {
+    const selectedRows = this.store.getSelectedRows();
+
+    for (const row of selectedRows) {
       const variation = row?.variation || {};
       const variationName = String(variation.name || "").trim();
 
@@ -211,7 +213,7 @@ class SupplierPreviewApp {
     if (this.elements.itemsSection) this.elements.itemsSection.hidden = renderedItems === 0;
     if (this.elements.artworkSection) this.elements.artworkSection.hidden = renderedArtwork === 0;
 
-    const priceSource = [...this.store.selectedPath].reverse().find((row) => {
+    const priceSource = [...selectedRows].reverse().find((row) => {
       return String(row?.variation?.price_display_mode ?? "prices") === "prices"
         && Array.isArray(row?.prices)
         && row.prices.length > 0;
@@ -264,7 +266,7 @@ class SupplierPreviewApp {
     const destination = new URL("../../view/product_details/index.php", window.location.href);
     destination.searchParams.set("sku", this.sku);
 
-    const selected = [...this.store.selectedPath].reverse().find((row) => row?.variation?.SKU);
+    const selected = [...this.store.getSelectedRows()].reverse().find((row) => row?.variation?.SKU);
     const initialVariation = String(this.params.get("sku_variation") || "").trim();
     const variationSku = String(selected?.variation?.SKU || initialVariation).trim();
     if (variationSku) destination.searchParams.set("sku_variation", variationSku);
