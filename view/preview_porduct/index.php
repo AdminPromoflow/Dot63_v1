@@ -14,7 +14,7 @@ if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <meta name="description" content="" />
+  <meta name="description" content="Review your configured product before submitting it for approval." />
   <meta name="author" content="Promoflow" />
   <meta name="keywords" content="" />
   <title>Supplier product preview</title>
@@ -25,11 +25,10 @@ if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
 
   <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
 
-  <!-- Reusa tu hoja base de layout -->
   <link rel="stylesheet" href="../../view/product_details/style.css?v=<?php echo filemtime("../../view/product_details/style.css"); ?>">
 </head>
 
-<body  class="body_product_details">
+<body class="body_product_details">
   <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>

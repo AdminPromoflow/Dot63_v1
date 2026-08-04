@@ -112,6 +112,7 @@ class Product {
                   FROM prices pr
                   INNER JOIN variations v ON v.variation_id = pr.variation_id
                   WHERE v.product_id = p.product_id
+                    AND COALESCE(NULLIF(TRIM(v.price_display_mode), ''), 'prices') = 'prices'
               ) AS prices_count
           FROM products p
           INNER JOIN suppliers s ON s.supplier_id = p.supplier_id
@@ -290,6 +291,20 @@ class Product {
       if (isset($childVariations['success']) && $childVariations['success'] === false) {
           $this->jsonError((string)($childVariations['error'] ?? 'Unable to load variations.'), 500);
           return;
+      }
+
+      if (isset($currentVariationData['success']) && $currentVariationData['success'] === false) {
+          $this->jsonError((string)($currentVariationData['error'] ?? 'Unable to load the selected variation.'), 500);
+          return;
+      }
+
+      if (isset($variationTypes['success']) && $variationTypes['success'] === false) {
+          $this->jsonError((string)($variationTypes['error'] ?? 'Unable to load variation types.'), 500);
+          return;
+      }
+
+      if (($childVariations['success'] ?? null) === true && isset($childVariations['data'])) {
+          $childVariations = is_array($childVariations['data']) ? $childVariations['data'] : [];
       }
 
       echo json_encode([

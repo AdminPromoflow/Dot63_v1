@@ -32,6 +32,8 @@ export class VariationsController {
       const open = !group.classList.contains("is-open");
       group.classList.toggle("is-open", open);
       header.setAttribute("aria-expanded", String(open));
+      const icon = header.querySelector(".var-collapse-icon");
+      if (icon) icon.textContent = open ? "−" : "+";
     });
   }
 

@@ -158,6 +158,7 @@ class Product {
         p.status,
         p.is_approved,
         p.group_id,
+        c.category_id,
         COALESCE(s.company_name, s.contact_name, '') AS supplier_name,
         s.email AS supplier_email,
         g.name AS group_name,
@@ -182,6 +183,7 @@ class Product {
           FROM prices pr
           INNER JOIN variations v ON v.variation_id = pr.variation_id
           WHERE v.product_id = p.product_id
+            AND COALESCE(NULLIF(TRIM(v.price_display_mode), ''), 'prices') = 'prices'
         ) AS prices_count
       FROM products p
       INNER JOIN suppliers s ON s.supplier_id = p.supplier_id
@@ -227,7 +229,8 @@ class Product {
     $missing = [];
     if (trim((string)$productData['product_name']) === '') $missing[] = 'product name';
     if (trim((string)$productData['description']) === '') $missing[] = 'product description';
-    if (empty($productData['group_id'])
+    if (empty($productData['category_id'])
+        || empty($productData['group_id'])
         || ($productData['group_name'] ?? '') === 'Unassigned Group'
         || ($productData['category_name'] ?? '') === 'Unassigned Category') {
         $missing[] = 'category and group';

@@ -19,6 +19,7 @@
   --shadow-sm: 0 8px 24px rgba(25, 36, 52, 0.07);
   --shadow-md: 0 18px 50px rgba(25, 36, 52, 0.11);
   width: 100%;
+  box-sizing: border-box;
   min-height: 100vh;
   padding: 28px clamp(18px, 4vw, 64px) 64px;
   color: var(--ink);
@@ -46,6 +47,10 @@
 .preview-shell {
   width: min(1540px, 100%);
   margin: 0 auto;
+}
+
+.body_product_details > .supplier-preview {
+  margin-top: calc(var(--header-height, 64px) - 1rem);
 }
 
 .preview-state {
@@ -158,7 +163,7 @@
   gap: 9px;
 }
 
-.btn {
+.supplier-preview .btn {
   min-height: 42px;
   padding: 0 18px;
   display: inline-flex;
@@ -174,11 +179,11 @@
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
-.btn:hover:not(:disabled) {
+.supplier-preview .btn:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-.btn:focus-visible,
+.supplier-preview .btn:focus-visible,
 .gallery-arrow:focus-visible,
 .var-option:focus-visible,
 .price-tier:focus-visible,
@@ -187,34 +192,34 @@
   outline-offset: 3px;
 }
 
-.btn:disabled {
+.supplier-preview .btn:disabled {
   cursor: not-allowed;
   opacity: 0.48;
 }
 
-.btn-primary {
+.supplier-preview .btn-primary {
   color: #fff;
   background: var(--accent);
   box-shadow: 0 8px 18px rgba(233, 102, 44, 0.22);
 }
 
-.btn-primary:hover:not(:disabled) {
+.supplier-preview .btn-primary:hover:not(:disabled) {
   background: var(--accent-dark);
   box-shadow: 0 12px 24px rgba(233, 102, 44, 0.3);
 }
 
-.btn-secondary {
+.supplier-preview .btn-secondary {
   color: var(--ink);
   border-color: var(--line-strong);
   background: #fff;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.supplier-preview .btn-secondary:hover:not(:disabled) {
   border-color: #aeb9c6;
   background: var(--surface-soft);
 }
 
-.btn-compact {
+.supplier-preview .btn-compact {
   min-height: 34px;
   width: fit-content;
   padding: 0 12px;
@@ -222,7 +227,7 @@
   font-size: 0.72rem;
 }
 
-.btn-spinner {
+.supplier-preview .btn-spinner {
   display: none;
   width: 14px;
   height: 14px;
@@ -232,7 +237,7 @@
   animation: preview-spin 0.7s linear infinite;
 }
 
-.btn.is-loading .btn-spinner {
+.supplier-preview .btn.is-loading .btn-spinner {
   display: block;
 }
 
@@ -702,11 +707,11 @@
 }
 
 .opt-main {
-  overflow: hidden;
   color: var(--navy);
   font-size: 0.72rem;
   font-weight: 700;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .opt-price-extra {
@@ -933,7 +938,7 @@
   line-height: 1.5;
 }
 
-.btn-customer-preview {
+.supplier-preview .btn-customer-preview {
   width: 100%;
   color: #fff;
   background: var(--navy);
