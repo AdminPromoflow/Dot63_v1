@@ -1,8 +1,26 @@
 <?php
 $cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
 $entryPath = '../../view/preview_porduct/preview_porduct/preview_logic.js';
-$cssTime = is_file($cssPath) ? filemtime($cssPath) : '1';
-$entryTime = is_file($entryPath) ? filemtime($entryPath) : '1';
+$cssFile = __DIR__ . '/preview.css';
+$moduleFiles = [
+  __DIR__ . '/preview_logic.js',
+  __DIR__ . '/preview_api.js',
+  __DIR__ . '/preview_store.js',
+  __DIR__ . '/preview.js',
+  dirname(__DIR__) . '/images/images.js',
+  dirname(__DIR__) . '/items/items.js',
+  dirname(__DIR__) . '/artwork/artwork.js',
+  dirname(__DIR__) . '/prices/prices.js',
+  dirname(__DIR__) . '/variations/variations.js',
+];
+
+$cssTime = is_file($cssFile) ? filemtime($cssFile) : '1';
+$entryTime = 1;
+foreach ($moduleFiles as $moduleFile) {
+  if (is_file($moduleFile)) {
+    $entryTime = max($entryTime, filemtime($moduleFile));
+  }
+}
 ?>
 
 <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>?v=<?= $cssTime ?>">

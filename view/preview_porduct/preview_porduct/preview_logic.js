@@ -1,11 +1,29 @@
-import { PreviewApi } from "./preview_api.js";
-import { PreviewStore } from "./preview_store.js";
-import { PreviewGallery } from "./preview.js";
-import { ImagesRenderer } from "../images/images.js";
-import { ItemsRenderer } from "../items/items.js";
-import { ArtworkRenderer } from "../artwork/artwork.js";
-import { PricesController } from "../prices/prices.js";
-import { VariationsController } from "../variations/variations.js";
+const moduleVersion = new URL(import.meta.url).searchParams.get("v") || "1";
+const versionedModule = (path) => {
+  const url = new URL(path, import.meta.url);
+  url.searchParams.set("v", moduleVersion);
+  return url.href;
+};
+
+const [
+  { PreviewApi },
+  { PreviewStore },
+  { PreviewGallery },
+  { ImagesRenderer },
+  { ItemsRenderer },
+  { ArtworkRenderer },
+  { PricesController },
+  { VariationsController }
+] = await Promise.all([
+  import(versionedModule("./preview_api.js")),
+  import(versionedModule("./preview_store.js")),
+  import(versionedModule("./preview.js")),
+  import(versionedModule("../images/images.js")),
+  import(versionedModule("../items/items.js")),
+  import(versionedModule("../artwork/artwork.js")),
+  import(versionedModule("../prices/prices.js")),
+  import(versionedModule("../variations/variations.js"))
+]);
 
 class SupplierPreviewApp {
   constructor() {
