@@ -106,10 +106,10 @@ export class VariationsController {
 
       this.setEmptyState(false);
       const groups = this.renderChildGroups(children, types, pathIndex + 1);
-      const firstButton = groups?.[0]?.querySelector(".var-option[data-variation-id]");
+      const defaultButton = this.getAutomaticOption(groups?.[0]);
 
-      if (firstButton && version === this.version) {
-        await this.selectVariation(firstButton, true, version);
+      if (defaultButton && version === this.version) {
+        await this.selectVariation(defaultButton, true, version);
       }
 
       return true;
@@ -250,6 +250,7 @@ export class VariationsController {
     button.dataset.variationId = id;
     button.dataset.pathIndex = String(pathIndex);
     button.dataset.variationLabel = label;
+    button.dataset.priceDisplayMode = String(variation.price_display_mode || "prices").toLowerCase();
     button.setAttribute("aria-pressed", "false");
 
     const image = document.createElement("img");
@@ -271,6 +272,44 @@ export class VariationsController {
 
     button.append(image, copy);
     return button;
+  }
+
+  getAutomaticOption(group) {
+    if (!group) return null;
+
+    const buttons = Array.from(
+      group.querySelectorAll(".var-option[data-variation-id]")
+    );
+
+    return buttons.find((button) => {
+      const row = this.rowCache.get(String(button.dataset.variationId));
+      return this.isIncludedExtra(row);
+    }) || buttons[0] || null;
+  }
+
+  isIncludedExtra(row) {
+    const mode = String(row?.variation?.price_display_mode || "prices").toLowerCase();
+    if (mode !== "variation") return false;
+
+    const prices = Array.isArray(row?.prices) ? row.prices : [];
+    const quantity = Number(this.store.selectedQuantity);
+
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      return prices.length === 0 || prices.every((price) => Number(price?.price) <= 0);
+    }
+
+    const applicablePrice = prices.find((price) => {
+      const min = Number(price?.min_quantity);
+      const rawMax = price?.max_quantity;
+      const max = rawMax === null || rawMax === "" ? null : Number(rawMax);
+      const hasOpenMaximum = max === null || !Number.isFinite(max) || max <= 0;
+
+      return Number.isFinite(min)
+        && quantity >= min
+        && (hasOpenMaximum || quantity <= max);
+    });
+
+    return !applicablePrice || Number(applicablePrice.price) <= 0;
   }
 
   markSelected(button) {

@@ -347,7 +347,7 @@ class Product {
       }
 
       $placeholders = implode(',', array_fill(0, count($ids), '?'));
-      $params = array_merge([(int)$product['product_id'], $quantity], $ids);
+      $params = array_merge([(int)$product['product_id'], $quantity, $quantity], $ids);
 
       $stmt = $pdo->prepare("
           SELECT
@@ -357,7 +357,8 @@ class Product {
           FROM variations v
           INNER JOIN prices pr ON pr.variation_id = v.variation_id
           WHERE v.product_id = ?
-            AND ? BETWEEN pr.min_quantity AND pr.max_quantity
+            AND ? >= pr.min_quantity
+            AND (pr.max_quantity IS NULL OR pr.max_quantity <= 0 OR ? <= pr.max_quantity)
             AND v.variation_id IN ($placeholders)
             AND v.price_display_mode = 'variation'
           ORDER BY v.variation_id, pr.min_quantity DESC
