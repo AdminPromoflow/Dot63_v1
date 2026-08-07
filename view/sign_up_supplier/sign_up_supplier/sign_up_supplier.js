@@ -9,32 +9,6 @@ class ClassSignUp {
       togglePassword.setAttribute("aria-pressed", String(!showing));
       togglePassword.setAttribute("aria-label", showing ? "Show password" : "Hide password");
     });
-
-
-/*   nameSignUp.value = "Ale";
-    emailSignUp.value =  "aleinarossui@gmail.com";
-    phoneSignUp.value = "57 312 348 9880";
-    companySignUp.value = "Aleina";
-    countrySignUp.value = "Colombia";
-    citySignUp.value = "Arbelaez";
-    address1SignUp.value = "Finca La Carmelia";
-    address2SignUp.value = "";
-    postcodeSignUp.value = "47999";
-    passwordSignUp.value =  "Aprch14?...";*/
-
-      //  nameSignUp.value = "Ian";
-      // emailSignUp.value =  "ian@kan-do-it.com";
-      // phoneSignUp.value = "44 4567896433";
-      // companySignUp.value = "Promoflow";
-      // countrySignUp.value = "England";
-      // citySignUp.value = "Southampton";
-      // address1SignUp.value = "....";
-      // address2SignUp.value = "";
-      // postcodeSignUp.value = "000000";
-      // passwordSignUp.value =  "32skiff32!CI";
-
-
-
     this.onPaused = false;
     signupEnter.addEventListener("click", function(){
       if (classSignUp.validateFormData()) {
