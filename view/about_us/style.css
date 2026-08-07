@@ -1,59 +1,82 @@
-* {
-     margin: 0;
-     padding: 0;
-     box-sizing: border-box;
-     scroll-behavior: smooth;
-     font-size: 16px; /* base */
-     overflow-x: hidden;
-   }
-   .body_about{
-     font-family: 'Poppins', sans-serif;
-     width: 100vw;
-     max-height: 100vh;
-     overflow-x: hidden;
-     padding: 1rem ;
-     background-color: #fafafa;
-   }
-   p {
-     font-size: clamp(1rem, 1.2vw, 1.4rem);
-   }
-   h3 {
-     font-size: clamp(1.2rem, 1.5vw, 1.6rem);
-   }
-   h2 {
-     font-size: clamp(1.5rem, 2vw, 2.2rem);
-   }
-   h1 {
-     font-size: clamp(1.8rem, 3vw, 2.8rem);
-   }
-label input button{
-  font-size: clamp(.8rem, 1vw, 1.3rem);
-}
-/* ===== Base ===== */
-
-* {
-	box-sizing: border-box;
+:root {
+  color-scheme: light;
+  --about-ink: #14263d;
+  --about-muted: #607086;
+  --about-navy: #172b45;
+  --about-navy-light: #244260;
+  --about-orange: #ff7a2f;
+  --about-orange-dark: #df5f19;
+  --about-canvas: #f6f8fb;
+  --about-white: #ffffff;
+  --about-line: rgba(20, 38, 61, 0.1);
 }
 
-html,
-body {
-	margin: 0;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-img {
-	max-width: 100%;
-	display: block;
+html {
+  scroll-behavior: smooth;
 }
 
-ul {
-	margin: 0;
-	padding: 0;
-	list-style: none;
+body.about-body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--about-ink);
+  background: var(--about-canvas);
+  font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-h3,
-p {
-	margin: 0;
+.about-body button,
+.about-body input {
+  font: inherit;
+}
+
+.about-body img,
+.about-body svg {
+  display: block;
+  max-width: 100%;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 9999;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.7rem 1rem;
+  color: #fff;
+  background: var(--about-navy);
+  border-radius: 10px;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+::selection {
+  color: #fff;
+  background: #2d65aa;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

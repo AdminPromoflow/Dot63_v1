@@ -924,7 +924,7 @@
 .auth-panel__meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   color: #68778a;
   font-size: 0.7rem;
@@ -934,17 +934,6 @@
   color: #315f96;
   font-weight: 700;
   text-decoration: none;
-}
-
-.auth-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  cursor: pointer;
-}
-
-.auth-check input {
-  accent-color: var(--home-navy);
 }
 
 .auth-requirements {

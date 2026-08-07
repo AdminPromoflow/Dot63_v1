@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /* Filesystem path for filemtime */
-$navCssFs = __DIR__ . '/view/about_us/navigation/navigation.css';
+$navCssFs = __DIR__ . '/navigation.css';
 
 /* Public path used in HTML */
 $navCssPublic = '../../view/about_us/navigation/navigation.css';

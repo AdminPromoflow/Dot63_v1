@@ -140,7 +140,7 @@ $mainJsFile = __DIR__ . '/main.js';
   data-login-url="../../controller/customers/login.php"
   data-register-url="../../controller/customers/sing_up.php"
   data-success-url="../../view/product/index.php"
-  aria-labelledby="auth-title"
+  aria-label="Account access"
 >
   <div class="auth-dialog__shell">
     <aside class="auth-dialog__aside">
@@ -183,7 +183,6 @@ $mainJsFile = __DIR__ . '/main.js';
           </label>
 
           <div class="auth-panel__meta">
-            <label class="auth-check"><input type="checkbox" name="remember"> <span>Remember me</span></label>
             <a href="../../view/forg_password/index.php">Forgot password?</a>
           </div>
 
