@@ -17,7 +17,7 @@ if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
   <meta name="description" content="Review your configured product before submitting it for approval." />
   <meta name="author" content="Promoflow" />
   <meta name="keywords" content="" />
-  <title>Supplier product preview</title>
+  <title>Customer product preview</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +32,6 @@ if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
   <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
-  <?php include "../../view/preview_porduct/preview_porduct/preview.php";?>
+  <?php include __DIR__ . "/preview_porduct/preview.php"; ?>
 </body>
 </html>

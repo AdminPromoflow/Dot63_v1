@@ -1,6 +1,6 @@
 <?php
-$cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
-$entryPath = '../../view/preview_porduct/preview_porduct/preview_logic.js';
+$cssPath = '../../view/preview_product_customers/preview_porduct/preview.css';
+$entryPath = '../../view/preview_product_customers/preview_porduct/preview_logic.js';
 $cssFile = __DIR__ . '/preview.css';
 $moduleFiles = [
   __DIR__ . '/preview_logic.js',

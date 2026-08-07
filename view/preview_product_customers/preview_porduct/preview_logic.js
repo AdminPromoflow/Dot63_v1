@@ -25,7 +25,7 @@ const [
   import(versionedModule("../variations/variations.js"))
 ]);
 
-class SupplierPreviewApp {
+class CustomerPreviewApp {
   constructor() {
     this.params = new URLSearchParams(window.location.search);
     this.sku = String(this.params.get("sku") || "").trim();
@@ -320,5 +320,5 @@ class SupplierPreviewApp {
   }
 }
 
-const app = new SupplierPreviewApp();
+const app = new CustomerPreviewApp();
 app.init();

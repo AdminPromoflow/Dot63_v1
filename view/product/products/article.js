@@ -1,618 +1,225 @@
 class ProductsClass {
   constructor() {
-    /*
-    |--------------------------------------------------------------------------
-    | Constructor
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-    |--------------------------------------------------------------------------
-    | General data
-    |--------------------------------------------------------------------------
-    */
-    this.productsData = [];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Search
-    |--------------------------------------------------------------------------
-    */
-    this.searchInput = document.getElementById("product-search");
-
-    /*
-    |--------------------------------------------------------------------------
-    | Category
-    |--------------------------------------------------------------------------
-    */
-    this.categoryFilter = document.getElementById("category_filter");
-    this.getCategoryFilters();
-
-    /*
-    |--------------------------------------------------------------------------
-    | Group
-    |--------------------------------------------------------------------------
-    */
-    document.addEventListener('change', function(event) {
-      productsClass.getEventAllGroups();
-      productsClass.getEventGroups();
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Material
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-    |--------------------------------------------------------------------------
-    | Width
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-    |--------------------------------------------------------------------------
-    | SidePrinted
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-    |--------------------------------------------------------------------------
-    | Colour
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-    |--------------------------------------------------------------------------
-    | Quantities
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-    |--------------------------------------------------------------------------
-    | Price
-    |--------------------------------------------------------------------------
-    */
-    this.initPriceRange();
-
-    /*
-    |--------------------------------------------------------------------------
-    | Products
-    |--------------------------------------------------------------------------
-    */
     this.articles = document.getElementById("articles");
-    this.fetchGetProducts();
+    this.categoryFilter = document.getElementById("category_filter");
+    this.variationFilters = document.getElementById("variation-filters");
+    this.productsData = [];
+    this.variationRows = [];
+    this.searchText = "";
 
-    /*
-    |--------------------------------------------------------------------------
-    | Search initialisation
-    |--------------------------------------------------------------------------
-    */
-    this.initSearch();
+    this.categoryFilter?.addEventListener("change", () => this.applyFilters());
+    this.variationFilters?.addEventListener("change", () => this.applyFilters());
+
+    Promise.all([this.getCategoryFilters(), this.fetchGetProducts()])
+      .catch(error => console.error("Error loading product filters:", error));
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Category
-  |--------------------------------------------------------------------------
-  */
-
-  getCategoryFilters() {
-    const groups = document.querySelectorAll(".groups");
-    const getGroups = [];
-
-    groups.forEach(function(group) {
-      if (group.checked) {
-
-        getGroups.push(group.value.split("-")[1]);
-      }
+  async post(url, data) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     });
 
+    if (!response.ok) throw new Error("Network error.");
+    return response.json();
+  }
 
-
-    const url = "../../controller/filters/category_filters.php";
-
-    const data = {
+  async getCategoryFilters() {
+    const result = await this.post("../../controller/filters/category_filters.php", {
       action: "get_categories_filter_and_their_groups",
-      groups: getGroups
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        if (!response.ok) throw new Error("Network error.");
-
-        return response.text();
-      })
-      .then(text => {
-    //    alert(text);
-
-        const result = JSON.parse(text);
-        if (result["success"]) {
-          this.categoryFilter.innerHTML = "";
-
-          for (let i = 0; i < result["cateogories"].length; i++) {
-            if (result["cateogories"][i].approved == 1) {
-              this.renderCategoriesFilter(
-                result["cateogories"][i].category_id,
-                result["cateogories"][i].name,
-                result["cateogories"][i].groups
-              );
-            }
-          }
-
-          this.initCategoryAccordion();
-        }
-
-
-      })
-      .catch(error => {
-        console.error("Error fetching categories:", error);
-      });
-  }
-
-  renderCategoriesFilter(category_id, name, groups) {
-    const safeId = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-    var groups_HTML = this.renderGroupsFilters(category_id, name, groups);
-
-    // alert(JSON.stringify(groups_HTML));
-
-    this.categoryFilter.insertAdjacentHTML("beforeend", `
-      <li class="category-accordion-item">
-        <button class="category-accordion-btn" type="button">
-          <span>${name}</span>
-          <span class="category-accordion-icon">+</span>
-        </button>
-
-        <div class="category-groups">
-          ${groups_HTML}
-        </div>
-      </li>
-    `);
-  }
-
-  initCategoryAccordion() {
-    const buttons = document.querySelectorAll(".category-accordion-btn");
-
-    buttons.forEach(button => {
-      button.addEventListener("click", () => {
-        const item = button.closest(".category-accordion-item");
-
-        if (!item) return;
-
-        item.classList.toggle("is-open");
-
-        const icon = button.querySelector(".category-accordion-icon");
-
-        if (icon) {
-          icon.textContent = item.classList.contains("is-open") ? "−" : "+";
-        }
-      });
+      groups: []
     });
-  }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Group
-  |--------------------------------------------------------------------------
-  */
+    if (!result.success || !this.categoryFilter) return;
 
-  getEventGroups(){
-    if (!event.target.classList.contains('groups')) {
-      return;
-    }
-    this.getProductsByFilterGroups();
-  }
+    this.categoryFilter.innerHTML = "";
+    (result.cateogories || [])
+      .filter(category => Number(category.approved) === 1)
+      .forEach(category => {
+        const item = document.createElement("li");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        const text = document.createElement("span");
 
-  getEventAllGroups(){
-    var group_category = '';
-
-    if (!event.target.classList.contains('all_groups')) {
-      return;
-    }
-    if (event.target.classList.contains('all_groups')) {
-      const groups = document.querySelectorAll(".groups");
-
-      groups.forEach(function(group) {
-        group_category = group.value.split("-")[0];
-
-        if (event.target.value == group_category) {
-          if (event.target.checked == true) {
-            group.checked = true;
-          }
-          else {
-            group.checked = false;
-          }
-        }
-      });
-    }
-
-    this.getProductsByFilterGroups();
-  }
-
-  renderGroupsFilters(category_id, name, groups) {
-    var groups_HTML = `
-      <label>
-        <input class="all_groups" type="checkbox" name="group[]" value="${category_id}">
-        <span>All groups</span>
-      </label>
-    `;
-
-    for (var i = 0; i < groups.length; i++) {
-      // alert(JSON.stringify(groups));
-
-      groups_HTML += `
-        <label>
-          <input class="groups" type="checkbox" name="group[]" value="${category_id}-${groups[i].group_id}">
-          <span>${groups[i].name}</span>
-        </label>
-      `;
-    }
-
-    return groups_HTML;
-  }
-
-  getProductsByFilterGroups() {
-    const groups = document.querySelectorAll(".groups");
-    const getGroups = [];
-
-    groups.forEach(function(group) {
-      if (group.checked) {
-
-        getGroups.push(group.value.split("-")[1]);
-      }
-    });
-    // const groupId = group.value.split("-")[1];
-
-  //  alert(JSON.stringify(getGroups));
-
-    const url = "../../controller/filters/category_filters.php";
-
-    const data = {
-      action: "get_products_by_groups",
-      groups: getGroups
-
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-
-    })
-      .then(response => {
-        if (!response.ok) throw new Error("Network error.");
-
-        return response.text();
-      })
-      .then(result => {
-         alert(result);
-
-        const data = JSON.parse(result);
-
-        this.drawSearch();
-        this.drawProducts(data["products"]);
-        const uniqueTypeVariations = this.removeDuplicateTypeVariations(data["typeVariations"]);
-
-        this.drawTypeVariations(uniqueTypeVariations);
-      })
-      .catch(error => {
-        console.error("Error:", error);
+        input.type = "checkbox";
+        input.name = "category[]";
+        input.value = String(category.name || "");
+        text.textContent = category.name || "Unnamed category";
+        label.append(input, text);
+        item.append(label);
+        this.categoryFilter.append(item);
       });
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Material
-  |--------------------------------------------------------------------------
-  */
-
-  /*
-  |--------------------------------------------------------------------------
-  | Width
-  |--------------------------------------------------------------------------
-  */
-
-  /*
-  |--------------------------------------------------------------------------
-  | SidePrinted
-  |--------------------------------------------------------------------------
-  */
-
-  /*
-  |--------------------------------------------------------------------------
-  | Colour
-  |--------------------------------------------------------------------------
-  */
-
-  /*
-  |--------------------------------------------------------------------------
-  | Quantities
-  |--------------------------------------------------------------------------
-  */
-
-  /*
-  |--------------------------------------------------------------------------
-  | Price
-  |--------------------------------------------------------------------------
-  */
-
-  initPriceRange() {
-    const priceRange = document.getElementById("priceRange");
-    const priceValue = document.getElementById("priceValue");
-
-    if (!priceRange || !priceValue) return;
-
-    const updatePrice = () => {
-      priceValue.textContent = `£${priceRange.value}`;
-    };
-
-    priceRange.addEventListener("input", updatePrice);
-    updatePrice();
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Type filters
-  |--------------------------------------------------------------------------
-  */
-
-  removeDuplicateTypeVariations(typeVariations) {
-    if (!Array.isArray(typeVariations)) {
-      return [];
-    }
-
-    const seen = new Set();
-
-    return typeVariations.filter(typeVariation => {
-      const typeName = String(typeVariation.type_name || "")
-        .toLowerCase()
-        .trim();
-
-      if (!typeName) {
-        return false;
-      }
-
-      if (seen.has(typeName)) {
-        return false;
-      }
-
-      seen.add(typeName);
-      return true;
-    });
-  }
-
-  drawTypeVariations(typeVariations) {
-    const groupsFilterGroup = document.getElementById("groups-filter-group");
-
-    if (!groupsFilterGroup) return;
-
-    groupsFilterGroup.innerHTML = ``;
-
-    if (!Array.isArray(typeVariations) || typeVariations.length === 0) {
-      groupsFilterGroup.innerHTML = `
-        <div class="filter-group" style="--filter-accent: #6b7280;">
-          <h1>Filters</h1>
-          <p>No filters found.</p>
-        </div>
-      `;
-      return;
-    }
-
-    for (let i = 0; i < typeVariations.length; i++) {
-      const typeId = typeVariations[i].type_id;
-      const typeName = typeVariations[i].type_name;
-
-      const slug = String(typeName)
-        .toLowerCase()
-        .trim()
-        .replaceAll(" ", "_")
-        .replaceAll("-", "_")
-        .replace(/[^a-z0-9_]/g, "");
-
-      const randomColor = this.getRandomColor();
-
-      groupsFilterGroup.innerHTML += `
-        <div
-          id="type_${typeId}"
-          class="filter-group filter-${slug}"
-          style="--filter-accent: ${randomColor};"
-        >
-          <h1>${typeName}</h1>
-
-          <div class="parent_${slug}_filter scroll_filter ${slug}-scroll">
-            <ul id="${slug}_filter" class="checklist ${slug}-list">
-              <li>
-                <label>
-                  <input type="checkbox" name="${slug}[]" value="option_1">
-                  Option 1
-                </label>
-              </li>
-
-              <li>
-                <label>
-                  <input type="checkbox" name="${slug}[]" value="option_2">
-                  Option 2
-                </label>
-              </li>
-
-              <li>
-                <label>
-                  <input type="checkbox" name="${slug}[]" value="option_3">
-                  Option 3
-                </label>
-              </li>
-            </ul>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  getRandomColor() {
-    const colors = [
-      "#7C3AED",
-      "#2563EB",
-      "#059669",
-      "#EA580C",
-      "#DC2626",
-      "#0891B2",
-      "#9333EA",
-      "#16A34A",
-      "#F59E0B",
-      "#DB2777"
-    ];
-
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Search
-  |--------------------------------------------------------------------------
-  */
-
-  initSearch() {
-    this.searchInput = document.getElementById("product-search");
-
-    if (!this.searchInput) return;
-
-    this.searchInput.addEventListener("input", () => {
-      const text = this.searchInput.value.toLowerCase().trim();
-
-      const filteredProducts = this.productsData.filter(product => {
-        return (
-          String(product.name || "").toLowerCase().includes(text) ||
-          String(product.category_name || "").toLowerCase().includes(text) ||
-          String(product.group_name || "").toLowerCase().includes(text) ||
-          String(product.SKU || "").toLowerCase().includes(text)
-        );
-      });
-
-      // this.drawProducts({
-      //   success: true,
-      //   result: filteredProducts
-      // });
-    });
-  }
-
-  drawSearch(){
-    this.articles.innerHTML = `
-      <div class="products-search-panel">
-        <label for="product-search">Search products</label>
-        <input
-          type="search"
-          id="product-search"
-          placeholder="Search by name, category, group or SKU..."
-          <!-- value="${this.searchInput ? this.searchInput.value : ""}" -->
-        <!-- > -->
-      </div>
-
-      <h1>All Products</h1>
-    `;
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Products
-  |--------------------------------------------------------------------------
-  */
-
-  fetchGetProducts() {
-    const url = "../../controller/products/product.php";
-
-    const data = {
+  async fetchGetProducts() {
+    const result = await this.post("../../controller/products/product.php", {
       action: "get_products"
-    };
+    });
 
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        if (!response.ok) throw new Error("Network error.");
+    this.productsData = (result.result || []).filter(product =>
+      Number(product.is_approved) === 1 &&
+      product.category_name !== "Unassigned Category" &&
+      product.group_name !== "Unassigned Group"
+    );
 
-        return response.text();
-      })
-      .then(result => {
-        // alert(result);
-
-        const data = JSON.parse(result);
-
-        this.articles.innerHTML = `
-          <div class="products-search-panel">
-            <label for="product-search">Search products</label>
-            <input
-              type="search"
-              id="product-search"
-              placeholder="Search by name, category, group or SKU..."
-              <!-- value="${this.searchInput ? this.searchInput.value : ""}" -->
-            <!-- > -->
-          </div>
-
-          <h1>All Products</h1>
-        `;
-
-        this.initSearch();
-        this.drawSearch();
-        this.drawProducts(data["result"]);
-      })
-      .catch(error => {
-        console.error("Error:", error);
-      });
+    await this.fetchTypeVariations(this.productsData.map(product => product.product_id));
+    this.applyFilters();
   }
 
-  drawProducts(data) {
-  //  alert(JSON.stringify(data));
+  async fetchTypeVariations(productIds) {
+    const result = await this.post("../../controller/filters/category_filters.php", {
+      action: "get_type_variations_by_products",
+      product_ids: productIds
+    });
+    this.variationRows = Array.isArray(result.typeVariations) ? result.typeVariations : [];
+  }
 
-    this.productsData = Array.isArray(data) ? data : [];
+  getSelectedValues(container, selector) {
+    return new Set(
+      Array.from(container?.querySelectorAll(`${selector}:checked`) || [])
+        .map(input => input.value)
+    );
+  }
 
-    if (!Array.isArray(data) || data.length === 0) {
-      this.articles.innerHTML += `<p>No products found.</p>`;
+  applyFilters() {
+    const selectedCategories = this.getSelectedValues(this.categoryFilter, 'input[name="category[]"]');
+    const selectionsByType = new Map();
+
+    this.variationFilters?.querySelectorAll("input[data-type-id]:checked").forEach(input => {
+      const typeId = input.dataset.typeId;
+      if (!selectionsByType.has(typeId)) selectionsByType.set(typeId, new Set());
+      selectionsByType.get(typeId).add(input.value);
+    });
+
+    const filtered = this.productsData.filter(product => {
+      if (selectedCategories.size && !selectedCategories.has(String(product.category_name || ""))) {
+        return false;
+      }
+
+      const searchable = [product.name, product.category_name, product.group_name, product.SKU]
+        .map(value => String(value || "").toLowerCase()).join(" ");
+      if (this.searchText && !searchable.includes(this.searchText)) return false;
+
+      return Array.from(selectionsByType).every(([typeId, options]) =>
+        this.variationRows.some(row =>
+          String(row.product_id) === String(product.product_id) &&
+          String(row.type_id) === String(typeId) &&
+          options.has(String(row.option_name))
+        )
+      );
+    });
+
+    this.drawProducts(filtered);
+    this.drawTypeVariations(filtered.map(product => String(product.product_id)), selectionsByType);
+  }
+
+  drawTypeVariations(visibleProductIds, previousSelections = new Map()) {
+    if (!this.variationFilters) return;
+
+    const visibleIds = new Set(visibleProductIds);
+    const grouped = new Map();
+    this.variationRows.forEach(row => {
+      if (!visibleIds.has(String(row.product_id))) return;
+      const typeId = String(row.type_id);
+      if (!grouped.has(typeId)) {
+        grouped.set(typeId, { name: row.type_name, options: new Map() });
+      }
+      const options = grouped.get(typeId).options;
+      const optionName = String(row.option_name);
+      if (!options.has(optionName)) options.set(optionName, new Set());
+      options.get(optionName).add(String(row.product_id));
+    });
+
+    this.variationFilters.innerHTML = "";
+    let colorIndex = 0;
+    const colors = ["#7C3AED", "#2563EB", "#059669", "#EA580C", "#DC2626", "#0891B2"];
+
+    grouped.forEach((type, typeId) => {
+      const group = document.createElement("div");
+      group.className = "filter-group";
+      group.style.setProperty("--filter-accent", colors[colorIndex++ % colors.length]);
+
+      const heading = document.createElement("h1");
+      heading.textContent = type.name;
+      const scroll = document.createElement("div");
+      scroll.className = "scroll_filter";
+      const list = document.createElement("ul");
+      list.className = "checklist";
+
+      type.options.forEach((productSet, optionName) => {
+        const item = document.createElement("li");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        const text = document.createElement("span");
+        input.type = "checkbox";
+        input.dataset.typeId = typeId;
+        input.value = optionName;
+        input.checked = previousSelections.get(typeId)?.has(optionName) || false;
+        text.textContent = `${optionName} (${productSet.size})`;
+        label.append(input, text);
+        item.append(label);
+        list.append(item);
+      });
+
+      scroll.append(list);
+      group.append(heading, scroll);
+      this.variationFilters.append(group);
+    });
+  }
+
+  drawProducts(products) {
+    if (!this.articles) return;
+    this.articles.innerHTML = "";
+
+    const panel = document.createElement("div");
+    panel.className = "products-search-panel";
+    const label = document.createElement("label");
+    label.htmlFor = "product-search";
+    label.textContent = "Search products";
+    const search = document.createElement("input");
+    search.type = "search";
+    search.id = "product-search";
+    search.placeholder = "Search by name, category, group or SKU...";
+    search.value = this.searchText;
+    search.addEventListener("input", event => {
+      this.searchText = event.target.value.toLowerCase().trim();
+      this.applyFilters();
+      document.getElementById("product-search")?.focus();
+    });
+    panel.append(label, search);
+
+    const title = document.createElement("h1");
+    title.textContent = "All Products";
+    this.articles.append(panel, title);
+
+    if (!products.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "No products found.";
+      this.articles.append(empty);
       return;
     }
 
-    for (let i = 0; i < data.length; i++) {
-      const product = data[i];
-
-      if (product.is_approved == 1  &&
-          product.category_name !== "Unassigned Category" &&
-          product.category_name !== "Unassigned Group"
-          ) {
-        const firstImage = product.images && product.images.length > 0
-          ? product.images[0]
-          : "../../../view/product/products/img/icon_products.png";
-
-        this.articles.innerHTML += `
-          <div class="box_article">
-            <img src="../../${firstImage}" alt="${product.name || 'Product image'}">
-
-            <h1>${product.name || 'Unnamed product'}</h1>
-            <p>${product.category_name || 'No category'}</p>
-            <p>${product.group_name || 'No group'}</p>
-
-            <button
-              class="buttom_products"
-              type="button"
-              onclick="productsClass.buyProduct('${product.SKU}')"
-            >
-              Buy
-            </button>
-          </div>
-        `;
-      }
-    }
+    products.forEach(product => {
+      const box = document.createElement("div");
+      box.className = "box_article";
+      const image = document.createElement("img");
+      image.src = `../../${product.images?.[0] || "view/product/products/img/icon_products.png"}`;
+      image.alt = product.name || "Product image";
+      const name = document.createElement("h1");
+      name.textContent = product.name || "Unnamed product";
+      const category = document.createElement("p");
+      category.textContent = product.category_name || "No category";
+      const productGroup = document.createElement("p");
+      productGroup.textContent = product.group_name || "No group";
+      const button = document.createElement("button");
+      button.className = "buttom_products";
+      button.type = "button";
+      button.textContent = "Buy";
+      button.addEventListener("click", () => this.buyProduct(product.SKU));
+      box.append(image, name, category, productGroup, button);
+      this.articles.append(box);
+    });
   }
 
   buyProduct(sku) {

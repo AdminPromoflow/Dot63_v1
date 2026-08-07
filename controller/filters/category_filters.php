@@ -17,12 +17,28 @@ public function  handleCategoryFilters(){
     $this->getProductsByGroups($data["groups"]);
       break;
 
+    case 'get_type_variations_by_products':
+      $this->getTypeVariationsByProducts($data["product_ids"] ?? []);
+      break;
+
     default:
       echo json_encode("no entramos");
       break;
   }
 
   // echo json_encode($data);
+}
+private function getTypeVariationsByProducts($productIds){
+  header('Content-Type: application/json; charset=utf-8');
+
+  $connection = new Database();
+  $typeVariation = new TypeVariation($connection);
+  $typeVariation->setProductIds(is_array($productIds) ? $productIds : []);
+
+  echo json_encode([
+    'success' => true,
+    'typeVariations' => $typeVariation->getTypeVariationsByProducts()
+  ]);
 }
 private function getProductsByGroups($groups){
   $connection = new Database();

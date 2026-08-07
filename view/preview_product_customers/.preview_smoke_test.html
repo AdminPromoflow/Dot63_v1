@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<body>
+  <div id="wrap-variations-group"></div>
+  <div id="variations_empty" hidden><strong></strong><span></span></div>
+  <div id="wrap-prices-group"></div>
+  <div id="prices_empty" hidden></div>
+  <span id="bb_unit"></span>
+  <span id="bb_unit_quantity"></span>
+  <span id="bb_unit_total"></span>
+  <span id="bb_extra_unit"></span>
+  <span id="bb_extra_quantity"></span>
+  <span id="bb_extra_total"></span>
+  <span id="bb_total"></span>
+  <span id="sp_price"></span>
+  <span id="var_label_quantity"></span>
+  <span id="sp_unit_hint"></span>
+
+  <script type="module">
+    import { PreviewStore } from "./preview_porduct/preview_store.js";
+    import { PricesController } from "./prices/prices.js";
+    import { VariationsController } from "./variations/variations.js";
+
+    const makeRow = (id, name, typeId, typeName, prices = []) => ({
+      variation: {
+        variation_id: id,
+        name,
+        type_id: typeId,
+        type_name: typeName,
+        price_display_mode: id === 1 ? "prices" : "variation",
+        image: ""
+      },
+      prices,
+      images: [],
+      items: [],
+      artwork: null
+    });
+
+    const rows = new Map([
+      [1, makeRow(1, "Default", null, "", [{ price_id: 1, min_quantity: 80, max_quantity: 99, price: 1 }])],
+      [2, makeRow(2, "One side", 10, "Printed sides")],
+      [3, makeRow(3, "Two sides", 10, "Printed sides", [{ min_quantity: 80, max_quantity: 99, price: 0.2 }])],
+      [4, makeRow(4, "Cord Lock", 20, "Accessories", [{ min_quantity: 80, max_quantity: 99, price: 0.08 }])],
+      [5, makeRow(5, "None", 20, "Accessories")]
+    ]);
+
+    const api = {
+      async getVariationChildren(id) {
+        return {
+          success: true,
+          current: rows.get(Number(id)),
+          children: Number(id) === 1 ? [rows.get(2), rows.get(3), rows.get(4), rows.get(5)] : [],
+          types: Number(id) === 1
+            ? [{ type_id: 10, type_name: "Printed sides" }, { type_id: 20, type_name: "Accessories" }]
+            : []
+        };
+      },
+      async getVariationPrices(_sku, ids, quantity) {
+        const prices = ids.flatMap((id) => {
+          const row = rows.get(Number(id));
+          if (row?.variation?.price_display_mode !== "variation") return [];
+          const match = row.prices.find((price) => quantity >= price.min_quantity && quantity <= price.max_quantity);
+          return match ? [{ variation_id: id, price: match.price }] : [];
+        });
+        return { success: true, prices };
+      }
+    };
+
+    const store = new PreviewStore();
+    const prices = new PricesController({ api, store, getSku: () => "TEST" });
+    const renderPath = () => {
+      const source = [...store.getSelectedRows()].reverse().find((row) => (
+        row?.variation?.price_display_mode === "prices" && row?.prices?.length
+      ));
+      if (source) {
+        prices.render(source.prices.map((price) => ({ ...price, price_display_mode: "prices" })));
+      }
+    };
+    const variations = new VariationsController({ api, store, prices, renderPath });
+
+    try {
+      await variations.loadRoot(1);
+      const cordLock = document.querySelector('.var-option[data-variation-id="4"]');
+      await variations.selectVariation(cordLock);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const selectedAfterCordLock = [...document.querySelectorAll(".var-option.is-selected")]
+        .map((button) => button.dataset.variationId);
+      const rowsAfterCordLock = store.getSelectedVariationIds();
+      const extraAfterCordLock = document.getElementById("bb_extra_unit").textContent;
+
+      const twoSides = document.querySelector('.var-option[data-variation-id="3"]');
+      await variations.selectVariation(twoSides);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      window.__previewTest = {
+        ok: true,
+        levelCount: store.selectedByLevel.get(1)?.size || 0,
+        selectedAfterCordLock,
+        rowsAfterCordLock,
+        extraAfterCordLock,
+        selectedFinal: [...document.querySelectorAll(".var-option.is-selected")]
+          .map((button) => button.dataset.variationId),
+        rowsFinal: store.getSelectedVariationIds(),
+        extraFinal: document.getElementById("bb_extra_unit").textContent,
+        totalFinal: document.getElementById("bb_total").textContent
+      };
+    } catch (error) {
+      window.__previewTest = { ok: false, error: String(error?.stack || error) };
+    }
+  </script>
+</body>
+</html>

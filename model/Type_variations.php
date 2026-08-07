@@ -10,6 +10,7 @@ class TypeVariation
   private $description = null;
   private $category_id = null;
   private $groups = []; // array
+  private $productIds = [];
 
   // ===== Constructor =====
   public function __construct($connection)
@@ -20,6 +21,48 @@ class TypeVariation
   public function setGroups(array $groups)
   {
     $this->groups = array_map('intval', $groups);
+  }
+
+  public function setProductIds(array $productIds): void
+  {
+    $this->productIds = array_values(array_unique(array_filter(
+      array_map('intval', $productIds),
+      static fn($id) => $id > 0
+    )));
+  }
+
+  public function getTypeVariationsByProducts(): array
+  {
+    if (empty($this->productIds)) {
+      return [];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+      $placeholders = implode(',', array_fill(0, count($this->productIds), '?'));
+      $stmt = $pdo->prepare("
+        SELECT DISTINCT
+          tv.type_id,
+          tv.type_name,
+          v.name AS option_name,
+          v.product_id
+        FROM variations v
+        INNER JOIN type_variations tv ON tv.type_id = v.type_id
+        WHERE v.product_id IN ($placeholders)
+          AND v.type_id IS NOT NULL
+          AND tv.type_name IS NOT NULL
+          AND TRIM(tv.type_name) <> ''
+          AND v.name IS NOT NULL
+          AND TRIM(v.name) <> ''
+        ORDER BY tv.type_name, v.name
+      ");
+      $stmt->execute($this->productIds);
+
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+      error_log('getTypeVariationsByProducts error: ' . $e->getMessage());
+      return [];
+    }
   }
 
   public function getTypeVariationsByGroups(): array
