@@ -199,6 +199,17 @@ foreach ($moduleFiles as $moduleFile) {
           <p class="preview-only-note">
             This estimate updates automatically when you change a product option or quantity.
           </p>
+
+          <div class="purchase-actions" aria-label="Purchase actions">
+            <button type="button" class="btn btn-primary purchase-button" id="bb_add_to_cart" disabled>
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <span class="purchase-button-label">addToCart</span>
+            </button>
+            <button type="button" class="btn btn-secondary purchase-button" id="bb_buy_now" disabled>
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <span class="purchase-button-label">Buy now</span>
+            </button>
+          </div>
         </section>
       </aside>
     </section>

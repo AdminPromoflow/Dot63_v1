@@ -700,6 +700,9 @@ class Products {
               LEFT JOIN images image
                   ON image_variation.variation_id = image.variation_id
               WHERE COALESCE(p.name, '') LIKE :product_name
+                 OR COALESCE(p.SKU, '') LIKE :product_sku
+                 OR COALESCE(c.name, '') LIKE :category_name
+                 OR COALESCE(g.name, '') LIKE :group_name
                  OR COALESCE(p.description, '') LIKE :product_description
                  OR COALESCE(p.descriptive_tagline, '') LIKE :descriptive_tagline
                  OR EXISTS (
@@ -716,6 +719,9 @@ class Products {
           $stmt = $pdo->prepare($sql);
           $stmt->execute([
               ':product_name' => $term,
+              ':product_sku' => $term,
+              ':category_name' => $term,
+              ':group_name' => $term,
               ':product_description' => $term,
               ':descriptive_tagline' => $term,
               ':item_name' => $term

@@ -226,6 +226,12 @@ img{
   color: var(--ov-muted);
 }
 
+.products-search-controls{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .7rem;
+}
+
 .products-search-panel input{
   width: 100%;
   min-height: 48px;
@@ -236,6 +242,30 @@ img{
   color: var(--ov-text);
   font-size: 1rem;
   outline: none;
+}
+
+.products-search-controls button{
+  min-height: 48px;
+  padding: 0 1.35rem;
+  border: 1px solid var(--accent-category);
+  border-radius: 14px;
+  background: var(--accent-category);
+  color: #111827;
+  font-size: .95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+
+.products-search-controls button:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(255, 138, 61, .24);
+  filter: brightness(.98);
+}
+
+.products-search-controls button:focus-visible{
+  outline: 3px solid rgba(255, 138, 61, .28);
+  outline-offset: 2px;
 }
 
 .products-search-panel input:focus{

@@ -8,6 +8,7 @@ export class PreviewStore {
     this.readiness = null;
     this.permissions = {};
     this.selectedPrice = null;
+    this.selectedPriceId = null;
     this.selectedQuantity = null;
     this.loading = false;
     this.error = null;

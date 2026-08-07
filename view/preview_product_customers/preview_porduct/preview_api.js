@@ -1,12 +1,14 @@
 export class PreviewApi {
   constructor(options = {}) {
     this.previewUrl = options.previewUrl || "../../controller/order/product.php";
+    this.cartUrl = options.cartUrl || "../../controller/order/cart.php";
   }
 
   async request(url, payload, options = {}) {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify(payload),
       signal: options.signal
     });
@@ -50,6 +52,13 @@ export class PreviewApi {
       sku,
       ids: variationIds,
       quantity
+    }, options);
+  }
+
+  addToCart(payload, options = {}) {
+    return this.request(this.cartUrl, {
+      action: "add_to_cart",
+      ...payload
     }, options);
   }
 }

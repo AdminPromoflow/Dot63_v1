@@ -9,6 +9,7 @@ class ProductsClass {
     this.searchRequestController = null;
 
     this.bindSearchInput(document.getElementById("product-search"));
+    this.bindSearchButton(document.getElementById("product-search-button"));
 
     this.categoryFilter?.addEventListener("change", () => this.applyFilters());
     this.variationFilters?.addEventListener("change", () => this.applyFilters());
@@ -133,6 +134,24 @@ class ProductsClass {
       this.searchText = event.target.value;
       this.fetchSearchProducts(this.searchText);
     });
+
+    search.addEventListener("keydown", event => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      this.searchText = event.target.value;
+      this.fetchSearchProducts(this.searchText);
+    });
+  }
+
+  bindSearchButton(button) {
+    if (!button || button.dataset.searchBound === "true") return;
+
+    button.dataset.searchBound = "true";
+    button.addEventListener("click", () => {
+      const search = document.getElementById("product-search");
+      this.searchText = search?.value || "";
+      this.fetchSearchProducts(this.searchText);
+    });
   }
 
   async fetchTypeVariations(productIds) {
@@ -245,11 +264,19 @@ class ProductsClass {
     const search = document.createElement("input");
     search.type = "search";
     search.id = "product-search";
-    search.placeholder = "Search by name, description, tagline or item...";
+    search.placeholder = "Search by product, category or group...";
     search.autocomplete = "off";
     search.value = this.searchText;
     this.bindSearchInput(search);
-    panel.append(label, search);
+    const searchButton = document.createElement("button");
+    searchButton.id = "product-search-button";
+    searchButton.type = "button";
+    searchButton.textContent = "Search";
+    this.bindSearchButton(searchButton);
+    const controls = document.createElement("div");
+    controls.className = "products-search-controls";
+    controls.append(search, searchButton);
+    panel.append(label, controls);
 
     const title = document.createElement("h1");
     title.textContent = "All Products";

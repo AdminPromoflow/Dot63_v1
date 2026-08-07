@@ -40,7 +40,8 @@ class CustomerPreviewApp {
     this.prices = new PricesController({
       api: this.api,
       store: this.store,
-      getSku: () => this.sku
+      getSku: () => this.sku,
+      onSummaryChange: (summary) => this.updatePurchaseActions(summary)
     });
     this.variations = new VariationsController({
       api: this.api,
@@ -57,15 +58,22 @@ class CustomerPreviewApp {
       fatalMessage: document.getElementById("preview_fatal_message"),
       notice: document.getElementById("preview_notice"),
       back: document.getElementById("btn_back_products"),
+      addToCart: document.getElementById("bb_add_to_cart"),
+      buyNow: document.getElementById("bb_buy_now"),
       itemsSection: document.getElementById("items_section"),
       artworkSection: document.getElementById("artwork_section")
     };
+
+    this.purchaseReady = false;
+    this.purchasePending = false;
 
     this.bindEvents();
   }
 
   bindEvents() {
     this.elements.back?.addEventListener("click", () => this.goBack());
+    this.elements.addToCart?.addEventListener("click", () => this.submitPurchase(false));
+    this.elements.buyNow?.addEventListener("click", () => this.submitPurchase(true));
   }
 
   async init() {
@@ -85,8 +93,8 @@ class CustomerPreviewApp {
 
       this.store.setProduct(payload);
       this.renderProduct(payload);
-      this.setLoading(false);
       await this.variations.loadRoot(payload.root_variation_id);
+      this.setLoading(false);
     } catch (error) {
       if (error.name === "AbortError") return;
       this.showFatal(error.message || "The product could not be loaded.");
@@ -189,6 +197,60 @@ class CustomerPreviewApp {
     window.location.assign(new URL("../../view/product/index.php", window.location.href));
   }
 
+  updatePurchaseActions(summary = {}) {
+    this.purchaseReady = Boolean(summary.ready);
+    const disabled = !this.purchaseReady || this.purchasePending;
+    if (this.elements.addToCart) this.elements.addToCart.disabled = disabled;
+    if (this.elements.buyNow) this.elements.buyNow.disabled = disabled;
+  }
+
+  async submitPurchase(buyNow) {
+    if (!this.purchaseReady || this.purchasePending) return;
+
+    const quantity = Number(this.store.selectedQuantity);
+    const priceId = Number(this.store.selectedPriceId);
+    const variationIds = [...new Set(this.store.getSelectedVariationIds())];
+
+    if (!Number.isInteger(quantity) || quantity <= 0 || !Number.isInteger(priceId) || priceId <= 0) {
+      this.showMessage("Please choose a valid product quantity before continuing.", "error");
+      return;
+    }
+
+    this.setPurchasePending(true, buyNow ? this.elements.buyNow : this.elements.addToCart);
+    this.hideMessage();
+
+    try {
+      const result = await this.api.addToCart({
+        sku: this.sku,
+        quantity,
+        price_id: priceId,
+        variation_ids: variationIds,
+        intent: buyNow ? "buy_now" : "add_to_cart"
+      });
+
+      this.showMessage(result.message || "The product was added to your cart.", "success");
+
+      if (buyNow) {
+        window.location.assign(new URL("../../view/shopping_cart/index.php", window.location.href));
+      }
+    } catch (error) {
+      this.showMessage(error.message || "The product could not be added to your cart.", "error");
+    } finally {
+      this.setPurchasePending(false);
+    }
+  }
+
+  setPurchasePending(pending, activeButton = null) {
+    this.purchasePending = pending;
+
+    [this.elements.addToCart, this.elements.buyNow].forEach((button) => {
+      if (!button) return;
+      button.disabled = pending || !this.purchaseReady;
+      button.classList.toggle("is-loading", pending && button === activeButton);
+      button.setAttribute("aria-busy", String(pending && button === activeButton));
+    });
+  }
+
   setLoading(loading) {
     if (this.elements.loading) this.elements.loading.hidden = !loading;
     if (this.elements.content) this.elements.content.hidden = loading;
@@ -205,7 +267,12 @@ class CustomerPreviewApp {
     if (!this.elements.notice) return;
     this.elements.notice.textContent = message;
     this.elements.notice.dataset.tone = tone;
+    this.elements.notice.setAttribute("role", tone === "error" ? "alert" : "status");
     this.elements.notice.hidden = false;
+  }
+
+  hideMessage() {
+    if (this.elements.notice) this.elements.notice.hidden = true;
   }
 
   setText(id, value) {

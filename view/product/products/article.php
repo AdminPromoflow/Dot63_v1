@@ -30,12 +30,15 @@ $jsTime = filemtime('../../view/product/products/article.js');
     <div class="articles" id="articles">
       <div class="products-search-panel">
         <label for="product-search">Search products</label>
-        <input
-          type="search"
-          id="product-search"
-          placeholder="Search by name, description, tagline or item..."
-          autocomplete="off"
-        >
+        <div class="products-search-controls">
+          <input
+            type="search"
+            id="product-search"
+            placeholder="Search by product, category or group..."
+            autocomplete="off"
+          >
+          <button id="product-search-button" type="button">Search</button>
+        </div>
       </div>
 
       <h1>All Products</h1>

@@ -3,6 +3,7 @@ export class PricesController {
     this.api = options.api;
     this.store = options.store;
     this.getSku = options.getSku || (() => "");
+    this.onSummaryChange = options.onSummaryChange || (() => {});
     this.root = document.getElementById("wrap-prices-group");
     this.empty = document.getElementById("prices_empty");
     this.abortController = null;
@@ -28,6 +29,7 @@ export class PricesController {
     this.extraVersion++;
     if (this.root) this.root.innerHTML = "";
     this.store.selectedPrice = null;
+    this.store.selectedPriceId = null;
     this.store.selectedQuantity = null;
     this.setEmptyState(true);
     this.updateSummary();
@@ -105,9 +107,11 @@ export class PricesController {
 
     const quantity = Number(button.dataset.quantity);
     const price = Number(button.dataset.price);
+    const priceId = Number(button.dataset.priceId);
 
     this.store.selectedQuantity = Number.isFinite(quantity) ? quantity : null;
     this.store.selectedPrice = Number.isFinite(price) ? price : null;
+    this.store.selectedPriceId = Number.isInteger(priceId) && priceId > 0 ? priceId : null;
     this.refreshVariationExtras();
     this.updateSummary();
     return true;
@@ -247,6 +251,14 @@ export class PricesController {
         ? "Choose an available option for this quantity"
         : `per unit at ${safeQuantity.toLocaleString("en-GB")} units`
       : "Pricing not configured");
+
+    this.onSummaryChange({
+      ready: hasPrice && !hasUnavailableSelection && Number(this.store.selectedPriceId) > 0,
+      quantity: safeQuantity,
+      basePrice: safeBase,
+      extrasPerUnit,
+      total
+    });
   }
 
   setEmptyState(show) {
