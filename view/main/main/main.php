@@ -35,22 +35,25 @@ $mainJsFile = __DIR__ . '/main.js';
       </ul>
     </div>
 
-    <div class="hero__visual" aria-label="A selection of customizable promotional products">
+    <div class="hero__visual">
       <div class="hero__badge hero__badge--top">
         <span class="hero__badge-icon" aria-hidden="true">✦</span>
-        <span><small>Made for your brand</small><strong>Stand out, naturally.</strong></span>
+        <span><small>Curated essentials</small><strong>Ready to customize</strong></span>
       </div>
 
-      <div class="hero__stage">
-        <span class="hero__stage-label">Most loved</span>
-        <img class="hero__product hero__product--bag" src="../../view/main/main/img/bags.png" alt="Custom branded tote bag">
-        <img class="hero__product hero__product--usb" src="../../view/main/main/img/USBs.png" alt="Custom branded USB drive">
-        <span class="hero__scribble" aria-hidden="true"></span>
-      </div>
+      <figure class="hero__frame">
+        <img
+          src="../../view/main/main/img/hero-products-v2.jpg"
+          alt="Premium promotional tote bag, tumbler, notebook, pen, gift box and wooden USB drive"
+          width="1200"
+          height="1200"
+          fetchpriority="high"
+        >
+      </figure>
 
       <div class="hero__badge hero__badge--bottom">
-        <strong>500+</strong>
-        <span>ways to make it yours</span>
+        <span class="hero__badge-check" aria-hidden="true">✓</span>
+        <span><small>Premium finishes</small><strong>Thoughtfully selected</strong></span>
       </div>
     </div>
   </section>

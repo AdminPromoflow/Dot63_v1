@@ -113,13 +113,14 @@
   stroke-linejoin: round;
 }
 
-.about-button--primary {
+.about-main .about-button--primary {
   color: #fff;
   background: var(--about-navy);
   box-shadow: 0 14px 28px rgba(23, 43, 69, 0.2);
 }
 
-.about-button--primary:hover {
+.about-main .about-button--primary:hover {
+  color: #fff;
   background: #0f2239;
   transform: translateY(-2px);
   box-shadow: 0 18px 34px rgba(23, 43, 69, 0.25);
@@ -568,14 +569,15 @@
   background: #fff;
 }
 
-.about-button--light {
+.about-main .about-button--light {
   min-width: 180px;
   color: var(--about-navy);
   background: #fff;
   box-shadow: 0 14px 28px rgba(103, 46, 15, 0.18);
 }
 
-.about-button--light:hover {
+.about-main .about-button--light:hover {
+  color: var(--about-navy);
   transform: translateY(-2px);
   box-shadow: 0 18px 34px rgba(103, 46, 15, 0.25);
 }
