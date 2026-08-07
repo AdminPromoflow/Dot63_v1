@@ -13,16 +13,16 @@ class ClassSignUp {
     postcodeSignUp.value = "47999";
     passwordSignUp.value =  "Aprch14?...";*/
 
-       nameSignUp.value = "Ian";
-      emailSignUp.value =  "ian@kan-do-it.com";
-      phoneSignUp.value = "44 4567896433";
-      companySignUp.value = "Promoflow";
-      countrySignUp.value = "England";
-      citySignUp.value = "Southampton";
-      address1SignUp.value = "....";
-      address2SignUp.value = "";
-      postcodeSignUp.value = "000000";
-      passwordSignUp.value =  "32skiff32!CI";
+      //  nameSignUp.value = "Ian";
+      // emailSignUp.value =  "ian@kan-do-it.com";
+      // phoneSignUp.value = "44 4567896433";
+      // companySignUp.value = "Promoflow";
+      // countrySignUp.value = "England";
+      // citySignUp.value = "Southampton";
+      // address1SignUp.value = "....";
+      // address2SignUp.value = "";
+      // postcodeSignUp.value = "000000";
+      // passwordSignUp.value =  "32skiff32!CI";
 
 
 
