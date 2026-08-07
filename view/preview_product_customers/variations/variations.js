@@ -371,7 +371,11 @@ export class VariationsController {
         && (hasOpenMaximum || quantity <= max);
     });
 
-    return !applicablePrice || Number(applicablePrice.price) <= 0;
+    if (applicablePrice) return Number(applicablePrice.price) <= 0;
+
+    // A gap between configured ranges is not the same as a free option.
+    // Only variations whose configured prices are all zero qualify as free.
+    return prices.every((price) => Number(price?.price) <= 0);
   }
 
   markSelected(button) {

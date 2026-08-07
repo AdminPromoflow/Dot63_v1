@@ -8,10 +8,16 @@ class ProductsClass {
     this.searchText = "";
     this.searchRequestController = null;
 
+    this.bindSearchInput(document.getElementById("product-search"));
+
     this.categoryFilter?.addEventListener("change", () => this.applyFilters());
     this.variationFilters?.addEventListener("change", () => this.applyFilters());
 
     Promise.all([this.getCategoryFilters(), this.fetchGetProducts()])
+      .then(() => {
+        this.selectCategoriesForProducts(this.productsData);
+        this.applyFilters();
+      })
       .catch(error => console.error("Error loading product filters:", error));
   }
 
@@ -62,7 +68,20 @@ class ProductsClass {
     this.productsData = this.getPublishedProducts(result.result);
 
     await this.fetchTypeVariations(this.productsData.map(product => product.product_id));
-    this.applyFilters();
+  }
+
+  selectCategoriesForProducts(products) {
+    if (!this.categoryFilter) return;
+
+    const productCategories = new Set(
+      (Array.isArray(products) ? products : [])
+        .map(product => String(product.category_name || "").trim())
+        .filter(Boolean)
+    );
+
+    this.categoryFilter.querySelectorAll('input[name="category[]"]').forEach(input => {
+      input.checked = productCategories.has(input.value);
+    });
   }
 
   getPublishedProducts(products) {
@@ -98,6 +117,16 @@ class ProductsClass {
         this.searchRequestController = null;
       }
     }
+  }
+
+  bindSearchInput(search) {
+    if (!search || search.dataset.searchBound === "true") return;
+
+    search.dataset.searchBound = "true";
+    search.addEventListener("input", event => {
+      this.searchText = event.target.value;
+      this.fetchSearchProducts(this.searchText);
+    });
   }
 
   async fetchTypeVariations(productIds) {
@@ -212,10 +241,7 @@ class ProductsClass {
     search.placeholder = "Search by name, description, tagline or item...";
     search.autocomplete = "off";
     search.value = this.searchText;
-    search.addEventListener("input", event => {
-      this.searchText = event.target.value;
-      this.fetchSearchProducts(this.searchText);
-    });
+    this.bindSearchInput(search);
     panel.append(label, search);
 
     const title = document.createElement("h1");

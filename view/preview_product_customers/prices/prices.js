@@ -118,6 +118,9 @@ export class PricesController {
     document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
     document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
       delete button.dataset.extraPrice;
+      button.classList.remove("is-price-unavailable");
+      button.disabled = false;
+      button.removeAttribute("title");
     });
 
     const quantity = Number(this.store.selectedQuantity);
@@ -154,20 +157,40 @@ export class PricesController {
       document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
       document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
         delete button.dataset.extraPrice;
+        button.classList.remove("is-price-unavailable");
+        button.disabled = false;
+        button.removeAttribute("title");
       });
 
       const priceById = new Map(
         (result.prices || []).map((row) => [String(row.variation_id), Number(row.price)])
       );
+      const pricedVariationIds = new Set(
+        (result.priced_variation_ids || []).map((id) => String(id))
+      );
 
       for (const button of buttons) {
-        const extra = priceById.get(String(button.dataset.variationId));
+        const variationId = String(button.dataset.variationId);
+        const hasApplicablePrice = priceById.has(variationId);
+        const extra = priceById.get(variationId);
 
-        if (Number.isFinite(extra) && extra > 0) {
-          button.dataset.extraPrice = String(extra);
+        if (hasApplicablePrice && Number.isFinite(extra)) {
+          button.dataset.extraPrice = String(Math.max(0, extra));
+
+          if (extra > 0) {
+            const label = document.createElement("span");
+            label.className = "opt-price-extra";
+            label.textContent = `+£${this.formatMoney(extra)} each`;
+            button.appendChild(label);
+          }
+        } else if (button.dataset.priceDisplayMode === "variation" && pricedVariationIds.has(variationId)) {
+          button.classList.add("is-price-unavailable");
+          button.disabled = true;
+          button.title = "This option has no price for the selected quantity";
+
           const label = document.createElement("span");
-          label.className = "opt-price-extra";
-          label.textContent = `+£${this.formatMoney(extra)} each`;
+          label.className = "opt-price-extra is-unavailable";
+          label.textContent = "Unavailable";
           button.appendChild(label);
         } else if (button.dataset.priceDisplayMode === "variation") {
           button.dataset.extraPrice = "0";
@@ -188,7 +211,14 @@ export class PricesController {
     const hasPrice = Number.isFinite(quantity) && quantity > 0 && Number.isFinite(basePrice);
 
     let extrasPerUnit = 0;
-    document.querySelectorAll("#wrap-variations-group .var-option.is-selected").forEach((button) => {
+    const selectedOptions = Array.from(
+      document.querySelectorAll("#wrap-variations-group .var-option.is-selected")
+    );
+    const hasUnavailableSelection = selectedOptions.some((button) => (
+      button.classList.contains("is-price-unavailable")
+    ));
+
+    selectedOptions.forEach((button) => {
       const value = Number(button.dataset.extraPrice);
       if (Number.isFinite(value)) extrasPerUnit += value;
     });
@@ -202,18 +232,20 @@ export class PricesController {
     this.setText(this.elements.unit, hasPrice ? `£${this.formatMoney(safeBase)}` : "—");
     this.setText(this.elements.quantity, hasPrice ? safeQuantity.toLocaleString("en-GB") : "—");
     this.setText(this.elements.unitTotal, hasPrice ? `£${this.formatMoney(baseTotal)}` : "—");
-    this.setText(this.elements.extraUnit, hasPrice ? `£${this.formatMoney(extrasPerUnit)}` : "—");
-    this.setText(this.elements.extraQuantity, hasPrice && extrasPerUnit > 0
+    this.setText(this.elements.extraUnit, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasPerUnit)}` : "—");
+    this.setText(this.elements.extraQuantity, hasPrice && !hasUnavailableSelection && extrasPerUnit > 0
       ? safeQuantity.toLocaleString("en-GB")
       : "—");
-    this.setText(this.elements.extraTotal, hasPrice ? `£${this.formatMoney(extrasTotal)}` : "—");
-    this.setText(this.elements.total, hasPrice ? `£${this.formatMoney(total)}` : "—");
+    this.setText(this.elements.extraTotal, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasTotal)}` : "—");
+    this.setText(this.elements.total, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(total)}` : "—");
     this.setText(this.elements.mainPrice, hasPrice ? this.formatMoney(safeBase) : "—");
     this.setText(this.elements.quantityLabel, hasPrice
       ? `${safeQuantity.toLocaleString("en-GB")} units`
       : "Select a price tier");
     this.setText(this.elements.unitHint, hasPrice
-      ? `per unit at ${safeQuantity.toLocaleString("en-GB")} units`
+      ? hasUnavailableSelection
+        ? "Choose an available option for this quantity"
+        : `per unit at ${safeQuantity.toLocaleString("en-GB")} units`
       : "Pricing not configured");
   }
 

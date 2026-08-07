@@ -596,9 +596,22 @@ class Product {
           }
       }
 
+      $configuredStmt = $pdo->prepare("
+          SELECT DISTINCT v.variation_id
+          FROM variations v
+          INNER JOIN prices pr ON pr.variation_id = v.variation_id
+          WHERE v.product_id = ?
+            AND v.variation_id IN ($placeholders)
+            AND v.price_display_mode = 'variation'
+            AND pr.price > 0
+      ");
+      $configuredStmt->execute(array_merge([(int)$product['product_id']], $ids));
+      $pricedVariationIds = array_map('intval', $configuredStmt->fetchAll(PDO::FETCH_COLUMN));
+
       echo json_encode([
           'success' => true,
           'prices' => array_values($pricesByVariation),
+          'priced_variation_ids' => $pricedVariationIds,
       ], JSON_UNESCAPED_UNICODE);
   }
   private function getVariationPrices($data)
