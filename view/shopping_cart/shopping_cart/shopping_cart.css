@@ -677,6 +677,12 @@ svg{
   outline-offset:3px;
 }
 
+.promo-code-control button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+  transform:none;
+}
+
 .promo-code-message{
   min-height:18px;
   margin:0;
@@ -880,6 +886,14 @@ svg{
   opacity:1;
   visibility:visible;
   transform:translateY(0);
+}
+
+.cart-toast.is-error{
+  background:#991b1b;
+}
+
+.cart-item.is-processing{
+  opacity:.72;
 }
 
 /* =============================================================================

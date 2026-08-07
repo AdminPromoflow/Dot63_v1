@@ -33,10 +33,19 @@ class CartController
             session_start();
         }
 
-        $email = strtolower(trim((string)($_SESSION['email'] ?? '')));
-        if (empty($_SESSION['login']) || $email === '') {
+        $customerAuthenticated = !empty($_SESSION['customer_login'])
+            && (int)($_SESSION['customer_id'] ?? 0) > 0
+            && trim((string)($_SESSION['customer_email'] ?? '')) !== '';
+        $supplierAuthenticated = !empty($_SESSION['login'])
+            && trim((string)($_SESSION['email'] ?? '')) !== '';
+        $email = strtolower(trim((string)($customerAuthenticated
+            ? $_SESSION['customer_email']
+            : ($_SESSION['email'] ?? ''))));
+
+        if ((!$customerAuthenticated && !$supplierAuthenticated) || $email === '') {
             $this->respond([
                 'success' => false,
+                'code' => 'AUTH_REQUIRED',
                 'error' => 'Please log in before using your shopping cart.',
             ], 401);
             return;
@@ -52,8 +61,28 @@ class CartController
                     $result['message'] = ($data['intent'] ?? '') === 'buy_now'
                         ? 'Your product is ready in the cart.'
                         : 'The product was added to your cart.';
+                    $result = $this->withCartCount($result, $jobs, $email);
                 }
                 $this->respondFromResult($result, 201);
+                return;
+
+            case 'get_cart_status':
+                $cart = $jobs->getCartItems($email);
+                if (empty($cart['success'])) {
+                    $this->respondFromResult($cart);
+                    return;
+                }
+                $cartItems = is_array($cart['items'] ?? null) ? $cart['items'] : [];
+                $cartCount = count($cartItems);
+                $_SESSION['shopping_cart_count'] = $cartCount;
+                $_SESSION['shopping_cart_job_ids'] = array_values(array_filter(array_map(
+                    static fn($item): int => (int)($item['cart_id'] ?? 0),
+                    $cartItems
+                )));
+                $this->respond([
+                    'success' => true,
+                    'cart_count' => $cartCount,
+                ], 200);
                 return;
 
             case 'update_cart_item':
@@ -72,6 +101,7 @@ class CartController
                 $result = $jobs->removeCartItem((int)($data['cart_id'] ?? 0), $email);
                 if (!empty($result['success'])) {
                     $result['message'] = 'The product was removed from your cart.';
+                    $result = $this->withCartCount($result, $jobs, $email);
                 }
                 $this->respondFromResult($result);
                 return;
@@ -80,6 +110,9 @@ class CartController
                 $result = $jobs->clearCart($email);
                 if (!empty($result['success'])) {
                     $result['message'] = 'Your shopping cart has been cleared.';
+                    $_SESSION['shopping_cart_count'] = 0;
+                    $_SESSION['shopping_cart_job_ids'] = [];
+                    $result['cart_count'] = 0;
                 }
                 $this->respondFromResult($result);
                 return;
@@ -94,6 +127,11 @@ class CartController
 
             case 'checkout':
                 $result = $jobs->checkoutCart($email, (string)($data['promo_code'] ?? ''));
+                if (!empty($result['success'])) {
+                    $_SESSION['shopping_cart_count'] = 0;
+                    $_SESSION['shopping_cart_job_ids'] = [];
+                    $result['cart_count'] = 0;
+                }
                 $this->respondFromResult($result, 201);
                 return;
 
@@ -112,6 +150,24 @@ class CartController
             : (int)($result['status'] ?? 400);
         unset($result['status']);
         $this->respond($result, $status);
+    }
+
+    private function withCartCount(array $result, Jobs $jobs, string $email): array
+    {
+        $cart = $jobs->getCartItems($email);
+        $cartCount = !empty($cart['success']) && is_array($cart['items'] ?? null)
+            ? count($cart['items'])
+            : max(0, (int)($_SESSION['shopping_cart_count'] ?? 0));
+
+        $_SESSION['shopping_cart_count'] = $cartCount;
+        if (!empty($cart['success']) && is_array($cart['items'] ?? null)) {
+            $_SESSION['shopping_cart_job_ids'] = array_values(array_filter(array_map(
+                static fn($item): int => (int)($item['cart_id'] ?? 0),
+                $cart['items']
+            )));
+        }
+        $result['cart_count'] = $cartCount;
+        return $result;
     }
 
     private function respond(array $payload, int $status): void

@@ -1,46 +1,64 @@
-class ClassLogin {
+class CustomerLogin {
   constructor() {
-  loginEnter.addEventListener("click", function(){
-    classLogin.makeAjaxRecuest();
-  })
-  }
-  makeAjaxRecuest(){
-    // alert(email.value + password.value);
-    // alert(email.value + password.value);
-    const url = "../../controller/users/login.php";
-    const data = {
-      action: "requestLogin",
-      email: email.value,
-      password: password.value
-    };
-    // Make a fetch request to the given URL with the specified data.
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        // Check if the response is okay, if so, return the response text.
-        if (response.ok) {
-          return response.text();
-        }
-        // If the response is not okay, throw an error.
-        throw new Error("Network error.");
-      })
-      .then(data => {
-        alert(data);
-      })
-      .catch(error => {
-        // Log any errors to the console.
-        console.error("Error:", error);
-      });
+    this.email = document.getElementById("email");
+    this.password = document.getElementById("password");
+    this.submit = document.getElementById("login_enter");
+    this.emailHelp = document.getElementById("email-help");
+    this.passwordHelp = document.getElementById("pass-help");
 
+    this.submit?.addEventListener("click", () => this.login());
+    [this.email, this.password].forEach((input) => {
+      input?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") this.login();
+      });
+    });
+  }
+
+  showError(message) {
+    if (this.passwordHelp) this.passwordHelp.textContent = message;
+  }
+
+  async login() {
+    if (!this.email || !this.password || !this.submit || this.submit.disabled) return;
+
+    const email = this.email.value.trim();
+    const password = this.password.value;
+    if (!email || !this.email.validity.valid) {
+      if (this.emailHelp) this.emailHelp.textContent = "Enter a valid email address.";
+      this.email.focus();
+      return;
+    }
+    if (!password) {
+      this.showError("Enter your password.");
+      this.password.focus();
+      return;
+    }
+
+    if (this.emailHelp) this.emailHelp.textContent = "";
+    this.showError("");
+    this.submit.disabled = true;
+    this.submit.textContent = "Signing in…";
+
+    try {
+      const response = await fetch("../../controller/customers/login.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "requestLogin", email, password })
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Unable to sign in.");
+      }
+
+      window.location.assign("../../view/product/index.php");
+    } catch (error) {
+      this.showError(error.message || "Unable to sign in. Please try again.");
+      this.submit.disabled = false;
+      this.submit.textContent = "Login";
+    }
   }
 }
 
-const email = document.getElementById("email");
-const password = document.getElementById("password");
-const loginEnter = document.getElementById("login_enter");
-const classLogin = new ClassLogin();
+new CustomerLogin();

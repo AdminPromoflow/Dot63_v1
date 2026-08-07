@@ -446,12 +446,15 @@ class CustomerPreviewApp {
 
       this.pendingPurchase = null;
       this.showMessage(result.message || "The product was added to your cart.", "success");
+      window.dispatchEvent(new CustomEvent("promoflow:cart-updated", {
+        detail: { count: Number(result.cart_count) || 1 }
+      }));
 
       if (buyNow) {
         window.location.assign(new URL("../../view/shopping_cart/index.php", window.location.href));
       }
     } catch (error) {
-      if (error.status === 401 && error.code === "AUTH_REQUIRED") {
+      if (error.status === 401 && (!error.code || error.code === "AUTH_REQUIRED")) {
         this.pendingPurchase = { buyNow, payload: purchasePayload };
         this.showMessage(error.message, "info");
         this.auth.open("login", error.message);

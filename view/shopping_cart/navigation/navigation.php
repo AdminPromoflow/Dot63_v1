@@ -2,10 +2,10 @@
 declare(strict_types=1);
 
 /* Filesystem path for filemtime */
-$navCssFs = __DIR__ . '/view/dashboard_supplier/navigation/navigation.css';
+$navCssFs = __DIR__ . '/navigation.css';
 
 /* Public path used in HTML */
-$navCssPublic = '../../view/dashboard_supplier/navigation/navigation.css';
+$navCssPublic = 'navigation/navigation.css';
 
 /* Cache-busting version */
 $navCssV = is_file($navCssFs) ? filemtime($navCssFs) : time();
@@ -15,8 +15,8 @@ $navCssV = is_file($navCssFs) ? filemtime($navCssFs) : time();
   If href is null, the item is rendered as the current page.
 */
 $breadcrumbs = $breadcrumbs ?? [
-  ['label' => 'Main', 'href' => '../Home/index.php'],
-  ['label' => 'About Us', 'href' => null],
+  ['label' => 'Products', 'href' => '../product/index.php'],
+  ['label' => 'Shopping cart', 'href' => null],
 ];
 ?>
 

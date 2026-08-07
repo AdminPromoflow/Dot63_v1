@@ -1,37 +1,72 @@
 <?php
-class Database {
 
-  // Database connection parameters
-  private $servername = 'localhost';
-  private $dbname = "u273173398_dot63"; //u273173398_dot63 dot63
-  private $username = "u273173398_test"; //u273173398_test root
-  private $password = "32skiff32!CI"; //32skiff32!CI ""
-  private $connection;
+class Database
+{
+    private $connection = null;
 
-  // Constructor to establish a database connection
-   public function __construct() {
+    public function __construct()
+    {
+        $environmentHost = getenv('DOT63_DB_HOST');
+        $environmentName = getenv('DOT63_DB_NAME');
+        $environmentUser = getenv('DOT63_DB_USER');
+        $environmentPassword = getenv('DOT63_DB_PASSWORD');
 
-        try {
-            // Create a PDO connection
-            $this->connection = new PDO("mysql:host=$this->servername;dbname=$this->dbname", $this->username, $this->password);
+        if ($environmentHost !== false && $environmentName !== false && $environmentUser !== false) {
+            $candidates = [[
+                'host' => $environmentHost,
+                'name' => $environmentName,
+                'user' => $environmentUser,
+                'password' => $environmentPassword !== false ? $environmentPassword : '',
+            ]];
+        } else {
+            $production = [
+                'host' => 'localhost',
+                'name' => 'u273173398_dot63',
+                'user' => 'u273173398_test',
+                'password' => '32skiff32!CI',
+            ];
+            $localXampp = [
+                'host' => 'localhost',
+                'name' => 'dot63',
+                'user' => 'root',
+                'password' => '',
+            ];
 
-            // Set PDO error mode to exception for better error handling
-            $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            // Do not leak connection details or corrupt JSON API responses.
-            error_log("Database connection failed: " . $e->getMessage());
-            $this->connection = null;
+            $isLocalXampp = strpos(__DIR__, '/Applications/XAMPP/') === 0;
+            $candidates = $isLocalXampp
+                ? [$localXampp, $production]
+                : [$production];
         }
+
+        $lastError = null;
+        foreach ($candidates as $candidate) {
+            try {
+                $dsn = sprintf(
+                    'mysql:host=%s;dbname=%s;charset=utf8mb4',
+                    $candidate['host'],
+                    $candidate['name']
+                );
+                $this->connection = new PDO($dsn, $candidate['user'], $candidate['password'], [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => true,
+                ]);
+                return;
+            } catch (PDOException $error) {
+                $lastError = $error;
+            }
+        }
+
+        error_log('Database connection failed: ' . ($lastError ? $lastError->getMessage() : 'No connection candidates.'));
     }
 
-    // Method to get the database connection
-    public function getConnection() {
+    public function getConnection()
+    {
         return $this->connection;
     }
 
-    // Method to close the database connection
-    public function closeConnection() {
+    public function closeConnection(): void
+    {
         $this->connection = null;
     }
 }
- ?>

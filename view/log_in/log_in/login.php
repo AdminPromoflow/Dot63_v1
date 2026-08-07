@@ -26,7 +26,7 @@ $jsTime = filemtime('../../view/log_in/log_in/login.js');   // ejemplo: '../Home
                minlength="6" placeholder="••••••••" aria-describedby="pass-help"/>
         <button type="button" class="toggle-pass" aria-label="Show password" aria-pressed="false" data-show="false">Show</button>
       </div>
-      <a class="muted-link" href="#forgot">Forgot your password?</a>
+      <a class="muted-link" href="../../view/forg_password/index.php">Forgot your password?</a>
       <div id="pass-help" class="help" aria-live="polite"></div>
     </div>
 
@@ -35,7 +35,7 @@ $jsTime = filemtime('../../view/log_in/log_in/login.js');   // ejemplo: '../Home
     </div>
 
     <p class="footer">
-      Don’t have an account? <a class="link" href="#signup">Sign up</a>
+      Don’t have an account? <a class="link" href="../../view/sign_up/index.php">Sign up</a>
     </p>
   </seccion>
 </main>

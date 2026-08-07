@@ -1,8 +1,4 @@
 <?php
-if (session_status() !== PHP_SESSION_ACTIVE) {
-  session_start();
-}
-
 function shoppingCartEscape($value): string
 {
   return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
@@ -13,65 +9,36 @@ function shoppingCartCurrency($value): string
   return '$' . number_format((float)$value, 0, ',', '.');
 }
 
-/*
- * Temporary products.
- *
- * Replace this array later with:
- *
- * $cartItems = $_SESSION['shopping_cart'] ?? [];
- */
-$cartItems = $_SESSION['shopping_cart'] ?? [
-  [
-    'cart_id' => 1,
-    'sku' => 'PF-TOTE-001',
-    'name' => 'Premium Cotton Tote Bag',
-    'company' => 'PromoFlow Supplies',
-    'image' => 'img/icon_product.png',
-    'quantity' => 2,
-    'max_quantity' => 25,
-    'unit_price' => 38500,
-    'variations' => [
-      'Colour' => 'Natural',
-      'Print' => 'Full colour',
-      'Size' => 'Standard'
-    ]
-  ],
-  [
-    'cart_id' => 2,
-    'sku' => 'PF-BOTTLE-750',
-    'name' => 'Recycled Stainless Steel Bottle',
-    'company' => 'DOC63 Products',
-    'image' => 'img/icon_product.png',
-    'quantity' => 1,
-    'max_quantity' => 10,
-    'unit_price' => 72900,
-    'variations' => [
-      'Colour' => 'Copper',
-      'Capacity' => '750 ml',
-      'Artwork' => 'Logo engraving'
-    ]
-  ],
-  [
-    'cart_id' => 3,
-    'sku' => 'PF-NOTE-003',
-    'name' => 'Classic Promotional Notebook',
-    'company' => 'PromoFlow Supplies',
-    'image' => 'img/icon_product.png',
-    'quantity' => 3,
-    'max_quantity' => 50,
-    'unit_price' => 24900,
-    'variations' => [
-      'Colour' => 'Warm grey',
-      'Pages' => 'Lined',
-      'Branding' => 'Front cover'
-    ]
-  ]
-];
+function shoppingCartImageUrl($value): string
+{
+  $value = trim((string)$value);
+  $fallback = '../preview_product_customers/img/icon_product.png';
 
-$cartItems = is_array($cartItems) ? $cartItems : [];
+  if ($value === '') {
+    return $fallback;
+  }
+
+  if (preg_match('#^https?://#i', $value) === 1 || str_starts_with($value, 'data:image/')) {
+    return $value;
+  }
+
+  return '../../' . ltrim($value, '/');
+}
+
+$cartItems = is_array($cartItems ?? null) ? $cartItems : [];
+$cartLoadError = trim((string)($cartLoadError ?? ''));
+$isCartAuthenticated = !empty($isCartAuthenticated);
+$emptyTitle = $cartLoadError !== ''
+  ? ($isCartAuthenticated ? 'We could not load your shopping cart' : 'Sign in to view your shopping cart')
+  : 'No products have been added yet';
+$emptyDescription = $cartLoadError !== ''
+  ? $cartLoadError
+  : 'Browse the available products and select the variations you would like to order.';
+$emptyLink = $isCartAuthenticated ? '../product/index.php' : '../log_in/index.php';
+$emptyLinkLabel = $isCartAuthenticated ? 'Browse products' : 'Log in';
 ?>
 
-<main class="shopping-cart-page" aria-labelledby="shopping-cart-title">
+<main class="shopping-cart-page" aria-labelledby="shopping-cart-title" data-api-url="../../controller/order/cart.php">
   <div class="shopping-cart-shell">
 
     <header class="shopping-cart-header">
@@ -83,7 +50,7 @@ $cartItems = is_array($cartItems) ? $cartItems : [];
         <p>Review your selected products, variations and quantities before proceeding to checkout.</p>
       </div>
 
-      <a href="../overview/index.php" class="continue-shopping-link">
+      <a href="../product/index.php" class="continue-shopping-link">
         <span aria-hidden="true">←</span>
         <span>Continue shopping</span>
       </a>
@@ -115,7 +82,7 @@ $cartItems = is_array($cartItems) ? $cartItems : [];
             $sku = trim((string)($item['sku'] ?? ''));
             $name = trim((string)($item['name'] ?? 'Product'));
             $company = trim((string)($item['company'] ?? ''));
-            $image = trim((string)($item['image'] ?? 'img/icon_product.png'));
+            $image = shoppingCartImageUrl($item['image'] ?? '');
             $quantity = max(1, (int)($item['quantity'] ?? 1));
             $maxQuantity = max(1, (int)($item['max_quantity'] ?? 999));
             $unitPrice = max(0, (float)($item['unit_price'] ?? 0));
@@ -126,7 +93,7 @@ $cartItems = is_array($cartItems) ? $cartItems : [];
             <article class="cart-item" data-cart-id="<?= $cartId ?>" data-sku="<?= shoppingCartEscape($sku) ?>" data-unit-price="<?= shoppingCartEscape($unitPrice) ?>">
 
               <div class="cart-item-image-wrapper">
-                <img class="cart-item-image" src="<?= shoppingCartEscape($image) ?>" alt="<?= shoppingCartEscape($name) ?>" loading="lazy" decoding="async" onerror="this.src='img/icon_product.png'">
+                <img class="cart-item-image" src="<?= shoppingCartEscape($image) ?>" alt="<?= shoppingCartEscape($name) ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='../preview_product_customers/img/icon_product.png'">
               </div>
 
               <div class="cart-item-content">
@@ -154,6 +121,12 @@ $cartItems = is_array($cartItems) ? $cartItems : [];
                 <?php if (count($variations) > 0): ?>
                   <div class="cart-item-variations">
                     <?php foreach ($variations as $variationName => $variationValue): ?>
+                      <?php
+                      if (is_array($variationValue)) {
+                        $variationName = (string)($variationValue['name'] ?? 'Option');
+                        $variationValue = (string)($variationValue['value'] ?? '');
+                      }
+                      ?>
                       <div class="cart-variation">
                         <span class="cart-variation-name"><?= shoppingCartEscape($variationName) ?></span>
                         <strong class="cart-variation-value"><?= shoppingCartEscape($variationValue) ?></strong>
@@ -170,12 +143,14 @@ $cartItems = is_array($cartItems) ? $cartItems : [];
                     <div class="cart-quantity-control">
                       <button type="button" class="quantity-button quantity-decrease" aria-label="Decrease quantity">−</button>
 
-                      <input type="number" class="quantity-input" value="<?= $quantity ?>" min="1" max="<?= $maxQuantity ?>" inputmode="numeric" aria-label="Quantity for <?= shoppingCartEscape($name) ?>">
+                      <input type="number" class="quantity-input" value="<?= $quantity ?>" min="1" max="<?= $maxQuantity ?>" inputmode="numeric" aria-label="Quantity for <?= shoppingCartEscape($name) ?>" data-saved-quantity="<?= $quantity ?>">
 
                       <button type="button" class="quantity-button quantity-increase" aria-label="Increase quantity">+</button>
                     </div>
 
-                    <small class="quantity-limit">Maximum <?= $maxQuantity ?></small>
+                    <?php if ($maxQuantity < 999999): ?>
+                      <small class="quantity-limit">Maximum <?= $maxQuantity ?></small>
+                    <?php endif; ?>
                   </div>
 
                   <div class="cart-item-price-information">
@@ -200,11 +175,11 @@ $cartItems = is_array($cartItems) ? $cartItems : [];
 
           <span class="section-label">Your cart is empty</span>
 
-          <h2>No products have been added yet</h2>
+          <h2><?= shoppingCartEscape($emptyTitle) ?></h2>
 
-          <p>Browse the available products and select the variations you would like to order.</p>
+          <p><?= shoppingCartEscape($emptyDescription) ?></p>
 
-          <a href="../overview/index.php" class="primary-cart-button">Browse products</a>
+          <a href="<?= shoppingCartEscape($emptyLink) ?>" class="primary-cart-button"><?= shoppingCartEscape($emptyLinkLabel) ?></a>
         </div>
       </section>
 
@@ -238,7 +213,7 @@ $cartItems = is_array($cartItems) ? $cartItems : [];
 
             <div class="promo-code-control">
               <input type="text" id="promo-code-input" placeholder="Enter code" autocomplete="off" maxlength="30">
-              <button type="button" id="apply-promo-button">Apply</button>
+              <button type="button" id="apply-promo-button" <?= count($cartItems) === 0 ? 'disabled' : '' ?>>Apply</button>
             </div>
 
             <p class="promo-code-message" id="promo-code-message" aria-live="polite"></p>

@@ -112,7 +112,10 @@ class CustomerLoginController
             $_SESSION['customer_login'],
             $_SESSION['customer_id'],
             $_SESSION['customer_name'],
-            $_SESSION['customer_email']
+            $_SESSION['customer_email'],
+            $_SESSION['shopping_cart_count'],
+            $_SESSION['shopping_cart_job_ids'],
+            $_SESSION['shopping_cart']
         );
         session_regenerate_id(true);
 

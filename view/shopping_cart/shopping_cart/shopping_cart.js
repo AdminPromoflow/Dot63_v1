@@ -1,5 +1,3 @@
-// shopping_cart.js
-
 class ShoppingCart {
   constructor() {
     this.itemsContainer = null;
@@ -17,15 +15,19 @@ class ShoppingCart {
     this.promoButton = null;
     this.promoMessage = null;
     this.toast = null;
+    this.apiUrl = "../../controller/order/cart.php";
 
-    this.discountPercentage = 0;
+    this.discountType = null;
+    this.discountValue = 0;
+    this.promoCode = "";
     this.deliveryPrice = 0;
     this.toastTimer = null;
     this.isProcessing = false;
 
-    this.currencyFormatter = new Intl.NumberFormat("en-CO", {
+    this.currencyFormatter = new Intl.NumberFormat("es-CO", {
       style: "currency",
       currency: "COP",
+      currencyDisplay: "narrowSymbol",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     });
@@ -37,11 +39,9 @@ class ShoppingCart {
     }
   }
 
-  /* ============================================================================
-    INITIALISE
-  ============================================================================ */
-
   init() {
+    const page = document.querySelector(".shopping-cart-page");
+    this.apiUrl = page?.dataset.apiUrl || this.apiUrl;
     this.itemsContainer = document.getElementById("cart-items-list");
     this.emptyState = document.getElementById("empty-cart-state");
     this.itemCount = document.getElementById("cart-item-count");
@@ -58,31 +58,21 @@ class ShoppingCart {
     this.promoMessage = document.getElementById("promo-code-message");
     this.toast = document.getElementById("cart-toast");
 
-    if (!this.itemsContainer) {
-      console.warn("Shopping cart container not found.");
-      return false;
-    }
+    if (!this.itemsContainer) return false;
 
     this.bindEvents();
     this.validateAllQuantities();
     this.calculateTotals();
     this.updateCartState();
-
     return true;
   }
 
-  /* ============================================================================
-    EVENTS
-  ============================================================================ */
-
   bindEvents() {
     if (this.itemsContainer.dataset.bound === "1") return false;
-
     this.itemsContainer.dataset.bound = "1";
 
     this.itemsContainer.addEventListener("click", (event) => {
       const target = event.target;
-
       if (!(target instanceof Element)) return;
 
       const decreaseButton = target.closest(".quantity-decrease");
@@ -92,16 +82,10 @@ class ShoppingCart {
       if (decreaseButton) {
         event.preventDefault();
         this.changeQuantity(decreaseButton, -1);
-        return;
-      }
-
-      if (increaseButton) {
+      } else if (increaseButton) {
         event.preventDefault();
         this.changeQuantity(increaseButton, 1);
-        return;
-      }
-
-      if (removeButton) {
+      } else if (removeButton) {
         event.preventDefault();
         this.removeItem(removeButton);
       }
@@ -109,10 +93,7 @@ class ShoppingCart {
 
     this.itemsContainer.addEventListener("input", (event) => {
       const input = event.target;
-
-      if (!(input instanceof HTMLInputElement)) return;
-      if (!input.classList.contains("quantity-input")) return;
-
+      if (!(input instanceof HTMLInputElement) || !input.classList.contains("quantity-input")) return;
       this.validateQuantity(input);
       this.updateItemTotal(input.closest(".cart-item"));
       this.calculateTotals();
@@ -120,566 +101,370 @@ class ShoppingCart {
 
     this.itemsContainer.addEventListener("change", (event) => {
       const input = event.target;
-
-      if (!(input instanceof HTMLInputElement)) return;
-      if (!input.classList.contains("quantity-input")) return;
-
-      this.validateQuantity(input);
-      this.updateItemTotal(input.closest(".cart-item"));
-      this.calculateTotals();
-      this.updateCartItem(input.closest(".cart-item"));
+      if (!(input instanceof HTMLInputElement) || !input.classList.contains("quantity-input")) return;
+      this.persistQuantity(input.closest(".cart-item"));
     });
 
-    this.clearCartButton?.addEventListener("click", () => {
-      this.clearCart();
-    });
-
-    this.promoButton?.addEventListener("click", () => {
-      this.applyPromoCode();
-    });
-
+    this.clearCartButton?.addEventListener("click", () => this.clearCart());
+    this.promoButton?.addEventListener("click", () => this.applyPromoCode());
     this.promoInput?.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
-
       event.preventDefault();
       this.applyPromoCode();
     });
-
-    this.checkoutButton?.addEventListener("click", () => {
-      this.checkout();
-    });
-
+    this.checkoutButton?.addEventListener("click", () => this.checkout());
     return true;
   }
 
-  /* ============================================================================
-    QUANTITY
-  ============================================================================ */
+  async request(action, payload = {}) {
+    const response = await fetch(this.apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ action, ...payload })
+    });
 
-  changeQuantity(button, change) {
+    const text = await response.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error("The server returned an invalid cart response.");
+    }
+
+    if (!response.ok || !data?.success) {
+      const error = new Error(data?.error || data?.message || "The cart request could not be completed.");
+      error.status = response.status;
+      throw error;
+    }
+
+    return data;
+  }
+
+  async changeQuantity(button, change) {
     const item = button.closest(".cart-item");
     const input = item?.querySelector(".quantity-input");
-
-    if (!item || !input) return false;
+    if (!item || !input || item.dataset.pending === "1") return false;
 
     const currentQuantity = this.getValidNumber(input.value, 1);
     const minimum = this.getValidNumber(input.min, 1);
     const maximum = this.getValidNumber(input.max, 999999);
-
-    const nextQuantity = Math.min(
-      maximum,
-      Math.max(minimum, currentQuantity + change)
-    );
-
+    const nextQuantity = Math.min(maximum, Math.max(minimum, currentQuantity + change));
     if (nextQuantity === currentQuantity) return false;
 
-    input.value = nextQuantity;
-
+    input.value = String(nextQuantity);
     this.updateQuantityButtons(item);
     this.updateItemTotal(item);
     this.calculateTotals();
-    this.updateCartItem(item);
-
-    return true;
+    return this.persistQuantity(item);
   }
 
   validateQuantity(input) {
     const minimum = this.getValidNumber(input.min, 1);
     const maximum = this.getValidNumber(input.max, 999999);
     let quantity = Number(input.value);
-
-    if (!Number.isFinite(quantity)) {
-      quantity = minimum;
-    }
-
-    quantity = Math.floor(quantity);
-    quantity = Math.min(maximum, Math.max(minimum, quantity));
-
-    input.value = quantity;
-
+    if (!Number.isFinite(quantity)) quantity = minimum;
+    quantity = Math.min(maximum, Math.max(minimum, Math.floor(quantity)));
+    input.value = String(quantity);
     this.updateQuantityButtons(input.closest(".cart-item"));
-
     return quantity;
   }
 
   validateAllQuantities() {
-    const inputs = this.itemsContainer.querySelectorAll(".quantity-input");
-
-    inputs.forEach((input) => {
-      this.validateQuantity(input);
+    this.itemsContainer.querySelectorAll(".quantity-input").forEach((input) => {
+      const quantity = this.validateQuantity(input);
+      input.dataset.savedQuantity = String(quantity);
       this.updateItemTotal(input.closest(".cart-item"));
     });
-
-    return true;
   }
 
   updateQuantityButtons(item) {
     if (!item) return false;
-
     const input = item.querySelector(".quantity-input");
-    const decreaseButton = item.querySelector(".quantity-decrease");
-    const increaseButton = item.querySelector(".quantity-increase");
-
     if (!input) return false;
 
+    const pending = item.dataset.pending === "1";
     const quantity = this.getValidNumber(input.value, 1);
     const minimum = this.getValidNumber(input.min, 1);
     const maximum = this.getValidNumber(input.max, 999999);
-
-    if (decreaseButton) {
-      decreaseButton.disabled = quantity <= minimum;
-    }
-
-    if (increaseButton) {
-      increaseButton.disabled = quantity >= maximum;
-    }
-
+    const decreaseButton = item.querySelector(".quantity-decrease");
+    const increaseButton = item.querySelector(".quantity-increase");
+    if (decreaseButton) decreaseButton.disabled = pending || quantity <= minimum;
+    if (increaseButton) increaseButton.disabled = pending || quantity >= maximum;
+    input.disabled = pending;
     return true;
   }
 
-  /* ============================================================================
-    ITEM TOTAL
-  ============================================================================ */
+  setItemPending(item, pending) {
+    if (!item) return;
+    item.dataset.pending = pending ? "1" : "0";
+    item.classList.toggle("is-processing", pending);
+    this.updateQuantityButtons(item);
+  }
+
+  async persistQuantity(item) {
+    const input = item?.querySelector(".quantity-input");
+    if (!item || !input || item.dataset.pending === "1") return false;
+
+    const quantity = this.validateQuantity(input);
+    const savedQuantity = this.getValidNumber(input.dataset.savedQuantity, quantity);
+    if (quantity === savedQuantity) return true;
+
+    this.setItemPending(item, true);
+    try {
+      const data = await this.request("update_cart_item", {
+        cart_id: this.getValidNumber(item.dataset.cartId, 0),
+        quantity
+      });
+
+      input.value = String(data.quantity);
+      input.dataset.savedQuantity = String(data.quantity);
+      input.max = String(data.max_quantity || input.max || 999999);
+      item.dataset.unitPrice = String(data.price_per_unit);
+      const unitPrice = item.querySelector(".cart-unit-price");
+      if (unitPrice) unitPrice.textContent = `${this.formatCurrency(data.price_per_unit)} each`;
+      this.updateItemTotal(item);
+      this.calculateTotals();
+      return true;
+    } catch (error) {
+      input.value = String(savedQuantity);
+      this.updateItemTotal(item);
+      this.calculateTotals();
+      this.showToast(error.message || "The quantity could not be updated.", true);
+      return false;
+    } finally {
+      this.setItemPending(item, false);
+    }
+  }
 
   updateItemTotal(item) {
     if (!item) return false;
-
     const input = item.querySelector(".quantity-input");
     const lineTotalElement = item.querySelector(".cart-line-total");
-
     if (!input || !lineTotalElement) return false;
-
-    const unitPrice = this.getValidNumber(item.dataset.unitPrice, 0);
-    const quantity = this.getValidNumber(input.value, 1);
-    const lineTotal = unitPrice * quantity;
-
+    const lineTotal = this.getValidNumber(item.dataset.unitPrice, 0) * this.getValidNumber(input.value, 1);
     lineTotalElement.textContent = this.formatCurrency(lineTotal);
-
     return true;
   }
 
-  /* ============================================================================
-    TOTALS
-  ============================================================================ */
-
   calculateTotals() {
-    const items = this.getCartItems();
     let subtotal = 0;
-
-    items.forEach((item) => {
-      const quantityInput = item.querySelector(".quantity-input");
-      const unitPrice = this.getValidNumber(item.dataset.unitPrice, 0);
-      const quantity = this.getValidNumber(quantityInput?.value, 1);
-
-      subtotal += unitPrice * quantity;
+    this.getCartItems().forEach((item) => {
+      const quantity = this.getValidNumber(item.querySelector(".quantity-input")?.value, 1);
+      subtotal += this.getValidNumber(item.dataset.unitPrice, 0) * quantity;
     });
 
     this.deliveryPrice = this.calculateDelivery(subtotal);
-
-    const discount = subtotal * (this.discountPercentage / 100);
+    let discount = 0;
+    if (this.discountType === "percentage") {
+      discount = subtotal * (this.discountValue / 100);
+    } else if (this.discountType === "fixed") {
+      discount = this.discountValue;
+    }
+    discount = Math.min(subtotal, Math.max(0, discount));
     const total = Math.max(0, subtotal - discount + this.deliveryPrice);
 
-    if (this.subtotalElement) {
-      this.subtotalElement.textContent = this.formatCurrency(subtotal);
-    }
-
-    if (this.discountElement) {
-      this.discountElement.textContent = `−${this.formatCurrency(discount)}`;
-    }
-
+    if (this.subtotalElement) this.subtotalElement.textContent = this.formatCurrency(subtotal);
+    if (this.discountElement) this.discountElement.textContent = `−${this.formatCurrency(discount)}`;
     if (this.deliveryElement) {
-      this.deliveryElement.textContent =
-        subtotal > 0 && this.deliveryPrice === 0
-          ? "Free"
-          : this.formatCurrency(this.deliveryPrice);
+      this.deliveryElement.textContent = subtotal > 0 && this.deliveryPrice === 0
+        ? "Free"
+        : this.formatCurrency(this.deliveryPrice);
     }
-
-    if (this.totalElement) {
-      this.totalElement.textContent = this.formatCurrency(total);
-    }
-
-    this.discountLine?.classList.toggle(
-      "is-hidden",
-      this.discountPercentage <= 0 || subtotal <= 0
-    );
-
-    return {
-      subtotal: subtotal,
-      discount: discount,
-      delivery: this.deliveryPrice,
-      total: total
-    };
+    if (this.totalElement) this.totalElement.textContent = this.formatCurrency(total);
+    this.discountLine?.classList.toggle("is-hidden", discount <= 0 || subtotal <= 0);
+    return { subtotal, discount, delivery: this.deliveryPrice, total };
   }
 
   calculateDelivery(subtotal) {
-    if (subtotal <= 0) return 0;
-    if (subtotal >= 200000) return 0;
-
+    if (subtotal <= 0 || subtotal >= 200000) return 0;
     return 15000;
   }
 
-  /* ============================================================================
-    PROMOTIONAL CODE
-  ============================================================================ */
-
-  applyPromoCode() {
-    if (!this.promoInput || !this.promoMessage) return false;
-
+  async applyPromoCode() {
+    if (!this.promoInput || !this.promoMessage || this.promoButton?.disabled) return false;
     const code = this.promoInput.value.trim().toUpperCase();
-
     this.promoMessage.classList.remove("is-success", "is-error");
 
     if (!code) {
-      this.discountPercentage = 0;
+      this.resetPromo();
       this.promoMessage.textContent = "Enter a promotional code.";
       this.promoMessage.classList.add("is-error");
-      this.calculateTotals();
       return false;
     }
 
-    const promotionalCodes = {
-      PROMO10: 10,
-      DOC63: 5,
-      WELCOME15: 15
-    };
-
-    if (!Object.prototype.hasOwnProperty.call(promotionalCodes, code)) {
-      this.discountPercentage = 0;
-      this.promoMessage.textContent = "This promotional code is not valid.";
+    this.promoButton.disabled = true;
+    try {
+      const data = await this.request("validate_promo", { code });
+      this.discountType = data.discount_type;
+      this.discountValue = this.getValidNumber(data.discount_value, 0);
+      this.promoCode = data.code || code;
+      this.promoInput.value = this.promoCode;
+      this.promoMessage.textContent = data.message || "Promotional code applied successfully.";
+      this.promoMessage.classList.add("is-success");
+      this.calculateTotals();
+      this.showToast("Promotional code applied.");
+      return true;
+    } catch (error) {
+      this.resetPromo(false);
+      this.promoMessage.textContent = error.message || "This promotional code is not valid.";
       this.promoMessage.classList.add("is-error");
-      this.calculateTotals();
       return false;
+    } finally {
+      this.promoButton.disabled = this.getCartItems().length === 0;
     }
+  }
 
-    this.discountPercentage = promotionalCodes[code];
-    this.promoInput.value = code;
-    this.promoMessage.textContent = `${this.discountPercentage}% discount applied successfully.`;
-    this.promoMessage.classList.add("is-success");
-
+  resetPromo(clearInput = true) {
+    this.discountType = null;
+    this.discountValue = 0;
+    this.promoCode = "";
+    if (clearInput && this.promoInput) this.promoInput.value = "";
+    if (this.promoMessage) {
+      this.promoMessage.textContent = "";
+      this.promoMessage.classList.remove("is-success", "is-error");
+    }
     this.calculateTotals();
-    this.showToast("Promotional code applied.");
-
-    return true;
   }
 
-  /* ============================================================================
-    UPDATE PRODUCT
-  ============================================================================ */
-
-  updateCartItem(item) {
-    if (!item) return false;
-
-    const quantityInput = item.querySelector(".quantity-input");
-
-    const data = {
-      action: "update_cart_item",
-      cart_id: this.getValidNumber(item.dataset.cartId, 0),
-      sku: item.dataset.sku || "",
-      quantity: this.getValidNumber(quantityInput?.value, 1)
-    };
-
-    console.log("Cart item updated:", data);
-
-    /*
-     * Use this fetch when your backend controller is ready:
-     *
-     * fetch("../../controller/order/cart.php", {
-     *   method: "POST",
-     *   headers: {
-     *     "Content-Type": "application/json"
-     *   },
-     *   body: JSON.stringify(data)
-     * })
-     *   .then((response) => {
-     *     if (!response.ok) {
-     *       throw new Error(`Network error: ${response.status}`);
-     *     }
-     *
-     *     return response.json();
-     *   })
-     *   .then((responseData) => {
-     *     if (!responseData.success) {
-     *       throw new Error(responseData.message || "Unable to update cart.");
-     *     }
-     *   })
-     *   .catch((error) => {
-     *     console.error("Error updating cart item:", error);
-     *   });
-     */
-
-    return true;
-  }
-
-  /* ============================================================================
-    REMOVE PRODUCT
-  ============================================================================ */
-
-  removeItem(button) {
+  async removeItem(button) {
     const item = button.closest(".cart-item");
+    if (!item || this.isProcessing || item.dataset.pending === "1") return false;
+    const productName = item.querySelector(".cart-item-name")?.textContent?.trim() || "this product";
+    if (!window.confirm(`Are you sure you want to remove "${productName}" from your shopping cart?`)) return false;
 
-    if (!item || this.isProcessing) return false;
-
-    const productName =
-      item.querySelector(".cart-item-name")?.textContent?.trim() ||
-      "this product";
-
-    const confirmed = window.confirm(
-      `Are you sure you want to remove "${productName}" from your shopping cart?`
-    );
-
-    if (!confirmed) return false;
-
-    this.isProcessing = true;
-    item.classList.add("is-removing");
-
-    const data = {
-      action: "remove_cart_item",
-      cart_id: this.getValidNumber(item.dataset.cartId, 0),
-      sku: item.dataset.sku || ""
-    };
-
-    console.log("Cart item removed:", data);
-
-    window.setTimeout(() => {
+    this.setItemPending(item, true);
+    button.disabled = true;
+    try {
+      await this.request("remove_cart_item", {
+        cart_id: this.getValidNumber(item.dataset.cartId, 0)
+      });
+      item.classList.add("is-removing");
+      await new Promise((resolve) => window.setTimeout(resolve, 220));
       item.remove();
-
-      this.isProcessing = false;
       this.calculateTotals();
       this.updateCartState();
       this.showToast("Product removed from your shopping cart.");
-    }, 220);
-
-    return true;
+      return true;
+    } catch (error) {
+      this.showToast(error.message || "The product could not be removed.", true);
+      return false;
+    } finally {
+      if (item.isConnected) {
+        button.disabled = false;
+        this.setItemPending(item, false);
+      }
+    }
   }
 
-  /* ============================================================================
-    CLEAR CART
-  ============================================================================ */
-
-  clearCart() {
+  async clearCart() {
     const items = this.getCartItems();
-
     if (items.length === 0 || this.isProcessing) return false;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to remove all products from your shopping cart?"
-    );
-
-    if (!confirmed) return false;
+    if (!window.confirm("Are you sure you want to remove all products from your shopping cart?")) return false;
 
     this.isProcessing = true;
-
-    items.forEach((item) => {
-      item.classList.add("is-removing");
-    });
-
-    const data = {
-      action: "clear_cart"
-    };
-
-    console.log("Shopping cart cleared:", data);
-
-    window.setTimeout(() => {
+    this.setGlobalProcessing(true);
+    try {
+      await this.request("clear_cart");
+      items.forEach((item) => item.classList.add("is-removing"));
+      await new Promise((resolve) => window.setTimeout(resolve, 220));
       this.itemsContainer.replaceChildren();
-
-      this.discountPercentage = 0;
-      this.isProcessing = false;
-
-      if (this.promoInput) {
-        this.promoInput.value = "";
-      }
-
-      if (this.promoMessage) {
-        this.promoMessage.textContent = "";
-        this.promoMessage.classList.remove("is-success", "is-error");
-      }
-
-      this.calculateTotals();
+      this.resetPromo();
       this.updateCartState();
       this.showToast("Your shopping cart has been cleared.");
-    }, 220);
-
-    return true;
+      return true;
+    } catch (error) {
+      this.showToast(error.message || "Your shopping cart could not be cleared.", true);
+      return false;
+    } finally {
+      this.isProcessing = false;
+      this.setGlobalProcessing(false);
+    }
   }
 
-  /* ============================================================================
-    CART STATE
-  ============================================================================ */
-
   updateCartState() {
-    const items = this.getCartItems();
-    const totalItems = items.length;
+    const totalItems = this.getCartItems().length;
     const isEmpty = totalItems === 0;
-
-    if (this.itemCount) {
-      this.itemCount.textContent = totalItems;
-    }
-
-    if (this.itemWord) {
-      this.itemWord.textContent = totalItems === 1 ? "product" : "products";
-    }
-
+    if (this.itemCount) this.itemCount.textContent = String(totalItems);
+    if (this.itemWord) this.itemWord.textContent = totalItems === 1 ? "product" : "products";
     this.emptyState?.classList.toggle("is-hidden", !isEmpty);
     this.itemsContainer?.classList.toggle("is-hidden", isEmpty);
     this.clearCartButton?.classList.toggle("is-hidden", isEmpty);
-
-    if (this.checkoutButton) {
-      this.checkoutButton.disabled = isEmpty;
-    }
-
+    if (this.checkoutButton) this.checkoutButton.disabled = isEmpty || this.isProcessing;
+    if (this.promoButton) this.promoButton.disabled = isEmpty || this.isProcessing;
+    if (isEmpty) this.resetPromo();
     return true;
   }
 
-  /* ============================================================================
-    CHECKOUT
-  ============================================================================ */
+  setGlobalProcessing(processing) {
+    if (this.clearCartButton) this.clearCartButton.disabled = processing;
+    if (this.checkoutButton) this.checkoutButton.disabled = processing || this.getCartItems().length === 0;
+    if (this.promoButton) this.promoButton.disabled = processing || this.getCartItems().length === 0;
+  }
 
-  checkout() {
-    const items = this.getCartItems();
-
-    if (items.length === 0) {
-      this.showToast("Your shopping cart is empty.");
+  async checkout() {
+    if (this.getCartItems().length === 0 || this.isProcessing) {
+      if (this.getCartItems().length === 0) this.showToast("Your shopping cart is empty.", true);
       return false;
     }
 
-    if (this.isProcessing) return false;
+    const totals = this.calculateTotals();
+    if (!window.confirm(`Create this order for ${this.formatCurrency(totals.total)}?`)) return false;
 
     this.isProcessing = true;
     this.setCheckoutLoading(true);
-
-    const products = items.map((item) => {
-      const quantityInput = item.querySelector(".quantity-input");
-
-      return {
-        cart_id: this.getValidNumber(item.dataset.cartId, 0),
-        sku: item.dataset.sku || "",
-        quantity: this.getValidNumber(quantityInput?.value, 1),
-        unit_price: this.getValidNumber(item.dataset.unitPrice, 0)
-      };
-    });
-
-    const totals = this.calculateTotals();
-
-    const checkoutData = {
-      action: "checkout",
-      products: products,
-      discount_percentage: this.discountPercentage,
-      subtotal: totals.subtotal,
-      discount: totals.discount,
-      delivery: totals.delivery,
-      total: totals.total
-    };
-
-    console.log("Checkout data:", checkoutData);
-
-    /*
-     * Replace this timeout with your fetch request:
-     *
-     * fetch("../../controller/order/cart.php", {
-     *   method: "POST",
-     *   headers: {
-     *     "Content-Type": "application/json"
-     *   },
-     *   body: JSON.stringify(checkoutData)
-     * })
-     *   .then((response) => {
-     *     if (!response.ok) {
-     *       throw new Error(`Network error: ${response.status}`);
-     *     }
-     *
-     *     return response.json();
-     *   })
-     *   .then((responseData) => {
-     *     if (!responseData.success) {
-     *       throw new Error(
-     *         responseData.message ||
-     *         "Unable to proceed to checkout."
-     *       );
-     *     }
-     *
-     *     window.location.assign(responseData.checkout_url);
-     *   })
-     *   .catch((error) => {
-     *     console.error("Checkout error:", error);
-     *     this.showToast(error.message || "Unable to proceed to checkout.");
-     *   })
-     *   .finally(() => {
-     *     this.isProcessing = false;
-     *     this.setCheckoutLoading(false);
-     *   });
-     */
-
-    window.setTimeout(() => {
+    this.setGlobalProcessing(true);
+    try {
+      const data = await this.request("checkout", { promo_code: this.promoCode });
+      this.itemsContainer.replaceChildren();
+      this.resetPromo();
+      this.updateCartState();
+      const title = this.emptyState?.querySelector("h2");
+      const description = this.emptyState?.querySelector("p");
+      if (title) title.textContent = `Order #${data.order_id} created`;
+      if (description) description.textContent = "Your order is pending and has been saved successfully.";
+      this.showToast(data.message || "Your order was created successfully.");
+      return true;
+    } catch (error) {
+      this.showToast(error.message || "Your order could not be created.", true);
+      return false;
+    } finally {
       this.isProcessing = false;
       this.setCheckoutLoading(false);
-      this.showToast("Your order is ready to proceed to checkout.");
-    }, 700);
-
-    return true;
+      this.setGlobalProcessing(false);
+    }
   }
 
   setCheckoutLoading(isLoading) {
-    if (!this.checkoutButton) return false;
-
-    this.checkoutButton.disabled = isLoading || this.getCartItems().length === 0;
-
+    if (!this.checkoutButton) return;
     const textElement = this.checkoutButton.querySelector("span:first-child");
-
-    if (textElement) {
-      textElement.textContent = isLoading
-        ? "Processing..."
-        : "Proceed to checkout";
-    }
-
-    return true;
+    if (textElement) textElement.textContent = isLoading ? "Processing..." : "Proceed to checkout";
   }
 
-  /* ============================================================================
-    TOAST
-  ============================================================================ */
-
-  showToast(message) {
+  showToast(message, isError = false) {
     if (!this.toast) return false;
-
     window.clearTimeout(this.toastTimer);
-
-    this.toast.textContent = String(message ?? "");
+    this.toast.textContent = String(message || "");
+    this.toast.classList.toggle("is-error", isError);
     this.toast.classList.add("is-visible");
-
-    this.toastTimer = window.setTimeout(() => {
-      this.toast.classList.remove("is-visible");
-    }, 2800);
-
+    this.toastTimer = window.setTimeout(() => this.toast.classList.remove("is-visible"), 3800);
     return true;
   }
-
-  /* ============================================================================
-    HELPERS
-  ============================================================================ */
 
   getCartItems() {
-    if (!this.itemsContainer) return [];
-
-    return Array.from(
-      this.itemsContainer.querySelectorAll(".cart-item")
-    );
+    return this.itemsContainer
+      ? Array.from(this.itemsContainer.querySelectorAll(".cart-item"))
+      : [];
   }
 
   getValidNumber(value, fallback = 0) {
     const number = Number(value);
-
     return Number.isFinite(number) ? number : fallback;
   }
 
   formatCurrency(value) {
-    return this.currencyFormatter.format(
-      this.getValidNumber(value, 0)
-    );
+    return this.currencyFormatter.format(this.getValidNumber(value, 0));
   }
 }
-
-/* ============================================================================
-   GLOBAL INSTANCE
-============================================================================ */
 
 window.shoppingCart = new ShoppingCart();

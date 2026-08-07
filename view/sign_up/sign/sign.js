@@ -51,7 +51,7 @@ class ClassSignUp {
 
   // --- Ajax ---
   makeAjaxRequest() {
-    const url = "controller/customers/sing_up.php";
+    const url = "../../controller/customers/sing_up.php";
     const payload = {
       action: "requestSignUp",
       name: nameSignUp.value.trim(),
@@ -68,7 +68,7 @@ class ClassSignUp {
       .then(data => {
         if (data.response === true) {
           alert("User registered successfully.");
-          window.location.href = "../../view/log_in/index.php";
+          window.location.href = "../../view/product/index.php";
         } else {
           alert(data.error || "Could not complete the registration.");
         }
