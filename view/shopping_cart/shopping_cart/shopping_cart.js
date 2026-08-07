@@ -391,6 +391,9 @@ class ShoppingCart {
     if (this.checkoutButton) this.checkoutButton.disabled = isEmpty || this.isProcessing;
     if (this.promoButton) this.promoButton.disabled = isEmpty || this.isProcessing;
     if (isEmpty) this.resetPromo();
+    window.dispatchEvent(new CustomEvent("promoflow:cart-updated", {
+      detail: { count: totalItems }
+    }));
     return true;
   }
 
