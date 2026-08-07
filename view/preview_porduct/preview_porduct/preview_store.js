@@ -21,79 +21,33 @@ export class PreviewStore {
   }
 
   clearVariationSelections() {
-    this.rootVariation = null;
-    this.selectedByLevel = new Map();
-    this.groupLevels = new Map();
+    this.selectedPath = [];
   }
 
-  setRootVariation(row) {
-    this.rootVariation = row && typeof row === "object" ? row : null;
-  }
+  setPathEntry(level, row) {
+    if (!row || typeof row !== "object") return false;
 
-  setGroupSelection(level, groupKey, row, metadata = {}) {
-    const safeLevel = Math.max(1, Number(level) || 1);
-    const safeKey = String(groupKey || "").trim();
-    if (!safeKey || !row || typeof row !== "object") return false;
+    const numericLevel = Number(level);
+    const safeLevel = Number.isFinite(numericLevel)
+      ? Math.max(0, Math.trunc(numericLevel))
+      : 0;
 
-    const previousLevel = this.groupLevels.get(safeKey);
-    if (previousLevel !== undefined && previousLevel !== safeLevel) {
-      const previousMap = this.selectedByLevel.get(previousLevel);
-      previousMap?.delete(safeKey);
-      if (previousMap?.size === 0) this.selectedByLevel.delete(previousLevel);
-    }
-
-    if (!this.selectedByLevel.has(safeLevel)) {
-      this.selectedByLevel.set(safeLevel, new Map());
-    }
-
-    this.selectedByLevel.get(safeLevel).set(safeKey, {
-      row,
-      level: safeLevel,
-      groupKey: safeKey,
-      parentVariationId: Number(metadata.parentVariationId) || 0,
-      typeId: String(metadata.typeId || "")
-    });
-    this.groupLevels.set(safeKey, safeLevel);
+    this.selectedPath = this.selectedPath.slice(0, safeLevel);
+    this.selectedPath[safeLevel] = row;
     return true;
   }
 
-  getGroupSelection(groupKey) {
-    const safeKey = String(groupKey || "").trim();
-    const level = this.groupLevels.get(safeKey);
-    if (level === undefined) return null;
-    return this.selectedByLevel.get(level)?.get(safeKey) || null;
-  }
+  truncatePath(level) {
+    const numericLevel = Number(level);
+    const length = Number.isFinite(numericLevel)
+      ? Math.max(0, Math.trunc(numericLevel))
+      : 0;
 
-  removeGroupSelection(groupKey) {
-    const safeKey = String(groupKey || "").trim();
-    const level = this.groupLevels.get(safeKey);
-    if (level === undefined) return false;
-
-    const levelSelections = this.selectedByLevel.get(level);
-    levelSelections?.delete(safeKey);
-    if (levelSelections?.size === 0) this.selectedByLevel.delete(level);
-    this.groupLevels.delete(safeKey);
-    return true;
-  }
-
-  getSelectedEntries() {
-    const entries = [];
-    const levels = [...this.selectedByLevel.keys()].sort((a, b) => a - b);
-
-    for (const level of levels) {
-      for (const entry of this.selectedByLevel.get(level).values()) {
-        entries.push(entry);
-      }
-    }
-
-    return entries;
+    this.selectedPath = this.selectedPath.slice(0, length);
   }
 
   getSelectedRows() {
-    const rows = [];
-    if (this.rootVariation) rows.push(this.rootVariation);
-    rows.push(...this.getSelectedEntries().map((entry) => entry.row));
-    return rows;
+    return this.selectedPath.filter((row) => row && typeof row === "object");
   }
 
   getSelectedVariationIds() {

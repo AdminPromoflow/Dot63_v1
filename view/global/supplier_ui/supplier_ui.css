@@ -34,6 +34,33 @@ html {
   background: var(--supplier-bg);
 }
 
+body.body_category *,
+body.body_category *::before,
+body.body_category *::after,
+body.body_product_details *,
+body.body_product_details *::before,
+body.body_product_details *::after,
+body.body_variations *,
+body.body_variations *::before,
+body.body_variations *::after,
+body.body_images *,
+body.body_images *::before,
+body.body_images *::after,
+body.body_items *,
+body.body_items *::before,
+body.body_items *::after,
+body.body_prices *,
+body.body_prices *::before,
+body.body_prices *::after,
+body.body_dashboard_supplier *,
+body.body_dashboard_supplier *::before,
+body.body_dashboard_supplier *::after,
+body.body_product *,
+body.body_product *::before,
+body.body_product *::after {
+  box-sizing: border-box;
+}
+
 body.body_category,
 body.body_product_details,
 body.body_variations,
@@ -442,6 +469,10 @@ body.body_product > .nav-section {
   color: #b42318;
   border-color: #f1c7c4;
   background: #fff7f6;
+}
+
+#cancel_editing {
+  display: none;
 }
 
 .btn-danger:hover,
