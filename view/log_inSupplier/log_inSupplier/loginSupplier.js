@@ -1,5 +1,15 @@
 class ClassLogin {
   constructor() {
+  const togglePassword = document.querySelector(".toggle-pass");
+  togglePassword?.addEventListener("click", () => {
+    const showing = password.type === "text";
+    password.type = showing ? "password" : "text";
+    togglePassword.textContent = showing ? "Show" : "Hide";
+    togglePassword.dataset.show = showing ? "false" : "true";
+    togglePassword.setAttribute("aria-pressed", String(!showing));
+    togglePassword.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+  });
+
   loginEnter.addEventListener("click", function(){
     classLogin.makeAjaxRecuest();
   })
