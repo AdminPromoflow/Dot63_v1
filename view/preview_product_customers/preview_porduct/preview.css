@@ -690,6 +690,16 @@
   box-shadow: 0 0 0 2px rgba(233, 102, 44, 0.12);
 }
 
+.var-option.is-price-unavailable,
+.var-option.is-price-unavailable.is-selected {
+  border-color: #efb7b0;
+  background: var(--danger-soft);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.78;
+  transform: none;
+}
+
 .var-thumb {
   width: 46px;
   height: 46px;
@@ -718,6 +728,10 @@
   color: var(--accent-dark);
   font-size: 0.6rem;
   font-weight: 700;
+}
+
+.opt-price-extra.is-unavailable {
+  color: var(--danger);
 }
 
 .price-tiers {
@@ -1053,6 +1067,10 @@
     position: static;
     grid-column: 1 / -1;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .customer-product-preview .preview-sidebar {
+    grid-template-columns: 1fr;
   }
 }
 

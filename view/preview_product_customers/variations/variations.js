@@ -350,9 +350,6 @@ export class VariationsController {
   }
 
   isFreeExtra(row) {
-    const mode = String(row?.variation?.price_display_mode || "prices").toLowerCase();
-    if (mode !== "variation") return false;
-
     const prices = Array.isArray(row?.prices) ? row.prices : [];
     const quantity = Number(this.store.selectedQuantity);
 

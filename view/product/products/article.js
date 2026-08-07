@@ -65,9 +65,15 @@ class ProductsClass {
       action: "get_products"
     });
 
-    this.productsData = this.getPublishedProducts(result.result);
+    const initialProducts = this.getPublishedProducts(result.result);
 
-    await this.fetchTypeVariations(this.productsData.map(product => product.product_id));
+    await this.fetchTypeVariations(initialProducts.map(product => product.product_id));
+
+    if (!this.searchText.trim()) {
+      this.productsData = initialProducts;
+    }
+
+    return initialProducts;
   }
 
   selectCategoriesForProducts(products) {
@@ -228,6 +234,7 @@ class ProductsClass {
 
   drawProducts(products) {
     if (!this.articles) return;
+    const shouldRestoreSearchFocus = document.activeElement?.id === "product-search";
     this.articles.innerHTML = "";
 
     const panel = document.createElement("div");
@@ -248,7 +255,7 @@ class ProductsClass {
     title.textContent = "All Products";
     this.articles.append(panel, title);
 
-    if (this.searchText) {
+    if (shouldRestoreSearchFocus) {
       requestAnimationFrame(() => {
         search.focus();
         search.setSelectionRange(search.value.length, search.value.length);
