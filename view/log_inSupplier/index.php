@@ -21,7 +21,6 @@
 
 <body class="body_log_inSipplier">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
-  <?php include "../../view/log_inSupplier/navigation/navigation.php" ?>
   <?php include "../../view/log_inSupplier/log_inSupplier/loginSupplier.php";?>
 </body>
 </html>

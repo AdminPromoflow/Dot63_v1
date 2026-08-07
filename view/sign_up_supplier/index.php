@@ -22,7 +22,6 @@
 <body class="body_sigUp_Supplier">
   <?php include "../../view/global/PageLoader/PageLoader.php" ?>
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
-  <?php include "../../view/sign_up_supplier/navigation/navigation.php" ?>
   <?php include "../../view/sign_up_supplier/sign_up_supplier/sign_up_supplier.php";?>
 </body>
 </html>
