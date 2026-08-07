@@ -15,6 +15,10 @@ class Product {
         $this->getProducts();
       break;
 
+      case 'search_products':
+        $this->searchProducts($data);
+      break;
+
       case 'get_products_by_group':
         $this->getProductsByGroup($data);
       break;
@@ -447,6 +451,27 @@ class Product {
     $products   = new Products($connection);
 
     $response   = $products->getProducts();
+
+    echo json_encode($response);
+  }
+
+  private function searchProducts($data){
+    header('Content-Type: application/json; charset=utf-8');
+
+    $search = trim((string)($data['search'] ?? ''));
+
+    if (mb_strlen($search) > 200) {
+      http_response_code(422);
+      echo json_encode([
+        'success' => false,
+        'error' => 'Search text is too long'
+      ]);
+      return;
+    }
+
+    $connection = new Database();
+    $products = new Products($connection);
+    $response = $products->searchProducts($search);
 
     echo json_encode($response);
   }

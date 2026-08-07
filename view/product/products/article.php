@@ -33,7 +33,8 @@ $jsTime = filemtime('../../view/product/products/article.js');
         <input
           type="search"
           id="product-search"
-          placeholder="Search by name, category, group or SKU..."
+          placeholder="Search by name, description, tagline or item..."
+          autocomplete="off"
         >
       </div>
 

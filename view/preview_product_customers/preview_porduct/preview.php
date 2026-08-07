@@ -25,11 +25,11 @@ foreach ($moduleFiles as $moduleFile) {
 
 <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>?v=<?= $cssTime ?>">
 
-<main class="supplier-preview" aria-labelledby="sp-title">
+<main class="supplier-preview customer-product-preview" aria-labelledby="sp-title">
   <section id="preview_loading" class="preview-state preview-state--loading" aria-live="polite">
     <span class="preview-spinner" aria-hidden="true"></span>
     <div>
-      <strong>Preparing your product preview</strong>
+      <strong>Preparing this product</strong>
       <span>Loading the product, variations and pricing…</span>
     </div>
   </section>
@@ -37,11 +37,8 @@ foreach ($moduleFiles as $moduleFile) {
   <section id="preview_fatal" class="preview-state preview-state--error" hidden role="alert">
     <span class="preview-state-icon" aria-hidden="true">!</span>
     <div>
-      <strong>Preview unavailable</strong>
-      <span id="preview_fatal_message">The product preview could not be loaded.</span>
-      <a id="preview_login_link" class="btn btn-secondary btn-compact" href="../../view/log_inSupplier/index.php" hidden>
-        Sign in again
-      </a>
+      <strong>Product unavailable</strong>
+      <span id="preview_fatal_message">This product could not be loaded.</span>
     </div>
   </section>
 
@@ -50,18 +47,14 @@ foreach ($moduleFiles as $moduleFile) {
       <div class="preview-mode">
         <span class="preview-mode-icon" aria-hidden="true">◎</span>
         <div>
-          <strong>Customer preview</strong>
-          <span>This is how customers will see the configured product.</span>
+          <strong>Product configurator</strong>
+          <span>Choose your options and quantity to see an estimated total.</span>
         </div>
       </div>
 
       <div class="preview-actions">
-        <button type="button" class="btn btn-secondary" id="btn_back_edit">
-          Back to editing
-        </button>
-        <button type="button" class="btn btn-primary" id="btn_publish">
-          <span class="btn-label">Submit for approval</span>
-          <span class="btn-spinner" aria-hidden="true"></span>
+        <button type="button" class="btn btn-secondary" id="btn_back_products">
+          Back to products
         </button>
       </div>
     </header>
@@ -94,7 +87,6 @@ foreach ($moduleFiles as $moduleFile) {
         <header class="product-heading">
           <div class="product-heading-topline">
             <span id="sp_category" class="sp-category"></span>
-            <span id="product_status" class="status-pill" data-tone="draft">Draft</span>
           </div>
 
           <h1 id="sp-title" class="sp-title">Untitled product</h1>
@@ -125,7 +117,7 @@ foreach ($moduleFiles as $moduleFile) {
           <div id="wrap-variations-group" class="variations-stack"></div>
           <div id="variations_empty" class="preview-empty" hidden>
             <strong>No variations configured</strong>
-            <span>Add customer-selectable variations in the product editor.</span>
+            <span>This product does not require additional options.</span>
           </div>
         </section>
 
@@ -141,7 +133,7 @@ foreach ($moduleFiles as $moduleFile) {
           <div id="wrap-prices-group" class="price-tiers"></div>
           <div id="prices_empty" class="preview-empty" hidden>
             <strong>Pricing is not configured</strong>
-            <span>Add at least one quantity and price range before submitting.</span>
+            <span>Please contact the supplier for pricing.</span>
           </div>
         </section>
 
@@ -149,7 +141,7 @@ foreach ($moduleFiles as $moduleFile) {
           <div class="section-heading">
             <div>
               <span class="section-kicker">Details</span>
-              <h2 id="items_heading">What customers should know</h2>
+              <h2 id="items_heading">What you should know</h2>
             </div>
           </div>
           <div id="wrap-items-group" class="items-grid"></div>
@@ -167,19 +159,6 @@ foreach ($moduleFiles as $moduleFile) {
       </article>
 
       <aside class="preview-sidebar">
-        <section class="readiness-card" aria-labelledby="readiness_heading">
-          <div class="readiness-header">
-            <span class="readiness-mark" aria-hidden="true">✓</span>
-            <div>
-              <span class="section-kicker">Readiness</span>
-              <h2 id="readiness_heading">Product checklist</h2>
-            </div>
-          </div>
-
-          <p id="readiness_summary" class="readiness-summary"></p>
-          <ul id="readiness_list" class="readiness-list"></ul>
-        </section>
-
         <section class="buybox" aria-labelledby="summary_heading">
           <div class="buybox-header">
             <span class="section-kicker">Customer summary</span>
@@ -218,9 +197,8 @@ foreach ($moduleFiles as $moduleFile) {
           </dl>
 
           <p class="preview-only-note">
-            Checkout actions are disabled in supplier preview mode.
+            This estimate updates automatically when you change a product option or quantity.
           </p>
-          <button type="button" class="btn btn-customer-preview" disabled>Add to basket</button>
         </section>
       </aside>
     </section>

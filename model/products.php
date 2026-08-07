@@ -669,6 +669,95 @@ class Products {
       }
   }
 
+  public function searchProducts(string $search): array
+  {
+      $search = trim($search);
+
+      if ($search === '') {
+          return $this->getProducts();
+      }
+
+      try {
+          $pdo = $this->connection->getConnection();
+          $term = '%' . $search . '%';
+
+          $sql = "
+              SELECT
+                  p.product_id,
+                  p.SKU,
+                  p.name,
+                  p.is_approved,
+                  g.name AS group_name,
+                  c.name AS category_name,
+                  image.link AS image_link
+              FROM products p
+              LEFT JOIN `groups` g
+                  ON p.group_id = g.group_id
+              LEFT JOIN categories c
+                  ON g.category_id = c.category_id
+              LEFT JOIN variations image_variation
+                  ON p.product_id = image_variation.product_id
+              LEFT JOIN images image
+                  ON image_variation.variation_id = image.variation_id
+              WHERE COALESCE(p.name, '') LIKE :product_name
+                 OR COALESCE(p.description, '') LIKE :product_description
+                 OR COALESCE(p.descriptive_tagline, '') LIKE :descriptive_tagline
+                 OR EXISTS (
+                      SELECT 1
+                      FROM variations item_variation
+                      INNER JOIN items item
+                          ON item.variation_id = item_variation.variation_id
+                      WHERE item_variation.product_id = p.product_id
+                        AND COALESCE(item.name, '') LIKE :item_name
+                 )
+              ORDER BY p.product_id DESC
+          ";
+
+          $stmt = $pdo->prepare($sql);
+          $stmt->execute([
+              ':product_name' => $term,
+              ':product_description' => $term,
+              ':descriptive_tagline' => $term,
+              ':item_name' => $term
+          ]);
+
+          $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+          $products = [];
+
+          foreach ($rows as $row) {
+              $productId = $row['product_id'];
+
+              if (!isset($products[$productId])) {
+                  $products[$productId] = [
+                      'product_id'    => $row['product_id'],
+                      'SKU'           => $row['SKU'],
+                      'name'          => $row['name'],
+                      'is_approved'   => $row['is_approved'],
+                      'group_name'    => $row['group_name'],
+                      'category_name' => $row['category_name'],
+                      'images'        => []
+                  ];
+              }
+
+              if (!empty($row['image_link']) && !in_array($row['image_link'], $products[$productId]['images'])) {
+                  $products[$productId]['images'][] = $row['image_link'];
+              }
+          }
+
+          return [
+              'success' => true,
+              'result'  => array_values($products)
+          ];
+
+      } catch (PDOException $e) {
+          error_log('searchProducts error: ' . $e->getMessage());
+          return [
+              'success' => false,
+              'error'   => 'DB error'
+          ];
+      }
+  }
+
   public function updateDescription($id, $description) {
     $description = is_string($description) ? trim($description) : null;
     try {

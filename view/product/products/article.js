@@ -6,6 +6,7 @@ class ProductsClass {
     this.productsData = [];
     this.variationRows = [];
     this.searchText = "";
+    this.searchRequestController = null;
 
     this.categoryFilter?.addEventListener("change", () => this.applyFilters());
     this.variationFilters?.addEventListener("change", () => this.applyFilters());
@@ -14,11 +15,12 @@ class ProductsClass {
       .catch(error => console.error("Error loading product filters:", error));
   }
 
-  async post(url, data) {
+  async post(url, data, signal = null) {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      signal
     });
 
     if (!response.ok) throw new Error("Network error.");
@@ -57,14 +59,45 @@ class ProductsClass {
       action: "get_products"
     });
 
-    this.productsData = (result.result || []).filter(product =>
+    this.productsData = this.getPublishedProducts(result.result);
+
+    await this.fetchTypeVariations(this.productsData.map(product => product.product_id));
+    this.applyFilters();
+  }
+
+  getPublishedProducts(products) {
+    return (Array.isArray(products) ? products : []).filter(product =>
       Number(product.is_approved) === 1 &&
       product.category_name !== "Unassigned Category" &&
       product.group_name !== "Unassigned Group"
     );
+  }
 
-    await this.fetchTypeVariations(this.productsData.map(product => product.product_id));
-    this.applyFilters();
+  async fetchSearchProducts(searchText) {
+    this.searchRequestController?.abort();
+
+    const requestController = new AbortController();
+    this.searchRequestController = requestController;
+
+    try {
+      const result = await this.post("../../controller/products/product.php", {
+        action: "search_products",
+        search: String(searchText || "").trim()
+      }, requestController.signal);
+
+      if (this.searchRequestController !== requestController) return;
+
+      this.productsData = this.getPublishedProducts(result.result);
+      this.applyFilters();
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Error searching products:", error);
+      }
+    } finally {
+      if (this.searchRequestController === requestController) {
+        this.searchRequestController = null;
+      }
+    }
   }
 
   async fetchTypeVariations(productIds) {
@@ -96,10 +129,6 @@ class ProductsClass {
       if (selectedCategories.size && !selectedCategories.has(String(product.category_name || ""))) {
         return false;
       }
-
-      const searchable = [product.name, product.category_name, product.group_name, product.SKU]
-        .map(value => String(value || "").toLowerCase()).join(" ");
-      if (this.searchText && !searchable.includes(this.searchText)) return false;
 
       return Array.from(selectionsByType).every(([typeId, options]) =>
         this.variationRows.some(row =>
@@ -180,18 +209,25 @@ class ProductsClass {
     const search = document.createElement("input");
     search.type = "search";
     search.id = "product-search";
-    search.placeholder = "Search by name, category, group or SKU...";
+    search.placeholder = "Search by name, description, tagline or item...";
+    search.autocomplete = "off";
     search.value = this.searchText;
     search.addEventListener("input", event => {
-      this.searchText = event.target.value.toLowerCase().trim();
-      this.applyFilters();
-      document.getElementById("product-search")?.focus();
+      this.searchText = event.target.value;
+      this.fetchSearchProducts(this.searchText);
     });
     panel.append(label, search);
 
     const title = document.createElement("h1");
     title.textContent = "All Products";
     this.articles.append(panel, title);
+
+    if (this.searchText) {
+      requestAnimationFrame(() => {
+        search.focus();
+        search.setSelectionRange(search.value.length, search.value.length);
+      });
+    }
 
     if (!products.length) {
       const empty = document.createElement("p");

@@ -32,7 +32,6 @@ class CustomerPreviewApp {
     this.api = new PreviewApi();
     this.store = new PreviewStore();
     this.loadController = null;
-    this.submitController = null;
 
     this.gallery = new PreviewGallery();
     this.images = new ImagesRenderer();
@@ -57,11 +56,7 @@ class CustomerPreviewApp {
       fatal: document.getElementById("preview_fatal"),
       fatalMessage: document.getElementById("preview_fatal_message"),
       notice: document.getElementById("preview_notice"),
-      publish: document.getElementById("btn_publish"),
-      back: document.getElementById("btn_back_edit"),
-      status: document.getElementById("product_status"),
-      readiness: document.getElementById("readiness_list"),
-      readinessSummary: document.getElementById("readiness_summary"),
+      back: document.getElementById("btn_back_products"),
       itemsSection: document.getElementById("items_section"),
       artworkSection: document.getElementById("artwork_section")
     };
@@ -71,12 +66,11 @@ class CustomerPreviewApp {
 
   bindEvents() {
     this.elements.back?.addEventListener("click", () => this.goBack());
-    this.elements.publish?.addEventListener("click", () => this.submitForApproval());
   }
 
   async init() {
     if (!this.sku) {
-      this.showFatal("The product SKU is missing from this preview link.");
+      this.showFatal("The product SKU is missing from this link.");
       return;
     }
 
@@ -85,7 +79,7 @@ class CustomerPreviewApp {
     this.loadController = new AbortController();
 
     try {
-      const payload = await this.api.getSupplierPreview(this.sku, {
+      const payload = await this.api.getCustomerPreview(this.sku, {
         signal: this.loadController.signal
       });
 
@@ -95,7 +89,7 @@ class CustomerPreviewApp {
       await this.variations.loadRoot(payload.root_variation_id);
     } catch (error) {
       if (error.name === "AbortError") return;
-      this.showFatal(error.message || "The product preview could not be loaded.", error.status === 401);
+      this.showFatal(error.message || "The product could not be loaded.");
     }
   }
 
@@ -124,63 +118,6 @@ class CustomerPreviewApp {
       });
     }
 
-    this.renderStatus(product);
-    this.renderReadiness(payload.readiness || {});
-
-    const canSubmit = Boolean(payload.permissions?.can_submit);
-    if (this.elements.publish) {
-      this.elements.publish.hidden = product.is_approved || String(product.status) === "2";
-      this.elements.publish.disabled = !canSubmit;
-      this.elements.publish.title = canSubmit
-        ? "Submit this product for approval"
-        : "Complete every readiness check before submitting";
-    }
-  }
-
-  renderStatus(product) {
-    if (!this.elements.status) return;
-
-    let label = "Draft";
-    let tone = "draft";
-
-    if (product.is_approved) {
-      label = "Approved";
-      tone = "approved";
-    } else if (String(product.status) === "2") {
-      label = "Pending approval";
-      tone = "pending";
-    }
-
-    this.elements.status.textContent = label;
-    this.elements.status.dataset.tone = tone;
-  }
-
-  renderReadiness(readiness) {
-    if (!this.elements.readiness) return;
-    this.elements.readiness.innerHTML = "";
-
-    const checks = Array.isArray(readiness.checks) ? readiness.checks : [];
-    for (const check of checks) {
-      const item = document.createElement("li");
-      item.className = check.complete ? "is-complete" : "is-incomplete";
-
-      const icon = document.createElement("span");
-      icon.className = "readiness-icon";
-      icon.setAttribute("aria-hidden", "true");
-      icon.textContent = check.complete ? "✓" : "!";
-
-      const label = document.createElement("span");
-      label.textContent = check.label;
-      item.append(icon, label);
-      this.elements.readiness.appendChild(item);
-    }
-
-    if (this.elements.readinessSummary) {
-      this.elements.readinessSummary.textContent = readiness.complete
-        ? "Ready to submit for approval"
-        : `${readiness.issues?.length || 0} item${readiness.issues?.length === 1 ? "" : "s"} need attention`;
-      this.elements.readinessSummary.classList.toggle("is-ready", Boolean(readiness.complete));
-    }
   }
 
   renderSelectedPath() {
@@ -248,48 +185,8 @@ class CustomerPreviewApp {
     }
   }
 
-  async submitForApproval() {
-    if (!this.store.permissions?.can_submit || !this.elements.publish) return;
-
-    this.submitController?.abort();
-    this.submitController = new AbortController();
-    this.elements.publish.disabled = true;
-    this.elements.publish.classList.add("is-loading");
-    this.showMessage("Submitting your product for approval…", "info");
-
-    try {
-      const result = await this.api.submitForApproval(this.sku, {
-        signal: this.submitController.signal
-      });
-
-      this.store.product.status = "2";
-      this.store.permissions.can_submit = false;
-      this.renderStatus(this.store.product);
-      this.elements.publish.hidden = true;
-      this.showMessage(result.message || "Product submitted for approval.", "success");
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        const missing = Array.isArray(error.details?.missing)
-          ? ` Missing: ${error.details.missing.join(", ")}.`
-          : "";
-        this.showMessage(`${error.message}${missing}`, "error");
-        this.elements.publish.disabled = false;
-      }
-    } finally {
-      this.elements.publish.classList.remove("is-loading");
-    }
-  }
-
   goBack() {
-    const destination = new URL("../../view/product_details/index.php", window.location.href);
-    destination.searchParams.set("sku", this.sku);
-
-    const selected = [...this.store.getSelectedRows()].reverse().find((row) => row?.variation?.SKU);
-    const initialVariation = String(this.params.get("sku_variation") || "").trim();
-    const variationSku = String(selected?.variation?.SKU || initialVariation).trim();
-    if (variationSku) destination.searchParams.set("sku_variation", variationSku);
-
-    window.location.assign(destination);
+    window.location.assign(new URL("../../view/product/index.php", window.location.href));
   }
 
   setLoading(loading) {
@@ -297,14 +194,11 @@ class CustomerPreviewApp {
     if (this.elements.content) this.elements.content.hidden = loading;
   }
 
-  showFatal(message, showLogin = false) {
+  showFatal(message) {
     this.setLoading(false);
     if (this.elements.content) this.elements.content.hidden = true;
     if (this.elements.fatal) this.elements.fatal.hidden = false;
     if (this.elements.fatalMessage) this.elements.fatalMessage.textContent = message;
-
-    const loginLink = document.getElementById("preview_login_link");
-    if (loginLink) loginLink.hidden = !showLogin;
   }
 
   showMessage(message, tone = "info") {

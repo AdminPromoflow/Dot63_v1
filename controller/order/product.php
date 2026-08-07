@@ -19,6 +19,18 @@ class Product {
         $this->getSupplierVariationPrices($data);
         break;
 
+      case 'get_customer_preview':
+        $this->getCustomerPreview($data);
+        break;
+
+      case 'get_customer_variation_children':
+        $this->getCustomerVariationChildren($data);
+        break;
+
+      case 'get_customer_variation_prices':
+        $this->getCustomerVariationPrices($data);
+        break;
+
       case 'get_preview_product_details':
         $this->getPreviewProductDetails($data);
         break;
@@ -368,6 +380,212 @@ class Product {
       $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
       $pricesByVariation = [];
       foreach ($rows as $row) {
+          $id = (int)$row['variation_id'];
+          if (!isset($pricesByVariation[$id])) {
+              $pricesByVariation[$id] = [
+                  'variation_id' => $id,
+                  'price' => (float)$row['price'],
+                  'price_display_mode' => (string)$row['price_display_mode'],
+              ];
+          }
+      }
+
+      echo json_encode([
+          'success' => true,
+          'prices' => array_values($pricesByVariation),
+      ], JSON_UNESCAPED_UNICODE);
+  }
+
+  private function getCustomerProduct(PDO $pdo, string $sku): ?array
+  {
+      $stmt = $pdo->prepare("
+          SELECT
+              p.product_id,
+              p.SKU AS sku,
+              p.name,
+              p.description,
+              p.descriptive_tagline,
+              p.group_id,
+              s.company_name,
+              s.contact_name,
+              g.name AS group_name,
+              c.category_id,
+              c.name AS category_name,
+              (
+                  SELECT v.variation_id
+                  FROM variations v
+                  WHERE v.product_id = p.product_id
+                    AND (
+                      LOWER(TRIM(v.name)) = 'default'
+                      OR v.parent_id IS NULL
+                    )
+                  ORDER BY
+                    CASE WHEN LOWER(TRIM(v.name)) = 'default' THEN 0 ELSE 1 END,
+                    v.variation_id ASC
+                  LIMIT 1
+              ) AS root_variation_id
+          FROM products p
+          INNER JOIN suppliers s ON s.supplier_id = p.supplier_id
+          LEFT JOIN `groups` g ON g.group_id = p.group_id
+          LEFT JOIN categories c ON c.category_id = g.category_id
+          WHERE LOWER(TRIM(p.SKU)) = LOWER(:sku)
+            AND p.is_approved = 1
+          LIMIT 1
+      ");
+      $stmt->execute([':sku' => $sku]);
+
+      $row = $stmt->fetch(PDO::FETCH_ASSOC);
+      return $row ?: null;
+  }
+
+  private function getCustomerPreview(array $data): void
+  {
+      header('Content-Type: application/json; charset=utf-8');
+
+      $sku = trim((string)($data['sku'] ?? ''));
+      if ($sku === '') {
+          $this->jsonError('Product SKU is required.');
+          return;
+      }
+
+      $database = new Database();
+      $pdo = $database->getConnection();
+      $product = $this->getCustomerProduct($pdo, $sku);
+
+      if (!$product) {
+          $this->jsonError('This product is unavailable.', 404);
+          return;
+      }
+
+      echo json_encode([
+          'success' => true,
+          'product' => [
+              'id' => (int)$product['product_id'],
+              'sku' => (string)$product['sku'],
+              'name' => (string)($product['name'] ?? ''),
+              'description' => (string)($product['description'] ?? ''),
+              'tagline' => (string)($product['descriptive_tagline'] ?? ''),
+              'supplier_name' => (string)($product['company_name'] ?: $product['contact_name']),
+              'category' => [
+                  'id' => (int)($product['category_id'] ?? 0),
+                  'name' => (string)($product['category_name'] ?? ''),
+              ],
+              'group' => [
+                  'id' => (int)($product['group_id'] ?? 0),
+                  'name' => (string)($product['group_name'] ?? ''),
+              ],
+          ],
+          'root_variation_id' => (int)($product['root_variation_id'] ?? 0),
+      ], JSON_UNESCAPED_UNICODE);
+  }
+
+  private function getCustomerVariationChildren(array $data): void
+  {
+      header('Content-Type: application/json; charset=utf-8');
+
+      $variationId = (int)($data['variation_id'] ?? 0);
+      if ($variationId <= 0) {
+          $this->jsonError('A valid variation is required.');
+          return;
+      }
+
+      $database = new Database();
+      $pdo = $database->getConnection();
+      $stmt = $pdo->prepare("
+          SELECT p.product_id
+          FROM variations v
+          INNER JOIN products p ON p.product_id = v.product_id
+          WHERE v.variation_id = :variation_id
+            AND p.is_approved = 1
+          LIMIT 1
+      ");
+      $stmt->execute([':variation_id' => $variationId]);
+
+      if (!$stmt->fetchColumn()) {
+          $this->jsonError('This variation is unavailable.', 404);
+          return;
+      }
+
+      $variation = new Variation($database);
+      $variation->setVariationId($variationId);
+
+      $children = $variation->getVariationChildrenById();
+      $current = $variation->getDetailsCurrentVariationById();
+      $types = $variation->getTypeVariationsChildByVariationId();
+
+      if (isset($children['success']) && $children['success'] === false) {
+          $this->jsonError((string)($children['error'] ?? 'Unable to load variations.'), 500);
+          return;
+      }
+
+      if (isset($current['success']) && $current['success'] === false) {
+          $this->jsonError((string)($current['error'] ?? 'Unable to load the selected variation.'), 500);
+          return;
+      }
+
+      if (isset($types['success']) && $types['success'] === false) {
+          $this->jsonError((string)($types['error'] ?? 'Unable to load variation types.'), 500);
+          return;
+      }
+
+      if (($children['success'] ?? null) === true && isset($children['data'])) {
+          $children = is_array($children['data']) ? $children['data'] : [];
+      }
+
+      echo json_encode([
+          'success' => true,
+          'current' => $current,
+          'children' => array_values(is_array($children) ? $children : []),
+          'types' => array_values(is_array($types) ? $types : []),
+      ], JSON_UNESCAPED_UNICODE);
+  }
+
+  private function getCustomerVariationPrices(array $data): void
+  {
+      header('Content-Type: application/json; charset=utf-8');
+
+      $sku = trim((string)($data['sku'] ?? ''));
+      $quantity = (int)($data['quantity'] ?? 0);
+      $ids = array_values(array_unique(array_filter(
+          array_map('intval', is_array($data['ids'] ?? null) ? $data['ids'] : []),
+          fn($id) => $id > 0
+      )));
+
+      if ($sku === '' || $quantity <= 0 || empty($ids)) {
+          $this->jsonError('Product, quantity and variation IDs are required.');
+          return;
+      }
+
+      $database = new Database();
+      $pdo = $database->getConnection();
+      $product = $this->getCustomerProduct($pdo, $sku);
+
+      if (!$product) {
+          $this->jsonError('This product is unavailable.', 404);
+          return;
+      }
+
+      $placeholders = implode(',', array_fill(0, count($ids), '?'));
+      $params = array_merge([(int)$product['product_id'], $quantity, $quantity], $ids);
+
+      $stmt = $pdo->prepare("
+          SELECT
+              v.variation_id,
+              pr.price,
+              v.price_display_mode
+          FROM variations v
+          INNER JOIN prices pr ON pr.variation_id = v.variation_id
+          WHERE v.product_id = ?
+            AND ? >= pr.min_quantity
+            AND (pr.max_quantity IS NULL OR pr.max_quantity <= 0 OR ? <= pr.max_quantity)
+            AND v.variation_id IN ($placeholders)
+            AND v.price_display_mode = 'variation'
+          ORDER BY v.variation_id, pr.min_quantity DESC
+      ");
+      $stmt->execute($params);
+
+      $pricesByVariation = [];
+      foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
           $id = (int)$row['variation_id'];
           if (!isset($pricesByVariation[$id])) {
               $pricesByVariation[$id] = [

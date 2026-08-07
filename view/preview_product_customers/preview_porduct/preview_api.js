@@ -1,7 +1,6 @@
 export class PreviewApi {
   constructor(options = {}) {
     this.previewUrl = options.previewUrl || "../../controller/order/product.php";
-    this.productUrl = options.productUrl || "../../controller/products/product.php";
   }
 
   async request(url, payload, options = {}) {
@@ -31,33 +30,26 @@ export class PreviewApi {
     return data;
   }
 
-  getSupplierPreview(sku, options = {}) {
+  getCustomerPreview(sku, options = {}) {
     return this.request(this.previewUrl, {
-      action: "get_supplier_preview",
+      action: "get_customer_preview",
       sku
     }, options);
   }
 
   getVariationChildren(variationId, options = {}) {
     return this.request(this.previewUrl, {
-      action: "get_supplier_variation_children",
+      action: "get_customer_variation_children",
       variation_id: variationId
     }, options);
   }
 
   getVariationPrices(sku, variationIds, quantity, options = {}) {
     return this.request(this.previewUrl, {
-      action: "get_supplier_variation_prices",
+      action: "get_customer_variation_prices",
       sku,
       ids: variationIds,
       quantity
-    }, options);
-  }
-
-  submitForApproval(sku, options = {}) {
-    return this.request(this.productUrl, {
-      action: "publish_product",
-      sku
     }, options);
   }
 }
