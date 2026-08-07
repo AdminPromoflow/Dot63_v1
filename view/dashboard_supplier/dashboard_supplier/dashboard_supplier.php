@@ -6,10 +6,14 @@ $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard
 
 <main class="dashboard_supplier" aria-labelledby="dashboard_supplier-title">
   <header class="ds-header">
-    <h1 id="dashboard_supplier-title">Supplier Dashboard</h1>
+    <div class="ds-heading">
+      <p class="ds-eyebrow">Supplier workspace</p>
+      <h1 id="dashboard_supplier-title">Supplier Dashboard</h1>
+      <p class="ds-subtitle">Track orders, manage your catalogue and keep every product moving from setup to production.</p>
+    </div>
     <div class="ds-actions">
       <button id="button_new_product" class="btn btn-primary" type="button">+ New Product</button>
-      <a href="../../view/products_supplier/index.php"><button class="btn" type="button">Products</button></a>
+      <a class="btn" href="../../view/products_supplier/index.php">View products</a>
     </div>
   </header>
 
@@ -32,14 +36,14 @@ $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard
       <small class="muted">Approval required</small>
     </article>
 
-    <a href="../../view/messages/index.php">
-  <article class="card stat">
-      <h2>Messages</h2>
-      <p class="stat-num">3</p>
-      <small class="muted">2 unread</small>
-    </article>
+    <a href="../../view/messages/index.php" aria-label="Open messages">
+      <article class="card stat">
+        <h2>Messages</h2>
+        <p class="stat-num">3</p>
+        <small class="muted">2 unread</small>
+      </article>
+    </a>
   </section>
-  </a>
   <section class="ds-columns">
     <!-- Tabla: últimos pedidos -->
     <div class="card table-card" aria-labelledby="recent-orders-title">

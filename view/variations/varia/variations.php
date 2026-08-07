@@ -17,30 +17,10 @@ $jsVersion =
     : '';
 
 ?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>
-    Product variations
-  </title>
-
-  <link
-    rel="stylesheet"
-    href="../../view/variations/varia/variations.css<?= $cssVersion ? '?v=' . $cssVersion : '' ?>"
-  >
-
-</head>
-
-<body>
+<link
+  rel="stylesheet"
+  href="../../view/variations/varia/variations.css<?= $cssVersion ? '?v=' . $cssVersion : '' ?>"
+>
 
   <main
     class="create_product"
@@ -535,7 +515,3 @@ $jsVersion =
   <script
     src="../../view/variations/varia/variations.js<?= $jsVersion ? '?v=' . $jsVersion : '' ?>"
   ></script>
-
-</body>
-
-</html>

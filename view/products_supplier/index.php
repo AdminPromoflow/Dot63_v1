@@ -16,12 +16,13 @@
 
   <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
 
-  <link rel="stylesheet" href="../../view/product/style.css?v=<?php echo filemtime("../../view/product/style.css"); ?>">
+  <link rel="stylesheet" href="../../view/products_supplier/style.css?v=<?php echo filemtime("../../view/products_supplier/style.css"); ?>">
 </head>
 
 <body class="body_product">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/products_supplier/navigation/navigation.php" ?>
   <?php include "../../view/products_supplier/products/article.php";?>
+  <?php include "../../view/global/supplier_ui/supplier_ui.php"; ?>
 </body>
 </html>

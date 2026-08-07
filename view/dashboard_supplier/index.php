@@ -22,5 +22,6 @@
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/dashboard_supplier/navigation/navigation.php" ?>
   <?php include "../../view/dashboard_supplier/dashboard_supplier/dashboard_supplier.php";?>
+  <?php include "../../view/global/supplier_ui/supplier_ui.php"; ?>
 </body>
 </html>

@@ -5,11 +5,16 @@ $jsTime  = filemtime('../../view/products_supplier/products/article.js');
 <link rel="stylesheet" href="../../view/products_supplier/products/article.css?v=<?= $cssTime ?>">
 
 <main class="dashboard_supplier" aria-labelledby="products-title">
-
-
-
-  <!-- Toolbar: solo conteo y orden -->
-
+  <header class="ds-header">
+    <div class="ds-heading">
+      <p class="ds-eyebrow">Catalogue management</p>
+      <h1 id="products-title">Products</h1>
+      <p class="ds-subtitle">Search, filter and update the products connected to your supplier account.</p>
+    </div>
+    <div class="ds-actions">
+      <a class="btn" href="../../view/dashboard_supplier/index.php">Back to dashboard</a>
+    </div>
+  </header>
 
   <!-- Filtros -->
   <section class="card products__filters" aria-labelledby="filters-title">

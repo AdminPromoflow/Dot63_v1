@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /* Filesystem path for filemtime */
-$navCssFs = __DIR__ . '/view/products_supplier/navigation/navigation.css';
+$navCssFs = __DIR__ . '/navigation.css';
 
 /* Public path used in HTML */
 $navCssPublic = '../../view/products_supplier/navigation/navigation.css';
@@ -15,8 +15,8 @@ $navCssV = is_file($navCssFs) ? filemtime($navCssFs) : time();
   If href is null, the item is rendered as the current page.
 */
 $breadcrumbs = $breadcrumbs ?? [
-  ['label' => 'Main', 'href' => '../Home/index.php'],
-  ['label' => 'About Us', 'href' => null],
+  ['label' => 'Supplier dashboard', 'href' => '../../view/dashboard_supplier/index.php'],
+  ['label' => 'Products', 'href' => null],
 ];
 ?>
 

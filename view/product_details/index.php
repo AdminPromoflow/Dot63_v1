@@ -23,6 +23,7 @@
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/product_details/product_details/product_details.php";?>
+  <?php include "../../view/global/supplier_ui/supplier_ui.php"; ?>
 
 </body>
 </html>

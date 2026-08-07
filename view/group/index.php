@@ -16,7 +16,7 @@
 
   <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
 
-  <link rel="stylesheet" href="../../view/category/style.css?v=<?php echo filemtime("../../view/category/style.css"); ?>">
+  <link rel="stylesheet" href="../../view/group/style.css?v=<?php echo filemtime("../../view/group/style.css"); ?>">
 </head>
 
 <body class="body_category">
@@ -24,6 +24,7 @@
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/group/group/group.php";?>
+  <?php include "../../view/global/supplier_ui/supplier_ui.php"; ?>
 
 </body>
 

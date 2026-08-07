@@ -15,12 +15,13 @@
 
   <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
 
-  <link rel="stylesheet" href="../../view/product_details/style.css?v=<?php echo filemtime("../../view/product_details/style.css"); ?>">
+  <link rel="stylesheet" href="../../view/variations/style.css?v=<?php echo filemtime("../../view/variations/style.css"); ?>">
 </head>
 
-<body class="body_product_details">
+<body class="body_variations">
   <script src="../../view/global/security/security_helper.js" type="text/javascript"></script>  
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/variations/varia/variations.php";?>
+  <?php include "../../view/global/supplier_ui/supplier_ui.php"; ?>
 </body>
 </html>

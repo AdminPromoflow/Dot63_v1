@@ -4,29 +4,26 @@ $cssTime = filemtime('../../view/global/menu_supplier/menu_general.css'); // eje
 $jsTime = filemtime('../../view/global/menu_supplier/menu_general.js');   // ejemplo: '../Home/5.Video/video.js'
 ?>
 <link rel="stylesheet" href="../../view/global/menu_supplier/menu_general.css?v=<?= $cssTime ?>">
-<!-- ===== HEADER PRINCIPAL DE LA PÁGINA ===== -->
-<!-- HEADER -->
 <header class="site-header">
-  <!-- Marca / logo -->
-  <a class="brand" href="../../view/dashboard_supplier/index.php" aria-label="Inicio">
-    <h1 class="brand-text">.63</h1>
-    <!-- Si quieres imagen, descomenta:
-    <img src="../../view/login/menu/img/logo.png" alt="" class="brand-logo">
-    -->
+  <a class="brand" href="../../view/dashboard_supplier/index.php" aria-label="PromoFlow supplier dashboard">
+    <span class="brand-mark"><span>.</span>63</span>
+    <span class="brand-copy">
+      <strong>PromoFlow</strong>
+      <small>Supplier portal</small>
+    </span>
   </a>
 
-  <!-- Toggle (checkbox) -->
   <input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+  <label for="nav-toggle" class="burger" aria-label="Open menu" aria-controls="site-nav">
+    <span></span>
+  </label>
 
-  <!-- Botón hamburguesa -->
-  <label for="nav-toggle" class="burger" aria-label="Abrir menú" aria-controls="site-nav"></label>
-
-  <!-- Navegación -->
   <nav id="site-nav" class="nav">
     <ul class="nav-list">
-      <li><a class="cta" id="logout" >Logout</a></li>
+      <li><a href="../../view/dashboard_supplier/index.php">Dashboard</a></li>
+      <li><a href="../../view/products_supplier/index.php">Products</a></li>
+      <li><button class="cta" id="logout" type="button">Log out</button></li>
     </ul>
   </nav>
-
 </header>
 <script src="../../view/global/menu_supplier/menu_general.js?v=<?= $jsTime ?>" type="text/javascript"></script>
