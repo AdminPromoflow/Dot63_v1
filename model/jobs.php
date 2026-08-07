@@ -421,7 +421,7 @@ class Jobs
             ");
             $subtotalStatement->execute($jobIds);
             $subtotal = max(0, (float)$subtotalStatement->fetchColumn());
-            $shipping = $subtotal > 0 && $subtotal < 200000 ? 15000.0 : 0.0;
+            $shipping = 0.0;
             $discount = 0.0;
 
             $promotionCode = strtoupper(trim($promotionCode));
@@ -453,7 +453,7 @@ class Jobs
                 INSERT INTO orders
                     (status, created_at, currency, subtotal, shipping_total, customer_id)
                 VALUES
-                    ('pending', :created_at, 'COP', :subtotal, :shipping_total, :customer_id)
+                    ('pending', :created_at, 'GBP', :subtotal, :shipping_total, :customer_id)
             ");
             $orderStatement->execute([
                 ':created_at' => date('Y-m-d H:i:s'),

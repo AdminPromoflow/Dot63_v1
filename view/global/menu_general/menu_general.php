@@ -78,7 +78,7 @@ $logoutAction = $isCustomerLoggedIn ? 'logout_customer' : 'logout_supplier';
     <span></span>
   </button>
 
-  <button class="general-menu__backdrop" type="button" aria-label="Close navigation" tabindex="-1"></button>
+  <div class="general-menu__backdrop" aria-hidden="true"></div>
 
   <nav class="general-menu__nav" id="general-menu-navigation" aria-label="Main navigation">
     <ul class="general-menu__list">

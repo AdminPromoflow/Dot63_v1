@@ -6,7 +6,7 @@ function shoppingCartEscape($value): string
 
 function shoppingCartCurrency($value): string
 {
-  return '$' . number_format((float)$value, 0, ',', '.');
+  return '£' . number_format((float)$value, 2, '.', ',');
 }
 
 function shoppingCartImageUrl($value): string
@@ -18,7 +18,7 @@ function shoppingCartImageUrl($value): string
     return $fallback;
   }
 
-  if (preg_match('#^https?://#i', $value) === 1 || str_starts_with($value, 'data:image/')) {
+  if (preg_match('#^https?://#i', $value) === 1 || strpos($value, 'data:image/') === 0) {
     return $value;
   }
 
@@ -194,17 +194,17 @@ $emptyLinkLabel = $isCartAuthenticated ? 'Browse products' : 'Log in';
           <div class="summary-lines">
             <div class="summary-line">
               <span>Subtotal</span>
-              <strong id="cart-subtotal">$0</strong>
+              <strong id="cart-subtotal">£0.00</strong>
             </div>
 
             <div class="summary-line discount-line is-hidden" id="discount-line">
               <span>Discount</span>
-              <strong id="cart-discount">−$0</strong>
+              <strong id="cart-discount">−£0.00</strong>
             </div>
 
             <div class="summary-line">
-              <span>Estimated delivery</span>
-              <strong id="cart-delivery">$0</strong>
+              <span>Delivery</span>
+              <strong id="cart-delivery">£0.00</strong>
             </div>
           </div>
 
@@ -225,7 +225,7 @@ $emptyLinkLabel = $isCartAuthenticated ? 'Browse products' : 'Log in';
               <small>Taxes included where applicable</small>
             </div>
 
-            <strong id="cart-total">$0</strong>
+            <strong id="cart-total">£0.00</strong>
           </div>
 
           <button type="button" class="checkout-button" id="checkout-button" <?= count($cartItems) === 0 ? 'disabled' : '' ?>>

@@ -24,12 +24,11 @@ class ShoppingCart {
     this.toastTimer = null;
     this.isProcessing = false;
 
-    this.currencyFormatter = new Intl.NumberFormat("es-CO", {
+    this.currencyFormatter = new Intl.NumberFormat("en-GB", {
       style: "currency",
-      currency: "COP",
-      currencyDisplay: "narrowSymbol",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      currency: "GBP",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
 
     if (document.readyState === "loading") {
@@ -268,7 +267,7 @@ class ShoppingCart {
     if (this.discountElement) this.discountElement.textContent = `−${this.formatCurrency(discount)}`;
     if (this.deliveryElement) {
       this.deliveryElement.textContent = subtotal > 0 && this.deliveryPrice === 0
-        ? "Free"
+        ? "Calculated at checkout"
         : this.formatCurrency(this.deliveryPrice);
     }
     if (this.totalElement) this.totalElement.textContent = this.formatCurrency(total);
@@ -277,8 +276,7 @@ class ShoppingCart {
   }
 
   calculateDelivery(subtotal) {
-    if (subtotal <= 0 || subtotal >= 200000) return 0;
-    return 15000;
+    return 0;
   }
 
   async applyPromoCode() {

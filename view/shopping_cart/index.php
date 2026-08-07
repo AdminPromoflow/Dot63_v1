@@ -76,10 +76,6 @@ $cartJsVersion = is_file($cartJsFs) ? filemtime($cartJsFs) : time();
     ['label' => 'Products', 'href' => '../product/index.php'],
     ['label' => 'Shopping cart', 'href' => null],
   ];
-  $navigationFile = __DIR__ . '/navigation/navigation.php';
-  if (is_file($navigationFile)) {
-    include $navigationFile;
-  }
 
   $shoppingCartFile = __DIR__ . '/shopping_cart/shopping_cart.php';
   if (is_file($shoppingCartFile)) {
