@@ -268,9 +268,11 @@ body.body_product > .nav-section {
   box-shadow: var(--supplier-shadow-soft);
 }
 
-.cp-card::before {
+.cp-card::before,
+.cp-card.cp-section::before {
   position: absolute;
   top: 1.15rem;
+  right: auto;
   bottom: 1.15rem;
   left: 0;
   width: 4px;

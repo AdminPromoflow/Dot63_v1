@@ -58,6 +58,13 @@ class HeaderAddProduct {
     if (target) {
       target.classList.add('active');
       target.setAttribute('aria-current', 'page');
+
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({
+        behavior: reducedMotion ? 'auto' : 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
     }
   }
 
