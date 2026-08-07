@@ -8,9 +8,9 @@ export class VariationsController {
     this.root = document.getElementById("wrap-variations-group");
     this.empty = document.getElementById("variations_empty");
     this.rowCache = new Map();
-    this.generation = 0;
-    this.requestVersions = new Map();
-    this.requestControllers = new Map();
+    this.version = 0;
+    this.abortController = null;
+    this.visited = new Set();
 
     this.bindEvents();
   }
@@ -38,12 +38,12 @@ export class VariationsController {
   }
 
   reset() {
-    for (const controller of this.requestControllers.values()) controller.abort();
-    this.requestControllers.clear();
-    this.requestVersions.clear();
+    this.abortController?.abort();
+    this.abortController = null;
+    this.version++;
     this.rowCache.clear();
-    this.generation++;
-    this.store.clearVariationSelections();
+    this.visited.clear();
+    this.store.selectedPath = [];
     if (this.root) this.root.innerHTML = "";
     this.setEmptyState(false);
   }
@@ -58,38 +58,30 @@ export class VariationsController {
       return false;
     }
 
-    return this.loadNode(rootId, 0, {
-      requestKey: "__root__",
-      generation: this.generation,
-      ancestry: [],
-      isRoot: true,
-      parentVariationId: 0,
-      typeId: ""
-    });
+    const version = this.version;
+    return this.loadNode(rootId, 0, version, true);
   }
 
-  async loadNode(variationId, pathIndex, context = {}) {
+  async loadNode(variationId, pathIndex, version, automatic = false) {
     const id = Number(variationId);
-    const generation = Number(context.generation ?? this.generation);
-    const ancestry = Array.isArray(context.ancestry) ? context.ancestry.map(Number) : [];
-    const requestKey = String(context.requestKey || `variation:${id}`);
+    if (!Number.isFinite(id) || id <= 0 || version !== this.version) return false;
 
-    if (!Number.isFinite(id) || id <= 0 || generation !== this.generation) return false;
-    if (ancestry.includes(id)) {
+    const visitKey = `${version}:${id}`;
+    if (this.visited.has(visitKey)) {
       this.onError("A circular variation relationship was detected. Check the parent variation settings.");
       return false;
     }
+    this.visited.add(visitKey);
 
-    const request = this.startRequest(requestKey);
+    this.abortController?.abort();
+    this.abortController = new AbortController();
 
     try {
       const result = await this.api.getVariationChildren(id, {
-        signal: request.controller.signal
+        signal: this.abortController.signal
       });
 
-      if (!this.isRequestCurrent(requestKey, request.version, id, generation, context.isRoot)) {
-        return false;
-      }
+      if (version !== this.version) return false;
 
       const current = result.current && typeof result.current === "object"
         ? result.current
@@ -97,110 +89,69 @@ export class VariationsController {
 
       if (current?.variation) {
         this.rowCache.set(String(id), current);
-
-        if (context.isRoot) {
-          this.store.setRootVariation(current);
-        } else {
-          this.store.setGroupSelection(pathIndex, requestKey, current, {
-            parentVariationId: context.parentVariationId,
-            typeId: context.typeId
-          });
-        }
+        this.store.setPathEntry(pathIndex, current);
       }
 
-      this.removeDescendantsOfVariation(id);
+      this.removeGroupsAfter(pathIndex);
       this.renderPath();
 
       const children = Array.isArray(result.children) ? result.children : [];
       const types = Array.isArray(result.types) ? result.types : [];
 
       if (children.length === 0) {
-        if (context.isRoot) {
-          this.setEmptyState(true, "No customer-selectable variations are configured yet.");
-        }
+        this.setEmptyState(this.store.selectedPath.length <= 1, "No customer-selectable variations are configured yet.");
         await this.prices.refreshVariationExtras();
         return true;
       }
 
       this.setEmptyState(false);
-      const childAncestry = [...ancestry, id];
-      const groups = this.renderChildGroups(
-        children,
-        types,
-        pathIndex + 1,
-        id,
-        childAncestry
-      );
+      const groups = this.renderChildGroups(children, types, pathIndex + 1);
+      const defaultButton = this.getAutomaticOption(groups?.[0]);
 
-      for (const group of groups) {
-        if (!this.isRequestCurrent(requestKey, request.version, id, generation, context.isRoot)) {
-          return false;
-        }
-
-        const defaultButton = this.getAutomaticOption(group);
-        if (defaultButton) await this.selectVariation(defaultButton, true);
+      if (defaultButton && version === this.version) {
+        await this.selectVariation(defaultButton, true, version);
       }
 
       return true;
     } catch (error) {
       if (error.name === "AbortError") return false;
-      if (generation === this.generation) {
-        this.onError(error.message || "Unable to load product variations.");
-      }
+      if (version === this.version) this.onError(error.message || "Unable to load product variations.");
       return false;
-    } finally {
-      if (this.requestControllers.get(requestKey) === request.controller) {
-        this.requestControllers.delete(requestKey);
-      }
     }
   }
 
-  async selectVariation(button, automatic = false) {
+  async selectVariation(button, automatic = false, inheritedVersion = null) {
     if (!button) return false;
 
-    const group = button.closest(".wrap-variations[data-group-key]");
-    if (!group) return false;
+    let version = inheritedVersion;
+    if (!automatic) {
+      this.version++;
+      version = this.version;
+      this.visited.clear();
+      this.abortController?.abort();
+    }
+
+    if (version === null) version = this.version;
 
     const variationId = Number(button.dataset.variationId);
-    const pathIndex = Number(group.dataset.pathIndex);
-    const groupKey = String(group.dataset.groupKey || "");
-    const typeId = String(group.dataset.typeId || "");
-    const parentVariationId = Number(group.dataset.parentVariationId);
-    const ancestry = this.parseAncestry(group.dataset.ancestorIds);
-
-    if (!Number.isFinite(variationId) || variationId <= 0 || !Number.isFinite(pathIndex) || !groupKey) {
-      return false;
-    }
+    const pathIndex = Number(button.dataset.pathIndex);
+    if (!Number.isFinite(variationId) || !Number.isFinite(pathIndex)) return false;
 
     const row = this.rowCache.get(String(variationId));
-    if (!row) return false;
-
-    const previous = this.store.getGroupSelection(groupKey);
-    const previousVariationId = Number(previous?.row?.variation?.variation_id);
-
-    if (Number.isFinite(previousVariationId) && previousVariationId !== variationId) {
-      this.removeDescendantsOfVariation(previousVariationId);
+    if (row) {
+      this.store.setPathEntry(pathIndex, row);
+    } else {
+      this.store.truncatePath(pathIndex);
     }
 
+    this.removeGroupsAfter(pathIndex);
     this.markSelected(button);
-    this.store.setGroupSelection(pathIndex, groupKey, row, {
-      parentVariationId,
-      typeId
-    });
     this.renderPath();
 
-    return this.loadNode(variationId, pathIndex, {
-      requestKey: groupKey,
-      generation: this.generation,
-      ancestry,
-      isRoot: false,
-      parentVariationId,
-      typeId,
-      automatic
-    });
+    return this.loadNode(variationId, pathIndex, version, automatic);
   }
 
-  renderChildGroups(children, types, pathIndex, parentVariationId, ancestry) {
+  renderChildGroups(children, types, pathIndex) {
     if (!this.root) return [];
 
     const typeNames = new Map(
@@ -224,37 +175,24 @@ export class VariationsController {
 
     const created = [];
     for (const groupData of grouped.values()) {
-      const groupKey = this.buildGroupKey(parentVariationId, groupData.typeId);
-      const existing = this.root.querySelector(`.wrap-variations[data-group-key="${CSS.escape(groupKey)}"]`);
-      if (existing) this.removeGroupBranch(existing);
-
-      const group = this.createGroup(
-        groupData,
-        pathIndex,
-        parentVariationId,
-        ancestry,
-        groupKey
-      );
-
+      const group = this.createGroup(groupData, pathIndex);
       if (group) {
         this.root.appendChild(group);
         created.push(group);
       }
     }
 
+    if (created[0]) this.openGroup(created[0]);
     return created;
   }
 
-  createGroup(groupData, pathIndex, parentVariationId, ancestry, groupKey) {
+  createGroup(groupData, pathIndex) {
     const group = document.createElement("section");
     group.className = "wrap-variations is-collapsible";
-    group.dataset.groupKey = groupKey;
     group.dataset.typeId = groupData.typeId;
     group.dataset.pathIndex = String(pathIndex);
-    group.dataset.parentVariationId = String(parentVariationId);
-    group.dataset.ancestorIds = ancestry.join(",");
 
-    const bodyId = `variation-options-${pathIndex}-${parentVariationId}-${groupData.typeId}`;
+    const bodyId = `variation-options-${pathIndex}-${groupData.typeId}`;
     const header = document.createElement("button");
     header.type = "button";
     header.className = "var-collapse-header";
@@ -293,7 +231,7 @@ export class VariationsController {
     options.className = "var-options";
 
     for (const row of groupData.rows) {
-      options.appendChild(this.createOption(row));
+      options.appendChild(this.createOption(row, pathIndex));
     }
 
     body.appendChild(options);
@@ -301,7 +239,7 @@ export class VariationsController {
     return group;
   }
 
-  createOption(row) {
+  createOption(row, pathIndex) {
     const variation = row.variation;
     const id = String(variation.variation_id);
     const label = String(variation.name || "Option");
@@ -310,6 +248,7 @@ export class VariationsController {
     button.type = "button";
     button.className = "var-option";
     button.dataset.variationId = id;
+    button.dataset.pathIndex = String(pathIndex);
     button.dataset.variationLabel = label;
     button.dataset.priceDisplayMode = String(variation.price_display_mode || "prices").toLowerCase();
     button.setAttribute("aria-pressed", "false");
@@ -342,15 +281,13 @@ export class VariationsController {
       group.querySelectorAll(".var-option[data-variation-id]")
     );
 
-    const freeButton = buttons.find((button) => {
+    return buttons.find((button) => {
       const row = this.rowCache.get(String(button.dataset.variationId));
-      return this.isFreeExtra(row);
-    });
-
-    return freeButton || buttons[0] || null;
+      return this.isIncludedExtra(row);
+    }) || buttons[0] || null;
   }
 
-  isFreeExtra(row) {
+  isIncludedExtra(row) {
     const mode = String(row?.variation?.price_display_mode || "prices").toLowerCase();
     if (mode !== "variation") return false;
 
@@ -376,18 +313,18 @@ export class VariationsController {
   }
 
   markSelected(button) {
-    const group = button.closest(".wrap-variations");
-    if (!group) return;
+    const pathIndex = button.dataset.pathIndex;
 
-    group.querySelectorAll(".var-option").forEach((item) => {
+    this.root?.querySelectorAll(`.wrap-variations[data-path-index="${CSS.escape(pathIndex)}"] .var-option`).forEach((item) => {
       const selected = item === button;
       item.classList.toggle("is-selected", selected);
       item.setAttribute("aria-pressed", String(selected));
     });
 
+    const group = button.closest(".wrap-variations");
     const label = button.dataset.variationLabel || "Selected option";
-    const selectedLabel = group.querySelector(".js-selected-variation-label");
-    const summary = group.querySelector(".variation-summary-pill");
+    const selectedLabel = group?.querySelector(".js-selected-variation-label");
+    const summary = group?.querySelector(".variation-summary-pill");
     if (selectedLabel) selectedLabel.textContent = label;
     if (summary) summary.textContent = `Selected: ${label}`;
     this.openGroup(group);
@@ -402,67 +339,11 @@ export class VariationsController {
     if (icon) icon.textContent = "−";
   }
 
-  removeDescendantsOfVariation(variationId) {
-    if (!this.root) return;
-    const id = Number(variationId);
-    if (!Number.isFinite(id) || id <= 0) return;
-
-    const groups = Array.from(
-      this.root.querySelectorAll(`.wrap-variations[data-parent-variation-id="${id}"]`)
-    );
-    groups.forEach((group) => this.removeGroupBranch(group));
-  }
-
-  removeGroupBranch(group) {
-    if (!group) return;
-
-    const groupKey = String(group.dataset.groupKey || "");
-    const selected = this.store.getGroupSelection(groupKey);
-    const selectedVariationId = Number(selected?.row?.variation?.variation_id);
-
-    if (Number.isFinite(selectedVariationId) && selectedVariationId > 0) {
-      this.removeDescendantsOfVariation(selectedVariationId);
-    }
-
-    this.invalidateRequest(groupKey);
-    this.store.removeGroupSelection(groupKey);
-    group.remove();
-  }
-
-  startRequest(requestKey) {
-    this.requestControllers.get(requestKey)?.abort();
-    const version = (this.requestVersions.get(requestKey) || 0) + 1;
-    const controller = new AbortController();
-    this.requestVersions.set(requestKey, version);
-    this.requestControllers.set(requestKey, controller);
-    return { version, controller };
-  }
-
-  invalidateRequest(requestKey) {
-    if (!requestKey) return;
-    this.requestControllers.get(requestKey)?.abort();
-    this.requestControllers.delete(requestKey);
-    this.requestVersions.set(requestKey, (this.requestVersions.get(requestKey) || 0) + 1);
-  }
-
-  isRequestCurrent(requestKey, version, variationId, generation, isRoot = false) {
-    if (generation !== this.generation) return false;
-    if (this.requestVersions.get(requestKey) !== version) return false;
-    if (isRoot) return true;
-
-    const selected = this.store.getGroupSelection(requestKey);
-    return Number(selected?.row?.variation?.variation_id) === Number(variationId);
-  }
-
-  buildGroupKey(parentVariationId, typeId) {
-    return `${Number(parentVariationId) || 0}:${String(typeId || "")}`;
-  }
-
-  parseAncestry(value) {
-    return String(value || "")
-      .split(",")
-      .map((id) => Number(id))
-      .filter((id) => Number.isFinite(id) && id > 0);
+  removeGroupsAfter(pathIndex) {
+    this.root?.querySelectorAll(".wrap-variations[data-path-index]").forEach((group) => {
+      if (Number(group.dataset.pathIndex) > Number(pathIndex)) group.remove();
+    });
+    this.store.selectedPath = this.store.selectedPath.slice(0, Number(pathIndex) + 1);
   }
 
   setEmptyState(show, message = "No variations configured.") {
