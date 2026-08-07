@@ -227,4 +227,83 @@ foreach ($moduleFiles as $moduleFile) {
   </div>
 </main>
 
+<div class="customer-auth-modal" id="customer_auth_modal" hidden>
+  <button type="button" class="customer-auth-backdrop" data-auth-close aria-label="Close authentication window"></button>
+
+  <section class="customer-auth-dialog" role="dialog" aria-modal="true" aria-labelledby="customer_auth_title">
+    <header class="customer-auth-header">
+      <div>
+        <span class="section-kicker">Continue your order</span>
+        <h2 id="customer_auth_title">Sign in or create an account</h2>
+        <p>Your selected product will stay ready while you authenticate.</p>
+      </div>
+      <button type="button" class="customer-auth-close" data-auth-close aria-label="Close authentication window">×</button>
+    </header>
+
+    <div class="customer-auth-tabs" role="tablist" aria-label="Authentication options">
+      <button type="button" id="customer_auth_login_tab" class="customer-auth-tab is-active" role="tab" aria-selected="true" aria-controls="customer_auth_login_panel" data-auth-view="login">
+        Log in
+      </button>
+      <button type="button" id="customer_auth_register_tab" class="customer-auth-tab" role="tab" aria-selected="false" aria-controls="customer_auth_register_panel" data-auth-view="register" tabindex="-1">
+        Register
+      </button>
+    </div>
+
+    <div id="customer_auth_feedback" class="customer-auth-feedback" role="status" aria-live="polite" hidden></div>
+
+    <div id="customer_auth_login_panel" class="customer-auth-panel" role="tabpanel" aria-labelledby="customer_auth_login_tab">
+      <form id="customer_login_form" novalidate>
+        <div class="customer-auth-field">
+          <label for="customer_login_email">Email address</label>
+          <input id="customer_login_email" name="email" type="email" autocomplete="email" maxlength="50" required>
+        </div>
+
+        <div class="customer-auth-field">
+          <label for="customer_login_password">Password</label>
+          <input id="customer_login_password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary customer-auth-submit">
+          <span class="btn-spinner" aria-hidden="true"></span>
+          <span class="customer-auth-submit-label">Log in and continue</span>
+        </button>
+
+        <p class="customer-auth-switch">New to Promoflow? <button type="button" data-auth-view="register">Create an account</button></p>
+      </form>
+    </div>
+
+    <div id="customer_auth_register_panel" class="customer-auth-panel" role="tabpanel" aria-labelledby="customer_auth_register_tab" hidden>
+      <form id="customer_register_form" novalidate>
+        <div class="customer-auth-field">
+          <label for="customer_register_name">Full name</label>
+          <input id="customer_register_name" name="name" type="text" autocomplete="name" maxlength="50" required>
+        </div>
+
+        <div class="customer-auth-field">
+          <label for="customer_register_email">Email address</label>
+          <input id="customer_register_email" name="email" type="email" autocomplete="email" maxlength="50" required>
+        </div>
+
+        <div class="customer-auth-field">
+          <label for="customer_register_password">Password</label>
+          <input id="customer_register_password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="customer_password_help" required>
+          <small id="customer_password_help">At least 8 characters with uppercase, lowercase, a number and a symbol.</small>
+        </div>
+
+        <div class="customer-auth-field">
+          <label for="customer_register_password_confirm">Confirm password</label>
+          <input id="customer_register_password_confirm" name="password_confirmation" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary customer-auth-submit">
+          <span class="btn-spinner" aria-hidden="true"></span>
+          <span class="customer-auth-submit-label">Register and continue</span>
+        </button>
+
+        <p class="customer-auth-switch">Already registered? <button type="button" data-auth-view="login">Log in</button></p>
+      </form>
+    </div>
+  </section>
+</div>
+
 <script type="module" src="<?= htmlspecialchars($entryPath) ?>?v=<?= $entryTime ?>"></script>

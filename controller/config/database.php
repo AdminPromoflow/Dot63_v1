@@ -18,8 +18,9 @@ class Database {
             // Set PDO error mode to exception for better error handling
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            // Handle connection errors
-            echo "Connection failed: " . $e->getMessage();
+            // Do not leak connection details or corrupt JSON API responses.
+            error_log("Database connection failed: " . $e->getMessage());
+            $this->connection = null;
         }
     }
 

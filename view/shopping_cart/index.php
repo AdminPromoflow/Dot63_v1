@@ -33,7 +33,7 @@ $cartJsVersion = is_file($cartJsFs) ? filemtime($cartJsFs) : time();
 
 <body class="shopping-cart-body">
   <?php
-  $menuFile = __DIR__ . '/../global/menu_supplier/menu_general.php';
+  $menuFile = __DIR__ . '/../view/global/menu_general/menu_general.php';
 
   if (is_file($menuFile)) {
     include $menuFile;
@@ -41,12 +41,7 @@ $cartJsVersion = is_file($cartJsFs) ? filemtime($cartJsFs) : time();
   ?>
 
   <?php
-  $navigationFile = __DIR__ . '/navigation/navigation.php';
 
-  if (is_file($navigationFile)) {
-    include $navigationFile;
-  }
-  ?>
 
   <?php
   $shoppingCartFile = __DIR__ . '/shopping_cart/shopping_cart.php';

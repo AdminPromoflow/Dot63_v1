@@ -23,12 +23,23 @@ class CartController
             session_start();
         }
 
-        $email = strtolower(trim((string)($_SESSION['email'] ?? '')));
-        if (empty($_SESSION['login']) || $email === '') {
+        $customerId = (int)($_SESSION['customer_id'] ?? 0);
+        $email = strtolower(trim((string)($_SESSION['customer_email'] ?? '')));
+        if (empty($_SESSION['customer_login']) || $customerId <= 0 || $email === '') {
             $this->respond([
                 'success' => false,
-                'error' => 'Please log in before adding a product to your cart.',
+                'code' => 'AUTH_REQUIRED',
+                'error' => 'Usuario no registrado. Inicia sesión o crea una cuenta para continuar.',
             ], 401);
+            return;
+        }
+
+        $intent = (string)($data['intent'] ?? 'add_to_cart');
+        if (!in_array($intent, ['add_to_cart', 'buy_now'], true)) {
+            $this->respond([
+                'success' => false,
+                'error' => 'Unsupported purchase intent.',
+            ], 422);
             return;
         }
 
@@ -43,7 +54,7 @@ class CartController
             return;
         }
 
-        $result['message'] = ($data['intent'] ?? '') === 'buy_now'
+        $result['message'] = $intent === 'buy_now'
             ? 'Your product is ready in the cart.'
             : 'The product was added to your cart.';
         $this->respond($result, 201);

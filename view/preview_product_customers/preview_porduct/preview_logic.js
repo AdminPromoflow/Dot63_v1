@@ -25,6 +25,212 @@ const [
   import(versionedModule("../variations/variations.js"))
 ]);
 
+class CustomerAuthModal {
+  constructor({ api, onAuthenticated, onDismissed }) {
+    this.api = api;
+    this.onAuthenticated = onAuthenticated;
+    this.onDismissed = onDismissed;
+    this.modal = document.getElementById("customer_auth_modal");
+    this.dialog = this.modal?.querySelector(".customer-auth-dialog") || null;
+    this.feedback = document.getElementById("customer_auth_feedback");
+    this.loginPanel = document.getElementById("customer_auth_login_panel");
+    this.registerPanel = document.getElementById("customer_auth_register_panel");
+    this.loginForm = document.getElementById("customer_login_form");
+    this.registerForm = document.getElementById("customer_register_form");
+    this.currentView = "login";
+    this.busy = false;
+    this.previousFocus = null;
+
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    this.modal?.querySelectorAll("[data-auth-close]").forEach((button) => {
+      button.addEventListener("click", () => this.close({ dismissed: true }));
+    });
+
+    this.modal?.querySelectorAll("[data-auth-view]").forEach((button) => {
+      button.addEventListener("click", () => this.setView(button.dataset.authView));
+    });
+
+    this.loginForm?.addEventListener("submit", (event) => this.submitLogin(event));
+    this.registerForm?.addEventListener("submit", (event) => this.submitRegistration(event));
+    document.addEventListener("keydown", (event) => this.handleKeydown(event));
+  }
+
+  open(view = "login", message = "") {
+    if (!this.modal) return;
+
+    this.previousFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    this.modal.hidden = false;
+    document.body.classList.add("customer-auth-open");
+    this.setView(view, { focus: false });
+    this.showFeedback(message, message ? "info" : "");
+
+    window.requestAnimationFrame(() => {
+      this.modal?.classList.add("is-open");
+      this.focusFirstField();
+    });
+  }
+
+  close({ dismissed = false, restoreFocus = true } = {}) {
+    if (!this.modal || this.modal.hidden || this.busy) return;
+
+    this.modal.classList.remove("is-open");
+    this.modal.hidden = true;
+    document.body.classList.remove("customer-auth-open");
+    this.clearPasswords();
+    this.showFeedback("");
+
+    if (restoreFocus) this.previousFocus?.focus?.();
+    if (dismissed) this.onDismissed?.();
+  }
+
+  setView(view, { focus = true } = {}) {
+    if (this.busy) return;
+    this.currentView = view === "register" ? "register" : "login";
+
+    const showingLogin = this.currentView === "login";
+    if (this.loginPanel) this.loginPanel.hidden = !showingLogin;
+    if (this.registerPanel) this.registerPanel.hidden = showingLogin;
+
+    this.modal?.querySelectorAll('[role="tab"][data-auth-view]').forEach((tab) => {
+      const active = tab.dataset.authView === this.currentView;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+      tab.tabIndex = active ? 0 : -1;
+    });
+
+    this.showFeedback("");
+    if (focus && !this.modal?.hidden) this.focusFirstField();
+  }
+
+  async submitLogin(event) {
+    event.preventDefault();
+    if (this.busy || !this.loginForm) return;
+
+    if (!this.loginForm.checkValidity()) {
+      this.loginForm.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(this.loginForm);
+    const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
+
+    await this.authenticate(() => this.api.loginCustomer(email, password));
+  }
+
+  async submitRegistration(event) {
+    event.preventDefault();
+    if (this.busy || !this.registerForm) return;
+
+    const password = document.getElementById("customer_register_password");
+    const confirmation = document.getElementById("customer_register_password_confirm");
+    const passwordValue = String(password?.value || "");
+    const passwordIsStrong = passwordValue.length >= 8
+      && /[A-Z]/.test(passwordValue)
+      && /[a-z]/.test(passwordValue)
+      && /[0-9]/.test(passwordValue)
+      && /[^A-Za-z0-9]/.test(passwordValue);
+
+    password?.setCustomValidity(passwordIsStrong
+      ? ""
+      : "Use at least 8 characters with uppercase, lowercase, a number and a symbol.");
+    confirmation?.setCustomValidity(passwordValue === String(confirmation?.value || "")
+      ? ""
+      : "Passwords do not match.");
+
+    if (!this.registerForm.checkValidity()) {
+      this.registerForm.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(this.registerForm);
+    const name = String(formData.get("name") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+
+    await this.authenticate(() => this.api.registerCustomer(name, email, passwordValue));
+  }
+
+  async authenticate(request) {
+    this.setBusy(true);
+    this.showFeedback("");
+
+    try {
+      const result = await request();
+      this.showFeedback(result.message || "Authentication successful. Continuing your order…", "success");
+      this.setBusy(false);
+      this.close({ dismissed: false, restoreFocus: false });
+      await this.onAuthenticated?.(result);
+    } catch (error) {
+      this.showFeedback(error.message || "Authentication could not be completed.", "error");
+      this.setBusy(false);
+    }
+  }
+
+  setBusy(busy) {
+    this.busy = busy;
+    [this.loginForm, this.registerForm].forEach((form) => {
+      if (!form) return;
+      form.setAttribute("aria-busy", String(busy));
+      form.querySelectorAll("button[type='submit']").forEach((button) => {
+        button.disabled = busy;
+        button.classList.toggle("is-loading", busy && !form.hidden && !form.closest("[hidden]"));
+      });
+    });
+  }
+
+  showFeedback(message, tone = "info") {
+    if (!this.feedback) return;
+    this.feedback.textContent = message;
+    this.feedback.dataset.tone = tone || "info";
+    this.feedback.setAttribute("role", tone === "error" ? "alert" : "status");
+    this.feedback.hidden = !message;
+  }
+
+  focusFirstField() {
+    const panel = this.currentView === "register" ? this.registerPanel : this.loginPanel;
+    panel?.querySelector("input:not([disabled])")?.focus();
+  }
+
+  clearPasswords() {
+    this.modal?.querySelectorAll('input[type="password"]').forEach((input) => {
+      input.value = "";
+      input.setCustomValidity("");
+    });
+  }
+
+  handleKeydown(event) {
+    if (!this.modal || this.modal.hidden) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.close({ dismissed: true });
+      return;
+    }
+
+    if (event.key !== "Tab" || !this.dialog) return;
+    const focusable = [...this.dialog.querySelectorAll(
+      'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([type="hidden"]), a[href]'
+    )].filter((element) => !element.closest("[hidden]"));
+
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+}
+
 class CustomerPreviewApp {
   constructor() {
     this.params = new URLSearchParams(window.location.search);
@@ -66,6 +272,12 @@ class CustomerPreviewApp {
 
     this.purchaseReady = false;
     this.purchasePending = false;
+    this.pendingPurchase = null;
+    this.auth = new CustomerAuthModal({
+      api: this.api,
+      onAuthenticated: () => this.resumePendingPurchase(),
+      onDismissed: () => this.cancelPendingPurchase()
+    });
 
     this.bindEvents();
   }
@@ -204,40 +416,66 @@ class CustomerPreviewApp {
     if (this.elements.buyNow) this.elements.buyNow.disabled = disabled;
   }
 
-  async submitPurchase(buyNow) {
+  async submitPurchase(buyNow, savedPayload = null) {
     if (!this.purchaseReady || this.purchasePending) return;
 
-    const quantity = Number(this.store.selectedQuantity);
-    const priceId = Number(this.store.selectedPriceId);
-    const variationIds = [...new Set(this.store.getSelectedVariationIds())];
+    const quantity = Number(savedPayload?.quantity ?? this.store.selectedQuantity);
+    const priceId = Number(savedPayload?.price_id ?? this.store.selectedPriceId);
+    const variationIds = savedPayload?.variation_ids
+      ? [...savedPayload.variation_ids]
+      : [...new Set(this.store.getSelectedVariationIds())];
 
     if (!Number.isInteger(quantity) || quantity <= 0 || !Number.isInteger(priceId) || priceId <= 0) {
       this.showMessage("Please choose a valid product quantity before continuing.", "error");
       return;
     }
 
+    const purchasePayload = savedPayload || {
+      sku: this.sku,
+      quantity,
+      price_id: priceId,
+      variation_ids: variationIds,
+      intent: buyNow ? "buy_now" : "add_to_cart"
+    };
+
     this.setPurchasePending(true, buyNow ? this.elements.buyNow : this.elements.addToCart);
     this.hideMessage();
 
     try {
-      const result = await this.api.addToCart({
-        sku: this.sku,
-        quantity,
-        price_id: priceId,
-        variation_ids: variationIds,
-        intent: buyNow ? "buy_now" : "add_to_cart"
-      });
+      const result = await this.api.addToCart(purchasePayload);
 
+      this.pendingPurchase = null;
       this.showMessage(result.message || "The product was added to your cart.", "success");
 
       if (buyNow) {
         window.location.assign(new URL("../../view/shopping_cart/index.php", window.location.href));
       }
     } catch (error) {
+      if (error.status === 401 && error.code === "AUTH_REQUIRED") {
+        this.pendingPurchase = { buyNow, payload: purchasePayload };
+        this.showMessage(error.message, "info");
+        this.auth.open("login", error.message);
+        return;
+      }
+
+      this.pendingPurchase = null;
       this.showMessage(error.message || "The product could not be added to your cart.", "error");
     } finally {
       this.setPurchasePending(false);
     }
+  }
+
+  async resumePendingPurchase() {
+    const pending = this.pendingPurchase;
+    if (!pending) return;
+
+    this.showMessage("You are signed in. Adding your selected product…", "info");
+    await this.submitPurchase(pending.buyNow, pending.payload);
+  }
+
+  cancelPendingPurchase() {
+    this.pendingPurchase = null;
+    this.showMessage("Sign in or create an account when you are ready to continue.", "info");
   }
 
   setPurchasePending(pending, activeButton = null) {

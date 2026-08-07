@@ -1,45 +1,124 @@
 <?php
-class SingUp {
-  public function handleSignUp(){
-    $input = file_get_contents('php://input');
-    $data  = json_decode($input, true);
 
-    switch ($data["action"] ?? null) {
-      case 'requestSignUp':
-        $this->signUpCustomer($data);
-        break;
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
-      default:
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['response' => false, 'error' => 'Unsupported action']);
-        break;
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../../model/customers.php';
+
+class CustomerSignUpController
+{
+    public function handle(): void
+    {
+        $data = json_decode((string)file_get_contents('php://input'), true);
+
+        if (!is_array($data) || ($data['action'] ?? '') !== 'requestSignUp') {
+            $this->respond([
+                'success' => false,
+                'response' => false,
+                'error' => 'Unsupported registration action.',
+            ], 400);
+            return;
+        }
+
+        $name = trim((string)($data['name'] ?? ''));
+        $email = strtolower(trim((string)($data['email'] ?? '')));
+        $password = (string)($data['password'] ?? '');
+
+        $validationError = $this->validate($name, $email, $password);
+        if ($validationError !== null) {
+            $this->respond([
+                'success' => false,
+                'response' => false,
+                'code' => 'VALIDATION_ERROR',
+                'error' => $validationError,
+            ], 422);
+            return;
+        }
+
+        $customer = new Customers(new Database());
+        $customer->setName($name);
+        $customer->setEmail($email);
+        $customer->setPassword($password);
+        $result = $customer->createCustomer();
+
+        if (empty($result['success'])) {
+            if (($result['reason'] ?? '') === 'email_exists') {
+                $this->respond([
+                    'success' => false,
+                    'response' => false,
+                    'code' => 'EMAIL_EXISTS',
+                    'error' => 'An account already exists for this email. Try logging in instead.',
+                ], 409);
+                return;
+            }
+
+            $this->respond([
+                'success' => false,
+                'response' => false,
+                'error' => 'Registration is temporarily unavailable. Please try again.',
+            ], 503);
+            return;
+        }
+
+        $publicCustomer = $result['customer'];
+        $this->startCustomerSession($publicCustomer);
+        $this->respond([
+            'success' => true,
+            'response' => true,
+            'authenticated' => true,
+            'message' => 'Your account was created successfully.',
+            'customer' => $publicCustomer,
+        ], 201);
     }
-  }
 
-  private function signUpCustomer($data){
-    header('Content-Type: application/json; charset=utf-8');
+    private function validate(string $name, string $email, string $password): ?string
+    {
+        if ($name === '' || strlen($name) > 50) {
+            return 'Enter your name using no more than 50 characters.';
+        }
 
-    $connection = new Database();
-    $customer   = new Customers($connection);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 50) {
+            return 'Enter a valid email address using no more than 50 characters.';
+        }
 
-    // Campos mínimos (coinciden con tu formulario JS)
-    $customer->setName($data['name'] ?? '');
-    $customer->setEmail($data['email'] ?? '');
-    $customer->setPassword($data['password'] ?? ''); // el modelo debe hashear a password_hash
+        if (strlen($password) < 8
+            || !preg_match('/[A-Z]/', $password)
+            || !preg_match('/[a-z]/', $password)
+            || !preg_match('/[0-9]/', $password)
+            || !preg_match('/[^A-Za-z0-9]/', $password)) {
+            return 'Use at least 8 characters with uppercase, lowercase, a number and a symbol.';
+        }
 
-    // Opcionales si los envías
-    if (isset($data['notes'])) { $customer->setNotes($data['notes']); }
-    if (isset($data['group'])) { $customer->setGroup($data['group']); } // `group` existe en tu tabla
+        return null;
+    }
 
-    // Debe devolver true/false
-    $customerCreated = $customer->createCustomer();
+    private function startCustomerSession(array $customer): void
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            ini_set('session.use_strict_mode', '1');
+            session_set_cookie_params([
+                'lifetime' => 0,
+                'path' => '/',
+                'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            session_start();
+        }
 
-    echo json_encode(['response' => (bool)$customerCreated]);
-  }
+        session_regenerate_id(true);
+        $_SESSION['customer_login'] = true;
+        $_SESSION['customer_id'] = (int)$customer['customer_id'];
+        $_SESSION['customer_name'] = (string)$customer['name'];
+        $_SESSION['customer_email'] = (string)$customer['email'];
+    }
+
+    private function respond(array $payload, int $status): void
+    {
+        http_response_code($status);
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+    }
 }
 
-include "../../controller/config/database.php";
-include "../../model/customers.php";
-
-$signUpClass = new SingUp(); // instancia
-$signUpClass->handleSignUp();
+(new CustomerSignUpController())->handle();
