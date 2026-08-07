@@ -14,8 +14,8 @@ $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
   <section class="pl-card" aria-labelledby="pl-products-title">
     <header class="pl-card-header">
       <div>
-        <h2 id="pl-products-title">Products List</h2>
-        <p class="pl-subtitle">View and manage your products.</p>
+        <h2 id="pl-products-title">Products</h2>
+        <p class="pl-subtitle">Choose the product record you want to continue editing.</p>
       </div>
     </header>
 

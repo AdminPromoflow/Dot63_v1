@@ -14,7 +14,7 @@ $navCssTime = filemtime('../../view/about_us/navigation/navigation.css');
 
       <li class="nav-breadcrumbs__item">
         <span class="nav-breadcrumbs__current" aria-current="page">
-          Groups
+          Products
         </span>
       </li>
     </ol>

@@ -23,6 +23,7 @@
   <script src="../../view/global/security/security_helper.js" type="text/javascript"></script>
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/product_list/product_list/product_list.php";?>
+  <?php include "../../view/global/supplier_ui/supplier_ui.php"; ?>
 </body>
 
 
