@@ -339,6 +339,80 @@ class Categories {
    * Devuelve todas las categorías (solo nombres).
    * @return array ['Art', 'Accessories', ...]
    */
+  public function getAllForDashboard(): array {
+    try {
+      $pdo = $this->connection->getConnection();
+
+      if (!$pdo instanceof PDO) {
+        return ['success' => false, 'error' => 'Database connection unavailable'];
+      }
+
+      $stmt = $pdo->prepare("
+        SELECT
+          c.category_id,
+          c.name,
+          COUNT(DISTINCT g.group_id) AS groups_count
+        FROM categories c
+        LEFT JOIN `groups` g
+          ON g.category_id = c.category_id
+        GROUP BY c.category_id, c.name
+        ORDER BY c.name ASC, c.category_id ASC
+      ");
+      $stmt->execute();
+
+      $rows = array_map(static function ($row) {
+        return [
+          'category_id' => (int)$row['category_id'],
+          'name' => $row['name'],
+          'groups_count' => (int)$row['groups_count']
+        ];
+      }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+
+      return ['success' => true, 'data' => $rows];
+    } catch (PDOException $e) {
+      error_log('getAllForDashboard categories error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
+
+  public function getByIdForDashboard(): array {
+    if (empty($this->category_id)) {
+      return ['success' => false, 'error' => 'Category ID required'];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      if (!$pdo instanceof PDO) {
+        return ['success' => false, 'error' => 'Database connection unavailable'];
+      }
+
+      $stmt = $pdo->prepare("
+        SELECT category_id, name
+        FROM categories
+        WHERE category_id = :category_id
+        LIMIT 1
+      ");
+      $stmt->execute([':category_id' => $this->category_id]);
+      $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      if (!$row) {
+        return ['success' => false, 'error' => 'Category not found'];
+      }
+
+      return [
+        'success' => true,
+        'data' => [
+          'category_id' => (int)$row['category_id'],
+          'name' => $row['name']
+        ]
+      ];
+    } catch (PDOException $e) {
+      error_log('getByIdForDashboard category error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
+
    public function getAllNames() {
      try {
        $pdo = $this->connection->getConnection();

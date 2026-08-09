@@ -45,48 +45,20 @@ $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard
     </a>
   </section>
   <section class="ds-columns">
-    <!-- Tabla: últimos pedidos -->
-    <div class="card table-card" aria-labelledby="recent-orders-title">
-      <div class="card-header">
-        <h2 id="recent-orders-title">Recent Orders</h2>
-        <a href="#" class="link">View all</a>
+    <div class="card catalog-card" aria-labelledby="catalog-browser-title">
+      <div class="catalog-toolbar">
+        <button id="catalog-back" class="catalog-back" type="button" hidden aria-label="Volver al nivel anterior">
+          <span aria-hidden="true">←</span> Atrás
+        </button>
+        <div>
+          <p class="catalog-eyebrow">Product catalogue</p>
+          <h2 id="catalog-browser-title">Categories</h2>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="table" role="table">
-          <thead>
-            <tr>
-              <th scope="col">Order</th>
-              <th scope="col">Date</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="right">Total</th>
-              <th scope="col" class="center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>#10234</td>
-              <td>2025-09-10</td>
-              <td><span class="badge badge-warning">Pending</span></td>
-              <td class="right">$420.00</td>
-              <td class="center"><button class="btn btn-small">Open</button></td>
-            </tr>
-            <tr>
-              <td>#10233</td>
-              <td>2025-09-09</td>
-              <td><span class="badge badge-info">Production</span></td>
-              <td class="right">$1,280.00</td>
-              <td class="center"><button class="btn btn-small">Open</button></td>
-            </tr>
-            <tr>
-              <td>#10232</td>
-              <td>2025-09-08</td>
-              <td><span class="badge badge-success">Shipped</span></td>
-              <td class="right">$199.99</td>
-              <td class="center"><button class="btn btn-small">Open</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
+      <p id="catalog-description" class="catalog-description">Select a category to view its groups.</p>
+      <div id="catalog-status" class="catalog-status" role="status" aria-live="polite"></div>
+      <div id="catalog-list" class="catalog-list" aria-live="polite"></div>
     </div>
 
     <!-- Lateral: perfil y acciones rápidas -->

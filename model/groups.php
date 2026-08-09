@@ -361,6 +361,88 @@ class Groups {
    * Devuelve todos los grupos (para pintar la lista en la UI).
    * Si category_id está seteado, devuelve solo los grupos de esa categoría.
    */
+  public function getByCategoryForDashboard(): array {
+    if (empty($this->category_id)) {
+      return ['success' => false, 'error' => 'Category ID required'];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      if (!$pdo instanceof PDO) {
+        return ['success' => false, 'error' => 'Database connection unavailable'];
+      }
+
+      $stmt = $pdo->prepare("
+        SELECT
+          g.group_id,
+          g.category_id,
+          g.name,
+          COUNT(DISTINCT p.product_id) AS products_count
+        FROM `groups` g
+        LEFT JOIN products p
+          ON p.group_id = g.group_id
+        WHERE g.category_id = :category_id
+        GROUP BY g.group_id, g.category_id, g.name
+        ORDER BY g.name ASC, g.group_id ASC
+      ");
+      $stmt->execute([':category_id' => $this->category_id]);
+
+      $rows = array_map(static function ($row) {
+        return [
+          'group_id' => (int)$row['group_id'],
+          'category_id' => (int)$row['category_id'],
+          'name' => $row['name'],
+          'products_count' => (int)$row['products_count']
+        ];
+      }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+
+      return ['success' => true, 'data' => $rows];
+    } catch (PDOException $e) {
+      error_log('getByCategoryForDashboard groups error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
+
+  public function getByIdForDashboard(): array {
+    if (empty($this->group_id)) {
+      return ['success' => false, 'error' => 'Group ID required'];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      if (!$pdo instanceof PDO) {
+        return ['success' => false, 'error' => 'Database connection unavailable'];
+      }
+
+      $stmt = $pdo->prepare("
+        SELECT group_id, category_id, name
+        FROM `groups`
+        WHERE group_id = :group_id
+        LIMIT 1
+      ");
+      $stmt->execute([':group_id' => $this->group_id]);
+      $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      if (!$row) {
+        return ['success' => false, 'error' => 'Group not found'];
+      }
+
+      return [
+        'success' => true,
+        'data' => [
+          'group_id' => (int)$row['group_id'],
+          'category_id' => (int)$row['category_id'],
+          'name' => $row['name']
+        ]
+      ];
+    } catch (PDOException $e) {
+      error_log('getByIdForDashboard group error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
+
    public function getAllNames(): array {
      // 1) SKU requerido
      $sku = trim((string)$this->sku);

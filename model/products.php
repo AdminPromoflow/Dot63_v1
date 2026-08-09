@@ -114,6 +114,49 @@ class Products {
     }
   }
 
+  public function getByGroupForDashboard(): array
+  {
+    if (empty($this->group_id)) {
+      return ['success' => false, 'error' => 'Group ID required'];
+    }
+
+    try {
+      $pdo = $this->connection->getConnection();
+
+      if (!$pdo instanceof PDO) {
+        return ['success' => false, 'error' => 'Database connection unavailable'];
+      }
+
+      $stmt = $pdo->prepare("
+        SELECT
+          p.product_id,
+          p.group_id,
+          p.SKU AS sku,
+          p.name,
+          p.status
+        FROM products p
+        WHERE p.group_id = :group_id
+        ORDER BY p.name ASC, p.product_id ASC
+      ");
+      $stmt->execute([':group_id' => $this->group_id]);
+
+      $rows = array_map(static function ($row) {
+        return [
+          'product_id' => (int)$row['product_id'],
+          'group_id' => (int)$row['group_id'],
+          'sku' => $row['sku'],
+          'name' => $row['name'],
+          'status' => $row['status']
+        ];
+      }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+
+      return ['success' => true, 'data' => $rows];
+    } catch (PDOException $e) {
+      error_log('getByGroupForDashboard products error: ' . $e->getMessage());
+      return ['success' => false, 'error' => 'DB error'];
+    }
+  }
+
   public function changeStatusForPending(): array
   {
       $sku = trim((string)($this->sku ?? ''));

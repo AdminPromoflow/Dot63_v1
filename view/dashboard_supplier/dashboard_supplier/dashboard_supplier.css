@@ -96,54 +96,156 @@ body.body_dashboard_supplier{
   gap: var(--space-3);
 }
 
-/* Tabla */
-.card-header{
+/* Navegador del catálogo */
+.catalog-card{
+  min-width:0;
+  min-height:360px;
+}
+.catalog-toolbar{
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  margin-bottom: var(--space-2);
+  gap:var(--space-2);
+  min-height:42px;
+  margin-bottom:4px;
 }
-.card-header h2{
+.catalog-toolbar h2{
   margin:0;
-  font-size:1rem;
+  font-size:1.12rem;
 }
-.link{
-  text-decoration:none;
-  font-weight:600;
-  color: var(--brand);
+.catalog-eyebrow{
+  margin:0 0 2px;
+  color:var(--brand);
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
 }
-.table-wrap{ overflow:auto; }
-.table{
+.catalog-back{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex:0 0 auto;
+  border:0;
+  border-radius:10px;
+  padding:8px 10px;
+  background:#eef6f4;
+  color:var(--brand);
+  font:inherit;
+  font-size:.88rem;
+  font-weight:800;
+  cursor:pointer;
+}
+.catalog-back[hidden]{ display:none; }
+.catalog-back:hover{ background:#e2efec; }
+.catalog-back:focus-visible,
+.catalog-item-button:focus-visible,
+.catalog-retry:focus-visible{
+  outline:2px solid var(--brand);
+  outline-offset:2px;
+}
+.catalog-description{
+  margin:0 0 var(--space-3);
+  color:var(--muted);
+  font-size:.9rem;
+}
+.catalog-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:var(--space-2);
+}
+.catalog-item{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:var(--space-2);
+  min-width:0;
+  min-height:72px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  color:var(--text);
+  text-align:left;
+}
+.catalog-item-button{
   width:100%;
-  border-collapse:collapse;
-  font-size:.95rem;
+  font:inherit;
+  cursor:pointer;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
-.table th,
-.table td{
-  padding: 10px var(--space-2);
-  border-top:1px solid var(--border);
+.catalog-item-button:hover{
+  border-color:#9abdb7;
+  box-shadow:0 7px 18px rgba(17,24,39,.07);
+  transform:translateY(-1px);
+}
+.catalog-item-icon{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  border-radius:10px;
+  background:#eef6f4;
+  color:var(--brand);
+  font-size:.78rem;
+  font-weight:900;
+}
+.catalog-item-icon-group{ background:#fff4cc; color:#7a5c00; }
+.catalog-item-icon-product{ background:#eef2ff; color:#3746a0; }
+.catalog-item-copy{
+  display:grid;
+  gap:3px;
+  min-width:0;
+}
+.catalog-item-copy strong,
+.catalog-item-copy small{
+  overflow:hidden;
+  text-overflow:ellipsis;
   white-space:nowrap;
 }
-.table thead th{
-  background:#fafafa;
-  position:sticky;
-  top:0;
-  z-index:1;
-  text-align:left;
-  color:#374151;
+.catalog-item-copy strong{ font-size:.94rem; }
+.catalog-item-copy small{ color:var(--muted); font-size:.78rem; }
+.catalog-item-arrow{
+  color:var(--brand);
+  font-size:1.1rem;
+  font-weight:800;
 }
-
-/* Badges */
-.badge{
-  display:inline-block;
-  padding: 4px 8px;
-  border-radius:999px;
-  font-size:.8rem;
+.catalog-product{ grid-template-columns:auto minmax(0,1fr); }
+.catalog-status{
+  display:none;
+  min-height:100px;
+  place-items:center;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  color:var(--muted);
+  font-size:.9rem;
+  text-align:center;
+}
+.catalog-status.is-loading,
+.catalog-status.is-empty,
+.catalog-status.is-error{ display:grid; }
+.catalog-status.is-loading::before{
+  content:"";
+  width:22px;
+  height:22px;
+  margin-bottom:8px;
+  border:3px solid #d9e6e3;
+  border-top-color:var(--brand);
+  border-radius:50%;
+  animation:catalog-spin .7s linear infinite;
+}
+.catalog-status.is-error{ color:#9f2f2f; }
+.catalog-retry{
+  margin-top:10px;
+  border:1px solid #e5bcbc;
+  border-radius:9px;
+  padding:7px 10px;
+  background:#fff;
+  color:#9f2f2f;
+  font:inherit;
   font-weight:700;
+  cursor:pointer;
 }
-.badge-warning{ background:#fff4cc; color:#8a6b00; }
-.badge-info{    background:#e6f4ff; color:#0b69a3; }
-.badge-success{ background:#e8f7ee; color:#1e7b47; }
+@keyframes catalog-spin{ to{ transform:rotate(360deg); } }
 
 /* Perfil / aside */
 .profile .profile-row{
@@ -219,7 +321,7 @@ body.body_dashboard_supplier{
 
 
 
-/* ===== Mobile fixes: Recent Orders + Supplier Info ===== */
+/* ===== Mobile fixes: Catalogue + Supplier Info ===== */
 
 /* Evita desbordes del grid en móviles */
 .ds-columns > * { min-width: 0; }
@@ -228,58 +330,13 @@ body.body_dashboard_supplier{
 @media (max-width: 720px){
   .ds-header{ flex-direction: column; align-items: stretch; gap: 8px; }
   .ds-actions{ width: 100%; }
-  .ds-columns{ grid-template-columns: 1fr; }      /* tabla arriba, perfil abajo */
+  .ds-columns{ grid-template-columns: 1fr; }      /* catálogo arriba, perfil abajo */
   .card{ padding: 12px; }                         /* padding más compacto */
   .muted{ overflow-wrap: anywhere; }              /* correos/largas palabras */
 }
 
-/* --- Option PREMIUM (sin scroll horizontal): tabla -> tarjetas --- */
 @media (max-width: 720px){
-  .table{ border: 0; font-size: 0.95rem; }
-  .table thead{
-    position:absolute !important;
-    width:1px;height:1px;overflow:hidden;
-    padding:0;margin:-1px;clip:rect(0,0,0,0); /* ocultamos encabezados */
-  }
-  .table tbody tr{
-    display: grid;
-    grid-template-columns: 1fr auto;            /* contenido + acciones */
-    gap: 6px 12px;
-    padding: 12px;
-    margin-bottom: 10px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: #fff;
-  }
-  .table td{
-    border: 0;
-    padding: 0;
-    white-space: normal;                         /* permite salto de línea */
-    display: grid;
-    grid-template-columns: 110px 1fr;            /* etiqueta + valor */
-    align-items: baseline;
-    gap: 8px;
-  }
-  .table td.right,
-  .table td.center{
-    justify-self: end;
-    grid-template-columns: 1fr;                  /* totales/acciones a la derecha */
-  }
-  /* Etiquetas por columna (sin tocar HTML) */
-  .table td:nth-child(1)::before{ content: "Order";    font-weight:700; color: var(--muted); }
-  .table td:nth-child(2)::before{ content: "Date";     font-weight:700; color: var(--muted); }
-  .table td:nth-child(3)::before{ content: "Status";   font-weight:700; color: var(--muted); }
-  .table td:nth-child(4)::before{ content: "Total";    font-weight:700; color: var(--muted); }
-  .table td:nth-child(5)::before{ content: "Action";   font-weight:700; color: var(--muted); }
-}
-
-/* --- Option RÁPIDA: scroll horizontal suave (por si prefieres mantener tabla) --- */
-@media (max-width: 720px){
-  .table-wrap{
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  /* Si usas esta opción, puedes quitar el bloque "PREMIUM" de arriba */
+  .catalog-list{ grid-template-columns:1fr; }
 }
 
 /* Perfil (info supplier) 100% ancho + texto seguro */
