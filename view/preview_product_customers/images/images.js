@@ -1,13 +1,16 @@
+/* [Customer 7.3.1] Convierte las filas de imágenes de la API en elementos <img> seguros. */
 export class ImagesRenderer {
   constructor(rootId = "wrap-images-group") {
     this.root = document.getElementById(rootId);
   }
 
   clear() {
+    // [Customer 7.3.1.1] Cada nueva ruta reemplaza por completo las imágenes anteriores.
     if (this.root) this.root.innerHTML = "";
   }
 
   render(rows = [], context = {}) {
+    // [Customer 7.3.1.2] Un fragmento agrupa las inserciones y evita repintar por cada imagen.
     if (!this.root || !Array.isArray(rows) || rows.length === 0) return 0;
 
     let count = 0;
@@ -35,6 +38,7 @@ export class ImagesRenderer {
   }
 
   renderEmpty() {
+    // [Customer 7.3.1.3] El mensaje vacío solo se crea si ningún nivel aportó imágenes.
     if (!this.root || this.root.children.length > 0) return;
 
     const empty = document.createElement("div");
@@ -48,6 +52,7 @@ export class ImagesRenderer {
   }
 
   resolveAssetPath(rawPath = "") {
+    // [Customer 7.3.1.4] Se aceptan URLs completas y se normalizan rutas internas del controller.
     const path = String(rawPath ?? "").trim().replace(/^\/+/, "");
     if (!path) return "";
 

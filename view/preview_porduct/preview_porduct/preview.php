@@ -1,7 +1,12 @@
 <?php
+// [Supplier 2] index.php llegó a este archivo para construir el contenido específico del preview.
+// [Supplier 2.1] Estas rutas indican qué CSS y qué módulo JavaScript debe recibir el navegador.
 $cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
 $entryPath = '../../view/preview_porduct/preview_porduct/preview_logic.js';
 $cssFile = __DIR__ . '/preview.css';
+
+// [Supplier 2.2] Todos estos módulos forman una sola funcionalidad. Si cambia cualquiera,
+// se actualiza la versión del entry point para evitar que el navegador use lógica antigua de caché.
 $moduleFiles = [
   __DIR__ . '/preview_logic.js',
   __DIR__ . '/preview_api.js',
@@ -23,9 +28,12 @@ foreach ($moduleFiles as $moduleFile) {
 }
 ?>
 
+<!-- [Supplier 2.3] El navegador carga los estilos del preview con su versión actual. -->
 <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>?v=<?= $cssTime ?>">
 
+<!-- [Supplier 2.4] Se entrega primero una estructura vacía; JavaScript la llenará con datos seguros del servidor. -->
 <main class="supplier-preview" aria-labelledby="sp-title">
+  <!-- [Supplier 2.4.1] Este estado permanece visible mientras se buscan el producto y sus opciones. -->
   <section id="preview_loading" class="preview-state preview-state--loading" aria-live="polite">
     <span class="preview-spinner" aria-hidden="true"></span>
     <div>
@@ -34,6 +42,7 @@ foreach ($moduleFiles as $moduleFile) {
     </div>
   </section>
 
+  <!-- [Supplier 2.4.2] Si falta el SKU, expira la sesión o falla el servidor, se muestra este bloque. -->
   <section id="preview_fatal" class="preview-state preview-state--error" hidden role="alert">
     <span class="preview-state-icon" aria-hidden="true">!</span>
     <div>
@@ -45,6 +54,7 @@ foreach ($moduleFiles as $moduleFile) {
     </div>
   </section>
 
+  <!-- [Supplier 2.4.3] El contenido real empieza oculto y se muestra cuando termina la carga inicial. -->
   <div id="preview_content" class="preview-shell" hidden>
     <header class="preview-toolbar">
       <div class="preview-mode">
@@ -72,6 +82,7 @@ foreach ($moduleFiles as $moduleFile) {
       <ol id="sp_breadcrumbs" class="crumbs"></ol>
     </nav>
 
+    <!-- [Supplier 2.4.4] Los módulos llenan estas tres zonas: galería, configuración y resumen. -->
     <section class="preview-layout">
       <aside class="preview-gallery-card" aria-label="Product media">
         <div class="preview-gallery-stage">
@@ -225,6 +236,7 @@ foreach ($moduleFiles as $moduleFile) {
       </aside>
     </section>
 
+    <!-- [Supplier 2.4.5] Esta sección solo aparece si la ruta seleccionada tiene archivos de artwork. -->
     <section id="artwork_section" class="artwork-section" aria-labelledby="artwork_heading" hidden>
       <div class="section-heading">
         <div>
@@ -238,4 +250,5 @@ foreach ($moduleFiles as $moduleFile) {
   </div>
 </main>
 
+<!-- [Supplier 2.5] Al final se ejecuta preview_logic.js como módulo; desde allí continúa el paso 3. -->
 <script type="module" src="<?= htmlspecialchars($entryPath) ?>?v=<?= $entryTime ?>"></script>

@@ -1,5 +1,11 @@
+/*
+ * [Supplier 6]
+ * Este controlador recorre el árbol de variaciones del producto. Cada opción elegida
+ * puede pedir hijos al servidor, guardar una nueva ruta y volver a renderizar recursos/precios.
+ */
 export class VariationsController {
   constructor(options = {}) {
+    // [Supplier 6.1] El coordinador inyecta API, Store, Prices y callbacks para mantener este módulo enfocado.
     this.api = options.api;
     this.store = options.store;
     this.prices = options.prices;
@@ -16,6 +22,7 @@ export class VariationsController {
   }
 
   bindEvents() {
+    // [Supplier 9.2] Un solo listener atiende todas las opciones y headers, incluso los creados después.
     this.root?.addEventListener("click", (event) => {
       const option = event.target.closest(".var-option[data-variation-id]");
       if (option && this.root.contains(option)) {
@@ -38,6 +45,7 @@ export class VariationsController {
   }
 
   reset() {
+    // [Supplier 6.1.1] Al empezar se cancela la petición anterior y se borran caché, ciclos y ruta visual.
     this.abortController?.abort();
     this.abortController = null;
     this.version++;
@@ -49,6 +57,7 @@ export class VariationsController {
   }
 
   async loadRoot(rootVariationId) {
+    // [Supplier 6.1.2] La raíz es el punto de partida enviado por la primera respuesta del producto.
     this.reset();
 
     const rootId = Number(rootVariationId);
@@ -63,9 +72,11 @@ export class VariationsController {
   }
 
   async loadNode(variationId, pathIndex, version, automatic = false) {
+    // [Supplier 6.2] Cada nodo sigue el mismo ciclo: validar -> pedir datos -> guardar -> pintar -> seguir hijos.
     const id = Number(variationId);
     if (!Number.isFinite(id) || id <= 0 || version !== this.version) return false;
 
+    // [Supplier 6.2.1] visited evita que una relación circular provoque solicitudes infinitas.
     const visitKey = `${version}:${id}`;
     if (this.visited.has(visitKey)) {
       this.onError("A circular variation relationship was detected. Check the parent variation settings.");
@@ -77,6 +88,7 @@ export class VariationsController {
     this.abortController = new AbortController();
 
     try {
+      // [Supplier 6.2.2] PreviewApi continúa la ejecución en controller/order/product.php.
       const result = await this.api.getVariationChildren(id, {
         signal: this.abortController.signal
       });
@@ -88,10 +100,12 @@ export class VariationsController {
         : null;
 
       if (current?.variation) {
+        // [Supplier 6.3] Cache evita depender del DOM para recuperar la fila completa de una opción.
         this.rowCache.set(String(id), current);
         this.store.setPathEntry(pathIndex, current);
       }
 
+      // [Supplier 6.4] Se quitan grupos que pertenecían a una selección anterior y se redibujan recursos.
       this.removeGroupsAfter(pathIndex);
       this.renderPath();
 
@@ -99,16 +113,19 @@ export class VariationsController {
       const types = Array.isArray(result.types) ? result.types : [];
 
       if (children.length === 0) {
+        // [Supplier 6.5] Una hoja termina esta rama; solo resta actualizar extras del precio actual.
         this.setEmptyState(this.store.selectedPath.length <= 1, "No customer-selectable variations are configured yet.");
         await this.prices.refreshVariationExtras();
         return true;
       }
 
       this.setEmptyState(false);
+      // [Supplier 6.6] Los hijos se agrupan por tipo para crear una sección visual por pregunta.
       const groups = this.renderChildGroups(children, types, pathIndex + 1);
       const defaultButton = this.getAutomaticOption(groups?.[0]);
 
       if (defaultButton && version === this.version) {
+        // [Supplier 6.7] La primera opción válida se selecciona automáticamente para completar el preview.
         await this.selectVariation(defaultButton, true, version);
       }
 
@@ -121,6 +138,7 @@ export class VariationsController {
   }
 
   async selectVariation(button, automatic = false, inheritedVersion = null) {
+    // [Supplier 9.2.1] Una selección manual crea una versión nueva y cancela el recorrido anterior.
     if (!button) return false;
 
     let version = inheritedVersion;
@@ -144,6 +162,7 @@ export class VariationsController {
       this.store.truncatePath(pathIndex);
     }
 
+    // [Supplier 9.2.2] Estado, selección visual y recursos cambian antes de pedir los hijos nuevos.
     this.removeGroupsAfter(pathIndex);
     this.markSelected(button);
     this.renderPath();
@@ -152,6 +171,7 @@ export class VariationsController {
   }
 
   renderChildGroups(children, types, pathIndex) {
+    // [Supplier 6.6.1] Los nombres de tipo se indexan una vez y los hijos se separan con Map.
     if (!this.root) return [];
 
     const typeNames = new Map(
@@ -187,6 +207,7 @@ export class VariationsController {
   }
 
   createGroup(groupData, pathIndex) {
+    // [Supplier 6.6.2] Cada grupo es una sección colapsable accesible con su propio cuerpo e ID.
     const group = document.createElement("section");
     group.className = "wrap-variations is-collapsible";
     group.dataset.typeId = groupData.typeId;
@@ -240,6 +261,7 @@ export class VariationsController {
   }
 
   createOption(row, pathIndex) {
+    // [Supplier 6.6.3] El botón guarda solo metadatos simples; la fila completa permanece en rowCache.
     const variation = row.variation;
     const id = String(variation.variation_id);
     const label = String(variation.name || "Option");
@@ -275,6 +297,7 @@ export class VariationsController {
   }
 
   getAutomaticOption(group) {
+    // [Supplier 6.7.1] Se prefiere un extra incluido/gratis; si no existe, se usa la primera opción.
     if (!group) return null;
 
     const buttons = Array.from(
@@ -288,6 +311,7 @@ export class VariationsController {
   }
 
   isIncludedExtra(row) {
+    // [Supplier 6.7.2] Un extra se considera incluido si no tiene costo aplicable para la cantidad actual.
     const mode = String(row?.variation?.price_display_mode || "prices").toLowerCase();
     if (mode !== "variation") return false;
 
@@ -313,6 +337,7 @@ export class VariationsController {
   }
 
   markSelected(button) {
+    // [Supplier 9.2.3] Solo una opción del grupo queda presionada y el header resume su nombre.
     const pathIndex = button.dataset.pathIndex;
 
     this.root?.querySelectorAll(`.wrap-variations[data-path-index="${CSS.escape(pathIndex)}"] .var-option`).forEach((item) => {
@@ -340,6 +365,7 @@ export class VariationsController {
   }
 
   removeGroupsAfter(pathIndex) {
+    // [Supplier 6.4.1] Cambiar un nivel invalida todos sus descendientes visuales y de Store.
     this.root?.querySelectorAll(".wrap-variations[data-path-index]").forEach((group) => {
       if (Number(group.dataset.pathIndex) > Number(pathIndex)) group.remove();
     });
@@ -354,6 +380,7 @@ export class VariationsController {
   }
 
   resolveAssetPath(rawPath = "", fallback = "") {
+    // [Supplier 6.6.4] Una opción sin imagen usa el icono local del producto.
     const path = String(rawPath ?? "").trim().replace(/^\/+/, "");
     if (!path) return fallback;
     if (/^(https?:|data:|blob:)/i.test(path)) return path;

@@ -1,8 +1,11 @@
 <?php
+// [Supplier 1] El servidor empieza por este archivo cuando el proveedor abre el preview.
+// [Supplier 1.1] Antes de enviar HTML, recuperamos la sesión y confirmamos que el proveedor siga autenticado.
 if (session_status() !== PHP_SESSION_ACTIVE) {
   session_start();
 }
 
+// [Supplier 1.2] Sin una sesión válida no se carga información privada: se redirige al login y se detiene el archivo.
 if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
   header('Location: ../../view/log_inSupplier/index.php');
   exit;
@@ -29,9 +32,12 @@ if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
 </head>
 
 <body class="body_product_details">
+  <!-- [Supplier 1.3] Primero se agregan el loader global y el menú del proveedor. -->
   <?php include "../../view/global/PageLoader/PageLoader.php"; ?>
 
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
+
+  <!-- [Supplier 1.4] Después se ejecuta preview.php, que crea la interfaz y conecta la lógica JavaScript. -->
   <?php include "../../view/preview_porduct/preview_porduct/preview.php";?>
 </body>
 </html>

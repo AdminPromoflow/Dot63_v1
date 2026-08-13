@@ -1,5 +1,11 @@
+/*
+ * [Customer 8]
+ * Este controlador une rangos de cantidad, extras de variaciones, disponibilidad
+ * y el resumen matemático que habilita o bloquea la compra.
+ */
 export class PricesController {
   constructor(options = {}) {
+    // [Customer 8.1] onSummaryChange informa al coordinador cuándo la selección ya se puede comprar.
     this.api = options.api;
     this.store = options.store;
     this.getSku = options.getSku || (() => "");
@@ -24,6 +30,7 @@ export class PricesController {
   }
 
   clear() {
+    // [Customer 8.1.1] Cancelamos cálculos viejos y devolvemos precio/cantidad al estado inicial.
     this.abortController?.abort();
     this.abortController = null;
     this.extraVersion++;
@@ -36,10 +43,12 @@ export class PricesController {
   }
 
   render(rows = []) {
+    // [Customer 8.1.2] Recordamos la cantidad para conservarla si otra variación ofrece el mismo rango.
     const preferredQuantity = Number(this.store.selectedQuantity);
     this.clear();
     if (!this.root || !Array.isArray(rows) || rows.length === 0) return false;
 
+    // [Customer 8.1.3] Solo los registros de precio base se muestran como rangos y se ordenan.
     const sorted = [...rows]
       .filter((row) => String(row?.price_display_mode ?? "prices") === "prices")
       .sort((a, b) => Number(a?.min_quantity) - Number(b?.min_quantity));
@@ -49,6 +58,7 @@ export class PricesController {
     const fragment = document.createDocumentFragment();
 
     for (const row of sorted) {
+      // [Customer 8.1.4] Cada precio válido se transforma en botón y conserva price_id para el carrito.
       const min = Number(row?.min_quantity);
       const max = Number(row?.max_quantity);
       const price = Number(row?.price);
@@ -85,6 +95,7 @@ export class PricesController {
     const first = this.root.querySelector(".price-tier");
     if (!first) return false;
 
+    // [Customer 8.2] Se elige la cantidad anterior si todavía existe; de lo contrario, el primer rango.
     const preferred = Number.isFinite(preferredQuantity)
       ? Array.from(this.root.querySelectorAll(".price-tier")).find(
           (button) => Number(button.dataset.quantity) === preferredQuantity
@@ -97,6 +108,7 @@ export class PricesController {
   }
 
   select(button) {
+    // [Customer 8.2.1] La selección visual, cantidad, precio y price_id se actualizan juntos.
     if (!button || !this.root) return false;
 
     this.root.querySelectorAll(".price-tier").forEach((item) => {
@@ -112,20 +124,17 @@ export class PricesController {
     this.store.selectedQuantity = Number.isFinite(quantity) ? quantity : null;
     this.store.selectedPrice = Number.isFinite(price) ? price : null;
     this.store.selectedPriceId = Number.isInteger(priceId) && priceId > 0 ? priceId : null;
+
+    // [Customer 8.2.2] Cambiar cantidad puede cambiar precio o disponibilidad de todos los extras.
     this.refreshVariationExtras();
     this.updateSummary();
     return true;
   }
 
   async refreshVariationExtras() {
+    // [Customer 8.3] La versión permite ignorar respuestas antiguas si la cantidad cambia rápido.
     const requestVersion = ++this.extraVersion;
-    document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
-    document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
-      delete button.dataset.extraPrice;
-      button.classList.remove("is-price-unavailable");
-      button.disabled = false;
-      button.removeAttribute("title");
-    });
+    this.resetVariationPriceOptions();
 
     const quantity = Number(this.store.selectedQuantity);
     if (!Number.isFinite(quantity) || quantity <= 0) {
@@ -133,6 +142,7 @@ export class PricesController {
       return;
     }
 
+    // [Customer 8.3.1] Todos los IDs visibles viajan en una sola solicitud.
     const buttons = Array.from(
       document.querySelectorAll("#wrap-variations-group .var-option[data-variation-id]")
     );
@@ -149,6 +159,7 @@ export class PricesController {
     this.abortController = new AbortController();
 
     try {
+      // [Customer 8.3.2] PreviewApi continúa el flujo en controller/order/product.php.
       const result = await this.api.getVariationPrices(
         this.getSku(),
         ids,
@@ -158,14 +169,10 @@ export class PricesController {
 
       if (requestVersion !== this.extraVersion) return;
 
-      document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
-      document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
-        delete button.dataset.extraPrice;
-        button.classList.remove("is-price-unavailable");
-        button.disabled = false;
-        button.removeAttribute("title");
-      });
+      // [Customer 8.3.3] Limpiamos otra vez porque el DOM pudo cambiar durante la espera.
+      this.resetVariationPriceOptions();
 
+      // [Customer 8.3.4] Un Map resuelve extras y un Set distingue precio cero de rango inexistente.
       const priceById = new Map(
         (result.prices || []).map((row) => [String(row.variation_id), Number(row.price)])
       );
@@ -188,6 +195,7 @@ export class PricesController {
             button.appendChild(label);
           }
         } else if (button.dataset.priceDisplayMode === "variation" && pricedVariationIds.has(variationId)) {
+          // [Customer 8.3.5] Esta opción sí tiene precios configurados, pero ninguno cubre la cantidad elegida.
           button.classList.add("is-price-unavailable");
           button.disabled = true;
           button.title = "This option has no price for the selected quantity";
@@ -203,6 +211,7 @@ export class PricesController {
 
       this.updateSummary();
     } catch (error) {
+      // [Customer 8.3.6] Una cancelación es esperada; otros errores se registran para diagnóstico.
       if (error.name !== "AbortError") {
         console.error("Unable to load variation prices:", error);
       }
@@ -210,6 +219,7 @@ export class PricesController {
   }
 
   updateSummary() {
+    // [Customer 8.4] Se suman precio base y extras por unidad, luego se multiplican por cantidad.
     const quantity = Number(this.store.selectedQuantity);
     const basePrice = Number(this.store.selectedPrice);
     const hasPrice = Number.isFinite(quantity) && quantity > 0 && Number.isFinite(basePrice);
@@ -233,6 +243,7 @@ export class PricesController {
     const extrasTotal = extrasPerUnit * safeQuantity;
     const total = baseTotal + extrasTotal;
 
+    // [Customer 8.4.1] Si la opción seleccionada no tiene precio, no mostramos un total engañoso.
     this.setText(this.elements.unit, hasPrice ? `£${this.formatMoney(safeBase)}` : "—");
     this.setText(this.elements.quantity, hasPrice ? safeQuantity.toLocaleString("en-GB") : "—");
     this.setText(this.elements.unitTotal, hasPrice ? `£${this.formatMoney(baseTotal)}` : "—");
@@ -252,12 +263,24 @@ export class PricesController {
         : `per unit at ${safeQuantity.toLocaleString("en-GB")} units`
       : "Pricing not configured");
 
+    // [Customer 8.5] Solo una combinación con precio base, price_id y extras disponibles queda lista.
     this.onSummaryChange({
       ready: hasPrice && !hasUnavailableSelection && Number(this.store.selectedPriceId) > 0,
       quantity: safeQuantity,
       basePrice: safeBase,
       extrasPerUnit,
       total
+    });
+  }
+
+  resetVariationPriceOptions() {
+    // [Customer 8.3.7] Este helper concentra la limpieza usada antes y después de la solicitud.
+    document.querySelectorAll("#wrap-variations-group .opt-price-extra").forEach((node) => node.remove());
+    document.querySelectorAll("#wrap-variations-group .var-option").forEach((button) => {
+      delete button.dataset.extraPrice;
+      button.classList.remove("is-price-unavailable");
+      button.disabled = false;
+      button.removeAttribute("title");
     });
   }
 
@@ -270,6 +293,7 @@ export class PricesController {
   }
 
   formatMoney(value) {
+    // [Customer 8.4.2] La interfaz siempre presenta dos decimales y nunca muestra NaN.
     const number = Number(value);
     return Number.isFinite(number) ? number.toFixed(2) : "0.00";
   }

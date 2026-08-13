@@ -1,5 +1,11 @@
+/*
+ * [Supplier 7.4 / 9.1]
+ * Este archivo controla únicamente la galería. ImagesRenderer crea las imágenes;
+ * PreviewGallery decide cuál se ve, crea miniaturas, aplica zoom y maneja autoplay.
+ */
 export class PreviewGallery {
   constructor(options = {}) {
+    // [Supplier 7.4.1] Las opciones permiten reutilizar la galería con otros IDs o velocidades.
     this.root = document.getElementById(options.rootId || "wrap-images-group");
     this.thumbs = document.getElementById(options.thumbsId || "sp_thumbs");
     this.previousButton = document.getElementById(options.previousButtonId || "gallery_previous");
@@ -13,6 +19,7 @@ export class PreviewGallery {
   }
 
   bindEvents() {
+    // [Supplier 9.1.1] Flechas, mouse y visibilidad de pestaña controlan la navegación y el temporizador.
     this.previousButton?.addEventListener("click", () => this.previous());
     this.nextButton?.addEventListener("click", () => this.next());
 
@@ -29,12 +36,14 @@ export class PreviewGallery {
   }
 
   getItems() {
+    // [Supplier 7.4.2] La galería siempre vuelve a consultar el DOM porque las variaciones cambian sus imágenes.
     return this.root
       ? Array.from(this.root.querySelectorAll(".preview-media"))
       : [];
   }
 
   refresh(options = {}) {
+    // [Supplier 7.4.3] Tras un render se reconstruyen miniaturas, estado activo y controles.
     const items = this.getItems();
     this.stopAutoplay();
     this.currentIndex = options.keepIndex
@@ -48,6 +57,7 @@ export class PreviewGallery {
   }
 
   clear() {
+    // [Supplier 7.4.4] Antes de cambiar de ruta se detiene el autoplay y se eliminan miniaturas antiguas.
     this.stopAutoplay();
     this.currentIndex = 0;
     if (this.thumbs) this.thumbs.innerHTML = "";
@@ -55,11 +65,13 @@ export class PreviewGallery {
   }
 
   normaliseIndex(index, total) {
+    // [Supplier 9.1.2] Esta fórmula permite pasar del final al inicio y viceversa.
     if (total <= 0) return 0;
     return ((index % total) + total) % total;
   }
 
   showCurrent(items = this.getItems()) {
+    // [Supplier 9.1.3] Solo un medio permanece visible; un video oculto se pausa.
     if (items.length === 0) {
       this.updateControls(0);
       return;
@@ -100,6 +112,7 @@ export class PreviewGallery {
   }
 
   startAutoplay() {
+    // [Supplier 9.1.4] Se respeta la pestaña oculta y la preferencia de movimiento reducido.
     this.stopAutoplay();
     if (document.hidden || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (this.getItems().length <= 1) return;
@@ -114,6 +127,7 @@ export class PreviewGallery {
   }
 
   renderThumbs(items) {
+    // [Supplier 7.4.5] Cada miniatura conoce su índice y llama goTo al hacer clic.
     if (!this.thumbs) return;
     this.thumbs.innerHTML = "";
 
@@ -154,6 +168,7 @@ export class PreviewGallery {
   }
 
   handleZoom(event) {
+    // [Supplier 9.1.5] El origen del zoom sigue la posición del cursor dentro de la imagen activa.
     const image = event.target.closest(".preview-media.is-active");
     if (!image || image.tagName !== "IMG") return;
 
@@ -169,6 +184,7 @@ export class PreviewGallery {
   }
 
   resetZoom() {
+    // [Supplier 9.1.6] Al salir de la galería se retiran estilos inline de todos los medios.
     this.getItems().forEach((media) => {
       media.classList.remove("is-zooming");
       media.style.transform = "";

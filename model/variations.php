@@ -124,6 +124,9 @@ class Variation {
 
   public function getVariationChildrenById(): array
   {
+    // [Supplier 6.2.2.3.1 / Customer 6.2.3.3.1]
+    // Este método sigue sus propios subpasos 1-28: carga todos los hijos y, en bloque,
+    // sus artworks, imágenes, items, precios y nombres de tipo para evitar una consulta por hijo.
     // 1) Obtener el variation_id actual del objeto y convertirlo a entero.
     //    Si no existe, se usa 0 por defecto.
     $parentVariationId = (int)($this->variation_id ?? 0);
@@ -427,19 +430,22 @@ class Variation {
 
   public function getDetailsCurrentVariationById(): array
   {
-    // 1) Get the current variation_id from the object.
+    // [Supplier 6.2.2.3.2 / Customer 6.2.3.3.2]
+    // Este método sigue los subpasos 1-11 para enriquecer el nodo actualmente seleccionado.
+
+    // 1) Obtener el variation_id actual guardado en el objeto.
     $currentVariationId = (int)($this->variation_id ?? 0);
 
-    // 2) Validate that the variation_id is valid.
+    // 2) Comprobar que el variation_id sea válido.
     if ($currentVariationId <= 0) {
       return ['success' => false, 'error' => 'variation_id requerido'];
     }
 
     try {
-      // 3) Get the PDO connection.
+      // 3) Obtener la conexión PDO.
       $pdo = $this->connection->getConnection();
 
-      // 4) Get the current variation and its type name.
+      // 4) Consultar la variación actual junto con el nombre de su tipo.
       $stmt = $pdo->prepare("
         SELECT
           variations.variation_id,
@@ -463,12 +469,12 @@ class Variation {
 
       $currentVariation = $stmt->fetch(PDO::FETCH_ASSOC);
 
-      // 5) If the current variation does not exist, return an error.
+      // 5) Si la variación actual no existe, devolver un error.
       if (!$currentVariation) {
         return ['success' => false, 'error' => 'Variación actual no encontrada por variation_id'];
       }
 
-      // 6) Get all images linked to the current variation.
+      // 6) Consultar todas las imágenes relacionadas con la variación actual.
       $stmt = $pdo->prepare("
         SELECT
           images.image_id,
@@ -482,7 +488,7 @@ class Variation {
       $stmt->execute([':variation_id' => $currentVariationId]);
       $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-      // 7) Get all items linked to the current variation.
+      // 7) Consultar todos los items relacionados con la variación actual.
       $stmt = $pdo->prepare("
         SELECT
           items.item_id,
@@ -496,7 +502,7 @@ class Variation {
       $stmt->execute([':variation_id' => $currentVariationId]);
       $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-      // 8) Get all prices linked to the current variation.
+      // 8) Consultar todos los precios relacionados con la variación actual.
       $stmt = $pdo->prepare("
         SELECT
           prices.price_id,
@@ -511,17 +517,16 @@ class Variation {
       $stmt->execute([':variation_id' => $currentVariationId]);
       $prices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-      // 9) Build the artwork block from the current variation row.
+      // 9) Construir el bloque artwork desde la fila de la variación actual.
       $artwork = [
         'pdf_artwork' => $currentVariation['pdf_artwork'] ?? null,
         'name_pdf_artwork' => $currentVariation['name_pdf_artwork'] ?? null,
       ];
 
-      // 10) Remove artwork fields from the main variation block if you prefer
-      //     to keep artwork grouped separately.
+      // 10) Quitar los campos de artwork del bloque principal para no duplicarlos.
       unset($currentVariation['pdf_artwork'], $currentVariation['name_pdf_artwork']);
 
-      // 11) Return the final structure.
+      // 11) Devolver la misma forma de datos usada para cada hijo.
       return [
         'variation' => $currentVariation,
         'images'    => $images,
@@ -597,6 +602,8 @@ class Variation {
   }
   public function getTypeVariationsChildByVariationId(): array
   {
+    // [Supplier 6.2.2.3.3 / Customer 6.2.3.3.3]
+    // Este último método obtiene los tipos distintos de los hijos para crear sus grupos visuales.
     $parentVariationId = (int)($this->variation_id ?? 0);
 
     if ($parentVariationId <= 0) {
@@ -604,6 +611,7 @@ class Variation {
     }
 
     try {
+      // [Variaciones 1] Consultar type_id y type_name solo para hijos directos del nodo actual.
       $pdo = $this->connection->getConnection();
 
       $stmt = $pdo->prepare("
@@ -620,6 +628,7 @@ class Variation {
       $stmt->execute([':parent_variation_id' => $parentVariationId]);
       $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+      // [Variaciones 2] El controlador enviará esta lista junto con current y children.
       return $rows;
 
     } catch (PDOException $e) {

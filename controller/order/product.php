@@ -1,33 +1,45 @@
 <?php
+/*
+ * CONTROLADOR COMPARTIDO DE PREVIEWS
+ * [Supplier/Customer 4.2, 6.2 y 8.3]
+ * preview_api.js llega a este archivo para obtener producto, árbol de variaciones
+ * y extras por cantidad. Cada action se dirige a un método concreto.
+ */
 class Product {
   public function handleProduct(){
-
+    // [Servidor 4.2.1] PHP lee el JSON enviado por fetch y obtiene el nombre de la acción.
     $input = file_get_contents('php://input');
     $data  = json_decode($input, true);
 
     switch ($data["action"] ?? null) {
 
       case 'get_supplier_preview':
+        // [Supplier 4.2.2] Continúa en getSupplierPreview().
         $this->getSupplierPreview($data);
         break;
 
       case 'get_supplier_variation_children':
+        // [Supplier 6.2.2.1] Continúa en getSupplierVariationChildren().
         $this->getSupplierVariationChildren($data);
         break;
 
       case 'get_supplier_variation_prices':
+        // [Supplier 8.3.2.1] Continúa en getSupplierVariationPrices().
         $this->getSupplierVariationPrices($data);
         break;
 
       case 'get_customer_preview':
+        // [Customer 4.2.2] Continúa en getCustomerPreview().
         $this->getCustomerPreview($data);
         break;
 
       case 'get_customer_variation_children':
+        // [Customer 6.2.3.1] Continúa en getCustomerVariationChildren().
         $this->getCustomerVariationChildren($data);
         break;
 
       case 'get_customer_variation_prices':
+        // [Customer 8.3.2.1] Continúa en getCustomerVariationPrices().
         $this->getCustomerVariationPrices($data);
         break;
 
@@ -52,6 +64,7 @@ class Product {
 
   private function getSupplierSessionEmail(): ?string
   {
+      // [Supplier servidor 4.2.3] Una sesión válida necesita la bandera de login y un email no vacío.
       if (session_status() !== PHP_SESSION_ACTIVE) {
           session_start();
       }
@@ -64,6 +77,7 @@ class Product {
 
   private function jsonError(string $message, int $status = 400, array $extra = []): void
   {
+      // [Servidor 4.2.4] Todos los fallos del preview usan la misma estructura JSON y status HTTP.
       http_response_code($status);
       header('Content-Type: application/json; charset=utf-8');
       echo json_encode(array_merge([
@@ -74,6 +88,8 @@ class Product {
 
   private function getOwnedProduct(PDO $pdo, string $sku, string $email): ?array
   {
+      // [Supplier servidor 4.2.5] La consulta exige que el SKU pertenezca al proveedor autenticado.
+      // También cuenta requisitos y resuelve la variación raíz en una sola ida a la base de datos.
       $stmt = $pdo->prepare("
           SELECT
               p.product_id,
@@ -146,6 +162,7 @@ class Product {
 
   private function buildReadiness(array $product): array
   {
+      // [Supplier servidor 4.2.6] Cada check resume un requisito real de publicación.
       $checks = [
           [
               'key' => 'details',
@@ -179,6 +196,7 @@ class Product {
       ];
 
       $issues = [];
+      // [Supplier servidor 4.2.7] issues contiene solo las etiquetas pendientes que verá la interfaz.
       foreach ($checks as $check) {
           if (!$check['complete']) {
               $issues[] = $check['label'];
@@ -194,8 +212,10 @@ class Product {
 
   private function getSupplierPreview(array $data): void
   {
+      // [Supplier 4.2.2] Este método arma la primera respuesta del preview privado.
       header('Content-Type: application/json; charset=utf-8');
 
+      // [Supplier 4.2.2.1] Primero se valida sesión; después el SKU recibido.
       $email = $this->getSupplierSessionEmail();
       if ($email === null) {
           $this->jsonError('Your supplier session has expired. Please sign in again.', 401);
@@ -210,6 +230,8 @@ class Product {
 
       $database = new Database();
       $pdo = $database->getConnection();
+
+      // [Supplier 4.2.2.2] La consulta devuelve null si el producto no existe o pertenece a otra cuenta.
       $product = $this->getOwnedProduct($pdo, $sku, $email);
 
       if (!$product) {
@@ -217,10 +239,12 @@ class Product {
           return;
       }
 
+      // [Supplier 4.2.2.3] Se calculan estado, checklist y permiso de envío antes de responder.
       $readiness = $this->buildReadiness($product);
       $isApproved = (int)$product['is_approved'] === 1;
       $isPending = (string)$product['status'] === '2';
 
+      // [Supplier 4.3] preview_api.js recibe producto, root_variation_id, readiness y permissions.
       echo json_encode([
           'success' => true,
           'product' => [
@@ -252,6 +276,7 @@ class Product {
 
   private function getOwnedVariationProduct(PDO $pdo, int $variationId, string $email): ?array
   {
+      // [Supplier servidor 6.2.2.2] Cada nodo debe pertenecer también al proveedor autenticado.
       $stmt = $pdo->prepare("
           SELECT p.product_id, p.SKU AS sku
           FROM variations v
@@ -271,8 +296,10 @@ class Product {
 
   private function getSupplierVariationChildren(array $data): void
   {
+      // [Supplier 6.2.2.1] Este método responde una etapa del recorrido de variaciones.
       header('Content-Type: application/json; charset=utf-8');
 
+      // [Supplier 6.2.2.1.1] Se repiten las validaciones porque cada fetch es una petición independiente.
       $email = $this->getSupplierSessionEmail();
       if ($email === null) {
           $this->jsonError('Your supplier session has expired.', 401);
@@ -296,6 +323,8 @@ class Product {
       $variation = new Variation($database);
       $variation->setVariationId($variationId);
 
+      // [Supplier 6.2.2.3] El flujo entra en model/variations.php para cargar:
+      // hijos enriquecidos, datos del nodo actual y nombres de los tipos hijos.
       $childVariations = $variation->getVariationChildrenById();
       $currentVariationData = $variation->getDetailsCurrentVariationById();
       $variationTypes = $variation->getTypeVariationsChildByVariationId();
@@ -319,6 +348,7 @@ class Product {
           $childVariations = is_array($childVariations['data']) ? $childVariations['data'] : [];
       }
 
+      // [Supplier 6.2.2.4] Se normalizan listas y se devuelve una estructura estable al navegador.
       echo json_encode([
           'success' => true,
           'current' => $currentVariationData,
@@ -329,6 +359,7 @@ class Product {
 
   private function getSupplierVariationPrices(array $data): void
   {
+      // [Supplier 8.3.2.1] Este método calcula extras para una cantidad concreta.
       header('Content-Type: application/json; charset=utf-8');
 
       $email = $this->getSupplierSessionEmail();
@@ -337,6 +368,7 @@ class Product {
           return;
       }
 
+      // [Supplier 8.3.2.1.1] Se limpian el SKU, la cantidad y los IDs duplicados/no válidos.
       $sku = trim((string)($data['sku'] ?? ''));
       $quantity = (int)($data['quantity'] ?? 0);
       $ids = array_values(array_unique(array_filter(
@@ -358,6 +390,7 @@ class Product {
           return;
       }
 
+      // [Supplier 8.3.2.1.2] Una sola consulta busca los extras cuyo rango contiene la cantidad.
       $placeholders = implode(',', array_fill(0, count($ids), '?'));
       $params = array_merge([(int)$product['product_id'], $quantity, $quantity], $ids);
 
@@ -377,6 +410,7 @@ class Product {
       ");
       $stmt->execute($params);
 
+      // [Supplier 8.3.2.1.3] Conservamos el primer rango aplicable por variation_id.
       $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
       $pricesByVariation = [];
       foreach ($rows as $row) {
@@ -390,6 +424,7 @@ class Product {
           }
       }
 
+      // [Supplier 8.3.2.2] El navegador recibe un arreglo compacto de variation_id -> price.
       echo json_encode([
           'success' => true,
           'prices' => array_values($pricesByVariation),
@@ -398,6 +433,8 @@ class Product {
 
   private function getCustomerProduct(PDO $pdo, string $sku): ?array
   {
+      // [Customer servidor 4.2.3] Solo un producto aprobado puede aparecer en el preview público.
+      // La misma consulta resuelve proveedor, clasificación y variación raíz.
       $stmt = $pdo->prepare("
           SELECT
               p.product_id,
@@ -440,8 +477,10 @@ class Product {
 
   private function getCustomerPreview(array $data): void
   {
+      // [Customer 4.2.2] Este método arma la primera respuesta pública del producto.
       header('Content-Type: application/json; charset=utf-8');
 
+      // [Customer 4.2.2.1] Se valida el SKU y luego se busca únicamente entre productos aprobados.
       $sku = trim((string)($data['sku'] ?? ''));
       if ($sku === '') {
           $this->jsonError('Product SKU is required.');
@@ -457,6 +496,7 @@ class Product {
           return;
       }
 
+      // [Customer 4.3] preview_api.js recibe datos públicos y root_variation_id.
       echo json_encode([
           'success' => true,
           'product' => [
@@ -481,6 +521,7 @@ class Product {
 
   private function getCustomerVariationChildren(array $data): void
   {
+      // [Customer 6.2.3.1] Este método responde una etapa del recorrido público de variaciones.
       header('Content-Type: application/json; charset=utf-8');
 
       $variationId = (int)($data['variation_id'] ?? 0);
@@ -489,6 +530,7 @@ class Product {
           return;
       }
 
+      // [Customer 6.2.3.1.1] Aunque el cliente no inicia sesión, el nodo debe pertenecer a un producto aprobado.
       $database = new Database();
       $pdo = $database->getConnection();
       $stmt = $pdo->prepare("
@@ -509,6 +551,8 @@ class Product {
       $variation = new Variation($database);
       $variation->setVariationId($variationId);
 
+      // [Customer 6.2.3.3] El flujo entra en model/variations.php para cargar
+      // hijos enriquecidos, nodo actual y nombres de los tipos hijos.
       $children = $variation->getVariationChildrenById();
       $current = $variation->getDetailsCurrentVariationById();
       $types = $variation->getTypeVariationsChildByVariationId();
@@ -532,6 +576,7 @@ class Product {
           $children = is_array($children['data']) ? $children['data'] : [];
       }
 
+      // [Customer 6.2.3.4] Se normalizan listas y se devuelve una estructura estable al navegador.
       echo json_encode([
           'success' => true,
           'current' => $current,
@@ -542,8 +587,10 @@ class Product {
 
   private function getCustomerVariationPrices(array $data): void
   {
+      // [Customer 8.3.2.1] Este método calcula extras y disponibilidad para una cantidad concreta.
       header('Content-Type: application/json; charset=utf-8');
 
+      // [Customer 8.3.2.1.1] Se limpian el SKU, la cantidad y los IDs duplicados/no válidos.
       $sku = trim((string)($data['sku'] ?? ''));
       $quantity = (int)($data['quantity'] ?? 0);
       $ids = array_values(array_unique(array_filter(
@@ -565,6 +612,7 @@ class Product {
           return;
       }
 
+      // [Customer 8.3.2.1.2] La primera consulta devuelve precios cuyo rango sí contiene la cantidad.
       $placeholders = implode(',', array_fill(0, count($ids), '?'));
       $params = array_merge([(int)$product['product_id'], $quantity, $quantity], $ids);
 
@@ -596,6 +644,7 @@ class Product {
           }
       }
 
+      // [Customer 8.3.2.1.3] La segunda distingue una opción gratis de una opción pagada sin rango aplicable.
       $configuredStmt = $pdo->prepare("
           SELECT DISTINCT v.variation_id
           FROM variations v
@@ -608,6 +657,7 @@ class Product {
       $configuredStmt->execute(array_merge([(int)$product['product_id']], $ids));
       $pricedVariationIds = array_map('intval', $configuredStmt->fetchAll(PDO::FETCH_COLUMN));
 
+      // [Customer 8.3.2.2] El navegador recibe precios aplicables y IDs con precio configurado.
       echo json_encode([
           'success' => true,
           'prices' => array_values($pricesByVariation),
@@ -710,6 +760,7 @@ class Product {
 
 }
 
+// [Servidor 4.2.0] Estas clases se cargan antes de despachar la petición.
 include "../../controller/config/database.php";
 include "../../model/products.php";
 include "../../model/users.php";
@@ -719,5 +770,6 @@ include "../../model/prices.php";
 include "../../model/variations.php";
 include "../../controller/products/variations.php";
 
-$productClass = new Product(); // instancia
+// [Servidor 4.2.0.1] Se crea el controlador y handleProduct() inicia el switch descrito arriba.
+$productClass = new Product();
 $productClass->handleProduct();

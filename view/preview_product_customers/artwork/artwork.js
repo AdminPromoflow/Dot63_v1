@@ -1,13 +1,16 @@
+/* [Customer 7.3.3] Crea la tarjeta del PDF de producción asociado a una variación. */
 export class ArtworkRenderer {
   constructor(rootId = "wrap-artworks-group") {
     this.root = document.getElementById(rootId);
   }
 
   clear() {
+    // [Customer 7.3.3.1] Los archivos siempre se reconstruyen según la ruta seleccionada.
     if (this.root) this.root.innerHTML = "";
   }
 
   render(row = {}, context = {}) {
+    // [Customer 7.3.3.2] Sin nombre ni archivo no existe una tarjeta útil que mostrar.
     if (!this.root) return false;
 
     const name = String(row?.name_pdf_artwork ?? "").trim();
@@ -38,6 +41,7 @@ export class ArtworkRenderer {
     card.append(icon, copy);
 
     if (href) {
+      // [Customer 7.3.3.3] noopener impide que el PDF abierto controle esta página.
       const link = document.createElement("a");
       link.className = "btn btn-secondary btn-compact";
       link.href = href;
@@ -52,6 +56,7 @@ export class ArtworkRenderer {
   }
 
   resolveAssetPath(rawPath = "") {
+    // [Customer 7.3.3.4] Se aceptan URLs completas y se normalizan rutas internas del controller.
     const path = String(rawPath ?? "").trim().replace(/^\/+/, "");
     if (!path) return "";
 
