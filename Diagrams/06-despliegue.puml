@@ -1,0 +1,48 @@
+@startuml dot63_despliegue
+title DOT63 - Diagrama de despliegue
+
+skinparam shadowing false
+
+node "Dispositivo del usuario" as Client {
+  artifact "Navegador web" as Browser
+  artifact "HTML / CSS / JavaScript" as Frontend
+  Browser -- Frontend
+}
+
+node "Servidor web DOT63" as WebServer {
+  node "Apache HTTP Server" as Apache {
+    node "PHP Runtime" as PHP {
+      artifact "Vistas PHP" as PHPViews
+      artifact "Controladores" as Controllers
+      artifact "Modelos" as Models
+      artifact "Sesiones PHP" as Sessions
+    }
+    folder "Assets y cargas\nde productos" as Files
+  }
+}
+
+database "Servidor MySQL" as MySQL {
+  artifact "Base de datos dot63" as Dot63DB
+}
+
+cloud "Proveedor SMTP" as SMTP
+cloud "promoflow.net" as PromoFlow {
+  artifact "Webhook / API de casos" as PromoAPI
+}
+
+Browser --> Apache : HTTPS
+Apache --> PHP : FastCGI / módulo PHP
+PHPViews --> Controllers
+Controllers --> Models
+Controllers --> Sessions
+PHP --> Files : lectura/escritura
+Models --> Dot63DB : PDO / MySQL
+Controllers --> SMTP : SMTP/TLS
+Controllers --> PromoAPI : HTTPS/JSON
+
+note bottom of WebServer
+  En desarrollo local, Apache, PHP y MySQL
+  pueden ejecutarse juntos mediante XAMPP.
+end note
+
+@enduml

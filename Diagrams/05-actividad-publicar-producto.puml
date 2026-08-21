@@ -1,0 +1,68 @@
+@startuml dot63_actividad_publicar_producto
+title DOT63 - Actividad para publicar un producto
+
+skinparam shadowing false
+
+start
+:Proveedor pulsa "Enviar a aprobación";
+:Recibir SKU y comprobar sesión;
+
+if (¿Sesión de proveedor válida?) then (No)
+  :Responder 401;
+  stop
+else (Sí)
+endif
+
+if (¿SKU presente?) then (No)
+  :Responder 400;
+  stop
+else (Sí)
+endif
+
+:Buscar producto por SKU y correo del proveedor;
+if (¿Producto pertenece al proveedor?) then (No)
+  :Responder 403;
+  stop
+else (Sí)
+endif
+
+if (¿Producto ya aprobado?) then (Sí)
+  :Informar estado "approved";
+  stop
+else (No)
+endif
+
+if (¿Solicitud ya pendiente?) then (Sí)
+  :Informar estado "pending_approval";
+  stop
+else (No)
+endif
+
+:Validar nombre y descripción;
+:Validar categoría y grupo;
+:Validar variantes, imágenes y precios;
+
+if (¿Falta información obligatoria?) then (Sí)
+  :Responder 422 con lista de campos faltantes;
+  stop
+else (No)
+endif
+
+:Enviar correo de aprobación al administrador;
+if (¿Correo enviado?) then (No)
+  :Mantener producto como borrador;
+  :Responder 502;
+  stop
+else (Sí)
+endif
+
+:Actualizar products.status = "2";
+if (¿Actualización correcta?) then (No)
+  :Responder 500 y solicitar soporte;
+  stop
+else (Sí)
+  :Responder éxito y estado "pending_approval";
+endif
+
+stop
+@enduml

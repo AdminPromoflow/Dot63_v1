@@ -1,0 +1,58 @@
+@startuml dot63_secuencia_checkout
+title DOT63 - Secuencia de checkout
+
+skinparam shadowing false
+autonumber
+
+actor Cliente
+boundary "shopping_cart.js" as UI
+control "CartController" as Cart
+entity "Jobs" as Jobs
+database "MySQL" as DB
+
+Cliente -> UI : Confirmar compra
+UI -> Cart : POST {action: checkout, promo_code}
+activate Cart
+
+Cart -> Cart : Verificar sesión y correo
+alt Sesión inválida
+  Cart --> UI : 401 AUTH_REQUIRED
+  UI --> Cliente : Solicitar inicio de sesión
+else Sesión válida
+  Cart -> Jobs : checkoutCart(email, promoCode)
+  activate Jobs
+  Jobs -> DB : Buscar jobs del carrito del usuario
+  DB --> Jobs : jobIds
+
+  alt Carrito vacío
+    Jobs --> Cart : Error 422
+    Cart --> UI : Carrito vacío
+  else Hay artículos
+    Jobs -> DB : Calcular subtotal
+    DB --> Jobs : subtotal
+
+    opt Se proporcionó código promocional
+      Jobs -> DB : Buscar promoción aplicable y vigente
+      DB --> Jobs : promoción / sin coincidencia
+    end
+
+    alt Promoción inválida
+      Jobs --> Cart : Error 422
+      Cart --> UI : Código no válido
+    else Datos válidos
+      Jobs -> DB : BEGIN TRANSACTION
+      Jobs -> DB : INSERT orders (pending)
+      DB --> Jobs : order_id
+      Jobs -> DB : UPDATE jobs\nstatus = ordered, order_id
+      Jobs -> DB : COMMIT
+      Jobs --> Cart : success, order_id, totales
+      Cart -> Cart : Vaciar contador de sesión
+      Cart --> UI : 201 Created + resumen
+      UI --> Cliente : Mostrar confirmación del pedido
+    end
+  end
+  deactivate Jobs
+end
+
+deactivate Cart
+@enduml

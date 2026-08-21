@@ -133,8 +133,22 @@ class Products {
           p.group_id,
           p.SKU AS sku,
           p.name,
-          p.status
+          p.status,
+          first_variation.SKU AS sku_variation
         FROM products p
+        LEFT JOIN (
+          SELECT v.product_id, v.SKU
+          FROM variations v
+          INNER JOIN (
+            SELECT product_id, MIN(variation_id) AS variation_id
+            FROM variations
+            WHERE product_id IS NOT NULL
+            GROUP BY product_id
+          ) first_variation_id
+            ON first_variation_id.product_id = v.product_id
+           AND first_variation_id.variation_id = v.variation_id
+        ) first_variation
+          ON first_variation.product_id = p.product_id
         WHERE p.group_id = :group_id
         ORDER BY p.name ASC, p.product_id ASC
       ");
@@ -145,6 +159,7 @@ class Products {
           'product_id' => (int)$row['product_id'],
           'group_id' => (int)$row['group_id'],
           'sku' => $row['sku'],
+          'sku_variation' => $row['sku_variation'],
           'name' => $row['name'],
           'status' => $row['status']
         ];

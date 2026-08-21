@@ -1,0 +1,157 @@
+@startuml dot63_clases
+title DOT63 - Diagrama de clases principales
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide empty attributes
+
+package "Controladores" {
+  class ProductController <<controller>> {
+    +handleProduct()
+    -createNewProduct()
+    -saveProductDetails(data)
+    -publishProduct(data)
+    -deleteProduct(data)
+  }
+
+  class CartController <<controller>> {
+    +handle(): void
+    -respondFromResult(result, status): void
+    -withCartCount(result, jobs, email): array
+  }
+
+  class CatalogBrowser <<controller>> {
+    +handleRequest(): void
+    -getCategories(): void
+    -getGroups(data): void
+    -getProducts(data): void
+  }
+
+  class CustomerSignUpController <<controller>> {
+    +handle(): void
+    -validate(name, email, password): string
+    -startCustomerSession(customer): void
+  }
+
+  class SupplierLogin <<controller>> {
+    +handleLogin()
+    -loginSupplier(data)
+    -logoutSupplier(): void
+  }
+
+  class EmailsSender <<service>> {
+    +sendEmailProductApprovalNotice(): bool
+  }
+
+  class PromoFlowGateway <<gateway>> {
+    +handleResques63API()
+    +sendToDotPromoflow(payload)
+  }
+}
+
+package "Modelos" {
+  class Products <<entity>> {
+    +create()
+    +update(): array
+    +getProducts(): array
+    +searchProducts(search): array
+    +getProductDetailsBySKU(): array
+    +deleteProduct(): array
+  }
+
+  class Variation <<entity>> {
+    +createDefaultVariation()
+    +getDefaultVariationBySKU()
+  }
+
+  class Categories <<entity>> {
+    +create()
+    +update()
+    +delete()
+    +getCategories()
+  }
+
+  class Groups <<entity>> {
+    +create()
+    +update()
+    +delete()
+    +getByCategoryForDashboard(): array
+  }
+
+  class Images <<entity>> {
+    +saveImage(): array
+    +getImagesBySKUVariation()
+  }
+
+  class Items <<entity>>
+  class Prices <<entity>>
+
+  class Jobs <<entity>> {
+    +addProductToJobs(input, email): array
+    +getCartItems(email): array
+    +updateCartItem(jobId, quantity, email): array
+    +validatePromotion(code, email): array
+    +checkoutCart(email, promotionCode): array
+  }
+
+  class Customers <<entity>> {
+    +authenticate(): array
+    +createCustomer(): array
+  }
+
+  class Users <<entity>> {
+    +authenticate()
+    +create()
+    +getIdSupplierByEmail()
+  }
+}
+
+package "Infraestructura" {
+  class Database <<database>> {
+    -connection: PDO
+    +getConnection(): PDO
+    +closeConnection(): void
+  }
+  class PDO <<library>>
+  class PHPMailer <<library>>
+}
+
+ProductController ..> Products
+ProductController ..> Variation
+ProductController ..> Categories
+ProductController ..> Groups
+ProductController ..> EmailsSender
+CartController ..> Jobs
+CatalogBrowser ..> Products
+CatalogBrowser ..> Categories
+CatalogBrowser ..> Groups
+CustomerSignUpController ..> Customers
+SupplierLogin ..> Users
+PromoFlowGateway ..> Users
+
+Products --> Database
+Variation --> Database
+Categories --> Database
+Groups --> Database
+Images --> Database
+Items --> Database
+Prices --> Database
+Jobs --> Database
+Customers --> Database
+Users --> Database
+Database --> PDO
+EmailsSender --> PHPMailer
+
+Products "1" o-- "0..*" Variation
+Variation "1" o-- "0..*" Images
+Variation "1" o-- "0..*" Items
+Variation "1" o-- "0..*" Prices
+
+note right of ProductController
+  La clase se llama Product en el código;
+  se muestra como ProductController para
+  distinguirla del modelo Products.
+end note
+
+@enduml
