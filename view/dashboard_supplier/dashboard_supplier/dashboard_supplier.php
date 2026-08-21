@@ -47,8 +47,8 @@ $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard
   <section class="ds-columns">
     <div class="card catalog-card" aria-labelledby="catalog-browser-title">
       <div class="catalog-toolbar">
-        <button id="catalog-back" class="catalog-back" type="button" hidden aria-label="Volver al nivel anterior">
-          <span aria-hidden="true">←</span> Atrás
+        <button id="catalog-back" class="catalog-back" type="button" hidden aria-label="Back to the previous level">
+          <span aria-hidden="true">←</span> Back
         </button>
         <div>
           <p class="catalog-eyebrow">Product catalogue</p>
