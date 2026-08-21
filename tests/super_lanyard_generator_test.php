@@ -215,4 +215,27 @@ $catalogTitleSearch = array_filter(
 );
 assertSameValue(4, count($catalogTitleSearch), 'Products catalogue search must use the generated title.');
 
+require_once __DIR__ . '/../model/variations.php';
+$openedProduct = $catalogResponse['catalog']['products'][0];
+$openedProductIdStatement = $pdo->prepare('SELECT product_id FROM products WHERE SKU = :sku');
+$openedProductIdStatement->execute([':sku' => $openedProduct['product_sku']]);
+$openedProductId = (int)$openedProductIdStatement->fetchColumn();
+
+$variationModel = new Variation(new SuperLanyardTestDatabase($pdo));
+$variationModel->setId($openedProductId);
+$variationModel->setSKUVariation((string)$openedProduct['sku']);
+$activePath = $variationModel->getVariationPathBySkuForProduct();
+
+assertSameValue(true, $activePath['success'], 'Clicking a generated product must resolve its active variation path.');
+assertSameValue(7, count($activePath['path']), 'The active path must contain Default plus all six Super Lanyard dimensions.');
+
+$pathPlaceholders = implode(',', array_fill(0, count($activePath['path']), '?'));
+$pathNamesStatement = $pdo->prepare("SELECT name FROM variations WHERE variation_id IN ($pathPlaceholders)");
+$pathNamesStatement->execute($activePath['path']);
+$activeNames = $pathNamesStatement->fetchAll(PDO::FETCH_COLUMN);
+$expectedActiveNames = array_merge(['Default'], array_values($openedProduct['configuration']));
+foreach ($expectedActiveNames as $expectedName) {
+    assertSameValue(true, in_array($expectedName, $activeNames, true), "The active path must include {$expectedName}.");
+}
+
 echo "Super Lanyard generator tests passed.\n";

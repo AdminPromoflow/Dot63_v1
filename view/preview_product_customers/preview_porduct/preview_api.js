@@ -49,7 +49,8 @@ export class PreviewApi {
     // [Customer 4.1.5] Primera solicitud: producto público aprobado y variación raíz.
     return this.request(this.previewUrl, {
       action: "get_customer_preview",
-      sku
+      sku,
+      sku_variation: String(options.variationSku || "").trim()
     }, options);
   }
 

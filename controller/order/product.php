@@ -210,6 +210,36 @@ class Product {
       ];
   }
 
+  private function getInitialVariationPath(Database $database, array $product, array $data): array
+  {
+      $variationSku = trim((string)($data['sku_variation'] ?? ''));
+      $productId = (int)($product['product_id'] ?? 0);
+      $rootVariationId = (int)($product['root_variation_id'] ?? 0);
+
+      if ($variationSku === '' || $productId <= 0 || $rootVariationId <= 0) {
+          return [];
+      }
+
+      $variation = new Variation($database);
+      $variation->setId($productId);
+      $variation->setSKUVariation($variationSku);
+      $result = $variation->getVariationPathBySkuForProduct();
+
+      if (empty($result['success']) || !is_array($result['path'] ?? null)) {
+          return [];
+      }
+
+      $path = array_values(array_filter(
+          array_map('intval', $result['path']),
+          static fn($id) => $id > 0
+      ));
+      $rootPosition = array_search($rootVariationId, $path, true);
+
+      return $rootPosition === false
+          ? []
+          : array_slice($path, $rootPosition);
+  }
+
   private function getSupplierPreview(array $data): void
   {
       // [Supplier 4.2.2] Este método arma la primera respuesta del preview privado.
@@ -243,6 +273,7 @@ class Product {
       $readiness = $this->buildReadiness($product);
       $isApproved = (int)$product['is_approved'] === 1;
       $isPending = (string)$product['status'] === '2';
+      $initialVariationPath = $this->getInitialVariationPath($database, $product, $data);
 
       // [Supplier 4.3] preview_api.js recibe producto, root_variation_id, readiness y permissions.
       echo json_encode([
@@ -266,6 +297,7 @@ class Product {
               ],
           ],
           'root_variation_id' => (int)($product['root_variation_id'] ?? 0),
+          'initial_variation_path' => $initialVariationPath,
           'readiness' => $readiness,
           'permissions' => [
               'can_edit' => !$isApproved,
@@ -496,6 +528,8 @@ class Product {
           return;
       }
 
+      $initialVariationPath = $this->getInitialVariationPath($database, $product, $data);
+
       // [Customer 4.3] preview_api.js recibe datos públicos y root_variation_id.
       echo json_encode([
           'success' => true,
@@ -516,6 +550,7 @@ class Product {
               ],
           ],
           'root_variation_id' => (int)($product['root_variation_id'] ?? 0),
+          'initial_variation_path' => $initialVariationPath,
       ], JSON_UNESCAPED_UNICODE);
   }
 

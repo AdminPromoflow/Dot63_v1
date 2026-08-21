@@ -134,6 +134,23 @@ class ClassProductList {
 
       const retryButton = event.target.closest('[data-action="retry-catalog"]');
       if (retryButton) this.getProducts();
+
+      const productCard = event.target.closest(".sl-product-card[data-product-url]");
+      if (productCard
+          && !event.target.closest("a, button, .sl-configuration-popover")) {
+        window.location.assign(productCard.dataset.productUrl);
+      }
+    });
+
+    this.elements.grid?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      if (event.target.closest("a, button")) return;
+
+      const productCard = event.target.closest(".sl-product-card[data-product-url]");
+      if (!productCard) return;
+
+      event.preventDefault();
+      window.location.assign(productCard.dataset.productUrl);
     });
 
     document.addEventListener("click", (event) => {
@@ -354,6 +371,9 @@ class ClassProductList {
     card.className = "sl-product-card";
     card.setAttribute("role", "listitem");
     card.dataset.productId = String(product.id || "");
+    card.dataset.productUrl = this.buildProductUrl(product);
+    card.tabIndex = 0;
+    card.setAttribute("aria-label", `Open ${product.title || "Super Lanyard"} with this combination selected`);
 
     const media = document.createElement("div");
     media.className = "sl-product-card__media";
@@ -491,7 +511,10 @@ class ClassProductList {
   }
 
   buildProductUrl(product) {
-    const url = new URL("../../view/product_details/index.php", window.location.href);
+    // Open the generated product in the supplier preview. sku_variation points
+    // at the final Colour node, allowing the preview to restore the complete
+    // Theme -> Material -> Width -> Print Technique -> Printed Sides -> Colour path.
+    const url = new URL("../../view/preview_porduct/index.php", window.location.href);
     const productSku = product.product_sku || this.catalog?.current_sku || "";
     if (productSku) url.searchParams.set("sku", productSku);
     if (product.sku) url.searchParams.set("sku_variation", product.sku);

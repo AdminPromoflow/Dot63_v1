@@ -38,25 +38,37 @@
       };
       const filterOptions = Object.fromEntries(keys.map((key, axis) => [key, values[axis]]));
 
-      window.fetch = async () => ({
-        ok: true,
-        json: async () => ({
-          success: true,
-          catalog_type: 'super_lanyard',
-          result: [],
-          catalog: {
-            title: 'Super Lanyard',
-            subtitle: 'Explore every available configuration.',
-            current_sku: 'SOURCE-SL',
-            filter_labels: filterLabels,
-            filter_options: filterOptions,
-            products,
-          },
-        }),
-      });
+      window.fetch = async (url, options = {}) => {
+        const action = JSON.parse(options.body || '{}').action;
+        if (action === 'verify_login_supplier') {
+          return {ok: true, json: async () => ({response: true})};
+        }
+
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            catalog_type: 'super_lanyard',
+            result: [],
+            catalog: {
+              title: 'Super Lanyard',
+              subtitle: 'Explore every available configuration.',
+              current_sku: 'SOURCE-SL',
+              filter_labels: filterLabels,
+              filter_options: filterOptions,
+              products,
+            },
+          }),
+        };
+      };
     })();
   </script>
   <?php include __DIR__ . '/../view/global/menu_supplier/menu_general.php'; ?>
-  <?php include __DIR__ . '/../view/product_list/product_list/product_list.php'; ?>
+  <?php
+  $visualFixtureDirectory = getcwd();
+  chdir(__DIR__ . '/../view/product_list');
+  include __DIR__ . '/../view/product_list/product_list/product_list.php';
+  chdir($visualFixtureDirectory);
+  ?>
 </body>
 </html>

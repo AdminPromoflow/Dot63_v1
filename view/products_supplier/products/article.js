@@ -254,6 +254,7 @@ class ProductsSupplierClass {
       const statusRaw = (p.status || "draft").toString().toLowerCase();
       const isGeneratedSuperLanyard = Number(p.is_super_lanyard_generated) === 1;
       const superOptions = p.super_lanyard_options || {};
+      const superVariationSku = String(p.super_lanyard_variation_sku || "");
 
       const statusMap = {
         active: { text: "Active", cls: "badge-success" },
@@ -267,7 +268,10 @@ class ProductsSupplierClass {
         cls: "badge-warning"
       };
 
-      const href = `../../view/category/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(skuVariation)}&mode=edit`;
+      const href = isGeneratedSuperLanyard
+        ? `../../view/preview_porduct/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(superVariationSku || skuVariation)}`
+        : `../../view/category/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(skuVariation)}&mode=edit`;
+      const actionText = isGeneratedSuperLanyard ? "Open" : "Edit";
 
       tbody.innerHTML += `
         <tr class="row-link"
@@ -282,6 +286,7 @@ class ProductsSupplierClass {
             data-super-print-technique="${this._escAttr(superOptions.print_technique || "")}"
             data-super-printed-sides="${this._escAttr(superOptions.printed_sides || "")}"
             data-super-colour="${this._escAttr(superOptions.colour || "")}"
+            data-href="${this._escAttr(href)}"
             tabindex="0">
           <td>${this._escHtml(sku)}</td>
           <td>
@@ -295,7 +300,7 @@ class ProductsSupplierClass {
             </span>
           </td>
           <td class="center">
-            <a class="btn btn-small" href="${this._escAttr(href)}">Edit</a>
+            <a class="btn btn-small" href="${this._escAttr(href)}">${actionText}</a>
           </td>
         </tr>
       `;

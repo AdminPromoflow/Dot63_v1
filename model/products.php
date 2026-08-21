@@ -795,6 +795,7 @@ class Products {
              // Se consultan por producto para que los filtros nunca mezclen opciones
              // pertenecientes a productos normales del catálogo.
              $superLanyardOptionsByProductId = [];
+             $superLanyardLeafSkuByProductId = [];
              $superLanyardProductIds = [];
              foreach ($products as $p) {
                  if ((int)($p['is_super_lanyard_generated'] ?? 0) === 1) {
@@ -806,6 +807,7 @@ class Products {
                  $placeholders = implode(',', array_fill(0, count($superLanyardProductIds), '?'));
                  $sqlOptions = "SELECT
                                   v.product_id,
+                                  v.SKU AS variation_sku,
                                   tv.type_name,
                                   v.name AS option_name
                                 FROM variations v
@@ -839,6 +841,9 @@ class Products {
                          $superLanyardOptionsByProductId[$pid] = [];
                      }
                      $superLanyardOptionsByProductId[$pid][$axisKey] = $optionRow['option_name'];
+                     if ($axisKey === 'colour') {
+                         $superLanyardLeafSkuByProductId[$pid] = $optionRow['variation_sku'];
+                     }
                  }
              }
 
@@ -927,6 +932,7 @@ class Products {
                      'status_date'          => $p['status_date'] ?? null,
                      'is_super_lanyard_generated' => (int)($p['is_super_lanyard_generated'] ?? 0),
                      'super_lanyard_options' => $superLanyardOptionsByProductId[$pid] ?? [],
+                     'super_lanyard_variation_sku' => $superLanyardLeafSkuByProductId[$pid] ?? null,
 
                      'first_variation_sku'  => $firstVariationSkuByProductId[$pid] ?? null,
 
