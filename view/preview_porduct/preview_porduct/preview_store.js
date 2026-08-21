@@ -1,7 +1,7 @@
 /*
  * [Supplier 5.1 / 6.3 / 8.2]
  * Store es la memoria temporal del preview. No dibuja HTML ni llama al servidor;
- * solo conserva el producto, el precio y la ruta de variaciones elegida.
+ * conserva el producto, el precio y todas las ramas de variaciones elegidas.
  */
 export class PreviewStore {
   constructor() {
@@ -29,37 +29,87 @@ export class PreviewStore {
   }
 
   clearVariationSelections() {
-    // [Supplier 6.3.1] selectedPath representa raíz -> opción -> subopción en el mismo orden visual.
-    this.selectedPath = [];
+    // [Supplier 6.3.1] La raíz se guarda aparte. Los Map permiten varias ramas en un mismo nivel.
+    this.rootVariation = null;
+    this.selectedByLevel = new Map();
+    this.groupLevels = new Map();
   }
 
-  setPathEntry(level, row) {
-    // [Supplier 6.3.2] Al escribir un nivel se eliminan niveles más profundos que ya no pertenecen a la ruta.
-    if (!row || typeof row !== "object") return false;
+  setRootVariation(row) {
+    // [Supplier 6.3.2] La raíz aporta recursos generales y es el inicio de todo el árbol.
+    this.rootVariation = row && typeof row === "object" ? row : null;
+  }
 
-    const numericLevel = Number(level);
-    const safeLevel = Number.isFinite(numericLevel)
-      ? Math.max(0, Math.trunc(numericLevel))
-      : 0;
+  setGroupSelection(level, groupKey, row, metadata = {}) {
+    // [Supplier 6.3.3] Cada grupo se identifica por su padre y su tipo. Dos grupos hermanos
+    // pueden estar en el mismo nivel sin sobrescribir sus selecciones.
+    const safeLevel = Math.max(1, Number(level) || 1);
+    const safeKey = String(groupKey || "").trim();
+    if (!safeKey || !row || typeof row !== "object") return false;
 
-    this.selectedPath = this.selectedPath.slice(0, safeLevel);
-    this.selectedPath[safeLevel] = row;
+    const previousLevel = this.groupLevels.get(safeKey);
+    if (previousLevel !== undefined && previousLevel !== safeLevel) {
+      const previousMap = this.selectedByLevel.get(previousLevel);
+      previousMap?.delete(safeKey);
+      if (previousMap?.size === 0) this.selectedByLevel.delete(previousLevel);
+    }
+
+    if (!this.selectedByLevel.has(safeLevel)) {
+      this.selectedByLevel.set(safeLevel, new Map());
+    }
+
+    this.selectedByLevel.get(safeLevel).set(safeKey, {
+      row,
+      level: safeLevel,
+      groupKey: safeKey,
+      parentVariationId: Number(metadata.parentVariationId) || 0,
+      typeId: String(metadata.typeId || "")
+    });
+    this.groupLevels.set(safeKey, safeLevel);
     return true;
   }
 
-  truncatePath(level) {
-    // [Supplier 6.3.3] Si todavía no conocemos el nuevo nodo, conservamos solo sus antecesores.
-    const numericLevel = Number(level);
-    const length = Number.isFinite(numericLevel)
-      ? Math.max(0, Math.trunc(numericLevel))
-      : 0;
+  getGroupSelection(groupKey) {
+    // [Supplier 6.3.4] La clave permite consultar una rama sin recorrer los otros grupos.
+    const safeKey = String(groupKey || "").trim();
+    const level = this.groupLevels.get(safeKey);
+    if (level === undefined) return null;
+    return this.selectedByLevel.get(level)?.get(safeKey) || null;
+  }
 
-    this.selectedPath = this.selectedPath.slice(0, length);
+  removeGroupSelection(groupKey) {
+    // [Supplier 6.3.5] Solo se elimina la rama que dejó de pertenecer a la configuración.
+    const safeKey = String(groupKey || "").trim();
+    const level = this.groupLevels.get(safeKey);
+    if (level === undefined) return false;
+
+    const levelSelections = this.selectedByLevel.get(level);
+    levelSelections?.delete(safeKey);
+    if (levelSelections?.size === 0) this.selectedByLevel.delete(level);
+    this.groupLevels.delete(safeKey);
+    return true;
+  }
+
+  getSelectedEntries() {
+    // [Supplier 7.1.1] Se aplanan los grupos respetando el orden de niveles.
+    const entries = [];
+    const levels = [...this.selectedByLevel.keys()].sort((a, b) => a - b);
+
+    for (const level of levels) {
+      for (const entry of this.selectedByLevel.get(level).values()) {
+        entries.push(entry);
+      }
+    }
+
+    return entries;
   }
 
   getSelectedRows() {
-    // [Supplier 7.1] Los renderizadores reciben solo filas válidas y en orden.
-    return this.selectedPath.filter((row) => row && typeof row === "object");
+    // [Supplier 7.1.2] Los renderizadores reciben la raíz y todas las selecciones independientes.
+    const rows = [];
+    if (this.rootVariation) rows.push(this.rootVariation);
+    rows.push(...this.getSelectedEntries().map((entry) => entry.row));
+    return rows;
   }
 
   getSelectedVariationIds() {
