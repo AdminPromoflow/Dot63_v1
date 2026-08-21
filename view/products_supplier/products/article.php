@@ -12,9 +12,57 @@ $jsTime  = filemtime('../../view/products_supplier/products/article.js');
       <p class="ds-subtitle">Search, filter and update the products connected to your supplier account.</p>
     </div>
     <div class="ds-actions">
+      <button class="btn btn-primary" id="preview-super-lanyard" type="button">
+        Generate Super Lanyard
+      </button>
       <a class="btn" href="../../view/dashboard_supplier/index.php">Back to dashboard</a>
     </div>
   </header>
+
+  <section class="card super-lanyard-generator" id="super-lanyard-generator" hidden aria-labelledby="super-lanyard-title">
+    <div class="super-lanyard-generator__header">
+      <div>
+        <p class="ds-eyebrow">Exclusive product generator</p>
+        <h2 id="super-lanyard-title">Super Lanyard combinations</h2>
+        <p class="muted" id="super-lanyard-status" role="status" aria-live="polite">
+          Preparing preview…
+        </p>
+      </div>
+      <button class="btn" id="close-super-lanyard" type="button">Close</button>
+    </div>
+
+    <div id="super-lanyard-preview" hidden>
+      <div class="super-lanyard-summary" aria-label="Combination summary">
+        <div><strong id="super-lanyard-total">0</strong><span>Total combinations</span></div>
+        <div><strong id="super-lanyard-pending">0</strong><span>Ready to create</span></div>
+        <div><strong id="super-lanyard-existing">0</strong><span>Already exist</span></div>
+      </div>
+
+      <div class="super-lanyard-dimensions" id="super-lanyard-dimensions"></div>
+
+      <div class="table-wrap super-lanyard-preview-table">
+        <table class="table products__table">
+          <thead>
+            <tr>
+              <th scope="col">Preview title</th>
+              <th scope="col">SKU</th>
+              <th scope="col" class="center">Result</th>
+            </tr>
+          </thead>
+          <tbody id="super-lanyard-preview-rows"></tbody>
+        </table>
+      </div>
+
+      <p class="muted super-lanyard-preview-note" id="super-lanyard-preview-note"></p>
+      <div class="super-lanyard-generator__footer">
+        <button class="btn btn-primary" id="generate-super-lanyard" type="button">
+          Create pending combinations
+        </button>
+      </div>
+    </div>
+
+    <div class="super-lanyard-report" id="super-lanyard-report" hidden aria-live="polite"></div>
+  </section>
 
   <!-- Filtros -->
   <section class="card products__filters" aria-labelledby="filters-title">
@@ -54,6 +102,12 @@ $jsTime  = filemtime('../../view/products_supplier/products/article.js');
         <button class="btn" type="reset">Reset</button>
         <button class="btn btn-primary" type="submit">Apply</button>
       </div>
+
+      <fieldset class="super-lanyard-filters" id="super-lanyard-product-filters" hidden>
+        <legend>Super Lanyard variations</legend>
+        <p>These filters use AND logic and only return generated Super Lanyard combinations.</p>
+        <div class="super-lanyard-filters__grid" id="super-lanyard-filter-fields"></div>
+      </fieldset>
     </form>
   </section>
 
