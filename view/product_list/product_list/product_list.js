@@ -50,6 +50,9 @@ class ClassProductList {
       if (window.headerAddProduct) {
         window.headerAddProduct.setCurrentHeader("Products");
       }
+      if (!window.location.hash) {
+        window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+      }
       this.getProducts();
     };
 
