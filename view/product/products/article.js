@@ -110,9 +110,16 @@ class ProductsClass {
   getPublishedProducts(products) {
     return (Array.isArray(products) ? products : []).filter(product =>
       Number(product.is_approved) === 1 &&
+      !this.isSuperLanyardSource(product) &&
       product.category_name !== "Unassigned Category" &&
       product.group_name !== "Unassigned Group"
     );
+  }
+
+  isSuperLanyardSource(product) {
+    if (this.isGeneratedSuperLanyard(product)) return false;
+
+    return this.normaliseTypeName(product?.name) === "superlanyard";
   }
 
   async fetchSearchProducts(searchText) {
@@ -373,14 +380,21 @@ class ProductsClass {
       button.className = "buttom_products";
       button.type = "button";
       button.textContent = "Buy";
-      button.addEventListener("click", () => this.buyProduct(product.SKU));
+      button.addEventListener("click", () => this.buyProduct(
+        product.SKU,
+        product.super_lanyard_variation_sku
+      ));
       box.append(image, name, category, productGroup, button);
       this.articles.append(box);
     });
   }
 
-  buyProduct(sku) {
-    window.location.href = `../../view/preview_product_customers/index.php?sku=${encodeURIComponent(sku)}`;
+  buyProduct(sku, variationSku = "") {
+    const params = new URLSearchParams({ sku: String(sku || "") });
+    if (String(variationSku || "").trim()) {
+      params.set("sku_variation", String(variationSku).trim());
+    }
+    window.location.href = `../../view/preview_product_customers/index.php?${params.toString()}`;
   }
 }
 

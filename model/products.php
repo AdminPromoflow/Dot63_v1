@@ -159,6 +159,34 @@ class Products {
   }
 
   /**
+   * The editable Super Lanyard record is only the source definition used by
+   * the generator. It must never be exposed as one more public product card,
+   * otherwise its complete variation tree is mixed with the generated
+   * one-combination-per-product catalogue.
+   */
+  private function isSuperLanyardSourceProduct(array $product): bool
+  {
+    if ($this->isGeneratedSuperLanyardProduct($product)) {
+      return false;
+    }
+
+    $normalized = mb_strtolower(trim((string)($product['name'] ?? '')), 'UTF-8');
+    $normalized = preg_replace('/[^a-z0-9]+/u', '', $normalized);
+
+    return $normalized === 'superlanyard';
+  }
+
+  private function filterPublicSuperLanyardSource(array $products): array
+  {
+    return array_values(array_filter(
+      $products,
+      function (array $product): bool {
+        return !$this->isSuperLanyardSourceProduct($product);
+      }
+    ));
+  }
+
+  /**
    * Build one catalogue card for every complete, terminal configuration.
    * Paths are reconstructed in PHP because some branches store Printed Sides
    * before Colour while others store them in the opposite order. The type_id
@@ -1035,6 +1063,8 @@ class Products {
                   END AS is_super_lanyard_generated,
                   g.name AS group_name,
                   c.name AS category_name,
+                  v.SKU AS variation_sku,
+                  tv.type_name AS variation_type_name,
                   i.link AS image_link
               FROM products p
               LEFT JOIN `groups` g
@@ -1043,6 +1073,8 @@ class Products {
                   ON g.category_id = c.category_id
               LEFT JOIN variations v
                   ON p.product_id = v.product_id
+              LEFT JOIN type_variations tv
+                  ON v.type_id = tv.type_id
               LEFT JOIN images i
                   ON v.variation_id = i.variation_id
               ORDER BY p.product_id DESC
@@ -1065,10 +1097,17 @@ class Products {
                       'name'          => $row['name'],
                       'is_approved'   => $row['is_approved'],
                       'is_super_lanyard_generated' => (int)$row['is_super_lanyard_generated'],
+                      'super_lanyard_variation_sku' => null,
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
                       'images'        => []
                   ];
+              }
+
+              if ((int)$row['is_super_lanyard_generated'] === 1
+                  && $this->superLanyardFilterKey($row['variation_type_name'] ?? '') === 'colour'
+                  && trim((string)($row['variation_sku'] ?? '')) !== '') {
+                  $products[$productId]['super_lanyard_variation_sku'] = $row['variation_sku'];
               }
 
               if (!empty($row['image_link']) && !in_array($row['image_link'], $products[$productId]['images'])) {
@@ -1078,7 +1117,7 @@ class Products {
 
           return [
               'success' => true,
-              'result'  => array_values($products)
+              'result'  => $this->filterPublicSuperLanyardSource(array_values($products))
           ];
 
       } catch (PDOException $e) {
@@ -1115,6 +1154,8 @@ class Products {
                   END AS is_super_lanyard_generated,
                   g.name AS group_name,
                   c.name AS category_name,
+                  image_variation.SKU AS variation_sku,
+                  image_variation_type.type_name AS variation_type_name,
                   image.link AS image_link
               FROM products p
               LEFT JOIN `groups` g
@@ -1123,6 +1164,8 @@ class Products {
                   ON g.category_id = c.category_id
               LEFT JOIN variations image_variation
                   ON p.product_id = image_variation.product_id
+              LEFT JOIN type_variations image_variation_type
+                  ON image_variation.type_id = image_variation_type.type_id
               LEFT JOIN images image
                   ON image_variation.variation_id = image.variation_id
               WHERE COALESCE(p.name, '') LIKE :product_name
@@ -1166,10 +1209,17 @@ class Products {
                       'name'          => $row['name'],
                       'is_approved'   => $row['is_approved'],
                       'is_super_lanyard_generated' => (int)$row['is_super_lanyard_generated'],
+                      'super_lanyard_variation_sku' => null,
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
                       'images'        => []
                   ];
+              }
+
+              if ((int)$row['is_super_lanyard_generated'] === 1
+                  && $this->superLanyardFilterKey($row['variation_type_name'] ?? '') === 'colour'
+                  && trim((string)($row['variation_sku'] ?? '')) !== '') {
+                  $products[$productId]['super_lanyard_variation_sku'] = $row['variation_sku'];
               }
 
               if (!empty($row['image_link']) && !in_array($row['image_link'], $products[$productId]['images'])) {
@@ -1179,7 +1229,7 @@ class Products {
 
           return [
               'success' => true,
-              'result'  => array_values($products)
+              'result'  => $this->filterPublicSuperLanyardSource(array_values($products))
           ];
 
       } catch (PDOException $e) {
