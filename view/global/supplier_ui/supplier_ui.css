@@ -192,11 +192,18 @@ body.body_product > .nav-section {
 /* Product creation stepper */
 .cp-tabs {
   counter-reset: supplier-step;
-  position: static;
+  position: sticky;
+  top: calc(var(--header-height, 72px) + .75rem);
+  z-index: 30;
   width: 100%;
   margin: .35rem 0 1.25rem;
-  padding: .45rem;
-  display: block;
+  padding: .65rem;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: .4rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
   border: 1px solid rgba(223, 229, 236, .92);
   border-radius: 17px;
   background: rgba(255, 255, 255, .9);
@@ -207,11 +214,11 @@ body.body_product > .nav-section {
 .cp-tab {
   counter-increment: supplier-step;
   min-height: 43px;
-  margin: .2rem;
   padding: .66rem .85rem;
   display: inline-flex;
   align-items: center;
   gap: .5rem;
+  flex: 0 0 auto;
   color: #66758a;
   border: 1px solid transparent;
   border-radius: 11px;
@@ -1316,6 +1323,7 @@ body.body_product > .nav-section {
   }
 
   .cp-tabs {
+    top: calc(var(--header-height, 64px) + .4rem);
     margin-bottom: .85rem;
     border-radius: 14px;
   }

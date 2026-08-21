@@ -17,7 +17,6 @@ export class VariationsController {
     this.generation = 0;
     this.requestVersions = new Map();
     this.requestControllers = new Map();
-    this.preferredVariationIds = new Set();
 
     this.bindEvents();
   }
@@ -57,14 +56,9 @@ export class VariationsController {
     this.setEmptyState(false);
   }
 
-  async loadRoot(rootVariationId, preferredVariationPath = []) {
+  async loadRoot(rootVariationId) {
     // [Customer 6.1.2] La raíz llega con la primera respuesta del producto y abre el recorrido.
     this.reset();
-    this.preferredVariationIds = new Set(
-      (Array.isArray(preferredVariationPath) ? preferredVariationPath : [])
-        .map(Number)
-        .filter((id) => Number.isFinite(id) && id > 0)
-    );
 
     const rootId = Number(rootVariationId);
     if (!Number.isFinite(rootId) || rootId <= 0) {
@@ -372,12 +366,6 @@ export class VariationsController {
     const buttons = Array.from(
       group.querySelectorAll(".var-option[data-variation-id]")
     );
-
-    const preferredButton = buttons.find((button) =>
-      this.preferredVariationIds.has(Number(button.dataset.variationId))
-    );
-
-    if (preferredButton) return preferredButton;
 
     const freeButton = buttons.find((button) => {
       const row = this.rowCache.get(String(button.dataset.variationId));

@@ -337,8 +337,7 @@ class CustomerPreviewApp {
     try {
       // [Customer 4] PreviewApi envía el SKU al endpoint público del servidor.
       const payload = await this.api.getCustomerPreview(this.sku, {
-        signal: this.loadController.signal,
-        variationSku: this.params.get("sku_variation")
+        signal: this.loadController.signal
       });
 
       // [Customer 5] Con una respuesta válida guardamos el producto y pintamos sus datos generales.
@@ -347,10 +346,7 @@ class CustomerPreviewApp {
 
       // [Customer 6] Después recorremos las variaciones desde la raíz. Este proceso también elige
       // opciones predeterminadas y dispara los pasos 7 y 8 en cada cambio de ruta.
-      await this.variations.loadRoot(
-        payload.root_variation_id,
-        payload.initial_variation_path
-      );
+      await this.variations.loadRoot(payload.root_variation_id);
 
       // [Customer 9] Solo mostramos la pantalla cuando producto, opciones y precio inicial están coordinados.
       this.setLoading(false);

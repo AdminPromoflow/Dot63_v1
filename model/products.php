@@ -61,9 +61,9 @@ class Products {
         ];
       }
 
-      /* 1) Consultar el producto y su group_id según el SKU. */
+      /* 1) Consultar el group_id del producto según el SKU */
       $stmtGroup = $pdo->prepare("
-        SELECT product_id, group_id, SKU, name
+        SELECT group_id
         FROM products
         WHERE SKU = :sku
         LIMIT 1
@@ -73,21 +73,18 @@ class Products {
         ':sku' => $sku
       ]);
 
-      $currentProduct = $stmtGroup->fetch(PDO::FETCH_ASSOC);
+      $groupId = $stmtGroup->fetchColumn();
 
-      if (!$currentProduct || empty($currentProduct['group_id'])) {
+      if ($groupId === false || empty($groupId)) {
         return [
           'success' => false,
           'error'   => 'Group ID not found for this SKU'
         ];
       }
 
-      $groupId = (int)$currentProduct['group_id'];
-
       /* 2) Consultar todos los productos de ese group_id */
       $stmt = $pdo->prepare("
         SELECT
-          p.product_id,
           p.SKU,
           p.name
         FROM products p
@@ -96,39 +93,16 @@ class Products {
       ");
 
       $stmt->execute([
-        ':group_id' => $groupId
+        ':group_id' => (int)$groupId
       ]);
 
       $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-      $response = [
+      return [
         'success' => true,
-        'group_id' => $groupId,
+        'group_id' => (int)$groupId,
         'result'  => $rows
       ];
-
-      /*
-       * Only generated SLY-* records feed the exclusive Super Lanyard
-       * catalogue. The editable source product is deliberately excluded so
-       * its variation tree cannot be mixed into generated combinations.
-       */
-      if ($this->isSuperLanyardName($currentProduct['name'] ?? '')) {
-        $superLanyardProducts = array_values(array_filter(
-          $rows,
-          function ($row) {
-            return $this->isGeneratedSuperLanyardProduct($row);
-          }
-        ));
-
-        $response['catalog_type'] = 'super_lanyard';
-        $response['catalog'] = $this->buildSuperLanyardCatalog(
-          $pdo,
-          $superLanyardProducts,
-          (string)$currentProduct['SKU']
-        );
-      }
-
-      return $response;
 
     } catch (PDOException $e) {
       error_log('getProductsByGroupId error: ' . $e->getMessage());
@@ -138,301 +112,6 @@ class Products {
         'error'   => 'DB error'
       ];
     }
-  }
-
-  /**
-   * Detect the catalogue without relying on letter case, spacing or dashes.
-   */
-  private function isSuperLanyardName($name): bool
-  {
-    $normalized = mb_strtolower(trim((string)$name), 'UTF-8');
-    $normalized = preg_replace('/[^a-z0-9]+/u', '', $normalized);
-
-    return strpos($normalized, 'superlanyard') === 0;
-  }
-
-  private function isGeneratedSuperLanyardProduct(array $product): bool
-  {
-    $sku = strtoupper(trim((string)($product['SKU'] ?? '')));
-    return strpos($sku, 'SLY-') === 0
-      && $this->isSuperLanyardName($product['name'] ?? '');
-  }
-
-  /**
-   * The editable Super Lanyard record is only the source definition used by
-   * the generator. It must never be exposed as one more public product card,
-   * otherwise its complete variation tree is mixed with the generated
-   * one-combination-per-product catalogue.
-   */
-  private function isSuperLanyardSourceProduct(array $product): bool
-  {
-    if ($this->isGeneratedSuperLanyardProduct($product)) {
-      return false;
-    }
-
-    $normalized = mb_strtolower(trim((string)($product['name'] ?? '')), 'UTF-8');
-    $normalized = preg_replace('/[^a-z0-9]+/u', '', $normalized);
-
-    return $normalized === 'superlanyard';
-  }
-
-  private function filterPublicSuperLanyardSource(array $products): array
-  {
-    return array_values(array_filter(
-      $products,
-      function (array $product): bool {
-        return !$this->isSuperLanyardSourceProduct($product);
-      }
-    ));
-  }
-
-  /**
-   * Build one catalogue card for every complete, terminal configuration.
-   * Paths are reconstructed in PHP because some branches store Printed Sides
-   * before Colour while others store them in the opposite order. The type_id
-   * relationship, not the title or the tree depth, is the source of truth.
-   */
-  private function buildSuperLanyardCatalog(PDO $pdo, array $products, string $currentSku): array
-  {
-    $filterLabels = [
-      'theme' => 'Theme',
-      'material' => 'Material',
-      'width' => 'Width',
-      'print_technique' => 'Print Technique',
-      'printed_sides' => 'Printed Sides',
-      'colour' => 'Colour'
-    ];
-
-    $emptyCatalog = [
-      'title' => 'Super Lanyard',
-      'subtitle' => 'Explore every available configuration.',
-      'current_sku' => $currentSku,
-      'filter_labels' => $filterLabels,
-      'filter_options' => array_fill_keys(array_keys($filterLabels), []),
-      'products' => []
-    ];
-
-    $productIds = array_values(array_unique(array_filter(array_map(
-      static function ($product) {
-        return (int)($product['product_id'] ?? 0);
-      },
-      $products
-    ))));
-
-    if (empty($productIds)) {
-      return $emptyCatalog;
-    }
-
-    $placeholders = implode(',', array_fill(0, count($productIds), '?'));
-    $stmt = $pdo->prepare("
-      SELECT
-        v.variation_id,
-        v.parent_id,
-        v.product_id,
-        v.name,
-        v.SKU,
-        v.image,
-        v.type_id,
-        tv.type_name
-      FROM variations v
-      LEFT JOIN type_variations tv ON tv.type_id = v.type_id
-      WHERE v.product_id IN ($placeholders)
-      ORDER BY v.product_id ASC, v.variation_id ASC
-    ");
-    $stmt->execute($productIds);
-    $variationRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (empty($variationRows)) {
-      return $emptyCatalog;
-    }
-
-    $variationsById = [];
-    $childrenCount = [];
-    $variationIds = [];
-
-    foreach ($variationRows as $row) {
-      $variationId = (int)$row['variation_id'];
-      $parentId = !empty($row['parent_id']) ? (int)$row['parent_id'] : null;
-      $row['variation_id'] = $variationId;
-      $row['parent_id'] = $parentId;
-      $row['product_id'] = (int)$row['product_id'];
-      $variationsById[$variationId] = $row;
-      $variationIds[] = $variationId;
-
-      if ($parentId !== null) {
-        $childrenCount[$parentId] = ($childrenCount[$parentId] ?? 0) + 1;
-      }
-    }
-
-    $productById = [];
-    foreach ($products as $product) {
-      $productById[(int)$product['product_id']] = $product;
-    }
-
-    $assetByVariation = [];
-    $priceByVariation = [];
-    $variationPlaceholders = implode(',', array_fill(0, count($variationIds), '?'));
-
-    $imageStmt = $pdo->prepare("
-      SELECT variation_id, link
-      FROM images
-      WHERE variation_id IN ($variationPlaceholders)
-        AND link IS NOT NULL
-        AND TRIM(link) <> ''
-      ORDER BY image_id ASC
-    ");
-    $imageStmt->execute($variationIds);
-    foreach ($imageStmt->fetchAll(PDO::FETCH_ASSOC) as $imageRow) {
-      $variationId = (int)$imageRow['variation_id'];
-      if (!isset($assetByVariation[$variationId])) {
-        $assetByVariation[$variationId] = trim((string)$imageRow['link']);
-      }
-    }
-
-    $priceStmt = $pdo->prepare("
-      SELECT variation_id, MIN(price) AS starting_price
-      FROM prices
-      WHERE variation_id IN ($variationPlaceholders)
-        AND price IS NOT NULL
-        AND price > 0
-      GROUP BY variation_id
-    ");
-    $priceStmt->execute($variationIds);
-    foreach ($priceStmt->fetchAll(PDO::FETCH_ASSOC) as $priceRow) {
-      $priceByVariation[(int)$priceRow['variation_id']] = (float)$priceRow['starting_price'];
-    }
-
-    $cardsByCombination = [];
-
-    foreach ($variationsById as $leafId => $leaf) {
-      if (isset($childrenCount[$leafId]) || empty($leaf['type_id'])) {
-        continue;
-      }
-
-      $configuration = [];
-      $pathIds = [];
-      $cursorId = $leafId;
-      $visited = [];
-
-      while ($cursorId && isset($variationsById[$cursorId]) && !isset($visited[$cursorId])) {
-        $visited[$cursorId] = true;
-        $node = $variationsById[$cursorId];
-        $pathIds[] = $cursorId;
-
-        $filterKey = $this->superLanyardFilterKey($node['type_name'] ?? '');
-        $optionName = trim((string)($node['name'] ?? ''));
-        if ($filterKey !== null && $optionName !== '' && !isset($configuration[$filterKey])) {
-          $configuration[$filterKey] = $optionName;
-        }
-
-        $cursorId = $node['parent_id'];
-      }
-
-      $isComplete = true;
-      foreach (array_keys($filterLabels) as $requiredKey) {
-        if (!isset($configuration[$requiredKey]) || $configuration[$requiredKey] === '') {
-          $isComplete = false;
-          break;
-        }
-      }
-      if (!$isComplete) {
-        continue;
-      }
-
-      $orderedConfiguration = [];
-      foreach ($filterLabels as $key => $label) {
-        $orderedConfiguration[$key] = $configuration[$key];
-      }
-
-      $image = '';
-      $startingPrice = null;
-      foreach ($pathIds as $pathId) {
-        if ($image === '') {
-          $image = $assetByVariation[$pathId]
-            ?? trim((string)($variationsById[$pathId]['image'] ?? ''));
-        }
-        if ($startingPrice === null && isset($priceByVariation[$pathId])) {
-          $startingPrice = $priceByVariation[$pathId];
-        }
-        if ($image !== '' && $startingPrice !== null) {
-          break;
-        }
-      }
-
-      $product = $productById[(int)$leaf['product_id']] ?? [];
-      $combinationKeyParts = array_map(
-        static function ($value) {
-          return mb_strtolower(trim((string)$value), 'UTF-8');
-        },
-        array_values($orderedConfiguration)
-      );
-      $combinationKey = implode('|', $combinationKeyParts);
-      $title = 'Super Lanyard — ' . implode(' — ', array_values($orderedConfiguration));
-
-      $card = [
-        'id' => $leafId,
-        'product_sku' => (string)($product['SKU'] ?? $currentSku),
-        'sku' => trim((string)($leaf['SKU'] ?? '')),
-        'title' => $title,
-        'image' => $image,
-        'starting_price' => $startingPrice,
-        'configuration' => $orderedConfiguration
-      ];
-
-      /* Prefer the richest record if historical data contains a duplicate. */
-      $score = ($image !== '' ? 2 : 0) + ($startingPrice !== null ? 1 : 0);
-      $existingScore = isset($cardsByCombination[$combinationKey])
-        ? (($cardsByCombination[$combinationKey]['image'] !== '' ? 2 : 0)
-          + ($cardsByCombination[$combinationKey]['starting_price'] !== null ? 1 : 0))
-        : -1;
-
-      if ($score > $existingScore) {
-        $cardsByCombination[$combinationKey] = $card;
-      }
-    }
-
-    $cards = array_values($cardsByCombination);
-    usort($cards, static function ($left, $right) {
-      return strnatcasecmp((string)$left['title'], (string)$right['title']);
-    });
-
-    $filterOptions = array_fill_keys(array_keys($filterLabels), []);
-    foreach ($cards as $card) {
-      foreach ($card['configuration'] as $key => $value) {
-        $filterOptions[$key][$value] = true;
-      }
-    }
-    foreach ($filterOptions as $key => $values) {
-      $options = array_keys($values);
-      usort($options, 'strnatcasecmp');
-      $filterOptions[$key] = $options;
-    }
-
-    $emptyCatalog['filter_options'] = $filterOptions;
-    $emptyCatalog['products'] = $cards;
-
-    return $emptyCatalog;
-  }
-
-  /** Map database type labels to stable API keys used by the filters. */
-  private function superLanyardFilterKey($typeName): ?string
-  {
-    $normalized = mb_strtolower(trim((string)$typeName), 'UTF-8');
-    $normalized = preg_replace('/[^a-z0-9]+/u', '', $normalized);
-
-    $aliases = [
-      'theme' => 'theme',
-      'material' => 'material',
-      'width' => 'width',
-      'printtechnique' => 'print_technique',
-      'printmethod' => 'print_technique',
-      'printedsides' => 'printed_sides',
-      'printsides' => 'printed_sides',
-      'colour' => 'colour',
-      'color' => 'colour'
-    ];
-
-    return $aliases[$normalized] ?? null;
   }
 
   public function getByGroupForDashboard(): array
@@ -454,22 +133,8 @@ class Products {
           p.group_id,
           p.SKU AS sku,
           p.name,
-          p.status,
-          first_variation.SKU AS sku_variation
+          p.status
         FROM products p
-        LEFT JOIN (
-          SELECT v.product_id, v.SKU
-          FROM variations v
-          INNER JOIN (
-            SELECT product_id, MIN(variation_id) AS variation_id
-            FROM variations
-            WHERE product_id IS NOT NULL
-            GROUP BY product_id
-          ) first_variation_id
-            ON first_variation_id.product_id = v.product_id
-           AND first_variation_id.variation_id = v.variation_id
-        ) first_variation
-          ON first_variation.product_id = p.product_id
         WHERE p.group_id = :group_id
         ORDER BY p.name ASC, p.product_id ASC
       ");
@@ -480,7 +145,6 @@ class Products {
           'product_id' => (int)$row['product_id'],
           'group_id' => (int)$row['group_id'],
           'sku' => $row['sku'],
-          'sku_variation' => $row['sku_variation'],
           'name' => $row['name'],
           'status' => $row['status']
         ];
@@ -772,12 +436,7 @@ class Products {
                          p.name        AS product_name,
                          p.status      AS status,
                          p.date_status AS status_date,
-                         p.group_id,
-                         CASE
-                           WHEN UPPER(COALESCE(p.SKU, '')) LIKE 'SLY-%'
-                            AND COALESCE(p.name, '') LIKE 'Super Lanyard — %'
-                           THEN 1 ELSE 0
-                         END AS is_super_lanyard_generated
+                         p.group_id
                       FROM products p
                       WHERE p.supplier_id = :supplier_id
                       ORDER BY p.name ASC";
@@ -819,63 +478,7 @@ class Products {
                  }
              }
 
-             // 4) Valores exactos de filtro de cada producto generado de Super Lanyard.
-             // Se consultan por producto para que los filtros nunca mezclen opciones
-             // pertenecientes a productos normales del catálogo.
-             $superLanyardOptionsByProductId = [];
-             $superLanyardLeafSkuByProductId = [];
-             $superLanyardProductIds = [];
-             foreach ($products as $p) {
-                 if ((int)($p['is_super_lanyard_generated'] ?? 0) === 1) {
-                     $superLanyardProductIds[] = (int)$p['product_id'];
-                 }
-             }
-
-             if ($superLanyardProductIds) {
-                 $placeholders = implode(',', array_fill(0, count($superLanyardProductIds), '?'));
-                 $sqlOptions = "SELECT
-                                  v.product_id,
-                                  v.SKU AS variation_sku,
-                                  tv.type_name,
-                                  v.name AS option_name
-                                FROM variations v
-                                INNER JOIN type_variations tv ON tv.type_id = v.type_id
-                                WHERE v.product_id IN ($placeholders)
-                                  AND v.type_id IS NOT NULL
-                                  AND TRIM(COALESCE(v.name, '')) <> ''";
-                 $stmtOptions = $pdo->prepare($sqlOptions);
-                 $stmtOptions->execute($superLanyardProductIds);
-
-                 $axisNames = [
-                     'theme' => 'theme',
-                     'material' => 'material',
-                     'width' => 'width',
-                     'printtechnique' => 'print_technique',
-                     'printedsides' => 'printed_sides',
-                     'colour' => 'colour',
-                     'color' => 'colour',
-                 ];
-
-                 foreach ($stmtOptions->fetchAll(PDO::FETCH_ASSOC) as $optionRow) {
-                     $normalisedType = strtolower(trim((string)$optionRow['type_name']));
-                     $normalisedType = preg_replace('/[^a-z0-9]+/', '', $normalisedType);
-                     $axisKey = $axisNames[$normalisedType] ?? null;
-                     if ($axisKey === null) {
-                         continue;
-                     }
-
-                     $pid = (int)$optionRow['product_id'];
-                     if (!isset($superLanyardOptionsByProductId[$pid])) {
-                         $superLanyardOptionsByProductId[$pid] = [];
-                     }
-                     $superLanyardOptionsByProductId[$pid][$axisKey] = $optionRow['option_name'];
-                     if ($axisKey === 'colour') {
-                         $superLanyardLeafSkuByProductId[$pid] = $optionRow['variation_sku'];
-                     }
-                 }
-             }
-
-             // 5) group_id -> groups (group_name, category_id)
+             // 4) group_id -> groups (group_name, category_id)
              $groupIds = [];
              foreach ($products as $p) {
                  if (!empty($p['group_id'])) {
@@ -911,7 +514,7 @@ class Products {
                  $categoryIds = array_keys($categoryIds);
              }
 
-             // 6) category_id -> categories (category_name)
+             // 5) category_id -> categories (category_name)
              $categoriesById = [];
              if (!empty($categoryIds)) {
                  $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
@@ -958,9 +561,6 @@ class Products {
                      'product_name'         => $p['product_name'] ?? null,
                      'status'               => $p['status'] ?? null,
                      'status_date'          => $p['status_date'] ?? null,
-                     'is_super_lanyard_generated' => (int)($p['is_super_lanyard_generated'] ?? 0),
-                     'super_lanyard_options' => $superLanyardOptionsByProductId[$pid] ?? [],
-                     'super_lanyard_variation_sku' => $superLanyardLeafSkuByProductId[$pid] ?? null,
 
                      'first_variation_sku'  => $firstVariationSkuByProductId[$pid] ?? null,
 
@@ -1056,15 +656,8 @@ class Products {
                   p.SKU,
                   p.name,
                   p.is_approved,
-                  CASE
-                      WHEN UPPER(COALESCE(p.SKU, '')) LIKE 'SLY-%'
-                       AND COALESCE(p.name, '') LIKE 'Super Lanyard — %'
-                      THEN 1 ELSE 0
-                  END AS is_super_lanyard_generated,
                   g.name AS group_name,
                   c.name AS category_name,
-                  v.SKU AS variation_sku,
-                  tv.type_name AS variation_type_name,
                   i.link AS image_link
               FROM products p
               LEFT JOIN `groups` g
@@ -1073,8 +666,6 @@ class Products {
                   ON g.category_id = c.category_id
               LEFT JOIN variations v
                   ON p.product_id = v.product_id
-              LEFT JOIN type_variations tv
-                  ON v.type_id = tv.type_id
               LEFT JOIN images i
                   ON v.variation_id = i.variation_id
               ORDER BY p.product_id DESC
@@ -1096,18 +687,10 @@ class Products {
                       'SKU'           => $row['SKU'],
                       'name'          => $row['name'],
                       'is_approved'   => $row['is_approved'],
-                      'is_super_lanyard_generated' => (int)$row['is_super_lanyard_generated'],
-                      'super_lanyard_variation_sku' => null,
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
                       'images'        => []
                   ];
-              }
-
-              if ((int)$row['is_super_lanyard_generated'] === 1
-                  && $this->superLanyardFilterKey($row['variation_type_name'] ?? '') === 'colour'
-                  && trim((string)($row['variation_sku'] ?? '')) !== '') {
-                  $products[$productId]['super_lanyard_variation_sku'] = $row['variation_sku'];
               }
 
               if (!empty($row['image_link']) && !in_array($row['image_link'], $products[$productId]['images'])) {
@@ -1117,7 +700,7 @@ class Products {
 
           return [
               'success' => true,
-              'result'  => $this->filterPublicSuperLanyardSource(array_values($products))
+              'result'  => array_values($products)
           ];
 
       } catch (PDOException $e) {
@@ -1147,15 +730,8 @@ class Products {
                   p.SKU,
                   p.name,
                   p.is_approved,
-                  CASE
-                      WHEN UPPER(COALESCE(p.SKU, '')) LIKE 'SLY-%'
-                       AND COALESCE(p.name, '') LIKE 'Super Lanyard — %'
-                      THEN 1 ELSE 0
-                  END AS is_super_lanyard_generated,
                   g.name AS group_name,
                   c.name AS category_name,
-                  image_variation.SKU AS variation_sku,
-                  image_variation_type.type_name AS variation_type_name,
                   image.link AS image_link
               FROM products p
               LEFT JOIN `groups` g
@@ -1164,8 +740,6 @@ class Products {
                   ON g.category_id = c.category_id
               LEFT JOIN variations image_variation
                   ON p.product_id = image_variation.product_id
-              LEFT JOIN type_variations image_variation_type
-                  ON image_variation.type_id = image_variation_type.type_id
               LEFT JOIN images image
                   ON image_variation.variation_id = image.variation_id
               WHERE COALESCE(p.name, '') LIKE :product_name
@@ -1208,18 +782,10 @@ class Products {
                       'SKU'           => $row['SKU'],
                       'name'          => $row['name'],
                       'is_approved'   => $row['is_approved'],
-                      'is_super_lanyard_generated' => (int)$row['is_super_lanyard_generated'],
-                      'super_lanyard_variation_sku' => null,
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
                       'images'        => []
                   ];
-              }
-
-              if ((int)$row['is_super_lanyard_generated'] === 1
-                  && $this->superLanyardFilterKey($row['variation_type_name'] ?? '') === 'colour'
-                  && trim((string)($row['variation_sku'] ?? '')) !== '') {
-                  $products[$productId]['super_lanyard_variation_sku'] = $row['variation_sku'];
               }
 
               if (!empty($row['image_link']) && !in_array($row['image_link'], $products[$productId]['images'])) {
@@ -1229,7 +795,7 @@ class Products {
 
           return [
               'success' => true,
-              'result'  => $this->filterPublicSuperLanyardSource(array_values($products))
+              'result'  => array_values($products)
           ];
 
       } catch (PDOException $e) {

@@ -5,16 +5,6 @@ class ProductsClass {
     this.variationFilters = document.getElementById("variation-filters");
     this.productsData = [];
     this.variationRows = [];
-    this.superLanyardProductIds = new Set();
-    this.superLanyardAxisNames = new Set([
-      "theme",
-      "material",
-      "width",
-      "printtechnique",
-      "printedsides",
-      "colour",
-      "color"
-    ]);
     this.searchText = "";
     this.searchRequestController = null;
 
@@ -78,12 +68,6 @@ class ProductsClass {
 
     const initialProducts = this.getPublishedProducts(result.result);
 
-    this.superLanyardProductIds = new Set(
-      initialProducts
-        .filter(product => this.isGeneratedSuperLanyard(product))
-        .map(product => String(product.product_id))
-    );
-
     await this.fetchTypeVariations(initialProducts.map(product => product.product_id));
 
     if (!this.searchText.trim()) {
@@ -110,16 +94,9 @@ class ProductsClass {
   getPublishedProducts(products) {
     return (Array.isArray(products) ? products : []).filter(product =>
       Number(product.is_approved) === 1 &&
-      !this.isSuperLanyardSource(product) &&
       product.category_name !== "Unassigned Category" &&
       product.group_name !== "Unassigned Group"
     );
-  }
-
-  isSuperLanyardSource(product) {
-    if (this.isGeneratedSuperLanyard(product)) return false;
-
-    return this.normaliseTypeName(product?.name) === "superlanyard";
   }
 
   async fetchSearchProducts(searchText) {
@@ -192,46 +169,18 @@ class ProductsClass {
     );
   }
 
-  normaliseTypeName(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "");
-  }
-
-  isSuperLanyardAxis(typeName) {
-    return this.superLanyardAxisNames.has(this.normaliseTypeName(typeName));
-  }
-
-  isGeneratedSuperLanyard(product) {
-    return Number(product?.is_super_lanyard_generated) === 1;
-  }
-
   applyFilters() {
     const selectedCategories = this.getSelectedValues(this.categoryFilter, 'input[name="category[]"]');
     const selectionsByType = new Map();
-    let hasSuperLanyardSelection = false;
 
     this.variationFilters?.querySelectorAll("input[data-type-id]:checked").forEach(input => {
       const typeId = input.dataset.typeId;
       if (!selectionsByType.has(typeId)) selectionsByType.set(typeId, new Set());
       selectionsByType.get(typeId).add(input.value);
-      if (input.dataset.filterScope === "super-lanyard") {
-        hasSuperLanyardSelection = true;
-      }
     });
 
     const filtered = this.productsData.filter(product => {
       if (selectedCategories.size && !selectedCategories.has(String(product.category_name || ""))) {
-        return false;
-      }
-
-      // Los seis filtros exclusivos nunca se aplican ni mezclan productos
-      // normales. Al seleccionar uno, el resultado queda limitado a las
-      // combinaciones generadas de Super Lanyard.
-      if (hasSuperLanyardSelection && !this.isGeneratedSuperLanyard(product)) {
         return false;
       }
 
@@ -255,25 +204,9 @@ class ProductsClass {
     const grouped = new Map();
     this.variationRows.forEach(row => {
       if (!visibleIds.has(String(row.product_id))) return;
-      const isSuperLanyardAxis = this.isSuperLanyardAxis(row.type_name);
-
-      // Cuando existen combinaciones Super Lanyard, las seis dimensiones
-      // solicitadas se alimentan exclusivamente de esos productos.
-      if (isSuperLanyardAxis
-          && this.superLanyardProductIds.size
-          && !this.superLanyardProductIds.has(String(row.product_id))) {
-        return;
-      }
-
       const typeId = String(row.type_id);
       if (!grouped.has(typeId)) {
-        grouped.set(typeId, {
-          name: row.type_name,
-          scope: isSuperLanyardAxis && this.superLanyardProductIds.size
-            ? "super-lanyard"
-            : "catalogue",
-          options: new Map()
-        });
+        grouped.set(typeId, { name: row.type_name, options: new Map() });
       }
       const options = grouped.get(typeId).options;
       const optionName = String(row.option_name);
@@ -304,7 +237,6 @@ class ProductsClass {
         const text = document.createElement("span");
         input.type = "checkbox";
         input.dataset.typeId = typeId;
-        input.dataset.filterScope = type.scope;
         input.value = optionName;
         input.checked = previousSelections.get(typeId)?.has(optionName) || false;
         text.textContent = `${optionName} (${productSet.size})`;
@@ -380,21 +312,14 @@ class ProductsClass {
       button.className = "buttom_products";
       button.type = "button";
       button.textContent = "Buy";
-      button.addEventListener("click", () => this.buyProduct(
-        product.SKU,
-        product.super_lanyard_variation_sku
-      ));
+      button.addEventListener("click", () => this.buyProduct(product.SKU));
       box.append(image, name, category, productGroup, button);
       this.articles.append(box);
     });
   }
 
-  buyProduct(sku, variationSku = "") {
-    const params = new URLSearchParams({ sku: String(sku || "") });
-    if (String(variationSku || "").trim()) {
-      params.set("sku_variation", String(variationSku).trim());
-    }
-    window.location.href = `../../view/preview_product_customers/index.php?${params.toString()}`;
+  buyProduct(sku) {
+    window.location.href = `../../view/preview_product_customers/index.php?sku=${encodeURIComponent(sku)}`;
   }
 }
 

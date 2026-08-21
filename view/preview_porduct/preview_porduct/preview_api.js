@@ -46,8 +46,7 @@ export class PreviewApi {
     // [Supplier 4.1.5] Primera solicitud: datos generales, checklist y variación raíz.
     return this.request(this.previewUrl, {
       action: "get_supplier_preview",
-      sku,
-      sku_variation: String(options.variationSku || "").trim()
+      sku
     }, options);
   }
 

@@ -178,26 +178,19 @@ class ClassDashboardSupplier {
 
     products.forEach(product => {
       const productId = Number(product.product_id);
-      const sku = String(product.sku || "").trim();
-      const skuVariation = String(product.sku_variation || "").trim();
       const metaParts = [`ID ${productId}`];
 
-      if (sku) {
-        metaParts.push(`SKU ${sku}`);
+      if (product.sku) {
+        metaParts.push(`SKU ${product.sku}`);
       }
       if (product.status) {
         metaParts.push(product.status);
       }
 
-      const editUrl = sku && skuVariation
-        ? `../../view/category/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(skuVariation)}&mode=edit`
-        : "";
-
       const item = this.createCatalogItem(
         product.name || `Product ${productId}`,
         metaParts.join(" · "),
-        "product",
-        editUrl
+        "product"
       );
       item.dataset.productId = String(productId);
       this.catalogList.appendChild(item);
@@ -219,12 +212,9 @@ class ClassDashboardSupplier {
     return button;
   }
 
-  createCatalogItem(name, meta, type, href = "") {
-    const item = document.createElement(href ? "a" : "article");
-    item.className = `catalog-item catalog-product${href ? " catalog-item-button" : ""}`;
-    if (href) {
-      item.href = href;
-    }
+  createCatalogItem(name, meta, type) {
+    const item = document.createElement("article");
+    item.className = "catalog-item catalog-product";
     item.append(...this.createCatalogItemContent(name, meta, type));
     return item;
   }

@@ -83,51 +83,6 @@ body{
 .infield-icon{ position:absolute; right:12px; bottom:10px; opacity:.45; }
 .products__actions{ align-content:end; display:grid; grid-auto-flow:column; gap: var(--space-2); }
 
-/* Generador y filtros exclusivos de Super Lanyard */
-.super-lanyard-generator{
-  margin-bottom:var(--space-3);
-  border:1px solid color-mix(in oklab, var(--brand) 40%, var(--border));
-}
-.super-lanyard-generator__header,
-.super-lanyard-generator__footer{
-  display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-3);
-}
-.super-lanyard-generator__header h2{ margin:2px 0 6px; }
-.super-lanyard-generator__footer{ justify-content:flex-end; margin-top:var(--space-3); }
-.super-lanyard-summary{
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-2); margin:var(--space-3) 0;
-}
-.super-lanyard-summary > div{
-  display:grid; gap:4px; padding:var(--space-3); border:1px solid var(--border); border-radius:var(--radius-sm);
-  background:var(--brand-soft);
-}
-.super-lanyard-summary strong{ color:var(--brand); font-size:1.65rem; }
-.super-lanyard-summary span{ color:var(--muted); font-size:.85rem; }
-.super-lanyard-dimensions{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:var(--space-3); }
-.super-lanyard-dimensions .chip{ border-style:solid; }
-.super-lanyard-preview-table{ max-height:430px; border:1px solid var(--border); }
-.super-lanyard-preview-table .products__table td:first-child{ white-space:normal; min-width:480px; }
-.super-lanyard-preview-note{ margin-top:var(--space-2); font-size:.85rem; }
-.super-lanyard-report{
-  margin-top:var(--space-3); padding:var(--space-3); border-radius:var(--radius-sm);
-  border:1px solid var(--border); background:#f8fffc;
-}
-.super-lanyard-report.is-error{ border-color:#f3b6b6; background:#fff6f6; color:#8b1d1d; }
-.super-lanyard-report strong{ display:block; margin-bottom:6px; }
-.super-lanyard-filters{
-  grid-column:1/-1; min-width:0; margin:0; padding:var(--space-3); border:1px solid var(--border);
-  border-radius:var(--radius-sm); background:#fbfefc;
-}
-.super-lanyard-filters legend{ padding:0 6px; color:var(--brand); font-weight:700; }
-.super-lanyard-filters > p{ color:var(--muted); font-size:.82rem; margin-bottom:var(--space-2); }
-.super-lanyard-filters__grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-2); }
-.super-lanyard-filters__grid label{ display:grid; gap:6px; color:var(--muted); font-size:.85rem; }
-.super-lanyard-filters__grid select{
-  width:100%; border:1px solid var(--border); border-radius:12px; padding:10px 12px; background:#fff;
-}
-.super-lanyard-generated-chip{ margin-left:8px; color:var(--brand); font-size:.72rem; font-weight:700; }
-[hidden]{ display:none !important; }
-
 /* Tabla */
 .table-card{ overflow:hidden; }
 .sticky-blur{
@@ -177,9 +132,6 @@ body{
 @media (max-width: 1000px){ .products__filters-grid{ grid-template-columns: 1fr 1fr; } }
 @media (max-width: 720px){
   .products__filters-grid{ grid-template-columns: 1fr; }
-  .super-lanyard-summary,
-  .super-lanyard-filters__grid{ grid-template-columns:1fr; }
-  .super-lanyard-generator__header{ align-items:stretch; flex-direction:column; }
 
   /* Tabla → tarjetas compactas (semánticamente sigue siendo tabla) */
   .products__table{ border:0; font-size:.95rem; }
@@ -198,10 +150,4 @@ body{
   .products__table td:nth-child(3)::before{ content:"Category"; font-weight:700; color:var(--muted); }
   .products__table td:nth-child(4)::before{ content:"Status"; font-weight:700; color:var(--muted); }
   .products__table td:nth-child(5)::before{ content:"Action"; font-weight:700; color:var(--muted); }
-
-  .super-lanyard-preview-table .products__table tbody tr{ grid-template-columns:1fr; }
-  .super-lanyard-preview-table .products__table td{ grid-template-columns:100px 1fr; min-width:0; }
-  .super-lanyard-preview-table .products__table td:nth-child(1)::before{ content:"Title"; }
-  .super-lanyard-preview-table .products__table td:nth-child(2)::before{ content:"SKU"; }
-  .super-lanyard-preview-table .products__table td:nth-child(3)::before{ content:"Result"; }
 }
