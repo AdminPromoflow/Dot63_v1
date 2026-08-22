@@ -3,6 +3,30 @@
  * Este controlador recorre un árbol que puede tener varios grupos hermanos. Cada selección
  * puede crear otra rama, por eso las solicitudes y el estado se identifican por groupKey.
  */
+const reservedVariationParameters = new Set([
+  "sku",
+  "combination_id",
+  "variation_ids",
+  "intent"
+]);
+
+export function readVariationInput(params) {
+  // Los enlaces de combinaciones guardan Tipo=Variación. Esos pares legibles son
+  // la fuente de verdad; combination_id y variation_ids son solo metadatos del listado.
+  const options = {};
+  if (!params || typeof params.forEach !== "function") return { options };
+
+  params.forEach((value, key) => {
+    const typeName = String(key || "").trim();
+    // Una coma final suele llegar al copiar el enlace dentro de una frase.
+    const optionName = String(value || "").trim().replace(/,+$/u, "").trim();
+    if (!typeName || !optionName || reservedVariationParameters.has(typeName.toLowerCase())) return;
+    options[typeName] = optionName;
+  });
+
+  return { options };
+}
+
 export class VariationsController {
   constructor(options = {}) {
     // [Customer 6.1] El coordinador inyecta dependencias; generation y versiones evitan carreras asíncronas.
@@ -15,13 +39,7 @@ export class VariationsController {
         String(optionName || "").trim()
       ])
     );
-    this.preferredVariationIds = new Set(
-      (Array.isArray(options.preferredVariationIds) ? options.preferredVariationIds : [])
-        .map((variationId) => Number(variationId))
-        .filter((variationId) => Number.isInteger(variationId) && variationId > 0)
-        .map(String)
-    );
-    this.hasVariationInput = this.preferredOptions.size > 0 || this.preferredVariationIds.size > 0;
+    this.hasVariationInput = this.preferredOptions.size > 0;
     this.renderPath = options.renderPath || (() => {});
     this.onError = options.onError || (() => {});
     this.root = document.getElementById("wrap-variations-group");
@@ -388,8 +406,8 @@ export class VariationsController {
 
     if (!this.hasVariationInput) return freeButton || buttons[0] || null;
 
-    // Cuando el enlace sí describe una combinación, el nombre del tipo/opción tiene
-    // prioridad y variation_ids sirve como identificador exacto de respaldo.
+    // Cuando el enlace sí describe una combinación, buscamos el valor indicado
+    // para este tipo. Si este tipo no vino en la URL, aplicamos el fallback nuevo.
     const preferredLabel = this.preferredOptions.get(
       this.normalizeOptionText(group.dataset.typeName)
     );
@@ -399,10 +417,6 @@ export class VariationsController {
           this.normalizeOptionText(preferredLabel)
         )
       : null;
-    const preferredIdButton = buttons.find((button) => (
-      this.preferredVariationIds.has(String(button.dataset.variationId))
-    ));
-
     // Para un tipo que no vino en el enlace se usa la primera opción. La excepción
     // son los extras: si price_display_mode="variation", evitamos agregar un coste
     // implícito eligiendo primero una opción sin precio o con precio cero.
@@ -412,7 +426,7 @@ export class VariationsController {
       return this.isFreeExtra(row);
     });
 
-    return preferredLabelButton || preferredIdButton || freeExtraButton || buttons[0] || null;
+    return preferredLabelButton || freeExtraButton || buttons[0] || null;
   }
 
   normalizeOptionText(value) {

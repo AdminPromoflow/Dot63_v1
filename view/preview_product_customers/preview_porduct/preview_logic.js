@@ -29,7 +29,7 @@ const [
   { ItemsRenderer },
   { ArtworkRenderer },
   { PricesController },
-  { VariationsController }
+  { VariationsController, readVariationInput }
 ] = await Promise.all([
   import(versionedModule("./preview_api.js")),
   import(versionedModule("./preview_store.js")),
@@ -267,7 +267,7 @@ class CustomerPreviewApp {
     // [Customer 3.3.1] El SKU de la URL identifica el producto público que se debe consultar.
     this.params = new URLSearchParams(window.location.search);
     this.sku = String(this.params.get("sku") || "").trim();
-    this.variationInput = this.getVariationInput(this.params);
+    this.variationInput = readVariationInput(this.params);
     this.api = new PreviewApi();
     this.store = new PreviewStore();
     this.loadController = null;
@@ -288,7 +288,6 @@ class CustomerPreviewApp {
       store: this.store,
       prices: this.prices,
       preferredOptions: this.variationInput.options,
-      preferredVariationIds: this.variationInput.ids,
       renderPath: () => this.renderSelectedPath(),
       onError: (message) => this.showMessage(message, "error")
     });
@@ -317,34 +316,6 @@ class CustomerPreviewApp {
     });
 
     this.bindEvents();
-  }
-
-  getVariationInput(params) {
-    // Los enlaces de combinaciones guardan Tipo=Variación para que la selección sea legible
-    // y variation_ids para poder resolverla incluso si dos opciones comparten el mismo nombre.
-    const reservedParameters = new Set([
-      "sku",
-      "combination_id",
-      "variation_ids",
-      "intent"
-    ]);
-    const options = {};
-    const ids = String(params.get("variation_ids") || "")
-      .split(",")
-      .map((value) => Number(value.trim()))
-      .filter((value) => Number.isInteger(value) && value > 0);
-
-    params.forEach((value, key) => {
-      const typeName = String(key || "").trim();
-      const optionName = String(value || "").trim();
-      if (!typeName || !optionName || reservedParameters.has(typeName.toLowerCase())) return;
-      options[typeName] = optionName;
-    });
-
-    return {
-      options,
-      ids: [...new Set(ids)]
-    };
   }
 
   bindEvents() {
