@@ -316,6 +316,42 @@ img{
   margin: 0;
 }
 
+.product-combination-details{
+  display: grid;
+  gap: 0;
+  margin: .35rem 0 0;
+}
+
+.product-combination-row{
+  display: grid;
+  grid-template-columns: minmax(90px, .8fr) minmax(0, 1.2fr);
+  gap: .65rem;
+  align-items: baseline;
+  padding: .42rem 0;
+  border-bottom: 1px solid #edf1f5;
+  font-size: .88rem;
+  line-height: 1.35;
+}
+
+.product-combination-row:last-child{
+  border-bottom: 0;
+}
+
+.product-combination-row dt,
+.product-combination-row dd{
+  min-width: 0;
+  margin: 0;
+}
+
+.product-combination-row dt{
+  color: #111827;
+}
+
+.product-combination-row dd{
+  color: var(--ov-muted);
+  overflow-wrap: anywhere;
+}
+
 .buttom_products{
   margin-top: .55rem;
   padding: 10px 12px;

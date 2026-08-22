@@ -366,7 +366,7 @@ class ProductsClass {
       }));
       const variationIds = selectedVariations.map(variation => variation.variation_id);
       const combinationId = `${product.product_id}:${variationIds.join("-")}`;
-      const titleParts = [product.name, ...selectedVariations.map(variation => variation.name)]
+      const titleParts = selectedVariations.map(variation => variation.name)
         .map(value => String(value || "").trim())
         .filter(Boolean);
       const images = Array.from(new Set([
@@ -400,6 +400,7 @@ class ProductsClass {
         product_id: product.product_id,
         base_product_id: product.product_id,
         base_product_sku: product.SKU,
+        base_product_name: product.name,
         combination_id: combinationId,
         SKU: `${product.SKU || `PRODUCT-${product.product_id}`}--${variationIds.map(id => `V${id}`).join("-")}`,
         name: titleParts.join(" — "),
@@ -597,9 +598,7 @@ class ProductsClass {
       box.className = "box_article";
       const image = document.createElement("img");
       image.src = `../../${product.images?.[0] || "view/product/products/img/icon_products.png"}`;
-      image.alt = product.name || "Product image";
-      const name = document.createElement("h1");
-      name.textContent = product.name || "Unnamed product";
+      image.alt = product.base_product_name || product.name || "Product image";
       const category = document.createElement("p");
       category.textContent = product.category_name || "No category";
       const productGroup = document.createElement("p");
@@ -609,7 +608,35 @@ class ProductsClass {
       button.type = "button";
       button.textContent = "Buy";
       button.addEventListener("click", () => this.buyProduct(product.base_product_sku || product.SKU));
-      box.append(image, name, category, productGroup, button);
+
+      box.append(image);
+
+      if (product.is_status_three_combination) {
+        const details = document.createElement("dl");
+        details.className = "product-combination-details";
+
+        (Array.isArray(product.selected_variations) ? product.selected_variations : [])
+          .forEach(variation => {
+            const row = document.createElement("div");
+            row.className = "product-combination-row";
+            const type = document.createElement("dt");
+            const typeName = document.createElement("strong");
+            typeName.textContent = `${variation.type_name || "Option"}:`;
+            type.append(typeName);
+            const option = document.createElement("dd");
+            option.textContent = variation.name || "—";
+            row.append(type, option);
+            details.append(row);
+          });
+
+        box.append(details);
+      } else {
+        const name = document.createElement("h1");
+        name.textContent = product.name || "Unnamed product";
+        box.append(name);
+      }
+
+      box.append(category, productGroup, button);
       this.articles.append(box);
     });
   }
