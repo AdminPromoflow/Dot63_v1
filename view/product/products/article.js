@@ -275,6 +275,14 @@ class ProductsClass {
           ...current.source_variation_ids,
           variation.variation_id
         ]));
+        current.source_variations = this.mergeUniqueRows(
+          current.source_variations,
+          [{
+            variation_id: variation.variation_id,
+            parent_id: variation.parent_id
+          }],
+          "variation_id"
+        );
         current.source_variation_skus = Array.from(new Set([
           ...current.source_variation_skus,
           variation.SKU
@@ -292,6 +300,10 @@ class ProductsClass {
         images: Array.isArray(variation.images) ? [...variation.images] : [],
         prices: Array.isArray(variation.prices) ? [...variation.prices] : [],
         source_variation_ids: [variation.variation_id],
+        source_variations: [{
+          variation_id: variation.variation_id,
+          parent_id: variation.parent_id
+        }],
         source_variation_skus: variation.SKU ? [variation.SKU] : []
       });
     });
@@ -353,9 +365,35 @@ class ProductsClass {
     return Array.from(uniqueCombinations.values());
   }
 
+  resolveSelectedVariationSources(combination) {
+    const resolvedVariationIds = new Set();
+
+    return (Array.isArray(combination) ? combination : []).map(variation => {
+      const sources = Array.isArray(variation.source_variations)
+        && variation.source_variations.length
+        ? variation.source_variations
+        : [{
+            variation_id: variation.variation_id,
+            parent_id: variation.parent_id
+          }];
+      const linkedSource = sources.find(source => (
+        resolvedVariationIds.has(String(source.parent_id))
+      ));
+      const selectedSource = linkedSource || sources[0];
+      const variationId = selectedSource?.variation_id ?? variation.variation_id;
+
+      resolvedVariationIds.add(String(variationId));
+      return {
+        ...variation,
+        variation_id: variationId,
+        parent_id: selectedSource?.parent_id ?? variation.parent_id
+      };
+    });
+  }
+
   createStatusThreeObjects(product, matrix) {
     return (Array.isArray(matrix) ? matrix : []).map(combination => {
-      const selectedVariations = combination.map(variation => ({
+      const selectedVariations = this.resolveSelectedVariationSources(combination).map(variation => ({
         variation_id: variation.variation_id,
         source_variation_ids: variation.source_variation_ids,
         type_id: variation.type_id,
@@ -369,14 +407,7 @@ class ProductsClass {
         prices: variation.prices
       }));
       const selectedVariationIds = new Set(
-        selectedVariations
-          .flatMap(variation => [
-            variation.variation_id,
-            ...(Array.isArray(variation.source_variation_ids)
-              ? variation.source_variation_ids
-              : [])
-          ])
-          .map(variationId => String(variationId))
+        selectedVariations.map(variation => String(variation.variation_id))
       );
       const selectedItems = this.mergeUniqueRows(
         [],
