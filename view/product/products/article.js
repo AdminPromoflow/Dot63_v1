@@ -70,7 +70,10 @@ class ProductsClass {
     const productSets = await this.prepareProductSets(result.result);
 
     if (!this.searchText.trim()) {
-      this.productsData = productSets.normalProducts;
+      this.productsData = [
+        ...productSets.normalProducts,
+        ...productSets.statusThreeProducts
+      ];
       this.variationRows = productSets.variationRows;
       this.statusThreeProductsData = productSets.statusThreeProducts;
     }
@@ -135,7 +138,10 @@ class ProductsClass {
 
       if (this.searchRequestController !== requestController) return;
 
-      this.productsData = productSets.normalProducts;
+      this.productsData = [
+        ...productSets.normalProducts,
+        ...productSets.statusThreeProducts
+      ];
       this.variationRows = productSets.variationRows;
       this.statusThreeProductsData = productSets.statusThreeProducts;
       this.applyFilters();
@@ -439,35 +445,70 @@ class ProductsClass {
         return false;
       }
 
-      return Array.from(selectionsByType).every(([typeId, options]) =>
-        this.variationRows.some(row =>
+      return Array.from(selectionsByType).every(([typeId, options]) => {
+        if (product.is_status_three_combination) {
+          return (Array.isArray(product.selected_variations) ? product.selected_variations : [])
+            .some(variation =>
+              String(variation.type_id) === String(typeId) &&
+              options.has(String(variation.name))
+            );
+        }
+
+        return this.variationRows.some(row =>
           String(row.product_id) === String(product.product_id) &&
           String(row.type_id) === String(typeId) &&
           options.has(String(row.option_name))
-        )
-      );
+        );
+      });
     });
 
     this.drawProducts(filtered);
-    this.drawTypeVariations(filtered.map(product => String(product.product_id)), selectionsByType);
+    this.drawTypeVariations(filtered, selectionsByType);
   }
 
-  drawTypeVariations(visibleProductIds, previousSelections = new Map()) {
+  drawTypeVariations(visibleProducts, previousSelections = new Map()) {
     if (!this.variationFilters) return;
 
-    const visibleIds = new Set(visibleProductIds);
+    const products = Array.isArray(visibleProducts) ? visibleProducts : [];
+    const normalProductIds = new Set(
+      products
+        .filter(product => !product.is_status_three_combination)
+        .map(product => String(product.product_id))
+    );
     const grouped = new Map();
-    this.variationRows.forEach(row => {
-      if (!visibleIds.has(String(row.product_id))) return;
-      const typeId = String(row.type_id);
-      if (!grouped.has(typeId)) {
-        grouped.set(typeId, { name: row.type_name, options: new Map() });
+
+    const addOption = (typeId, typeName, optionName, productKey) => {
+      const normalizedTypeId = String(typeId ?? "");
+      const normalizedOptionName = String(optionName ?? "").trim();
+      if (!normalizedTypeId || !normalizedOptionName) return;
+
+      if (!grouped.has(normalizedTypeId)) {
+        grouped.set(normalizedTypeId, { name: typeName, options: new Map() });
       }
-      const options = grouped.get(typeId).options;
-      const optionName = String(row.option_name);
-      if (!options.has(optionName)) options.set(optionName, new Set());
-      options.get(optionName).add(String(row.product_id));
+
+      const options = grouped.get(normalizedTypeId).options;
+      if (!options.has(normalizedOptionName)) options.set(normalizedOptionName, new Set());
+      options.get(normalizedOptionName).add(String(productKey));
+    };
+
+    this.variationRows.forEach(row => {
+      if (!normalProductIds.has(String(row.product_id))) return;
+      addOption(row.type_id, row.type_name, row.option_name, `product:${row.product_id}`);
     });
+
+    products
+      .filter(product => product.is_status_three_combination)
+      .forEach(product => {
+        (Array.isArray(product.selected_variations) ? product.selected_variations : [])
+          .forEach(variation => {
+            addOption(
+              variation.type_id,
+              variation.type_name,
+              variation.name,
+              `combination:${product.combination_id}`
+            );
+          });
+      });
 
     this.variationFilters.innerHTML = "";
     let colorIndex = 0;
@@ -567,7 +608,7 @@ class ProductsClass {
       button.className = "buttom_products";
       button.type = "button";
       button.textContent = "Buy";
-      button.addEventListener("click", () => this.buyProduct(product.SKU));
+      button.addEventListener("click", () => this.buyProduct(product.base_product_sku || product.SKU));
       box.append(image, name, category, productGroup, button);
       this.articles.append(box);
     });
