@@ -368,6 +368,23 @@ class ProductsClass {
         images: variation.images,
         prices: variation.prices
       }));
+      const selectedVariationIds = new Set(
+        selectedVariations
+          .flatMap(variation => [
+            variation.variation_id,
+            ...(Array.isArray(variation.source_variation_ids)
+              ? variation.source_variation_ids
+              : [])
+          ])
+          .map(variationId => String(variationId))
+      );
+      const selectedItems = this.mergeUniqueRows(
+        [],
+        (Array.isArray(product.items) ? product.items : []).filter(item => (
+          selectedVariationIds.has(String(item.variation_id))
+        )),
+        "item_id"
+      );
       const variationIds = selectedVariations.map(variation => variation.variation_id);
       const combinationId = `${product.product_id}:${variationIds.join("-")}`;
       const titleParts = selectedVariations.map(variation => variation.name)
@@ -416,6 +433,7 @@ class ProductsClass {
         category_name: product.category_name,
         group_name: product.group_name,
         images,
+        items: selectedItems,
         price: minimumPrice,
         price_info: {
           kind: prices.length ? "variable" : "no_additional_price",

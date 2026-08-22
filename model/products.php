@@ -656,6 +656,7 @@ class Products {
               i.item_id,
               i.name,
               i.description,
+              i.variation_id,
               v.product_id
           FROM items i
           INNER JOIN variations v
@@ -672,7 +673,8 @@ class Products {
           $products[$productId]['items'][] = [
               'item_id' => (int)$item['item_id'],
               'name' => (string)($item['name'] ?? ''),
-              'description' => (string)($item['description'] ?? '')
+              'description' => (string)($item['description'] ?? ''),
+              'variation_id' => (int)$item['variation_id']
           ];
       }
   }
