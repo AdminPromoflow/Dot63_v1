@@ -9,6 +9,12 @@ export class VariationsController {
     this.api = options.api;
     this.store = options.store;
     this.prices = options.prices;
+    this.preferredOptions = new Map(
+      Object.entries(options.preferredOptions || {}).map(([typeName, optionName]) => [
+        this.normalizeOptionText(typeName),
+        String(optionName || "").trim()
+      ])
+    );
     this.renderPath = options.renderPath || (() => {});
     this.onError = options.onError || (() => {});
     this.root = document.getElementById("wrap-variations-group");
@@ -273,6 +279,7 @@ export class VariationsController {
     group.className = "wrap-variations is-collapsible";
     group.dataset.groupKey = groupKey;
     group.dataset.typeId = groupData.typeId;
+    group.dataset.typeName = groupData.typeName;
     group.dataset.pathIndex = String(pathIndex);
     group.dataset.parentVariationId = String(parentVariationId);
     group.dataset.ancestorIds = ancestry.join(",");
@@ -360,19 +367,36 @@ export class VariationsController {
   }
 
   getAutomaticOption(group) {
-    // [Customer 6.7.1] Se prefiere una opción gratis; si no existe, se usa la primera.
+    // [Customer 6.7.1] Una opción recibida por URL tiene prioridad. Si no existe,
+    // se prefiere una opción gratis y finalmente se usa la primera disponible.
     if (!group) return null;
 
     const buttons = Array.from(
       group.querySelectorAll(".var-option[data-variation-id]")
     );
+    const preferredLabel = this.preferredOptions.get(
+      this.normalizeOptionText(group.dataset.typeName)
+    );
+    const preferredButton = preferredLabel
+      ? buttons.find(button =>
+          this.normalizeOptionText(button.dataset.variationLabel) ===
+          this.normalizeOptionText(preferredLabel)
+        )
+      : null;
 
     const freeButton = buttons.find((button) => {
       const row = this.rowCache.get(String(button.dataset.variationId));
       return this.isFreeExtra(row);
     });
 
-    return freeButton || buttons[0] || null;
+    return preferredButton || freeButton || buttons[0] || null;
+  }
+
+  normalizeOptionText(value) {
+    return String(value || "")
+      .trim()
+      .toLocaleLowerCase()
+      .replace(/\s+/g, " ");
   }
 
   isFreeExtra(row) {

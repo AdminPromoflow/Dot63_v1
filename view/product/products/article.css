@@ -353,7 +353,7 @@ img{
 }
 
 .buttom_products{
-  margin-top: .55rem;
+  margin-top: 0;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid #d1d5db;
@@ -363,6 +363,19 @@ img{
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(15, 23, 42, .06);
   transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.product-card-actions{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: .55rem;
+}
+
+.buttom_products_secondary{
+  background: #ffffff;
+  border-color: var(--accent-category);
+  color: #9a3412;
 }
 
 .buttom_products:hover{

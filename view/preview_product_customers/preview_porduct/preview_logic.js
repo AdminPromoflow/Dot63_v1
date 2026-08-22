@@ -267,6 +267,7 @@ class CustomerPreviewApp {
     // [Customer 3.3.1] El SKU de la URL identifica el producto público que se debe consultar.
     this.params = new URLSearchParams(window.location.search);
     this.sku = String(this.params.get("sku") || "").trim();
+    this.preselectedVariations = this.getPreselectedVariations(this.params);
     this.api = new PreviewApi();
     this.store = new PreviewStore();
     this.loadController = null;
@@ -286,6 +287,7 @@ class CustomerPreviewApp {
       api: this.api,
       store: this.store,
       prices: this.prices,
+      preferredOptions: this.preselectedVariations,
       renderPath: () => this.renderSelectedPath(),
       onError: (message) => this.showMessage(message, "error")
     });
@@ -314,6 +316,25 @@ class CustomerPreviewApp {
     });
 
     this.bindEvents();
+  }
+
+  getPreselectedVariations(params) {
+    const reservedParameters = new Set([
+      "sku",
+      "combination_id",
+      "variation_ids",
+      "intent"
+    ]);
+    const selections = {};
+
+    params.forEach((value, key) => {
+      const typeName = String(key || "").trim();
+      const optionName = String(value || "").trim();
+      if (!typeName || !optionName || reservedParameters.has(typeName.toLowerCase())) return;
+      selections[typeName] = optionName;
+    });
+
+    return selections;
   }
 
   bindEvents() {

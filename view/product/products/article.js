@@ -8,6 +8,10 @@ class ProductsClass {
     this.statusThreeProductsData = [];
     this.searchText = "";
     this.searchRequestController = null;
+    this.imageRotationTimer = null;
+    this.imageRotationInterval = 5000;
+    this.fallbackImage = "../../view/product/products/img/icon_products.png";
+    this.prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false;
 
     this.bindSearchInput(document.getElementById("product-search"));
     this.bindSearchButton(document.getElementById("product-search-button"));
@@ -369,13 +373,18 @@ class ProductsClass {
       const titleParts = selectedVariations.map(variation => variation.name)
         .map(value => String(value || "").trim())
         .filter(Boolean);
-      const images = Array.from(new Set([
-        ...selectedVariations.flatMap(variation => [
+      const selectedImages = Array.from(new Set(
+        selectedVariations.flatMap(variation => [
           variation.image,
           ...(Array.isArray(variation.images) ? variation.images.map(image => image.link) : [])
-        ]),
-        ...(Array.isArray(product.images) ? product.images : [])
-      ].map(value => String(value || "").trim()).filter(Boolean)));
+        ])
+          .map(value => String(value || "").trim())
+          .filter(Boolean)
+      ));
+      const productImages = (Array.isArray(product.images) ? product.images : [])
+        .map(value => String(value || "").trim())
+        .filter(Boolean);
+      const images = selectedImages.length ? selectedImages : Array.from(new Set(productImages));
       const prices = this.mergeUniqueRows(
         [],
         selectedVariations.flatMap(variation =>
@@ -551,6 +560,7 @@ class ProductsClass {
   drawProducts(products) {
     if (!this.articles) return;
     const shouldRestoreSearchFocus = document.activeElement?.id === "product-search";
+    this.stopImageRotation();
     this.articles.innerHTML = "";
 
     const panel = document.createElement("div");
@@ -596,22 +606,42 @@ class ProductsClass {
     products.forEach(product => {
       const box = document.createElement("div");
       box.className = "box_article";
-      const image = document.createElement("img");
-      image.src = `../../${product.images?.[0] || "view/product/products/img/icon_products.png"}`;
-      image.alt = product.base_product_name || product.name || "Product image";
-      const category = document.createElement("p");
+      const productName = product.base_product_name || product.name || "Unnamed product";
+      const media = this.createProductMedia(product, productName);
+      const content = document.createElement("div");
+      content.className = "product-card-content";
+      const meta = document.createElement("div");
+      meta.className = "product-card-meta";
+      const category = document.createElement("span");
+      category.className = "product-card-badge product-card-badge_category";
       category.textContent = product.category_name || "No category";
-      const productGroup = document.createElement("p");
+      const productGroup = document.createElement("span");
+      productGroup.className = "product-card-badge";
       productGroup.textContent = product.group_name || "No group";
-      const button = document.createElement("button");
-      button.className = "buttom_products";
-      button.type = "button";
-      button.textContent = "Buy";
-      button.addEventListener("click", () => this.buyProduct(product.base_product_sku || product.SKU));
+      meta.append(category, productGroup);
+      const name = document.createElement("h2");
+      name.className = "product-card-title";
+      name.textContent = productName;
+      const actions = document.createElement("div");
+      actions.className = "product-card-actions";
+      const seeMoreButton = document.createElement("button");
+      seeMoreButton.className = "buttom_products buttom_products_secondary";
+      seeMoreButton.type = "button";
+      seeMoreButton.textContent = "See more";
+      seeMoreButton.addEventListener("click", () => this.seeMoreProduct(product));
+      const buyButton = document.createElement("button");
+      buyButton.className = "buttom_products";
+      buyButton.type = "button";
+      buyButton.textContent = "Buy";
+      buyButton.addEventListener("click", () => this.buyProduct(product.base_product_sku || product.SKU));
+      actions.append(seeMoreButton, buyButton);
 
-      box.append(image);
+      content.append(meta, name);
 
       if (product.is_status_three_combination) {
+        const selectionLabel = document.createElement("p");
+        selectionLabel.className = "product-selection-label";
+        selectionLabel.textContent = "Selected configuration";
         const details = document.createElement("dl");
         details.className = "product-combination-details";
 
@@ -629,16 +659,156 @@ class ProductsClass {
             details.append(row);
           });
 
-        box.append(details);
-      } else {
-        const name = document.createElement("h1");
-        name.textContent = product.name || "Unnamed product";
-        box.append(name);
+        content.append(selectionLabel, details);
       }
 
-      box.append(category, productGroup, button);
+      box.append(media, content, actions);
       this.articles.append(box);
     });
+
+    this.startImageRotation();
+  }
+
+  createProductMedia(product, productName) {
+    const images = this.getProductImages(product);
+    const media = document.createElement("figure");
+    media.className = "product-card-media";
+    media.dataset.currentImage = "0";
+    media.productImages = images;
+    media.productName = productName;
+    media.setAttribute("aria-label", `${productName} images`);
+
+    const image = document.createElement("img");
+    image.className = "product-card-image";
+    image.src = images[0];
+    image.alt = images.length > 1
+      ? `${productName} — image 1 of ${images.length}`
+      : productName;
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.addEventListener("error", () => {
+      if (image.dataset.fallbackApplied === "true") return;
+      image.dataset.fallbackApplied = "true";
+      image.src = this.fallbackImage;
+    });
+    media.append(image);
+
+    if (images.length > 1) {
+      const count = document.createElement("span");
+      count.className = "product-media-count";
+      count.textContent = `1 / ${images.length}`;
+
+      const previous = document.createElement("button");
+      previous.className = "product-media-control product-media-control_previous";
+      previous.type = "button";
+      previous.setAttribute("aria-label", `Previous image of ${productName}`);
+      previous.innerHTML = "&#8249;";
+      previous.addEventListener("click", () => this.rotateProductImage(media, -1));
+
+      const next = document.createElement("button");
+      next.className = "product-media-control product-media-control_next";
+      next.type = "button";
+      next.setAttribute("aria-label", `Next image of ${productName}`);
+      next.innerHTML = "&#8250;";
+      next.addEventListener("click", () => this.rotateProductImage(media, 1));
+
+      media.append(count, previous, next);
+    }
+
+    return media;
+  }
+
+  getProductImages(product) {
+    const uniqueImages = new Set();
+
+    (Array.isArray(product?.images) ? product.images : []).forEach(source => {
+      const rawSource = typeof source === "object" ? source?.link : source;
+      const resolvedSource = this.resolveProductImage(rawSource);
+      if (resolvedSource) uniqueImages.add(resolvedSource);
+    });
+
+    return uniqueImages.size ? Array.from(uniqueImages) : [this.fallbackImage];
+  }
+
+  resolveProductImage(source) {
+    const value = String(source || "").trim();
+    if (!value) return "";
+    if (/^(?:https?:|data:|blob:|\/)/i.test(value) || value.startsWith("../")) return value;
+    return `../../${value.replace(/^\.\//, "")}`;
+  }
+
+  rotateProductImage(media, direction = 1) {
+    const images = Array.isArray(media?.productImages) ? media.productImages : [];
+    if (images.length < 2) return;
+
+    const currentIndex = Number(media.dataset.currentImage || 0);
+    const nextIndex = (currentIndex + direction + images.length) % images.length;
+    const image = media.querySelector(".product-card-image");
+    const count = media.querySelector(".product-media-count");
+    if (!image) return;
+
+    media.dataset.currentImage = String(nextIndex);
+    image.dataset.fallbackApplied = "false";
+    image.src = images[nextIndex];
+    image.alt = `${media.productName} — image ${nextIndex + 1} of ${images.length}`;
+    if (count) count.textContent = `${nextIndex + 1} / ${images.length}`;
+
+    if (!this.prefersReducedMotion && typeof image.animate === "function") {
+      image.animate(
+        [
+          { opacity: .25, transform: "scale(.985)" },
+          { opacity: 1, transform: "scale(1)" }
+        ],
+        { duration: 420, easing: "ease-out" }
+      );
+    }
+  }
+
+  startImageRotation() {
+    this.stopImageRotation();
+    const hasCarousels = this.articles?.querySelector(".product-card-media .product-media-count");
+    if (!hasCarousels || this.prefersReducedMotion) return;
+
+    this.imageRotationTimer = window.setInterval(() => {
+      this.articles?.querySelectorAll(".product-card-media").forEach(media => {
+        if (media.matches(":hover") || media.matches(":focus-within")) return;
+        this.rotateProductImage(media, 1);
+      });
+    }, this.imageRotationInterval);
+  }
+
+  stopImageRotation() {
+    if (!this.imageRotationTimer) return;
+    window.clearInterval(this.imageRotationTimer);
+    this.imageRotationTimer = null;
+  }
+
+  seeMoreProduct(product) {
+    window.location.href = this.buildProductPreviewUrl(product);
+  }
+
+  buildProductPreviewUrl(product) {
+    const params = new URLSearchParams();
+    const sku = String(product?.base_product_sku || product?.SKU || "").trim();
+    params.set("sku", sku);
+
+    if (product?.is_status_three_combination) {
+      if (product.combination_id) params.set("combination_id", product.combination_id);
+
+      const variationIds = (Array.isArray(product.selected_variations) ? product.selected_variations : [])
+        .map(variation => Number(variation.variation_id))
+        .filter(id => Number.isInteger(id) && id > 0);
+      if (variationIds.length) params.set("variation_ids", variationIds.join(","));
+
+      (Array.isArray(product.selected_variations) ? product.selected_variations : [])
+        .forEach(variation => {
+          const typeName = String(variation.type_name || "").trim();
+          const optionName = String(variation.name || "").trim();
+          if (typeName && optionName) params.set(typeName, optionName);
+        });
+    }
+
+    return `../../view/preview_product_customers/index.php?${params.toString()}`;
   }
 
   buyProduct(sku) {
