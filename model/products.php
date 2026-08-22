@@ -655,6 +655,7 @@ class Products {
                   p.product_id,
                   p.SKU,
                   p.name,
+                  p.status,
                   p.is_approved,
                   g.name AS group_name,
                   c.name AS category_name,
@@ -686,6 +687,7 @@ class Products {
                       'product_id'    => $row['product_id'],
                       'SKU'           => $row['SKU'],
                       'name'          => $row['name'],
+                      'status'        => $row['status'],
                       'is_approved'   => $row['is_approved'],
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
@@ -729,6 +731,7 @@ class Products {
                   p.product_id,
                   p.SKU,
                   p.name,
+                  p.status,
                   p.is_approved,
                   g.name AS group_name,
                   c.name AS category_name,
@@ -781,6 +784,7 @@ class Products {
                       'product_id'    => $row['product_id'],
                       'SKU'           => $row['SKU'],
                       'name'          => $row['name'],
+                      'status'        => $row['status'],
                       'is_approved'   => $row['is_approved'],
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
@@ -804,6 +808,133 @@ class Products {
               'success' => false,
               'error'   => 'DB error'
           ];
+      }
+  }
+
+  /**
+   * Return only the options that can participate in the status=3 matrix.
+   *
+   * The current schema has no variation-level active flag. For this flow an
+   * active option is therefore a variation that is still attached to an
+   * approved status=3 product and has a valid type and non-empty option name.
+   * price_display_mode="variation" is the existing representation of an
+   * additional-price extra, so only the normal/base "prices" mode is eligible.
+   * A LEFT JOIN is intentionally used for price rows: options without their
+   * own price and options with variable price ranges must both be returned.
+   */
+  public function getStatusThreeEligibleVariations(array $productIds): array
+  {
+      $productIds = array_values(array_unique(array_filter(
+          array_map('intval', $productIds),
+          static fn($id) => $id > 0
+      )));
+
+      if (empty($productIds)) {
+          return ['success' => true, 'result' => []];
+      }
+
+      try {
+          $pdo = $this->connection->getConnection();
+          $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+
+          $stmt = $pdo->prepare("
+              SELECT
+                  v.variation_id,
+                  v.name,
+                  v.SKU,
+                  v.image,
+                  v.parent_id,
+                  v.product_id,
+                  v.type_id,
+                  COALESCE(NULLIF(LOWER(TRIM(v.price_display_mode)), ''), 'prices') AS price_display_mode,
+                  tv.type_name
+              FROM variations v
+              INNER JOIN products p
+                  ON p.product_id = v.product_id
+              INNER JOIN type_variations tv
+                  ON tv.type_id = v.type_id
+              WHERE v.product_id IN ($placeholders)
+                AND p.status = '3'
+                AND p.is_approved = 1
+                AND v.type_id IS NOT NULL
+                AND TRIM(COALESCE(tv.type_name, '')) <> ''
+                AND TRIM(COALESCE(v.name, '')) <> ''
+                AND LOWER(TRIM(v.name)) <> 'default'
+                AND COALESCE(NULLIF(LOWER(TRIM(v.price_display_mode)), ''), 'prices') = 'prices'
+              ORDER BY v.product_id ASC, v.variation_id ASC
+          ");
+          $stmt->execute($productIds);
+          $variationRows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+          if (empty($variationRows)) {
+              return ['success' => true, 'result' => []];
+          }
+
+          $variations = [];
+          foreach ($variationRows as $row) {
+              $variationId = (int)$row['variation_id'];
+              $variations[$variationId] = [
+                  'variation_id' => $variationId,
+                  'name' => (string)$row['name'],
+                  'SKU' => (string)($row['SKU'] ?? ''),
+                  'image' => $row['image'] ?? null,
+                  'parent_id' => !empty($row['parent_id']) ? (int)$row['parent_id'] : null,
+                  'product_id' => (int)$row['product_id'],
+                  'type_id' => (int)$row['type_id'],
+                  'type_name' => (string)$row['type_name'],
+                  'price_display_mode' => (string)$row['price_display_mode'],
+                  'images' => [],
+                  'prices' => [],
+              ];
+          }
+
+          $variationIds = array_keys($variations);
+          $variationPlaceholders = implode(',', array_fill(0, count($variationIds), '?'));
+
+          $imageStmt = $pdo->prepare("
+              SELECT image_id, link, updated, variation_id
+              FROM images
+              WHERE variation_id IN ($variationPlaceholders)
+              ORDER BY image_id ASC
+          ");
+          $imageStmt->execute($variationIds);
+          foreach ($imageStmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $image) {
+              $variationId = (int)$image['variation_id'];
+              if (!isset($variations[$variationId])) continue;
+
+              $variations[$variationId]['images'][] = [
+                  'image_id' => (int)$image['image_id'],
+                  'link' => (string)($image['link'] ?? ''),
+                  'updated' => isset($image['updated']) ? (int)$image['updated'] : null,
+              ];
+          }
+
+          $priceStmt = $pdo->prepare("
+              SELECT price_id, min_quantity, max_quantity, price, variation_id
+              FROM prices
+              WHERE variation_id IN ($variationPlaceholders)
+              ORDER BY variation_id ASC, min_quantity ASC, price_id ASC
+          ");
+          $priceStmt->execute($variationIds);
+          foreach ($priceStmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $price) {
+              $variationId = (int)$price['variation_id'];
+              if (!isset($variations[$variationId])) continue;
+
+              $variations[$variationId]['prices'][] = [
+                  'price_id' => (int)$price['price_id'],
+                  'min_quantity' => isset($price['min_quantity']) ? (int)$price['min_quantity'] : null,
+                  'max_quantity' => isset($price['max_quantity']) ? (int)$price['max_quantity'] : null,
+                  'price' => isset($price['price']) ? (float)$price['price'] : null,
+              ];
+          }
+
+          return [
+              'success' => true,
+              'result' => array_values($variations),
+          ];
+      } catch (PDOException $e) {
+          error_log('getStatusThreeEligibleVariations error: ' . $e->getMessage());
+          return ['success' => false, 'error' => 'DB error'];
       }
   }
 

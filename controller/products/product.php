@@ -19,6 +19,10 @@ class Product {
         $this->searchProducts($data);
       break;
 
+      case 'get_status_three_variations':
+        $this->getStatusThreeVariations($data);
+      break;
+
       case 'get_products_by_group':
         $this->getProductsByGroup($data);
       break;
@@ -474,6 +478,22 @@ class Product {
     $response = $products->searchProducts($search);
 
     echo json_encode($response);
+  }
+
+  private function getStatusThreeVariations($data){
+    header('Content-Type: application/json; charset=utf-8');
+
+    $productIds = is_array($data['product_ids'] ?? null)
+      ? array_slice($data['product_ids'], 0, 200)
+      : [];
+
+    $connection = new Database();
+    $products = new Products($connection);
+
+    echo json_encode(
+      $products->getStatusThreeEligibleVariations($productIds),
+      JSON_UNESCAPED_UNICODE
+    );
   }
 
   private function getUpdate(){
