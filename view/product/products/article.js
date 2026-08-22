@@ -557,6 +557,109 @@ class ProductsClass {
     });
   }
 
+  getProductSpecifications(product) {
+    const groupedSpecifications = new Map();
+
+    const addSpecification = (typeId, typeName, optionName) => {
+      const label = String(typeName || "").trim();
+      const value = String(optionName || "").trim();
+      if (!label || !value || value.toLocaleLowerCase() === "default") return;
+
+      const key = String(typeId || label.toLocaleLowerCase()).trim();
+      if (!groupedSpecifications.has(key)) {
+        groupedSpecifications.set(key, {
+          label,
+          values: [],
+          normalizedValues: new Set()
+        });
+      }
+
+      const specification = groupedSpecifications.get(key);
+      const normalizedValue = value.toLocaleLowerCase().replace(/\s+/g, " ");
+      if (specification.normalizedValues.has(normalizedValue)) return;
+
+      specification.normalizedValues.add(normalizedValue);
+      specification.values.push(value);
+    };
+
+    if (product?.is_status_three_combination) {
+      (Array.isArray(product.selected_variations) ? product.selected_variations : [])
+        .forEach(variation => {
+          addSpecification(
+            variation.type_id,
+            variation.type_name,
+            variation.name
+          );
+        });
+    } else {
+      this.variationRows
+        .filter(row => String(row.product_id) === String(product?.product_id))
+        .forEach(row => {
+          addSpecification(row.type_id, row.type_name, row.option_name);
+        });
+    }
+
+    return Array.from(groupedSpecifications.values()).map(({ label, values }) => ({
+      label,
+      values
+    }));
+  }
+
+  createProductSpecificationsCard(product, productName) {
+    const card = document.createElement("div");
+    card.className = "product-spec-card";
+
+    const header = document.createElement("div");
+    header.className = "product-spec-header";
+    const icon = document.createElement("span");
+    icon.className = "product-spec-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "✦";
+    const headingGroup = document.createElement("div");
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "product-spec-eyebrow";
+    eyebrow.textContent = "Product details";
+    const heading = document.createElement("h3");
+    heading.className = "product-spec-heading";
+    heading.textContent = productName;
+    headingGroup.append(eyebrow, heading);
+    header.append(icon, headingGroup);
+    card.append(header);
+
+    const specifications = this.getProductSpecifications(product);
+    if (!specifications.length) {
+      const empty = document.createElement("p");
+      empty.className = "product-spec-empty";
+      empty.textContent = "No specifications are available for this product.";
+      card.append(empty);
+      return card;
+    }
+
+    const list = document.createElement("dl");
+    list.className = "product-spec-list";
+
+    specifications.forEach(specification => {
+      const row = document.createElement("div");
+      row.className = "product-spec-row";
+      const term = document.createElement("dt");
+      term.textContent = `${specification.label}:`;
+      const description = document.createElement("dd");
+
+      specification.values.forEach(value => {
+        const chip = document.createElement("span");
+        chip.className = "product-spec-value";
+        chip.textContent = value;
+        description.append(chip);
+      });
+
+      row.append(term, description);
+      list.append(row);
+    });
+
+    card.append(list);
+    return card;
+  }
+
   drawProducts(products) {
     if (!this.articles) return;
     const shouldRestoreSearchFocus = document.activeElement?.id === "product-search";
@@ -662,7 +765,8 @@ class ProductsClass {
         content.append(selectionLabel, details);
       }
 
-      box.append(media, content, actions);
+      const specificationsCard = this.createProductSpecificationsCard(product, productName);
+      box.append(media, content, actions, specificationsCard);
       this.articles.append(box);
     });
 
