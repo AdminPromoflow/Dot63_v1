@@ -267,7 +267,7 @@ class CustomerPreviewApp {
     // [Customer 3.3.1] El SKU de la URL identifica el producto público que se debe consultar.
     this.params = new URLSearchParams(window.location.search);
     this.sku = String(this.params.get("sku") || "").trim();
-    this.preselectedVariations = this.getPreselectedVariations(this.params);
+    this.variationInput = this.getVariationInput(this.params);
     this.api = new PreviewApi();
     this.store = new PreviewStore();
     this.loadController = null;
@@ -287,7 +287,8 @@ class CustomerPreviewApp {
       api: this.api,
       store: this.store,
       prices: this.prices,
-      preferredOptions: this.preselectedVariations,
+      preferredOptions: this.variationInput.options,
+      preferredVariationIds: this.variationInput.ids,
       renderPath: () => this.renderSelectedPath(),
       onError: (message) => this.showMessage(message, "error")
     });
@@ -318,23 +319,32 @@ class CustomerPreviewApp {
     this.bindEvents();
   }
 
-  getPreselectedVariations(params) {
+  getVariationInput(params) {
+    // Los enlaces de combinaciones guardan Tipo=Variación para que la selección sea legible
+    // y variation_ids para poder resolverla incluso si dos opciones comparten el mismo nombre.
     const reservedParameters = new Set([
       "sku",
       "combination_id",
       "variation_ids",
       "intent"
     ]);
-    const selections = {};
+    const options = {};
+    const ids = String(params.get("variation_ids") || "")
+      .split(",")
+      .map((value) => Number(value.trim()))
+      .filter((value) => Number.isInteger(value) && value > 0);
 
     params.forEach((value, key) => {
       const typeName = String(key || "").trim();
       const optionName = String(value || "").trim();
       if (!typeName || !optionName || reservedParameters.has(typeName.toLowerCase())) return;
-      selections[typeName] = optionName;
+      options[typeName] = optionName;
     });
 
-    return selections;
+    return {
+      options,
+      ids: [...new Set(ids)]
+    };
   }
 
   bindEvents() {

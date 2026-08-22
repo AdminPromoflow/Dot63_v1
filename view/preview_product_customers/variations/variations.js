@@ -15,6 +15,13 @@ export class VariationsController {
         String(optionName || "").trim()
       ])
     );
+    this.preferredVariationIds = new Set(
+      (Array.isArray(options.preferredVariationIds) ? options.preferredVariationIds : [])
+        .map((variationId) => Number(variationId))
+        .filter((variationId) => Number.isInteger(variationId) && variationId > 0)
+        .map(String)
+    );
+    this.hasVariationInput = this.preferredOptions.size > 0 || this.preferredVariationIds.size > 0;
     this.renderPath = options.renderPath || (() => {});
     this.onError = options.onError || (() => {});
     this.root = document.getElementById("wrap-variations-group");
@@ -367,29 +374,45 @@ export class VariationsController {
   }
 
   getAutomaticOption(group) {
-    // [Customer 6.7.1] Una opción recibida por URL tiene prioridad. Si no existe,
-    // se prefiere una opción gratis y finalmente se usa la primera disponible.
+    // [Customer 6.7.1] Sin selección en la URL se conserva el comportamiento anterior:
+    // una opción gratis y, si no existe, la primera disponible.
     if (!group) return null;
 
     const buttons = Array.from(
       group.querySelectorAll(".var-option[data-variation-id]")
     );
-    const preferredLabel = this.preferredOptions.get(
-      this.normalizeOptionText(group.dataset.typeName)
-    );
-    const preferredButton = preferredLabel
-      ? buttons.find(button =>
-          this.normalizeOptionText(button.dataset.variationLabel) ===
-          this.normalizeOptionText(preferredLabel)
-        )
-      : null;
-
     const freeButton = buttons.find((button) => {
       const row = this.rowCache.get(String(button.dataset.variationId));
       return this.isFreeExtra(row);
     });
 
-    return preferredButton || freeButton || buttons[0] || null;
+    if (!this.hasVariationInput) return freeButton || buttons[0] || null;
+
+    // Cuando el enlace sí describe una combinación, el nombre del tipo/opción tiene
+    // prioridad y variation_ids sirve como identificador exacto de respaldo.
+    const preferredLabel = this.preferredOptions.get(
+      this.normalizeOptionText(group.dataset.typeName)
+    );
+    const preferredLabelButton = preferredLabel
+      ? buttons.find(button =>
+          this.normalizeOptionText(button.dataset.variationLabel) ===
+          this.normalizeOptionText(preferredLabel)
+        )
+      : null;
+    const preferredIdButton = buttons.find((button) => (
+      this.preferredVariationIds.has(String(button.dataset.variationId))
+    ));
+
+    // Para un tipo que no vino en el enlace se usa la primera opción. La excepción
+    // son los extras: si price_display_mode="variation", evitamos agregar un coste
+    // implícito eligiendo primero una opción sin precio o con precio cero.
+    const freeExtraButton = buttons.find((button) => {
+      if (button.dataset.priceDisplayMode !== "variation") return false;
+      const row = this.rowCache.get(String(button.dataset.variationId));
+      return this.isFreeExtra(row);
+    });
+
+    return preferredLabelButton || preferredIdButton || freeExtraButton || buttons[0] || null;
   }
 
   normalizeOptionText(value) {

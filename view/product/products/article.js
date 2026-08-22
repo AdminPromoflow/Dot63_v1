@@ -560,12 +560,12 @@ class ProductsClass {
   getProductSpecifications(product) {
     const groupedSpecifications = new Map();
 
-    const addSpecification = (typeId, typeName, optionName) => {
-      const label = String(typeName || "").trim();
-      const value = String(optionName || "").trim();
-      if (!label || !value || value.toLocaleLowerCase() === "default") return;
+    const addSpecification = (itemName, itemDescription) => {
+      const label = String(itemName || "").trim();
+      const value = String(itemDescription || "").trim();
+      if (!label || !value) return;
 
-      const key = String(typeId || label.toLocaleLowerCase()).trim();
+      const key = label.toLocaleLowerCase().replace(/\s+/g, " ");
       if (!groupedSpecifications.has(key)) {
         groupedSpecifications.set(key, {
           label,
@@ -582,22 +582,9 @@ class ProductsClass {
       specification.values.push(value);
     };
 
-    if (product?.is_status_three_combination) {
-      (Array.isArray(product.selected_variations) ? product.selected_variations : [])
-        .forEach(variation => {
-          addSpecification(
-            variation.type_id,
-            variation.type_name,
-            variation.name
-          );
-        });
-    } else {
-      this.variationRows
-        .filter(row => String(row.product_id) === String(product?.product_id))
-        .forEach(row => {
-          addSpecification(row.type_id, row.type_name, row.option_name);
-        });
-    }
+    (Array.isArray(product?.items) ? product.items : []).forEach(item => {
+      addSpecification(item.name, item.description);
+    });
 
     return Array.from(groupedSpecifications.values()).map(({ label, values }) => ({
       label,

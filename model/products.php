@@ -645,6 +645,38 @@ class Products {
     }
   }
 
+  private function attachItemsToProducts(PDO $pdo, array &$products): void
+  {
+      if (empty($products)) return;
+
+      $productIds = array_values(array_map('intval', array_keys($products)));
+      $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+      $stmt = $pdo->prepare("
+          SELECT
+              i.item_id,
+              i.name,
+              i.description,
+              v.product_id
+          FROM items i
+          INNER JOIN variations v
+              ON v.variation_id = i.variation_id
+          WHERE v.product_id IN ($placeholders)
+          ORDER BY v.product_id ASC, i.item_id ASC
+      ");
+      $stmt->execute($productIds);
+
+      foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $item) {
+          $productId = (int)$item['product_id'];
+          if (!isset($products[$productId])) continue;
+
+          $products[$productId]['items'][] = [
+              'item_id' => (int)$item['item_id'],
+              'name' => (string)($item['name'] ?? ''),
+              'description' => (string)($item['description'] ?? '')
+          ];
+      }
+  }
+
   public function getProducts(): array
   {
       try {
@@ -691,7 +723,8 @@ class Products {
                       'is_approved'   => $row['is_approved'],
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
-                      'images'        => []
+                      'images'        => [],
+                      'items'         => []
                   ];
               }
 
@@ -699,6 +732,8 @@ class Products {
                   $products[$productId]['images'][] = $row['image_link'];
               }
           }
+
+          $this->attachItemsToProducts($pdo, $products);
 
           return [
               'success' => true,
@@ -788,7 +823,8 @@ class Products {
                       'is_approved'   => $row['is_approved'],
                       'group_name'    => $row['group_name'],
                       'category_name' => $row['category_name'],
-                      'images'        => []
+                      'images'        => [],
+                      'items'         => []
                   ];
               }
 
@@ -796,6 +832,8 @@ class Products {
                   $products[$productId]['images'][] = $row['image_link'];
               }
           }
+
+          $this->attachItemsToProducts($pdo, $products);
 
           return [
               'success' => true,
