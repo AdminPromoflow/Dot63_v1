@@ -215,11 +215,18 @@ class ProductsClass {
       const variationGroups = this.groupEligibleVariations(eligibleVariations);
       const matrix = this.createCartesianMatrix(variationGroups);
       const finalObjects = this.createStatusThreeObjects(product, matrix);
+      const completeCombinations = matrix.map((combination, index) => ({
+        combination: index + 1,
+        title: combination.map(option => option.name).join(" — "),
+        selected_values: Object.fromEntries(
+          combination.map(option => [option.type_name, option.name])
+        )
+      }));
 
       console.groupCollapsed(`[Products][status=3] ${product.name || product.SKU || product.product_id}`);
       console.log("Producto original con status = 3:", product);
-      console.log("Variaciones elegibles detectadas:", eligibleVariations);
       console.log("Número total de combinaciones:", matrix.length);
+      console.log("Combinaciones completas:", completeCombinations);
       console.log("Matriz completa:", matrix);
       console.log("Objetos finales compatibles con Products (status = 2):", finalObjects);
       console.groupEnd();

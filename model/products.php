@@ -819,8 +819,8 @@ class Products {
    * approved status=3 product and has a valid type and non-empty option name.
    * price_display_mode="variation" is the existing representation of an
    * additional-price extra, so only the normal/base "prices" mode is eligible.
-   * A LEFT JOIN is intentionally used for price rows: options without their
-   * own price and options with variable price ranges must both be returned.
+   * Price rows are loaded separately and optionally: options without their own
+   * price and options with variable price ranges must both be returned.
    */
   public function getStatusThreeEligibleVariations(array $productIds): array
   {
