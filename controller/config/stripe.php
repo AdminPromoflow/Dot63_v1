@@ -4,19 +4,30 @@ declare(strict_types=1);
 
 final class StripeConfig
 {
+    private static ?array $localConfig = null;
+
     public static function publishableKey(): string
     {
-        return self::environmentValue(['DOT63_STRIPE_PUBLISHABLE_KEY', 'STRIPE_PUBLISHABLE_KEY']);
+        return self::configuredValue(
+            ['DOT63_STRIPE_PUBLISHABLE_KEY', 'STRIPE_PUBLISHABLE_KEY'],
+            'publishable_key'
+        );
     }
 
     public static function secretKey(): string
     {
-        return self::environmentValue(['DOT63_STRIPE_SECRET_KEY', 'STRIPE_SECRET_KEY']);
+        return self::configuredValue(
+            ['DOT63_STRIPE_SECRET_KEY', 'STRIPE_SECRET_KEY'],
+            'secret_key'
+        );
     }
 
     public static function webhookSecret(): string
     {
-        return self::environmentValue(['DOT63_STRIPE_WEBHOOK_SECRET', 'STRIPE_WEBHOOK_SECRET']);
+        return self::configuredValue(
+            ['DOT63_STRIPE_WEBHOOK_SECRET', 'STRIPE_WEBHOOK_SECRET'],
+            'webhook_secret'
+        );
     }
 
     public static function isConfigured(): bool
@@ -50,15 +61,36 @@ final class StripeConfig
         return new \Stripe\StripeClient($secretKey);
     }
 
-    private static function environmentValue(array $names): string
+    private static function configuredValue(array $environmentNames, string $fileKey): string
     {
-        foreach ($names as $name) {
+        foreach ($environmentNames as $name) {
             $value = getenv($name);
             if ($value !== false && trim((string)$value) !== '') {
                 return trim((string)$value);
             }
         }
 
-        return '';
+        $config = self::localConfig();
+        return trim((string)($config[$fileKey] ?? ''));
+    }
+
+    private static function localConfig(): array
+    {
+        if (self::$localConfig !== null) {
+            return self::$localConfig;
+        }
+
+        $configFile = __DIR__ . '/stripe.local.php';
+        if (!is_file($configFile)) {
+            self::$localConfig = [];
+            return self::$localConfig;
+        }
+
+        if (!defined('DOT63_STRIPE_CONFIG_ALLOWED')) {
+            define('DOT63_STRIPE_CONFIG_ALLOWED', true);
+        }
+        $config = require $configFile;
+        self::$localConfig = is_array($config) ? $config : [];
+        return self::$localConfig;
     }
 }

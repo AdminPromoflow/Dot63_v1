@@ -235,7 +235,9 @@ class ClassSignUp {
       .then(data => {
       //  alert(JSON.stringify(data));
         if (data.response === true) {
-          alert('User registered successfully.');
+          alert(data.notification_sent === false
+            ? (data.notification_warning || 'Your supplier account was created, but the welcome email could not be sent.')
+            : 'Supplier registered successfully. A welcome email has been sent.');
           window.location.href = "../../view/log_inSupplier/index.php";
         } else {
           // Error from server

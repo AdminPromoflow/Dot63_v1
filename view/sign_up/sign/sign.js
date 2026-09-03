@@ -67,7 +67,9 @@ class ClassSignUp {
       .then(res => res.json())
       .then(data => {
         if (data.response === true) {
-          alert("User registered successfully.");
+          alert(data.message || (data.notification_sent === false
+            ? "Your account was created, but the welcome email could not be sent."
+            : "User registered successfully. A welcome email has been sent."));
           window.location.href = "../../view/product/index.php";
         } else {
           alert(data.error || "Could not complete the registration.");

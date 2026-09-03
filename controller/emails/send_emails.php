@@ -1,299 +1,281 @@
 <?php
-// Include PHPMailer and its dependencies
-require '../assets/lib/send-email/PHPMailer/src/Exception.php';
-require '../assets/lib/send-email/PHPMailer/src/PHPMailer.php';
-require '../assets/lib/send-email/PHPMailer/src/SMTP.php';
 
-// Import PHPMailer classes
+require_once __DIR__ . '/../assets/lib/send-email/PHPMailer/src/Exception.php';
+require_once __DIR__ . '/../assets/lib/send-email/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/../assets/lib/send-email/PHPMailer/src/SMTP.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
 
+class EmailsSender
+{
+    private $recipientEmail = '';
+    private $recipientName = '';
+    private $recipientPassword = '';
+    private $supplierName = '';
+    private $supplierEmail = '';
+    private $productName = '';
+    private $productSku = '';
+    private $approvalUrl = '';
+    private $notificationType = 'unknown';
 
-class EmailsSender {
-    private $message;
-    private $recipientEmail;
-    private $recipientName;
-    private $recipientPassword;
-    private $recipientTableOrder;
-
-    private $supplierName;
-    private $supplierEmail;
-
-    private $productName;
-    private $productSku;
-
-    private $approvalUrl;
-
-    // Setter for recipient email
-    public function setRecipientEmail($recipientEmail) {
-        $this->recipientEmail = $recipientEmail;
+    public function setRecipientEmail($recipientEmail): void
+    {
+        $this->recipientEmail = trim((string)$recipientEmail);
     }
 
-    // Setter for recipient password
-    public function setRecipientPassword($recipientPassword) {
-        $this->recipientPassword = $recipientPassword;
+    public function setRecipientName($recipientName): void
+    {
+        $this->recipientName = trim((string)$recipientName);
     }
 
-    // Setter for supplier name
-    public function setSupplierName($supplierName) {
-        $this->supplierName = $supplierName;
+    /**
+     * Retained for backwards compatibility. Passwords are deliberately never emailed.
+     */
+    public function setRecipientPassword($recipientPassword): void
+    {
+        $this->recipientPassword = (string)$recipientPassword;
     }
 
-    // Setter for supplier email
-    public function setSupplierEmail($supplierEmail) {
-        $this->supplierEmail = $supplierEmail;
+    public function setSupplierName($supplierName): void
+    {
+        $this->supplierName = trim((string)$supplierName);
     }
 
-    // Setter for product name
-    public function setProductName($productName) {
-        $this->productName = $productName;
+    public function setSupplierEmail($supplierEmail): void
+    {
+        $this->supplierEmail = trim((string)$supplierEmail);
     }
 
-    // Setter for product SKU
-    public function setProductSku($productSku) {
-        $this->productSku = $productSku;
+    public function setProductName($productName): void
+    {
+        $this->productName = trim((string)$productName);
     }
 
-    // Setter for approval URL
-    public function setApprovalUrl($approvalUrl) {
-        $this->approvalUrl = $approvalUrl;
+    public function setProductSku($productSku): void
+    {
+        $this->productSku = trim((string)$productSku);
     }
 
-    // Setter for recipient name
-    public function setRecipientName($recipientName) {
-        $this->recipientName = $recipientName;
+    public function setApprovalUrl($approvalUrl): void
+    {
+        $this->approvalUrl = trim((string)$approvalUrl);
     }
 
-    // Method to send a registration email
-    public function sendEmailProductApprovalNotice() {
+    public function sendEmailProductApprovalNotice(): bool
+    {
         try {
-            $mail = new PHPMailer(true);
+            $this->notificationType = 'product_approval';
+            $mail = $this->createMailer();
+            $seen = [];
+            $this->addUniqueAddress(
+                $mail,
+                $seen,
+                $this->recipientEmail !== '' ? $this->recipientEmail : 'admin@promoflow.net',
+                $this->recipientName !== '' ? $this->recipientName : 'PromoFlow Admin'
+            );
+            $this->addUniqueAddress($mail, $seen, 'ian@kan-do-it.com', 'Ian Southworth');
+            $this->addUniqueAddress($mail, $seen, 'aleinarossui@gmail.com', 'Alexandra Rozo');
 
-            // ===== SMTP (Hostinger) =====
-            $mail->isSMTP();
-            $mail->SMTPDebug = 0;
-            $mail->Host       = 'smtp.hostinger.com';
-            $mail->Port       = 587; // STARTTLS
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'admin@lanyardsforyou.com';
-            $mail->Password   = '32skiff32!CI';
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $productName = $this->escape($this->productName !== '' ? $this->productName : 'Product pending review');
+            $productSku = $this->escape($this->productSku !== '' ? $this->productSku : 'N/A');
+            $supplierName = $this->escape($this->supplierName !== '' ? $this->supplierName : 'A supplier');
+            $supplierEmail = $this->escape($this->supplierEmail);
+            $approvalUrl = $this->escape(
+                $this->approvalUrl !== '' ? $this->approvalUrl : 'https://promoflow.net'
+            );
 
-            $mail->CharSet    = 'UTF-8';
-            $mail->Encoding   = 'base64';
-
-            // ===== Sender and recipient =====
-            $mail->setFrom('admin@lanyardsforyou.com', 'Ian Southworth');
-            $mail->addReplyTo('admin@lanyardsforyou.com', 'Ian Southworth');
-            $mail->addAddress('admin@promoflow.net', 'Alexandra Rozo');
-            $mail->addAddress('ian@kan-do-it.com', 'Alexandra Rozo');
-
-            $mail->addAddress('aleinarossui@gmail.com', 'Alexandra Rozo');
-
-            // ===== Safe escaped data =====
-            $name          = htmlspecialchars((string)$this->recipientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $productName   = htmlspecialchars((string)$this->productName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $productSku    = htmlspecialchars((string)$this->productSku, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $supplierName  = htmlspecialchars((string)$this->supplierName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $supplierEmail = htmlspecialchars((string)$this->supplierEmail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $year          = date('Y');
-
-            // ===== Subject =====
             $mail->Subject = 'Product sent for approval';
-
-            // ===== HTML body =====
             $mail->isHTML(true);
-
-
-                    $mail->Body = <<<HTML
-
-            <!doctype html>
-
-            <html lang="en-GB">
-
-              <body style="margin:0; padding:0; background:#ffffff;">
-
-                <div style="display:none; max-height:0; overflow:hidden; line-height:1px; color:#ffffff; opacity:0;">
-
-                  A product has been sent for approval. Please review it in PromoFlow.
-
-                </div>
-
-                <div style="width:100%; background:#ffffff;">
-
-                  <div style="max-width:640px; margin:0 auto; padding:24px; border:1px solid #000000; box-sizing:border-box;">
-
-                    <div style="margin:0 0 8px 0;">
-
-                      <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:1.4; color:#000000;">
-
-                        .63
-
-                      </p>
-
-                    </div>
-
-                    <div style="margin:0 0 16px 0;">
-
-                      <h1 style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:22px; line-height:1.3; color:#000000;">
-
-                        Product sent for approval
-
-                      </h1>
-
-                    </div>
-
-                    <div style="margin:0 0 12px 0;">
-
-                      <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
-
-                        Hello {$name},
-
-                      </p>
-
-                    </div>
-
-                    <div style="margin:0 0 16px 0;">
-
-                      <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
-
-                        The product <strong>{$productName}</strong> has been sent for approval.
-
-                      </p>
-
-                    </div>
-
-                    <div style="margin:16px 0; padding:12px 0; border-top:1px solid #000000; border-bottom:1px solid #000000;">
-
-                      <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
-
-                        <strong style="display:inline-block; width:130px;">Product:</strong>
-
-                        <span>{$productName}</span>
-
-                      </p>
-
-                      <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
-
-                        <strong style="display:inline-block; width:130px;">SKU:</strong>
-
-                        <span>{$productSku}</span>
-
-                      </p>
-
-                      <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
-
-                        <strong style="display:inline-block; width:130px;">Supplier:</strong>
-
-                        <span>{$supplierName}</span>
-
-                      </p>
-
-                      <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#000000;">
-
-                        <strong style="display:inline-block; width:130px;">Supplier email:</strong>
-
-                        <span>{$supplierEmail}</span>
-
-                      </p>
-
-                    </div>
-
-                    <div style="margin:0 0 16px 0;">
-
-                      <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; color:#000000;">
-
-                        Please review this product in PromoFlow and approve it or send a message to the supplier if changes are needed.
-
-                      </p>
-
-                    </div>
-
-                    <div style="margin:18px 0;">
-
-                      <a href="https://promoflow.net"
-
-                         target="_blank"
-
-                         style="display:inline-block; padding:12px 18px; background:#000000; color:#ffffff; text-decoration:none; font-family:Arial, Helvetica, sans-serif; font-size:14px; font-weight:bold;">
-
-                        Enter PromoFlow to review
-
-                      </a>
-
-                    </div>
-
-                    <div style="margin:16px 0 0 0;">
-
-                      <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:13px; color:#000000;">
-
-                        Kind regards,<br>
-
-                        .63 For You Team
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  <div style="max-width:640px; margin:8px auto 0 auto; text-align:center;">
-
-                    <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#000000;">
-
-                      © {$year} Lanyards For You. All rights reserved.
-
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </body>
-
-            </html>
-
-            HTML;
-
-                    // ===== Plain text fallback =====
-
-                    $mail->AltBody =
-
-                        "Hello {$name},\n\n" .
-
-                        "The product {$productName} has been sent for approval.\n\n" .
-
-                        "Product: {$productName}\n" .
-
-                        "SKU: {$productSku}\n" .
-
-                        "Supplier: {$supplierName}\n" .
-
-                        "Supplier email: {$supplierEmail}\n\n" .
-
-                        "Please review this product in PromoFlow and approve it or send a message to the supplier if changes are needed.\n\n" .
-
-                        "Enter PromoFlow to review: {$promoflowUrl}\n\n" .
-
-                        "Kind regards,\n" .
-
-                        ".63 For You Team\n" .
-
-                        "© {$year} Lanyards For You";
-
-                    // ===== Send =====
-
-                    return $mail->send();
-
-                } catch (Exception $e) {
-
-                    error_log('EmailsSender::sendEmailProductApprovalNotice error -> ' . $e->getMessage());
-
-                    return false;
-
-                }
-
+            $mail->Body = $this->htmlTemplate(
+                'PromoFlow approval',
+                'Product sent for approval',
+                '<p>A supplier has submitted a product and it is waiting for review in PromoFlow.</p>'
+                . '<div style="margin:20px 0;padding:16px;background:#f8fafc;border:1px solid #dce3ea;border-radius:10px;">'
+                . '<p><strong>Product:</strong> ' . $productName . '</p>'
+                . '<p><strong>SKU:</strong> ' . $productSku . '</p>'
+                . '<p><strong>Supplier:</strong> ' . $supplierName . '</p>'
+                . '<p><strong>Supplier email:</strong> ' . $supplierEmail . '</p>'
+                . '</div>'
+                . '<p>Please review the product details, variations, images and prices before approving it.</p>'
+                . '<p><a href="' . $approvalUrl . '" style="display:inline-block;padding:12px 18px;background:#1f3551;color:#fff;text-decoration:none;border-radius:999px;">Review product in PromoFlow</a></p>'
+            );
+            $mail->AltBody =
+                "A product is waiting for approval in PromoFlow.\n\n"
+                . "Product: {$this->productName}\n"
+                . "SKU: {$this->productSku}\n"
+                . "Supplier: {$this->supplierName}\n"
+                . "Supplier email: {$this->supplierEmail}\n\n"
+                . 'Review product: ' . ($this->approvalUrl !== '' ? $this->approvalUrl : 'https://promoflow.net');
+
+            return $this->deliver($mail);
+        } catch (Throwable $error) {
+            error_log('EmailsSender::sendEmailProductApprovalNotice error -> ' . $error->getMessage());
+            return false;
+        }
+    }
+
+    public function sendEmailSupplierRegistration(): bool
+    {
+        $this->notificationType = 'supplier_registration';
+
+        return $this->sendRegistrationNotice(
+            'Supplier account created',
+            'Your supplier account has been created successfully. You can now sign in and start preparing products for approval.',
+            'https://lanyardsforyou.com/view/log_inSupplier/index.php'
+        );
+    }
+
+    public function sendEmailCustomerRegistration(): bool
+    {
+        $this->notificationType = 'customer_registration';
+
+        return $this->sendRegistrationNotice(
+            'Welcome to .63',
+            'Your customer account has been created successfully. You can now browse products, save your cart and complete orders.',
+            'https://lanyardsforyou.com/view/log_in/index.php'
+        );
+    }
+
+    /**
+     * Legacy alias used by the original supplier registration controller.
+     */
+    public function sendEmailRegistration(): bool
+    {
+        return $this->sendEmailSupplierRegistration();
+    }
+
+    private function sendRegistrationNotice(string $subject, string $message, string $loginUrl): bool
+    {
+        try {
+            if (!filter_var($this->recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                throw new InvalidArgumentException('A valid registration recipient is required.');
             }
 
+            $mail = $this->createMailer();
+            $mail->addAddress($this->recipientEmail, $this->recipientName);
+
+            $name = $this->escape($this->recipientName !== '' ? $this->recipientName : 'there');
+            $email = $this->escape($this->recipientEmail);
+            $safeMessage = $this->escape($message);
+            $safeLoginUrl = $this->escape($loginUrl);
+
+            $mail->Subject = $subject;
+            $mail->isHTML(true);
+            $mail->Body = $this->htmlTemplate(
+                '.63 account notification',
+                $subject,
+                '<p>Hello ' . $name . ',</p>'
+                . '<p>' . $safeMessage . '</p>'
+                . '<div style="margin:20px 0;padding:16px;background:#f8fafc;border:1px solid #dce3ea;border-radius:10px;">'
+                . '<p><strong>Account email:</strong> ' . $email . '</p>'
+                . '</div>'
+                . '<p><a href="' . $safeLoginUrl . '" style="display:inline-block;padding:12px 18px;background:#1f3551;color:#fff;text-decoration:none;border-radius:999px;">Sign in to .63</a></p>'
+                . '<p style="font-size:13px;color:#6b7280;">If you did not create this account, reply to this email so our team can help.</p>'
+            );
+            $mail->AltBody =
+                "Hello {$this->recipientName},\n\n"
+                . $message . "\n\n"
+                . "Account email: {$this->recipientEmail}\n"
+                . "Sign in: {$loginUrl}\n\n"
+                . 'If you did not create this account, reply to this email so our team can help.';
+
+            return $this->deliver($mail);
+        } catch (Throwable $error) {
+            error_log('EmailsSender::sendRegistrationNotice error -> ' . $error->getMessage());
+            return false;
+        }
+    }
+
+    protected function createMailer(): PHPMailer
+    {
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->SMTPDebug = 0;
+        $mail->Host = $this->environmentValue('DOT63_SMTP_HOST', 'smtp.hostinger.com');
+        $mail->Port = (int)$this->environmentValue('DOT63_SMTP_PORT', '587');
+        $mail->SMTPAuth = true;
+        $mail->Username = $this->environmentValue('DOT63_SMTP_USERNAME', 'admin@lanyardsforyou.com');
+        $mail->Password = $this->environmentValue('DOT63_SMTP_PASSWORD', '32skiff32!CI');
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->CharSet = 'UTF-8';
+        $mail->Encoding = 'base64';
+        $mail->Hostname = $this->environmentValue('DOT63_SMTP_HELO_HOST', 'lanyardsforyou.com');
+
+        $fromEmail = $this->environmentValue('DOT63_SMTP_FROM_EMAIL', $mail->Username);
+        $fromName = $this->environmentValue('DOT63_SMTP_FROM_NAME', '.63');
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->Sender = $fromEmail;
+        $mail->addReplyTo($fromEmail, $fromName);
+
+        return $mail;
+    }
+
+    protected function deliver(PHPMailer $mail): bool
+    {
+        $sent = $mail->send();
+        $recipients = array_map(
+            static fn(array $recipient): string => (string)$recipient[0],
+            $mail->getToAddresses()
+        );
+
+        if ($sent) {
+            error_log(sprintf(
+                'Dot63 email accepted by SMTP [%s] to %s; message_id=%s',
+                $this->notificationType,
+                implode(', ', $recipients),
+                $mail->getLastMessageID()
+            ));
+        } else {
+            error_log(sprintf(
+                'Dot63 email rejected [%s] to %s; error=%s',
+                $this->notificationType,
+                implode(', ', $recipients),
+                $mail->ErrorInfo
+            ));
+        }
+
+        return $sent;
+    }
+
+    private function addUniqueAddress(PHPMailer $mail, array &$seen, string $email, string $name): void
+    {
+        $email = strtolower(trim($email));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || isset($seen[$email])) {
+            return;
+        }
+
+        $seen[$email] = true;
+        $mail->addAddress($email, $name);
+    }
+
+    private function htmlTemplate(string $eyebrow, string $title, string $content): string
+    {
+        $safeEyebrow = $this->escape($eyebrow);
+        $safeTitle = $this->escape($title);
+        $year = date('Y');
+
+        return '<!doctype html><html lang="en-GB"><body style="margin:0;padding:0;background:#f4f6f8;">'
+            . '<div style="width:100%;padding:28px 0;background:#f4f6f8;">'
+            . '<div style="max-width:680px;margin:0 auto;background:#fff;border:1px solid #dce3ea;border-radius:16px;overflow:hidden;">'
+            . '<div style="padding:24px 28px;background:#1f3551;color:#fff;">'
+            . '<p style="margin:0 0 8px;font:12px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;">' . $safeEyebrow . '</p>'
+            . '<h1 style="margin:0;font:700 24px Arial,sans-serif;">' . $safeTitle . '</h1>'
+            . '</div><div style="padding:28px;font:15px/1.7 Arial,sans-serif;color:#1f2933;">'
+            . $content
+            . '<div style="margin-top:24px;padding-top:18px;border-top:1px solid #dce3ea;font-size:13px;color:#6b7280;">'
+            . 'This is an automatic notification from .63.</div>'
+            . '</div></div><p style="text-align:center;font:11px Arial,sans-serif;color:#6b7280;">© ' . $year . ' Lanyards For You.</p>'
+            . '</div></body></html>';
+    }
+
+    private function escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    private function environmentValue(string $name, string $fallback): string
+    {
+        $value = getenv($name);
+        return $value !== false && trim((string)$value) !== '' ? trim((string)$value) : $fallback;
+    }
 }

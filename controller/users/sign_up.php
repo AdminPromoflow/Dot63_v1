@@ -45,13 +45,16 @@ class SingUp {
       FILTER_NULL_ON_FAILURE
     );
 
-    // Enviar sólo si es verdadero
+    // Send a welcome notification only after the supplier was created.
     if ($boolSendEmail === true) {
       $emailSender = new EmailSender();
       $emailSender->setRecipientEmail($data['email']);
       $emailSender->setRecipientName($data['name']);
-      $emailSender->setRecipientPassword($data['password']);
-      $emailSender->sendEmailRegistration();
+      $userCreated['notification_sent'] = $emailSender->sendEmailSupplierRegistration();
+
+      if (!$userCreated['notification_sent']) {
+        $userCreated['notification_warning'] = 'The supplier account was created, but the welcome email could not be sent.';
+      }
     }
 
     echo json_encode ($userCreated);
@@ -61,9 +64,9 @@ class SingUp {
 }
 
 
-include "../../controller/users/send_emails.php";
-include "../../controller/config/database.php";
-include "../../model/users.php";
+require_once __DIR__ . "/send_emails.php";
+require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../model/users.php";
 $signUpClass = new SingUp(); //intancia = ponerle nombre a la variable
 $signUpClass->handleSignUp();
 ?>

@@ -165,7 +165,13 @@
         throw new Error(result.error || "We couldn't complete that request. Please try again.");
       }
 
-      setStatus(mode, mode === "login" ? "Welcome back! Taking you to the catalog…" : "Account created! Taking you to the catalog…", "success");
+      setStatus(
+        mode,
+        mode === "login"
+          ? "Welcome back! Taking you to the catalog…"
+          : (result.message || "Account created! A welcome email has been sent."),
+        "success"
+      );
       window.setTimeout(() => {
         window.location.assign(new URL(dialog.dataset.successUrl, window.location.href));
       }, 650);

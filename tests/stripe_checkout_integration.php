@@ -111,6 +111,10 @@ try {
         ($fakeStripe->paymentIntents->createdParams['options']['idempotency_key'] ?? '') !== '',
         'Stripe idempotency was not configured.'
     );
+    assertCheckout(
+        ($fakeStripe->paymentIntents->createdParams['params']['receipt_email'] ?? '') === $email,
+        'The customer email was not attached to the Stripe receipt notification.'
+    );
 
     $webhook = $payments->processWebhookEvent($eventId, 'payment_intent.succeeded', [
         'id' => $intentId,

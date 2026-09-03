@@ -4,6 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../emails/send_emails.php';
 require_once __DIR__ . '/../../model/customers.php';
 
 class CustomerSignUpController
@@ -62,12 +63,20 @@ class CustomerSignUpController
         }
 
         $publicCustomer = $result['customer'];
+        $emailSender = new EmailsSender();
+        $emailSender->setRecipientEmail((string)$publicCustomer['email']);
+        $emailSender->setRecipientName((string)$publicCustomer['name']);
+        $notificationSent = $emailSender->sendEmailCustomerRegistration();
+
         $this->startCustomerSession($publicCustomer);
         $this->respond([
             'success' => true,
             'response' => true,
             'authenticated' => true,
-            'message' => 'Your account was created successfully.',
+            'message' => $notificationSent
+                ? 'Your account was created successfully. A welcome email has been sent.'
+                : 'Your account was created successfully, but the welcome email could not be sent.',
+            'notification_sent' => $notificationSent,
             'customer' => $publicCustomer,
         ], 201);
     }
