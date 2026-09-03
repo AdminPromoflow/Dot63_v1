@@ -23,6 +23,7 @@ class StripeCheckoutInterface {
     this.cardComplete = false;
     this.isPreparing = false;
     this.isPaying = false;
+    this.pendingAddressId = 0;
     this.toastTimer = null;
 
     if (this.page) this.init();
@@ -121,14 +122,19 @@ class StripeCheckoutInterface {
   }
 
   async setupPayment(addressId) {
-    if (!this.canUseStripe() || addressId <= 0 || this.isPreparing || this.isPaying) {
+    if (this.isPreparing) {
+      this.pendingAddressId = addressId;
+      return false;
+    }
+    if (!this.canUseStripe() || addressId <= 0 || this.isPaying) {
       this.updatePaymentAvailability();
       return false;
     }
 
     this.isPreparing = true;
     this.paymentReady = false;
-    this.cardComplete = false;
+    const previousClientSecret = this.clientSecret;
+    const previousCardComplete = this.cardComplete;
     this.setPaymentState("Preparing secure payment", "Stripe is creating a protected payment session.", "loading");
     this.setPayButtonState(true, "Preparing payment…");
 
@@ -150,6 +156,7 @@ class StripeCheckoutInterface {
       if (!this.stripe) this.stripe = window.Stripe(this.config.publishableKey);
 
       if (data.client_secret !== this.clientSecret) {
+        this.cardComplete = false;
         this.paymentElement?.unmount();
         this.clientSecret = data.client_secret;
         this.elements = this.stripe.elements({
@@ -190,9 +197,11 @@ class StripeCheckoutInterface {
         });
         this.paymentElement.mount(this.paymentElementContainer);
       } else {
+        this.cardComplete = previousClientSecret === data.client_secret && previousCardComplete;
         this.paymentReady = true;
         this.paymentLoading.hidden = true;
         this.paymentElementContainer.hidden = false;
+        this.setPayButtonState(!this.cardComplete, this.payButtonLabel(data.total, data.currency));
       }
 
       this.showPaymentMessage("");
@@ -204,6 +213,13 @@ class StripeCheckoutInterface {
       return false;
     } finally {
       this.isPreparing = false;
+      if (this.pendingAddressId > 0 && this.pendingAddressId !== addressId) {
+        const nextAddressId = this.pendingAddressId;
+        this.pendingAddressId = 0;
+        this.setupPayment(nextAddressId);
+      } else {
+        this.pendingAddressId = 0;
+      }
     }
   }
 
@@ -501,4 +517,3 @@ class StripeCheckoutInterface {
 }
 
 document.addEventListener("DOMContentLoaded", () => new StripeCheckoutInterface(), { once: true });
-

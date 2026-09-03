@@ -212,6 +212,16 @@ class CheckoutPayments
             $stripeStatus = trim((string)($intent['status'] ?? ''));
             $orderStatus = (string)$order['status'];
 
+            if ($orderStatus === 'paid' && $eventType !== 'payment_intent.succeeded') {
+                $this->pdo->commit();
+                return [
+                    'processed' => true,
+                    'ignored' => true,
+                    'order_id' => $orderId,
+                    'status' => 'paid',
+                ];
+            }
+
             if ($eventType === 'payment_intent.succeeded') {
                 $expectedAmount = (int)round(((float)$order['total_amount']) * 100);
                 $receivedAmount = (int)($intent['amount_received'] ?? $intent['amount'] ?? 0);

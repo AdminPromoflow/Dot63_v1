@@ -30,7 +30,6 @@ $completeJs = __DIR__ . '/checkout/complete.js';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../global/menu_general/menu_general.css">
   <link rel="stylesheet" href="checkout/complete.css?v=<?= is_file($completeCss) ? filemtime($completeCss) : time() ?>">
   <?php if ($publishableKey !== ''): ?>
     <script src="https://js.stripe.com/clover/stripe.js"></script>
@@ -86,4 +85,3 @@ $completeJs = __DIR__ . '/checkout/complete.js';
   <script src="checkout/complete.js?v=<?= is_file($completeJs) ? filemtime($completeJs) : time() ?>"></script>
 </body>
 </html>
-

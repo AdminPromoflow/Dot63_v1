@@ -21,8 +21,16 @@ final class StripeConfig
 
     public static function isConfigured(): bool
     {
-        return preg_match('/^pk_(test|live)_/', self::publishableKey()) === 1
-            && preg_match('/^sk_(test|live)_/', self::secretKey()) === 1;
+        $publishableMatches = [];
+        $secretMatches = [];
+        $publishableValid = preg_match('/^pk_(test|live)_/', self::publishableKey(), $publishableMatches) === 1;
+        $secretValid = preg_match('/^sk_(test|live)_/', self::secretKey(), $secretMatches) === 1;
+        $webhookValid = preg_match('/^whsec_/', self::webhookSecret()) === 1;
+
+        return $publishableValid
+            && $secretValid
+            && $webhookValid
+            && ($publishableMatches[1] ?? null) === ($secretMatches[1] ?? null);
     }
 
     public static function stripeClient(): \Stripe\StripeClient

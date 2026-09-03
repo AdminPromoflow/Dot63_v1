@@ -23,14 +23,10 @@ $stripeConfigured = StripeConfig::isConfigured();
 $isCustomerCheckoutAuthenticated = !empty($_SESSION['customer_login'])
   && (int)($_SESSION['customer_id'] ?? 0) > 0
   && trim((string)($_SESSION['customer_email'] ?? '')) !== '';
-$isSupplierCheckoutAuthenticated = !empty($_SESSION['login'])
-  && trim((string)($_SESSION['email'] ?? '')) !== '';
 $isCheckoutAuthenticated = $isCustomerCheckoutAuthenticated;
 $checkoutCustomerId = $isCustomerCheckoutAuthenticated ? (int)$_SESSION['customer_id'] : 0;
 $checkoutCustomerName = trim((string)($_SESSION['customer_name'] ?? ''));
-$checkoutEmail = $isCustomerCheckoutAuthenticated
-  ? trim((string)$_SESSION['customer_email'])
-  : trim((string)($_SESSION['email'] ?? ''));
+$checkoutEmail = $isCustomerCheckoutAuthenticated ? trim((string)$_SESSION['customer_email']) : '';
 
 if ($isCheckoutAuthenticated) {
   $cartResult = (new Jobs(new Database()))->getCartItems($checkoutEmail);
@@ -123,7 +119,6 @@ $checkoutTotal = $checkoutSubtotal + $checkoutDelivery;
 
 $styleFile = __DIR__ . '/style.css';
 $checkoutCssFile = __DIR__ . '/checkout/checkout.css';
-$checkoutJsFile = __DIR__ . '/checkout/checkout.js';
 $stripeCheckoutCssFile = __DIR__ . '/checkout/stripe_checkout.css';
 $stripeCheckoutJsFile = __DIR__ . '/checkout/stripe_checkout.js';
 ?>
