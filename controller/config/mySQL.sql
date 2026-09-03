@@ -47,6 +47,9 @@ DROP TABLE IF EXISTS `promotions` CASCADE
 DROP TABLE IF EXISTS `suppliers` CASCADE
 ;
 
+DROP TABLE IF EXISTS `stripe_webhook_events` CASCADE
+;
+
 DROP TABLE IF EXISTS `type_variations` CASCADE
 ;
 
@@ -172,6 +175,17 @@ CREATE TABLE `orders`
 	`subtotal` VARCHAR(50) NULL,
 	`shipping_total` VARCHAR(50) NULL,
 	`customer_id` INT NULL,
+	`address_id` INT NULL,
+	`shipping_address_json` TEXT NULL,
+	`promotion_code` VARCHAR(50) NULL,
+	`discount_total` DECIMAL(12,2) NOT NULL DEFAULT 0,
+	`total_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+	`cart_fingerprint` CHAR(64) NULL,
+	`stripe_payment_intent_id` VARCHAR(255) NULL,
+	`stripe_payment_status` VARCHAR(50) NULL,
+	`stripe_idempotency_key` VARCHAR(255) NULL,
+	`paid_at` DATETIME NULL,
+	`updated_at` DATETIME NULL,
 	CONSTRAINT `PK_orders` PRIMARY KEY (`order_id` ASC)
 )
 
@@ -233,6 +247,17 @@ CREATE TABLE `suppliers`
 	`postal_code` VARCHAR(50) NULL,
 	`password` TEXT NULL,
 	CONSTRAINT `PK_Suppliers` PRIMARY KEY (`supplier_id` ASC)
+)
+
+;
+
+CREATE TABLE `stripe_webhook_events`
+(
+	`event_id` VARCHAR(255) NOT NULL,
+	`event_type` VARCHAR(100) NOT NULL,
+	`payment_intent_id` VARCHAR(255) NULL,
+	`processed_at` DATETIME NOT NULL,
+	CONSTRAINT `PK_stripe_webhook_events` PRIMARY KEY (`event_id` ASC)
 )
 
 ;
@@ -313,6 +338,12 @@ ALTER TABLE `orders`
  ADD INDEX `IXFK_orders_customers` (`customer_id` ASC)
 ;
 
+ALTER TABLE `orders`
+ ADD UNIQUE INDEX `UX_orders_stripe_payment_intent` (`stripe_payment_intent_id` ASC),
+ ADD INDEX `IX_orders_address` (`address_id` ASC),
+ ADD INDEX `IX_orders_payment_status` (`status` ASC, `stripe_payment_status` ASC)
+;
+
 ALTER TABLE `prices`
  ADD INDEX `IXFK_prices_variations` (`variation_id` ASC)
 ;
@@ -389,6 +420,11 @@ ALTER TABLE `jobs`
 ALTER TABLE `orders`
  ADD CONSTRAINT `FK_orders_customers`
 	FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`) ON DELETE Restrict ON UPDATE Restrict
+;
+
+ALTER TABLE `orders`
+ ADD CONSTRAINT `FK_orders_addresses`
+	FOREIGN KEY (`address_id`) REFERENCES `addresses` (`address_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ;
 
 ALTER TABLE `prices`

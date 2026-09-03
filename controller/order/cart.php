@@ -126,13 +126,11 @@ class CartController
                 return;
 
             case 'checkout':
-                $result = $jobs->checkoutCart($email, (string)($data['promo_code'] ?? ''));
-                if (!empty($result['success'])) {
-                    $_SESSION['shopping_cart_count'] = 0;
-                    $_SESSION['shopping_cart_job_ids'] = [];
-                    $result['cart_count'] = 0;
-                }
-                $this->respondFromResult($result, 201);
+                $this->respond([
+                    'success' => false,
+                    'code' => 'STRIPE_CHECKOUT_REQUIRED',
+                    'error' => 'Orders must be completed through the secure Stripe checkout.',
+                ], 410);
                 return;
 
             default:

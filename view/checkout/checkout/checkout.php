@@ -234,7 +234,7 @@ $defaultLastName = (string)($nameParts[1] ?? '');
               <div>
                 <span class="section-kicker">New destination</span>
                 <h3>Add another address</h3>
-                <p>This prototype keeps the new address only on this page. It is not saved to the database yet.</p>
+                <p>The new destination will be saved to your address book and selected for this order.</p>
               </div>
               <button class="close-address-button" id="close-address-button" type="button" aria-label="Close new address form" <?= $hasCheckoutAddresses ? '' : 'hidden' ?>>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
@@ -312,16 +312,16 @@ $defaultLastName = (string)($nameParts[1] ?? '');
               <h2 id="payment-section-title">Secure card payment</h2>
               <p>Card information will be collected and protected directly by Stripe.</p>
             </div>
-            <span class="stripe-status"><span></span>Ready for Stripe</span>
+            <span class="stripe-status"><span></span>Connecting to Stripe</span>
           </header>
 
-          <div class="stripe-placeholder" aria-label="Reserved area for the Stripe payment element">
+          <div class="stripe-placeholder" aria-label="Secure Stripe payment form">
             <div class="stripe-placeholder-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg>
             </div>
             <div>
               <strong>Stripe Payment Element</strong>
-              <p>The secure Stripe card form will load in this area once the payment integration is connected.</p>
+              <p>The secure Stripe card form is loading in this area.</p>
             </div>
             <span class="stripe-wordmark">stripe</span>
           </div>
@@ -391,12 +391,12 @@ $defaultLastName = (string)($nameParts[1] ?? '');
             </div>
           </div>
 
-          <button class="pay-button" id="pay-button" type="button" <?= $hasCheckoutItems ? '' : 'disabled' ?>>
+          <button class="pay-button" id="pay-button" type="button" disabled>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6V10Z"/></svg>
-            <span>Continue to secure payment</span>
+            <span>Preparing secure payment…</span>
           </button>
 
-          <p class="summary-disclaimer">Payment is not active yet. This button will start Stripe Checkout once the integration is connected.</p>
+          <p class="summary-disclaimer">Payment is processed securely by Stripe. PromoFlow never receives or stores your card number.</p>
 
           <div class="summary-assurance">
             <span>

@@ -1,0 +1,13 @@
+{
+  "name": "dot63/checkout-payments",
+  "description": "Server dependencies for the Dot63 Stripe checkout.",
+  "require": {
+    "php": ">=8.0",
+    "ext-curl": "*",
+    "ext-json": "*",
+    "stripe/stripe-php": "^16.5"
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

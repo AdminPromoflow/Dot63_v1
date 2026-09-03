@@ -6,19 +6,26 @@ if (session_status() !== PHP_SESSION_ACTIVE && !headers_sent()) {
 }
 
 require_once __DIR__ . '/../../controller/config/database.php';
+require_once __DIR__ . '/../../controller/config/stripe.php';
 require_once __DIR__ . '/../../model/jobs.php';
 
 $checkoutItems = [];
 $checkoutSuppliers = [];
 $checkoutAddresses = [];
 $checkoutLoadError = '';
+if (empty($_SESSION['checkout_csrf_token'])) {
+  $_SESSION['checkout_csrf_token'] = bin2hex(random_bytes(32));
+}
+$checkoutCsrfToken = (string)$_SESSION['checkout_csrf_token'];
+$stripePublishableKey = StripeConfig::publishableKey();
+$stripeConfigured = StripeConfig::isConfigured();
 
 $isCustomerCheckoutAuthenticated = !empty($_SESSION['customer_login'])
   && (int)($_SESSION['customer_id'] ?? 0) > 0
   && trim((string)($_SESSION['customer_email'] ?? '')) !== '';
 $isSupplierCheckoutAuthenticated = !empty($_SESSION['login'])
   && trim((string)($_SESSION['email'] ?? '')) !== '';
-$isCheckoutAuthenticated = $isCustomerCheckoutAuthenticated || $isSupplierCheckoutAuthenticated;
+$isCheckoutAuthenticated = $isCustomerCheckoutAuthenticated;
 $checkoutCustomerId = $isCustomerCheckoutAuthenticated ? (int)$_SESSION['customer_id'] : 0;
 $checkoutCustomerName = trim((string)($_SESSION['customer_name'] ?? ''));
 $checkoutEmail = $isCustomerCheckoutAuthenticated
@@ -117,6 +124,8 @@ $checkoutTotal = $checkoutSubtotal + $checkoutDelivery;
 $styleFile = __DIR__ . '/style.css';
 $checkoutCssFile = __DIR__ . '/checkout/checkout.css';
 $checkoutJsFile = __DIR__ . '/checkout/checkout.js';
+$stripeCheckoutCssFile = __DIR__ . '/checkout/stripe_checkout.css';
+$stripeCheckoutJsFile = __DIR__ . '/checkout/stripe_checkout.js';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -133,6 +142,10 @@ $checkoutJsFile = __DIR__ . '/checkout/checkout.js';
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=<?= is_file($styleFile) ? filemtime($styleFile) : time() ?>">
   <link rel="stylesheet" href="checkout/checkout.css?v=<?= is_file($checkoutCssFile) ? filemtime($checkoutCssFile) : time() ?>">
+  <link rel="stylesheet" href="checkout/stripe_checkout.css?v=<?= is_file($stripeCheckoutCssFile) ? filemtime($stripeCheckoutCssFile) : time() ?>">
+  <?php if ($stripeConfigured): ?>
+    <script src="https://js.stripe.com/clover/stripe.js"></script>
+  <?php endif; ?>
 </head>
 
 <body class="checkout-body">
@@ -140,6 +153,16 @@ $checkoutJsFile = __DIR__ . '/checkout/checkout.js';
 
   <?php include __DIR__ . '/checkout/checkout.php'; ?>
 
-  <script src="checkout/checkout.js?v=<?= is_file($checkoutJsFile) ? filemtime($checkoutJsFile) : time() ?>"></script>
+  <script>
+    window.dot63CheckoutConfig = <?= json_encode([
+      'apiUrl' => '../../controller/order/stripe_checkout.php',
+      'csrfToken' => $checkoutCsrfToken,
+      'publishableKey' => $stripePublishableKey,
+      'stripeConfigured' => $stripeConfigured,
+      'authenticated' => $isCustomerCheckoutAuthenticated,
+      'customerEmail' => $checkoutEmail,
+    ], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+  </script>
+  <script src="checkout/stripe_checkout.js?v=<?= is_file($stripeCheckoutJsFile) ? filemtime($stripeCheckoutJsFile) : time() ?>"></script>
 </body>
 </html>
