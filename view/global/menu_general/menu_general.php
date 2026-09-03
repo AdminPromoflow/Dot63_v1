@@ -41,7 +41,8 @@ $currentPath = (string)(parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_U
 $isProductPage = strpos($currentPath, '/view/product/') !== false
     || strpos($currentPath, '/view/preview_product_customers/') !== false;
 $isAboutPage = strpos($currentPath, '/view/about_us/') !== false;
-$isCartPage = strpos($currentPath, '/view/shopping_cart/') !== false;
+$isCartPage = strpos($currentPath, '/view/shopping_cart/') !== false
+    || strpos($currentPath, '/view/checkout/') !== false;
 $escapeMenu = static fn($value): string => htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 $logoutUrl = $isCustomerLoggedIn
     ? '../../controller/customers/login.php'

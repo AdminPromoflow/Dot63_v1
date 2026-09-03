@@ -403,43 +403,20 @@ class ShoppingCart {
     if (this.promoButton) this.promoButton.disabled = processing || this.getCartItems().length === 0;
   }
 
-  async checkout() {
+  checkout() {
     if (this.getCartItems().length === 0 || this.isProcessing) {
       if (this.getCartItems().length === 0) this.showToast("Your shopping cart is empty.", true);
       return false;
     }
 
-    const totals = this.calculateTotals();
-    if (!window.confirm(`Create this order for ${this.formatCurrency(totals.total)}?`)) return false;
-
-    this.isProcessing = true;
-    this.setCheckoutLoading(true);
-    this.setGlobalProcessing(true);
     try {
-      const data = await this.request("checkout", { promo_code: this.promoCode });
-      this.itemsContainer.replaceChildren();
-      this.resetPromo();
-      this.updateCartState();
-      const title = this.emptyState?.querySelector("h2");
-      const description = this.emptyState?.querySelector("p");
-      if (title) title.textContent = `Order #${data.order_id} created`;
-      if (description) description.textContent = "Your order is pending and has been saved successfully.";
-      this.showToast(data.message || "Your order was created successfully.");
-      return true;
-    } catch (error) {
-      this.showToast(error.message || "Your order could not be created.", true);
-      return false;
-    } finally {
-      this.isProcessing = false;
-      this.setCheckoutLoading(false);
-      this.setGlobalProcessing(false);
+      window.sessionStorage.setItem("promoflow_checkout_promo", this.promoCode);
+    } catch {
+      // Session storage is optional; checkout can continue without it.
     }
-  }
 
-  setCheckoutLoading(isLoading) {
-    if (!this.checkoutButton) return;
-    const textElement = this.checkoutButton.querySelector("span:first-child");
-    if (textElement) textElement.textContent = isLoading ? "Processing..." : "Proceed to checkout";
+    window.location.assign(new URL("../checkout/index.php", window.location.href));
+    return true;
   }
 
   showToast(message, isError = false) {
