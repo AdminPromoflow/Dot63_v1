@@ -8,6 +8,7 @@ header('X-Content-Type-Options: nosniff');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/stripe.php';
+require_once __DIR__ . '/../emails/send_emails.php';
 require_once __DIR__ . '/../../model/checkout_payments.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
@@ -72,6 +73,20 @@ try {
 
     $payments = new CheckoutPayments(new Database());
     $result = $payments->processWebhookEvent((string)$event->id, (string)$event->type, $intent);
+
+    if ((string)$event->type === 'payment_intent.succeeded') {
+        $result['payment_notification'] = $payments->dispatchPaymentNotification(
+            (string)($intent['id'] ?? ''),
+            static function (array $order): bool {
+                $emailSender = new EmailsSender();
+                $emailSender->setRecipientEmail((string)($order['customer_email'] ?? ''));
+                $emailSender->setRecipientName((string)($order['customer_name'] ?? ''));
+
+                return $emailSender->sendEmailPaymentConfirmation($order);
+            }
+        );
+    }
+
     http_response_code(200);
     echo json_encode(array_merge(['received' => true], $result), JSON_UNESCAPED_SLASHES);
 } catch (Throwable $error) {

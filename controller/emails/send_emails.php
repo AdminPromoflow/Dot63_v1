@@ -136,6 +136,59 @@ class EmailsSender
         );
     }
 
+    public function sendEmailPaymentConfirmation(array $order): bool
+    {
+        try {
+            $this->notificationType = 'payment_confirmation';
+            if (!filter_var($this->recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                throw new InvalidArgumentException('A valid payment confirmation recipient is required.');
+            }
+
+            $orderId = (int)($order['order_id'] ?? 0);
+            if ($orderId <= 0) {
+                throw new InvalidArgumentException('A valid order ID is required.');
+            }
+
+            $currency = strtoupper(trim((string)($order['currency'] ?? 'GBP')));
+            $currency = preg_replace('/[^A-Z]/', '', $currency) ?: 'GBP';
+            $total = number_format((float)($order['total_amount'] ?? 0), 2, '.', ',');
+            $paidAt = trim((string)($order['paid_at'] ?? ''));
+            $safeName = $this->escape($this->recipientName !== '' ? $this->recipientName : 'there');
+            $safeOrderId = $this->escape((string)$orderId);
+            $safeTotal = $this->escape($currency . ' ' . $total);
+            $safePaidAt = $this->escape($paidAt !== '' ? $paidAt : date('Y-m-d H:i:s'));
+
+            $mail = $this->createMailer();
+            $mail->addAddress($this->recipientEmail, $this->recipientName);
+            $mail->Subject = 'Payment received for order #' . $orderId;
+            $mail->isHTML(true);
+            $mail->Body = $this->htmlTemplate(
+                '.63 payment notification',
+                'Payment received',
+                '<p>Hello ' . $safeName . ',</p>'
+                . '<p>Your payment was completed successfully. Your order is now being processed.</p>'
+                . '<div style="margin:20px 0;padding:16px;background:#f8fafc;border:1px solid #dce3ea;border-radius:10px;">'
+                . '<p><strong>Order:</strong> #' . $safeOrderId . '</p>'
+                . '<p><strong>Total paid:</strong> ' . $safeTotal . '</p>'
+                . '<p><strong>Payment date:</strong> ' . $safePaidAt . '</p>'
+                . '</div>'
+                . '<p>This confirmation is sent directly by .63. Stripe may send a separate payment receipt in live mode.</p>'
+            );
+            $mail->AltBody =
+                "Hello {$this->recipientName},\n\n"
+                . "Your payment was completed successfully. Your order is now being processed.\n\n"
+                . "Order: #{$orderId}\n"
+                . "Total paid: {$currency} {$total}\n"
+                . 'Payment date: ' . ($paidAt !== '' ? $paidAt : date('Y-m-d H:i:s')) . "\n\n"
+                . 'This confirmation is sent directly by .63. Stripe may send a separate payment receipt in live mode.';
+
+            return $this->deliver($mail);
+        } catch (Throwable $error) {
+            error_log('EmailsSender::sendEmailPaymentConfirmation error -> ' . $error->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Legacy alias used by the original supplier registration controller.
      */
@@ -197,6 +250,7 @@ class EmailsSender
         $mail->Username = $this->environmentValue('DOT63_SMTP_USERNAME', 'admin@lanyardsforyou.com');
         $mail->Password = $this->environmentValue('DOT63_SMTP_PASSWORD', '32skiff32!CI');
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Timeout = max(5, (int)$this->environmentValue('DOT63_SMTP_TIMEOUT', '15'));
         $mail->CharSet = 'UTF-8';
         $mail->Encoding = 'base64';
         $mail->Hostname = $this->environmentValue('DOT63_SMTP_HELO_HOST', 'lanyardsforyou.com');

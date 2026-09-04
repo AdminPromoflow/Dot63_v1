@@ -125,6 +125,39 @@ try {
     ]);
     assertCheckout(($webhook['status'] ?? '') === 'paid', 'The successful webhook did not mark the order paid.');
 
+    $notificationAttempts = 0;
+    $notificationFailed = false;
+    try {
+        $payments->dispatchPaymentNotification($intentId, static function () use (&$notificationAttempts): bool {
+            $notificationAttempts++;
+            return false;
+        });
+    } catch (CheckoutPaymentException $error) {
+        $notificationFailed = $error->publicCode() === 'PAYMENT_EMAIL_FAILED';
+    }
+    assertCheckout($notificationFailed, 'A failed payment email did not remain eligible for retry.');
+
+    $notification = $payments->dispatchPaymentNotification(
+        $intentId,
+        static function (array $order) use (&$notificationAttempts, $email): bool {
+            $notificationAttempts++;
+            assertCheckout((string)$order['customer_email'] === $email, 'The payment email recipient is incorrect.');
+            assertCheckout((int)$order['order_id'] > 0, 'The payment email order ID is missing.');
+            return true;
+        }
+    );
+    assertCheckout(!empty($notification['sent']), 'The payment email retry was not marked as sent.');
+
+    $duplicateNotification = $payments->dispatchPaymentNotification(
+        $intentId,
+        static function () use (&$notificationAttempts): bool {
+            $notificationAttempts++;
+            return true;
+        }
+    );
+    assertCheckout(!empty($duplicateNotification['already_sent']), 'A duplicate payment email was not prevented.');
+    assertCheckout($notificationAttempts === 2, 'The payment email callback ran more than once after success.');
+
     $duplicate = $payments->processWebhookEvent($eventId, 'payment_intent.succeeded', [
         'id' => $intentId,
         'status' => 'succeeded',
@@ -153,6 +186,8 @@ try {
         $pdo->prepare('DELETE FROM stripe_webhook_events WHERE event_id = :event_id')
             ->execute([':event_id' => $cleanupEventId]);
     }
+    $pdo->prepare("DELETE FROM stripe_webhook_events WHERE payment_intent_id = :payment_intent_id AND event_type = 'dot63.payment_confirmation.sent'")
+        ->execute([':payment_intent_id' => $intentId]);
     if ($jobId > 0) {
         $pdo->prepare('DELETE FROM jobs WHERE job_id = :job_id')->execute([':job_id' => $jobId]);
     }

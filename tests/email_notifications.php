@@ -85,4 +85,26 @@ assertEmailNotification(
     'The SMTP envelope sender is not configured.'
 );
 
+$payment = new RecordingEmailsSender();
+$payment->setRecipientEmail('customer@example.test');
+$payment->setRecipientName('Customer Test');
+assertEmailNotification($payment->sendEmailPaymentConfirmation([
+    'order_id' => 123,
+    'currency' => 'gbp',
+    'total_amount' => '42.50',
+    'paid_at' => '2026-09-03 17:00:00',
+]), 'Payment confirmation notification was not prepared.');
+assertEmailNotification(
+    recipientEmails($payment->messages[0]) === ['customer@example.test'],
+    'Payment confirmation notification has an unexpected recipient.'
+);
+assertEmailNotification(
+    $payment->messages[0]['subject'] === 'Payment received for order #123',
+    'Payment confirmation subject is incorrect.'
+);
+assertEmailNotification(
+    strpos($payment->messages[0]['body'], 'GBP 42.50') !== false,
+    'Payment confirmation total is missing.'
+);
+
 fwrite(STDOUT, "Email notification tests passed.\n");

@@ -275,6 +275,96 @@ class CheckoutPayments
         }
     }
 
+    /**
+     * Sends one payment notification per PaymentIntent. The marker and the SMTP
+     * callback share a transaction so a failed send remains eligible for retry.
+     */
+    public function dispatchPaymentNotification(string $paymentIntentId, callable $sender): array
+    {
+        $paymentIntentId = trim($paymentIntentId);
+        if ($paymentIntentId === '') {
+            throw new CheckoutPaymentException(
+                'The payment notification is missing its PaymentIntent ID.',
+                400,
+                'INVALID_PAYMENT_NOTIFICATION'
+            );
+        }
+
+        $notificationEventId = 'dot63_payment_email_' . hash('sha256', $paymentIntentId);
+
+        try {
+            $this->pdo->beginTransaction();
+            $orderStatement = $this->pdo->prepare('
+                SELECT
+                    o.order_id,
+                    o.status,
+                    o.currency,
+                    o.total_amount,
+                    o.paid_at,
+                    c.name AS customer_name,
+                    c.email AS customer_email
+                FROM orders o
+                INNER JOIN customers c ON c.customer_id = o.customer_id
+                WHERE o.stripe_payment_intent_id = :payment_intent_id
+                  AND o.status = \'paid\'
+                LIMIT 1
+                FOR UPDATE
+            ');
+            $orderStatement->execute([':payment_intent_id' => $paymentIntentId]);
+            $order = $orderStatement->fetch(PDO::FETCH_ASSOC);
+
+            if (!$order) {
+                $this->pdo->commit();
+                return [
+                    'sent' => false,
+                    'not_ready' => true,
+                ];
+            }
+
+            $marker = $this->pdo->prepare('
+                INSERT INTO stripe_webhook_events
+                    (event_id, event_type, payment_intent_id, processed_at)
+                VALUES
+                    (:event_id, \'dot63.payment_confirmation.sent\', :payment_intent_id, NOW())
+            ');
+            try {
+                $marker->execute([
+                    ':event_id' => $notificationEventId,
+                    ':payment_intent_id' => $paymentIntentId,
+                ]);
+            } catch (PDOException $error) {
+                if ((string)$error->getCode() === '23000') {
+                    $this->pdo->rollBack();
+                    return [
+                        'sent' => false,
+                        'already_sent' => true,
+                        'order_id' => (int)$order['order_id'],
+                    ];
+                }
+                throw $error;
+            }
+
+            if (!(bool)$sender($order)) {
+                throw new CheckoutPaymentException(
+                    'The payment was recorded, but its email notification could not be sent.',
+                    500,
+                    'PAYMENT_EMAIL_FAILED'
+                );
+            }
+
+            $this->pdo->commit();
+            return [
+                'sent' => true,
+                'order_id' => (int)$order['order_id'],
+            ];
+        } catch (Throwable $error) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $error;
+        }
+    }
+
     private function prepareOrderRecord(
         int $customerId,
         string $customerEmail,
