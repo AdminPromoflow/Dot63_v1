@@ -6,76 +6,58 @@ class PreviewGallery {
     this.thumbsId = options.thumbsId || "sp_thumbs";
     this.intervalMs = Number(options.intervalMs || 5000);
     this.zoomScale = Number(options.zoomScale || 2);
-
     this.currentIndex = 0;
     this.autoTimer = null;
     this.observer = null;
-
-    this.init();
-
-
-
-
-  }
-
-  /* ============================================================================
-    INITIALISE
-  ============================================================================ */
-
-  init() {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => {
+    {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          this.setupObserver();
+          {
+            const root = this.getRoot();
+            if (root) {
+              if (!(root.dataset.zoomBound === "1")) {
+                root.dataset.zoomBound = "1";
+                root.addEventListener("mousemove", event => {
+                  this.handleZoomMove(event);
+                });
+                root.addEventListener("mouseleave", () => {
+                  this.handleZoomLeave();
+                });
+              }
+            }
+          }
+          this.refreshGallery();
+        });
+      } else {
         this.setupObserver();
-        this.setupZoomEvents();
+        {
+          const root = this.getRoot();
+          if (root) {
+            if (!(root.dataset.zoomBound === "1")) {
+              root.dataset.zoomBound = "1";
+              root.addEventListener("mousemove", event => {
+                this.handleZoomMove(event);
+              });
+              root.addEventListener("mouseleave", () => {
+                this.handleZoomLeave();
+              });
+            }
+          }
+        }
         this.refreshGallery();
-      });
-    } else {
-      this.setupObserver();
-      this.setupZoomEvents();
-      this.refreshGallery();
-    }
-
-    this.setupVariationSelection();
-  }
-
-  setupVariationSelection() {
-    const parent = document.getElementById("wrap-variations-group");
-    if (!parent) return;
-
-    // Prevents duplicate binding.
-    if (parent.dataset.bound === "1") return;
-    parent.dataset.bound = "1";
-
-    parent.addEventListener("click", (e) => {
-      const option = e.target.closest(".var-option");
-      if (!option || !parent.contains(option)) return;
-
-      const group = option.closest(".wrap-variations");
-      if (!group) return;
-
-      // Removes the selected class only within the same variation group.
-      group.querySelectorAll(".var-option.is-selected").forEach((btn) => {
-        btn.classList.remove("is-selected");
-      });
-
-      // Selects the clicked option.
-      option.classList.add("is-selected");
-
-      // Updates the visible selected label.
-      const labelStrong = group.querySelector(".var-label strong");
-      const mainSpan = option.querySelector(".opt-main");
-      if (labelStrong && mainSpan) {
-        labelStrong.textContent = mainSpan.textContent.trim();
       }
-    });
+    }
+    const parent = document.getElementById("wrap-variations-group");
+    if (parent) {
+      parent.addEventListener("click", e => this.handleParentClick(e, parent));
+    }
+    document.addEventListener("click", event => this.handlePreviewClick(event));
   }
-
-
 
   setupObserver() {
     const root = this.getRoot();
     if (!root) return;
-
     if (this.observer) {
       this.observer.disconnect();
     }
@@ -84,7 +66,6 @@ class PreviewGallery {
     this.observer = new MutationObserver(() => {
       this.refreshGallery(true);
     });
-
     this.observer.observe(root, {
       childList: true,
       subtree: true,
@@ -92,24 +73,6 @@ class PreviewGallery {
       attributeFilter: ["src", "poster"]
     });
   }
-
-  setupZoomEvents() {
-    const root = this.getRoot();
-    if (!root) return;
-
-    // Prevents duplicate binding.
-    if (root.dataset.zoomBound === "1") return;
-    root.dataset.zoomBound = "1";
-
-    root.addEventListener("mousemove", (event) => {
-      this.handleZoomMove(event);
-    });
-
-    root.addEventListener("mouseleave", () => {
-      this.handleZoomLeave();
-    });
-  }
-
   /* ============================================================================
     HELPERS
   ============================================================================ */
@@ -125,7 +88,6 @@ class PreviewGallery {
   getMediaItems() {
     const root = this.getRoot();
     if (!root) return [];
-
     return Array.from(root.querySelectorAll(".preview-media"));
   }
 
@@ -155,10 +117,8 @@ class PreviewGallery {
 
   startAutoplay() {
     this.stopAutoplay();
-
     const items = this.getMediaItems();
     if (items.length <= 1) return;
-
     this.autoTimer = setInterval(() => {
       this.nextImage();
     }, this.intervalMs);
@@ -167,7 +127,6 @@ class PreviewGallery {
   clearGallery() {
     this.stopAutoplay();
     this.currentIndex = 0;
-
     const thumbsRoot = this.getThumbsRoot();
     if (thumbsRoot) {
       thumbsRoot.innerHTML = "";
@@ -176,10 +135,8 @@ class PreviewGallery {
 
   resetZoom(media = null) {
     const items = media ? [media] : this.getMediaItems();
-
     for (const item of items) {
       if (!(item instanceof HTMLElement)) continue;
-
       item.classList.remove("is-zooming");
       item.style.transformOrigin = "50% 50%";
       item.style.transform = "scale(1)";
@@ -190,20 +147,15 @@ class PreviewGallery {
     const activeMedia = event.target.closest(".preview-media.is-active");
     if (!activeMedia) return;
     if (activeMedia.tagName !== "IMG") return;
-
     const rect = activeMedia.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-
     const offsetX = event.clientX - rect.left;
     const offsetY = event.clientY - rect.top;
-
-    const xPercent = (offsetX / rect.width) * 100;
-    const yPercent = (offsetY / rect.height) * 100;
-
+    const xPercent = offsetX / rect.width * 100;
+    const yPercent = offsetY / rect.height * 100;
     activeMedia.classList.add("is-zooming");
     activeMedia.style.transformOrigin = `${xPercent}% ${yPercent}%`;
     activeMedia.style.transform = `scale(${this.zoomScale})`;
-
     this.stopAutoplay();
   }
 
@@ -212,7 +164,6 @@ class PreviewGallery {
     if (current && current.tagName === "IMG") {
       this.resetZoom(current);
     }
-
     this.startAutoplay();
   }
 
@@ -222,18 +173,15 @@ class PreviewGallery {
 
   refreshGallery(keepIndex = false) {
     const items = this.getMediaItems();
-
     if (!items.length) {
       this.clearGallery();
       return;
     }
-
     if (!keepIndex) {
       this.currentIndex = 0;
     } else {
       this.currentIndex = this.normaliseIndex(this.currentIndex, items.length);
     }
-
     this.renderThumbs();
     this.showCurrentMedia();
     this.startAutoplay();
@@ -242,24 +190,18 @@ class PreviewGallery {
   showCurrentMedia() {
     const items = this.getMediaItems();
     if (!items.length) return;
-
     this.currentIndex = this.normaliseIndex(this.currentIndex, items.length);
-
     for (let i = 0; i < items.length; i++) {
       const media = items[i];
       const isActive = i === this.currentIndex;
-
       this.resetZoom(media);
-
       media.classList.toggle("is-active", isActive);
       media.hidden = !isActive;
       media.style.display = isActive ? "block" : "none";
-
       if (media.tagName === "VIDEO" && !isActive) {
         media.pause();
       }
     }
-
     this.updateThumbStates();
   }
 
@@ -270,7 +212,6 @@ class PreviewGallery {
   nextImage() {
     const items = this.getMediaItems();
     if (items.length <= 1) return;
-
     this.currentIndex = this.normaliseIndex(this.currentIndex + 1, items.length);
     this.showCurrentMedia();
     this.startAutoplay();
@@ -279,7 +220,6 @@ class PreviewGallery {
   prevImage() {
     const items = this.getMediaItems();
     if (items.length <= 1) return;
-
     this.currentIndex = this.normaliseIndex(this.currentIndex - 1, items.length);
     this.showCurrentMedia();
     this.startAutoplay();
@@ -288,7 +228,6 @@ class PreviewGallery {
   goToImage(index) {
     const items = this.getMediaItems();
     if (!items.length) return;
-
     this.currentIndex = this.normaliseIndex(index, items.length);
     this.showCurrentMedia();
     this.startAutoplay();
@@ -301,20 +240,15 @@ class PreviewGallery {
   renderThumbs() {
     const thumbsRoot = this.getThumbsRoot();
     const items = this.getMediaItems();
-
     if (!thumbsRoot) return;
-
     thumbsRoot.innerHTML = "";
-
     for (let i = 0; i < items.length; i++) {
       const media = items[i];
       const button = document.createElement("button");
-
       button.type = "button";
       button.className = "sp-thumb";
       button.setAttribute("role", "listitem");
       button.setAttribute("aria-label", `Show media ${i + 1}`);
-
       if (media.tagName === "IMG") {
         const thumbImg = document.createElement("img");
         thumbImg.src = media.currentSrc || media.src;
@@ -330,23 +264,16 @@ class PreviewGallery {
       } else {
         button.textContent = `Media ${i + 1}`;
       }
-
-      button.addEventListener("click", () => {
-        this.goToImage(i);
-      });
-
+      button.dataset.index = String(i);
       thumbsRoot.appendChild(button);
     }
-
     this.updateThumbStates();
   }
 
   updateThumbStates() {
     const thumbsRoot = this.getThumbsRoot();
     if (!thumbsRoot) return;
-
     const thumbs = Array.from(thumbsRoot.querySelectorAll(".sp-thumb"));
-
     for (let i = 0; i < thumbs.length; i++) {
       const isActive = i === this.currentIndex;
       thumbs[i].classList.toggle("is-active", isActive);
@@ -360,29 +287,21 @@ class PreviewGallery {
   ============================================================================ */
 
   updatePrice(preferredButton = null) {
-    const selectedButton =
-      preferredButton ||
-      document.querySelector("#wrap-prices-group .js-price-option.is-selected") ||
-      document.querySelector("#wrap-prices-group .js-price-option");
-
+    const selectedButton = preferredButton || document.querySelector("#wrap-prices-group .js-price-option.is-selected") || document.querySelector("#wrap-prices-group .js-price-option");
     if (!selectedButton) return false;
 
-   // this.paintSelectedPrice(selectedButton);
-   // this.syncPriceDisplay(selectedButton);
+    // this.paintSelectedPrice(selectedButton);
+    // this.syncPriceDisplay(selectedButton);
 
     return true;
   }
 
   paintSelectedPrice(activeButton) {
-    const buttons = Array.from(
-      document.querySelectorAll("#wrap-prices-group .js-price-option")
-    );
-
+    const buttons = Array.from(document.querySelectorAll("#wrap-prices-group .js-price-option"));
     for (const btn of buttons) {
       btn.classList.remove("is-selected");
       btn.setAttribute("aria-pressed", "false");
     }
-
     activeButton.classList.add("is-selected");
     activeButton.setAttribute("aria-pressed", "true");
   }
@@ -390,23 +309,17 @@ class PreviewGallery {
   syncPriceDisplay(button) {
     const rawPrice = String(button?.dataset?.price ?? button?.value ?? "").trim();
     const maxQuantity = String(button?.dataset?.maxQuantity ?? "").trim();
-
     if (!rawPrice) return;
-
     const numericPrice = Number(rawPrice);
     const safePrice = Number.isFinite(numericPrice) ? numericPrice : 0;
-
     const fixed = safePrice.toFixed(2);
     const [major, minor] = fixed.split(".");
-
     const spPrice = document.getElementById("sp_price");
     const spUnitHint = document.getElementById("sp_unit_hint");
     const bbTotal = document.getElementById("bb_total");
     // const bbUnit = document.getElementById("bb_unit");
     const symbolEl = document.getElementById("sp_currency_symbol");
-
     const symbol = symbolEl ? symbolEl.textContent.trim() || "£" : "£";
-
     if (spPrice) {
       spPrice.innerHTML = `${major}<span class="sp-price-minor">.${minor}</span>`;
     }
@@ -429,6 +342,37 @@ class PreviewGallery {
     //   }
     // }
   }
+
+  handlePreviewClick(event) {
+    const thumb = event.target.closest(".sp-thumb");
+    if (thumb && this.getThumbsRoot()?.contains(thumb)) this.goToImage(Number(thumb.dataset.index));
+    const price = event.target.closest("#wrap-prices-group .js-price-option");
+    if (price) this.updatePrice(price);
+    if (event.target.closest("[data-preview-previous]")) this.prevImage();
+    if (event.target.closest("[data-preview-next]")) this.nextImage();
+  }
+
+  handleParentClick(e, parent) {
+    const option = e.target.closest(".var-option");
+    if (!option || !parent.contains(option)) return;
+    const group = option.closest(".wrap-variations");
+    if (!group) return;
+
+    // Removes the selected class only within the same variation group.
+    group.querySelectorAll(".var-option.is-selected").forEach(btn => {
+      btn.classList.remove("is-selected");
+    });
+
+    // Selects the clicked option.
+    option.classList.add("is-selected");
+
+    // Updates the visible selected label.
+    const labelStrong = group.querySelector(".var-label strong");
+    const mainSpan = option.querySelector(".opt-main");
+    if (labelStrong && mainSpan) {
+      labelStrong.textContent = mainSpan.textContent.trim();
+    }
+  }
 }
 
 /* ============================================================================
@@ -441,17 +385,9 @@ const previewGallery = new PreviewGallery({
   intervalMs: 5000,
   zoomScale: 2
 });
-
 window.previewGallery = previewGallery;
 
 /* ============================================================================
   OPTIONAL: PRICE BUTTON DELEGATION
   - Useful because price buttons are also rendered later.
 ============================================================================ */
-
-document.addEventListener("click", (event) => {
-  const button = event.target.closest("#wrap-prices-group .js-price-option");
-  if (!button) return;
-
-  window.previewGallery?.updatePrice?.(button);
-});

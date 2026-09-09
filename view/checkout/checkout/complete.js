@@ -10,11 +10,10 @@ class PaymentResult {
     this.secondaryAction = document.getElementById("result-secondary-action");
     this.pollCount = 0;
     this.maxPolls = 12;
-
-    if (this.page) this.init();
+    if (this.page) this.getPaymentResult();
   }
 
-  async init() {
+  async getPaymentResult() {
     const orderId = Number(this.page.dataset.orderId || 0);
     if (this.page.dataset.authenticated !== "true") {
       this.renderError("Sign in required", "Please log in to review this payment.", "Not available");
@@ -26,7 +25,6 @@ class PaymentResult {
       this.renderError("Order not found", "The payment return URL does not contain a valid order.", "Not available");
       return;
     }
-
     await this.readStripeRedirectStatus();
     await this.pollOrder(orderId);
   }
@@ -35,10 +33,11 @@ class PaymentResult {
     const clientSecret = new URLSearchParams(window.location.search).get("payment_intent_client_secret");
     const publishableKey = this.page.dataset.publishableKey || "";
     if (!clientSecret || !publishableKey || typeof window.Stripe !== "function") return;
-
     try {
       const stripe = window.Stripe(publishableKey);
-      const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+      const {
+        paymentIntent
+      } = await stripe.retrievePaymentIntent(clientSecret);
       if (paymentIntent?.status) this.renderStripeStatus(paymentIntent.status);
     } catch {
       // The signed webhook and server-side order status remain authoritative.
@@ -47,19 +46,29 @@ class PaymentResult {
 
   async pollOrder(orderId) {
     try {
-      const data = await this.request("get_payment_status", { order_id: orderId });
+      const data = await this.makeRequest(this.page.dataset.apiUrl, {
+        action: "get_payment_status",
+        order_id: orderId
+      }, {
+        requireSuccess: true,
+        headers: {
+          "X-CSRF-Token": this.page.dataset.csrfToken || ""
+        }
+      });
       this.renderOrder(data);
-
       if (data.complete) {
         try {
           window.sessionStorage.removeItem("promoflow_checkout_promo");
         } catch {
           // Storage is optional.
         }
-        window.dispatchEvent(new CustomEvent("promoflow:cart-updated", { detail: { count: 0 } }));
+        window.dispatchEvent(new CustomEvent("promoflow:cart-updated", {
+          detail: {
+            count: 0
+          }
+        }));
         return;
       }
-
       const pending = ["payment_pending", "payment_processing"].includes(data.status);
       if (pending && this.pollCount < this.maxPolls) {
         this.pollCount += 1;
@@ -68,23 +77,6 @@ class PaymentResult {
     } catch (error) {
       this.renderError("We could not verify the payment", error.message || "Refresh this page to try again.", "Unavailable");
     }
-  }
-
-  async request(action, payload = {}) {
-    const response = await fetch(this.page.dataset.apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": this.page.dataset.csrfToken || ""
-      },
-      credentials: "same-origin",
-      body: JSON.stringify({ action, ...payload })
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data?.success) {
-      throw new Error(data?.error || "The payment status could not be loaded.");
-    }
-    return data;
   }
 
   renderStripeStatus(status) {
@@ -110,7 +102,6 @@ class PaymentResult {
       payment_review: "Manual review"
     };
     this.status.textContent = labels[order.status] || order.payment_status || "Pending";
-
     if (order.status === "paid") {
       this.icon.className = "result-icon is-success";
       this.title.textContent = "Payment successful";
@@ -118,29 +109,18 @@ class PaymentResult {
       this.secondaryAction.hidden = true;
       return;
     }
-
     if (["payment_failed", "payment_canceled"].includes(order.status)) {
-      this.renderError(
-        order.status === "payment_failed" ? "Payment was not completed" : "Payment cancelled",
-        "No successful payment was recorded. You can return to checkout and try again.",
-        labels[order.status]
-      );
+      this.renderError(order.status === "payment_failed" ? "Payment was not completed" : "Payment cancelled", "No successful payment was recorded. You can return to checkout and try again.", labels[order.status]);
       this.primaryAction.textContent = "Try payment again";
       this.primaryAction.href = "index.php";
       this.secondaryAction.textContent = "Return to cart";
       this.secondaryAction.href = "../shopping_cart/index.php";
       return;
     }
-
     if (order.status === "payment_review") {
-      this.renderError(
-        "Payment needs review",
-        "Stripe reported a payment that does not match the order total. The order has not entered fulfilment.",
-        "Manual review"
-      );
+      this.renderError("Payment needs review", "Stripe reported a payment that does not match the order total. The order has not entered fulfilment.", "Manual review");
       return;
     }
-
     this.icon.className = "result-icon is-loading";
     this.title.textContent = order.status === "payment_processing" ? "Payment is processing" : "Confirming your payment";
     this.message.textContent = "Stripe is processing the payment. This page will update automatically.";
@@ -159,7 +139,42 @@ class PaymentResult {
       currency: String(currency || "GBP").toUpperCase()
     }).format(Number(value) || 0);
   }
+
+  async makeRequest(url, data, options = {}) {
+    const {
+      requireSuccess = false,
+      responseType = "json",
+      ...requestOptions
+    } = options;
+    const isFormData = data instanceof FormData;
+    const headers = new Headers(requestOptions.headers || {});
+    if (!isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      ...requestOptions,
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = responseType === "text" ? text : JSON.parse(text);
+    } catch {
+      const error = new Error("The server returned an invalid response.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok || requireSuccess && !result?.success) {
+      const error = new Error(result?.error || result?.message || "The request could not be completed.");
+      error.status = response.status;
+      error.code = result?.code || null;
+      error.details = result;
+      throw error;
+    }
+    return result;
+  }
 }
-
-document.addEventListener("DOMContentLoaded", () => new PaymentResult(), { once: true });
-
+document.addEventListener("DOMContentLoaded", () => new PaymentResult(), {
+  once: true
+});

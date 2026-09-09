@@ -9,8 +9,7 @@ class ClassAddProductDetails {
     /*
      * Capture the new Delete product button.
      */
-    const deleteProductButton =
-      document.getElementById("delete_product");
+    const deleteProductButton = document.getElementById("delete_product");
 
     /*
      * Configure the page after the HTML has loaded.
@@ -21,17 +20,14 @@ class ClassAddProductDetails {
       /*
        * Capture the Back button.
        */
-      const backButton =
-        document.getElementById("btn_back_product_details");
+      const backButton = document.getElementById("btn_back_product_details");
 
       /*
        * Return to the Groups page.
        */
       if (backButton) {
         backButton.addEventListener("click", () => {
-          headerAddProduct.goNext(
-            "../../view/group/index.php"
-          );
+          headerAddProduct.goNext("../../view/group/index.php");
         });
       }
     });
@@ -45,66 +41,20 @@ class ClassAddProductDetails {
     /*
      * Validate the product name length.
      */
-    pd_name.addEventListener("input", () => {
-      const length = pd_name.value.length;
-
-      /*
-       * Cut the text if it exceeds 150 characters.
-       */
-      if (length > 150) {
-        pd_name.value = pd_name.value.slice(0, 150);
-      }
-
-      /*
-       * Display the warning only once
-       * when the user reaches the limit.
-       */
-      if (length > 149 && !pdNameAlertShown) {
-        alert(
-          "Name must be 150 characters or fewer."
-        );
-
-        pdNameAlertShown = true;
-      }
-
-      /*
-       * Allow the warning to be displayed again
-       * when the user reduces the text length.
-       */
-      if (length <= 149) {
-        pdNameAlertShown = false;
-      }
-    });
+    pd_name.addEventListener("input", () => this.handlePd_nameInput(pdNameAlertShown));
 
     /*
      * Reset all product fields.
      */
     if (resetButton) {
-      resetButton.addEventListener("click", () => {
-        pd_name.value = "";
-        pd_status.value = "";
-        pd_desc.value = "";
-        pd_tagline.value = "";
-
-        this.saveProductDetails(false);
-
-        alert(
-          "The product fields have been reset."
-        );
-      });
+      resetButton.addEventListener("click", () => this.handleResetButtonClick());
     }
 
     /*
      * Save the product details without changing page.
      */
     if (saveButton) {
-      saveButton.addEventListener("click", () => {
-        this.saveProductDetails(false);
-
-        alert(
-          "The product details have been saved."
-        );
-      });
+      saveButton.addEventListener("click", () => this.handleSaveButtonClick());
     }
 
     /*
@@ -112,24 +62,18 @@ class ClassAddProductDetails {
      * to the Variations page.
      */
     if (next_product_details) {
-      next_product_details.addEventListener(
-        "click",
-        () => {
-          this.saveProductDetails(true);
-        }
-      );
+      next_product_details.addEventListener("click", () => {
+        this.saveProductDetails(true);
+      });
     }
 
     /*
      * Delete product button event.
      */
     if (deleteProductButton) {
-      deleteProductButton.addEventListener(
-        "click",
-        () => {
-          this.deleteProduct();
-        }
-      );
+      deleteProductButton.addEventListener("click", () => {
+        this.deleteProduct();
+      });
     }
 
     /*
@@ -142,136 +86,66 @@ class ClassAddProductDetails {
    * Get the current product information
    * using the SKU from the page URL.
    */
-  getProductDetails() {
-    const params =
-      new URLSearchParams(window.location.search);
 
+  async getProductDetails() {
+    const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
-
-    const url =
-      "../../controller/products/product.php";
-
+    const url = "../../controller/products/product.php";
     const data = {
       action: "get_product_details",
-      sku: sku,
+      sku: sku
     };
-
-    fetch(url, {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.text();
-        }
-
-        throw new Error("Network error.");
-      })
-      .then((responseText) => {
-        const responseData =
-          JSON.parse(responseText);
-
-        if (responseData.success) {
-          pd_name.value =
-            responseData.data.name ?? "";
-
-          pd_desc.value =
-            responseData.data.description ?? "";
-
-          pd_status.value =
-            responseData.data.status ?? "";
-
-          pd_tagline.value =
-            responseData.data.descriptive_tagline ?? "";
-        }
-
-        const isApproved =
-          responseData.data?.is_approved != 0;
-
-        this.toggleProductActiveStatus(
-          isApproved
-        );
-      })
-      .catch((error) => {
-        console.error(
-          "Error loading product details:",
-          error
-        );
-      });
+    try {
+      const response = await this.makeRequest(url, data);
+      if (response.success) {
+        pd_name.value = response.data.name ?? "";
+        pd_desc.value = response.data.description ?? "";
+        pd_status.value = response.data.status ?? "";
+        pd_tagline.value = response.data.descriptive_tagline ?? "";
+      }
+      const isApproved = response.data?.is_approved != 0;
+      this.toggleProductActiveStatus(isApproved);
+    } catch (error) {
+      console.error("Error loading product details:", error);
+    }
   }
 
   /*
    * Enable or disable the Active status option.
    */
-  toggleProductActiveStatus(active) {
-    const activeProductOption =
-      document.getElementById("active_product");
 
+  toggleProductActiveStatus(active) {
+    const activeProductOption = document.getElementById("active_product");
     if (!activeProductOption) {
       return;
     }
-
     activeProductOption.disabled = !active;
   }
 
   /*
    * Save the current product details.
    */
-  saveProductDetails(goNext = false) {
-    const params =
-      new URLSearchParams(window.location.search);
 
+  async saveProductDetails(goNext = false) {
+    const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
-
-    const url =
-      "../../controller/products/product.php";
-
+    const url = "../../controller/products/product.php";
     const data = {
       action: "save_product_details",
       name: pd_name.value,
       status: pd_status.value,
       description: pd_desc.value,
       pd_tagline: pd_tagline.value,
-      sku: sku,
+      sku: sku
     };
-
-    fetch(url, {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.text();
-        }
-
-        throw new Error("Network error.");
-      })
-      .then((responseText) => {
-        const responseData =
-          JSON.parse(responseText);
-
-        if (responseData.success && goNext) {
-          headerAddProduct.goNext(
-            "../../view/variations/index.php"
-          );
-        }
-      })
-      .catch((error) => {
-        console.error(
-          "Error saving product details:",
-          error
-        );
-      });
+    try {
+      const response = await this.makeRequest(url, data);
+      if (response.success && goNext) {
+        headerAddProduct.goNext("../../view/variations/index.php");
+      }
+    } catch (error) {
+      console.error("Error saving product details:", error);
+    }
   }
 
   /*
@@ -281,146 +155,174 @@ class ClassAddProductDetails {
    * Later, the request to the PHP controller
    * can be added here.
    */
-   deleteProduct() {
-     /*
-      * Ask the user to confirm the deletion
-      * before sending the request.
-      */
-     const isConfirmed = window.confirm(
-       "Are you sure you want to delete this product? This action cannot be undone."
-     );
 
-     /*
-      * Stop the function if the user clicks Cancel.
-      */
-     if (!isConfirmed) {
-       return;
-     }
+  async deleteProduct() {
+    /*
+     * Ask the user to confirm the deletion
+     * before sending the request.
+     */
+    const isConfirmed = window.confirm("Are you sure you want to delete this product? This action cannot be undone.");
 
-     /*
-      * Get the SKU from the page URL.
-      */
-     const params =
-       new URLSearchParams(window.location.search);
+    /*
+     * Stop the function if the user clicks Cancel.
+     */
+    if (!isConfirmed) {
+      return;
+    }
 
-     const sku = params.get("sku");
+    /*
+     * Get the SKU from the page URL.
+     */
+    const params = new URLSearchParams(window.location.search);
+    const sku = params.get("sku");
 
-     /*
-      * Validate that the SKU exists.
-      */
-     if (!sku) {
-       alert("The product SKU could not be found.");
-       return;
-     }
+    /*
+     * Validate that the SKU exists.
+     */
+    if (!sku) {
+      alert("The product SKU could not be found.");
+      return;
+    }
 
-     /*
-      * Controller URL.
-      */
-     const url =
-       "../../controller/products/product.php";
+    /*
+     * Controller URL.
+     */
+    const url = "../../controller/products/product.php";
 
-     /*
-      * Data sent to the controller.
-      */
-     const data = {
-       action: "delete_product",
-       sku: sku,
-     };
+    /*
+     * Data sent to the controller.
+     */
+    const data = {
+      action: "delete_product",
+      sku: sku
+    };
 
-     /*
-      * Send the deletion request.
-      */
-     fetch(url, {
-       method: "POST",
+    /*
+     * Send the deletion request.
+     */
+    try {
+      const response = await this.makeRequest(url, data);
 
-       headers: {
-         "Content-Type": "application/json",
-       },
+      /*
+       * Display the raw response temporarily
+       * while testing the controller.
+       */
+      // alert(responseText);
 
-       body: JSON.stringify(data),
-     })
-       .then((response) => {
-         if (response.ok) {
-           return response.text();
-         }
+      /*
+       * Product deleted successfully.
+       */
+      if (response.success) {
+        alert(response.message || "The product has been deleted successfully.");
 
-         throw new Error("Network error.");
-       })
-       .then((responseText) => {
-         /*
-          * Display the raw response temporarily
-          * while testing the controller.
-          */
-        // alert(responseText);
+        /*
+         * Redirect the user to the products page.
+         *
+         * Change this path if your products list
+         * is located somewhere else.
+         */
+        window.location.href = "../../view/dashboard_supplier/index.php";
+        return;
+      }
 
-         /*
-          * Convert the JSON response into an object.
-          */
-         const responseData =
-           JSON.parse(responseText);
+      /*
+       * The controller returned an error.
+       */
+      alert(response.error || "The product could not be deleted.");
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("An error occurred while deleting the product.");
+    }
+  }
 
-         /*
-          * Product deleted successfully.
-          */
-         if (responseData.success) {
-           alert(
-             responseData.message ||
-             "The product has been deleted successfully."
-           );
+  handlePd_nameInput(pdNameAlertShown) {
+    const length = pd_name.value.length;
 
-           /*
-            * Redirect the user to the products page.
-            *
-            * Change this path if your products list
-            * is located somewhere else.
-            */
-           window.location.href =
-             "../../view/dashboard_supplier/index.php";
+    /*
+     * Cut the text if it exceeds 150 characters.
+     */
+    if (length > 150) {
+      pd_name.value = pd_name.value.slice(0, 150);
+    }
 
-           return;
-         }
+    /*
+     * Display the warning only once
+     * when the user reaches the limit.
+     */
+    if (length > 149 && !pdNameAlertShown) {
+      alert("Name must be 150 characters or fewer.");
+      pdNameAlertShown = true;
+    }
 
-         /*
-          * The controller returned an error.
-          */
-         alert(
-           responseData.error ||
-           "The product could not be deleted."
-         );
-       })
-       .catch((error) => {
-         console.error(
-           "Error deleting product:",
-           error
-         );
+    /*
+     * Allow the warning to be displayed again
+     * when the user reduces the text length.
+     */
+    if (length <= 149) {
+      pdNameAlertShown = false;
+    }
+  }
 
-         alert(
-           "An error occurred while deleting the product."
-         );
-       });
-   }
+  handleResetButtonClick() {
+    pd_name.value = "";
+    pd_status.value = "";
+    pd_desc.value = "";
+    pd_tagline.value = "";
+    this.saveProductDetails(false);
+    alert("The product fields have been reset.");
+  }
+
+  handleSaveButtonClick() {
+    this.saveProductDetails(false);
+    alert("The product details have been saved.");
+  }
+
+  async makeRequest(url, data, options = {}) {
+    const {
+      requireSuccess = false,
+      responseType = "json",
+      ...requestOptions
+    } = options;
+    const isFormData = data instanceof FormData;
+    const headers = new Headers(requestOptions.headers || {});
+    if (!isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      ...requestOptions,
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = responseType === "text" ? text : JSON.parse(text);
+    } catch {
+      const error = new Error("The server returned an invalid response.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok || requireSuccess && !result?.success) {
+      const error = new Error(result?.error || result?.message || "The request could not be completed.");
+      error.status = response.status;
+      error.code = result?.code || null;
+      error.details = result;
+      throw error;
+    }
+    return result;
+  }
 }
 
 /*
  * Capture the product form elements.
  */
-const pd_name =
-  document.getElementById("pd_name");
-
-const pd_status =
-  document.getElementById("pd_status");
-
-const pd_desc =
-  document.getElementById("pd_desc");
-
-const pd_tagline =
-  document.getElementById("pd_tagline");
-
-const next_product_details =
-  document.getElementById("next_product_details");
+const pd_name = document.getElementById("pd_name");
+const pd_status = document.getElementById("pd_status");
+const pd_desc = document.getElementById("pd_desc");
+const pd_tagline = document.getElementById("pd_tagline");
+const next_product_details = document.getElementById("next_product_details");
 
 /*
  * Create the Product Details class instance.
  */
-const classAddProductDetails =
-  new ClassAddProductDetails();
+const classAddProductDetails = new ClassAddProductDetails();

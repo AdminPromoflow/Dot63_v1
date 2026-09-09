@@ -1,3 +1,8 @@
+# Borrador del recorrido de variaciones
+
+Este archivo conserva el ejemplo conceptual anterior; no es código ejecutable.
+
+```text
 /* ============================================================================
   1) constructor()
 ============================================================================ */
@@ -151,3 +156,5 @@ selectVariationZeroAndContinue(allVariations) {
   // Repetir el ciclo consultando hijas de la hija
   this.fetchAllVariations(selectedId);
 }
+
+```

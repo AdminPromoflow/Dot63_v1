@@ -40,7 +40,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
               type="button"
               class="sp-nav sp-nav-prev"
               aria-label="Previous media"
-              onclick="previewGallery.prevImage()">
+              data-preview-previous>
               ‹
             </button>
 
@@ -50,7 +50,7 @@ $jsTime2 = @filemtime($jsPath2) ?: time();
               type="button"
               class="sp-nav sp-nav-next"
               aria-label="Next media"
-              onclick="previewGallery.nextImage()">
+              data-preview-next>
               ›
             </button>
 

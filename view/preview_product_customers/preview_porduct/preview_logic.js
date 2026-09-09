@@ -13,7 +13,7 @@
 // [Customer 3.1] preview.php añadió una versión a esta URL. La reutilizamos en cada import
 // para que todos los archivos pertenezcan a la misma versión y no se mezclen módulos de caché.
 const moduleVersion = new URL(import.meta.url).searchParams.get("v") || "1";
-const versionedModule = (path) => {
+const versionedModule = path => {
   const url = new URL(path, import.meta.url);
   url.searchParams.set("v", moduleVersion);
   return url.href;
@@ -21,244 +21,29 @@ const versionedModule = (path) => {
 
 // [Customer 3.2] Los ocho módulos son independientes al descargarse, por eso se cargan en paralelo.
 // Promise.all espera a que estén todos listos antes de crear la aplicación.
-const [
-  { PreviewApi },
-  { PreviewStore },
-  { PreviewGallery },
-  { ImagesRenderer },
-  { ItemsRenderer },
-  { ArtworkRenderer },
-  { PricesController },
-  { VariationsController, readVariationInput }
-] = await Promise.all([
-  import(versionedModule("./preview_api.js")),
-  import(versionedModule("./preview_store.js")),
-  import(versionedModule("./preview.js")),
-  import(versionedModule("../images/images.js")),
-  import(versionedModule("../items/items.js")),
-  import(versionedModule("../artwork/artwork.js")),
-  import(versionedModule("../prices/prices.js")),
-  import(versionedModule("../variations/variations.js"))
-]);
+const [{
+  PreviewApi
+}, {
+  PreviewStore
+}, {
+  PreviewGallery
+}, {
+  ImagesRenderer
+}, {
+  ItemsRenderer
+}, {
+  ArtworkRenderer
+}, {
+  PricesController
+}, {
+  VariationsController,
+  readVariationInput
+}, {
+  CustomerAuthModal
+}] = await Promise.all([import(versionedModule("./preview_api.js")), import(versionedModule("./preview_store.js")), import(versionedModule("./preview.js")), import(versionedModule("../images/images.js")), import(versionedModule("../items/items.js")), import(versionedModule("../artwork/artwork.js")), import(versionedModule("../prices/prices.js")), import(versionedModule("../variations/variations.js")), import(versionedModule("./auth.js"))]);
 
 // [Customer 10.4] Este módulo controla el modal que aparece únicamente cuando el carrito
 // responde con 401/AUTH_REQUIRED. Conserva la selección mientras el cliente se identifica.
-class CustomerAuthModal {
-  constructor({ api, onAuthenticated, onDismissed }) {
-    // [Customer 10.4.1] Se reciben callbacks para que el modal no tenga que conocer la lógica del carrito.
-    this.api = api;
-    this.onAuthenticated = onAuthenticated;
-    this.onDismissed = onDismissed;
-    this.modal = document.getElementById("customer_auth_modal");
-    this.dialog = this.modal?.querySelector(".customer-auth-dialog") || null;
-    this.feedback = document.getElementById("customer_auth_feedback");
-    this.loginPanel = document.getElementById("customer_auth_login_panel");
-    this.registerPanel = document.getElementById("customer_auth_register_panel");
-    this.loginForm = document.getElementById("customer_login_form");
-    this.registerForm = document.getElementById("customer_register_form");
-    this.currentView = "login";
-    this.busy = false;
-    this.previousFocus = null;
-
-    this.bindEvents();
-  }
-
-  bindEvents() {
-    // [Customer 10.4.2] Se conectan cierre, cambio de pestaña, formularios y navegación por teclado.
-    this.modal?.querySelectorAll("[data-auth-close]").forEach((button) => {
-      button.addEventListener("click", () => this.close({ dismissed: true }));
-    });
-
-    this.modal?.querySelectorAll("[data-auth-view]").forEach((button) => {
-      button.addEventListener("click", () => this.setView(button.dataset.authView));
-    });
-
-    this.loginForm?.addEventListener("submit", (event) => this.submitLogin(event));
-    this.registerForm?.addEventListener("submit", (event) => this.submitRegistration(event));
-    document.addEventListener("keydown", (event) => this.handleKeydown(event));
-  }
-
-  open(view = "login", message = "") {
-    // [Customer 10.4.3] Se recuerda el foco anterior, se abre el modal y se enfoca el primer campo.
-    if (!this.modal) return;
-
-    this.previousFocus = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    this.modal.hidden = false;
-    document.body.classList.add("customer-auth-open");
-    this.setView(view, { focus: false });
-    this.showFeedback(message, message ? "info" : "");
-
-    window.requestAnimationFrame(() => {
-      this.modal?.classList.add("is-open");
-      this.focusFirstField();
-    });
-  }
-
-  close({ dismissed = false, restoreFocus = true } = {}) {
-    // [Customer 10.4.4] Al cerrar se limpian contraseñas y se devuelve el foco por accesibilidad.
-    if (!this.modal || this.modal.hidden || this.busy) return;
-
-    this.modal.classList.remove("is-open");
-    this.modal.hidden = true;
-    document.body.classList.remove("customer-auth-open");
-    this.clearPasswords();
-    this.showFeedback("");
-
-    if (restoreFocus) this.previousFocus?.focus?.();
-    if (dismissed) this.onDismissed?.();
-  }
-
-  setView(view, { focus = true } = {}) {
-    // [Customer 10.4.5] Solo un panel y una pestaña pueden estar activos al mismo tiempo.
-    if (this.busy) return;
-    this.currentView = view === "register" ? "register" : "login";
-
-    const showingLogin = this.currentView === "login";
-    if (this.loginPanel) this.loginPanel.hidden = !showingLogin;
-    if (this.registerPanel) this.registerPanel.hidden = showingLogin;
-
-    this.modal?.querySelectorAll('[role="tab"][data-auth-view]').forEach((tab) => {
-      const active = tab.dataset.authView === this.currentView;
-      tab.classList.toggle("is-active", active);
-      tab.setAttribute("aria-selected", String(active));
-      tab.tabIndex = active ? 0 : -1;
-    });
-
-    this.showFeedback("");
-    if (focus && !this.modal?.hidden) this.focusFirstField();
-  }
-
-  async submitLogin(event) {
-    // [Customer 10.4.6] El navegador valida los campos antes de enviar email y contraseña a PreviewApi.
-    event.preventDefault();
-    if (this.busy || !this.loginForm) return;
-
-    if (!this.loginForm.checkValidity()) {
-      this.loginForm.reportValidity();
-      return;
-    }
-
-    const formData = new FormData(this.loginForm);
-    const email = String(formData.get("email") || "").trim();
-    const password = String(formData.get("password") || "");
-
-    await this.authenticate(() => this.api.loginCustomer(email, password));
-  }
-
-  async submitRegistration(event) {
-    // [Customer 10.4.7] Además de la validación HTML, comprobamos fortaleza y coincidencia de contraseñas.
-    event.preventDefault();
-    if (this.busy || !this.registerForm) return;
-
-    const password = document.getElementById("customer_register_password");
-    const confirmation = document.getElementById("customer_register_password_confirm");
-    const passwordValue = String(password?.value || "");
-    const passwordIsStrong = passwordValue.length >= 8
-      && /[A-Z]/.test(passwordValue)
-      && /[a-z]/.test(passwordValue)
-      && /[0-9]/.test(passwordValue)
-      && /[^A-Za-z0-9]/.test(passwordValue);
-
-    password?.setCustomValidity(passwordIsStrong
-      ? ""
-      : "Use at least 8 characters with uppercase, lowercase, a number and a symbol.");
-    confirmation?.setCustomValidity(passwordValue === String(confirmation?.value || "")
-      ? ""
-      : "Passwords do not match.");
-
-    if (!this.registerForm.checkValidity()) {
-      this.registerForm.reportValidity();
-      return;
-    }
-
-    const formData = new FormData(this.registerForm);
-    const name = String(formData.get("name") || "").trim();
-    const email = String(formData.get("email") || "").trim();
-
-    await this.authenticate(() => this.api.registerCustomer(name, email, passwordValue));
-  }
-
-  async authenticate(request) {
-    // [Customer 10.4.8] Login y registro comparten el mismo manejo de espera, éxito y error.
-    this.setBusy(true);
-    this.showFeedback("");
-
-    try {
-      const result = await request();
-      this.showFeedback(result.message || "Authentication successful. Continuing your order…", "success");
-      this.setBusy(false);
-      this.close({ dismissed: false, restoreFocus: false });
-      // [Customer 10.6] El callback vuelve a CustomerPreviewApp para reintentar la compra guardada.
-      await this.onAuthenticated?.(result);
-    } catch (error) {
-      this.showFeedback(error.message || "Authentication could not be completed.", "error");
-      this.setBusy(false);
-    }
-  }
-
-  setBusy(busy) {
-    // [Customer 10.4.9] Mientras hay una solicitud se evita el doble submit y se muestra un spinner.
-    this.busy = busy;
-    [this.loginForm, this.registerForm].forEach((form) => {
-      if (!form) return;
-      form.setAttribute("aria-busy", String(busy));
-      form.querySelectorAll("button[type='submit']").forEach((button) => {
-        button.disabled = busy;
-        button.classList.toggle("is-loading", busy && !form.hidden && !form.closest("[hidden]"));
-      });
-    });
-  }
-
-  showFeedback(message, tone = "info") {
-    if (!this.feedback) return;
-    this.feedback.textContent = message;
-    this.feedback.dataset.tone = tone || "info";
-    this.feedback.setAttribute("role", tone === "error" ? "alert" : "status");
-    this.feedback.hidden = !message;
-  }
-
-  focusFirstField() {
-    const panel = this.currentView === "register" ? this.registerPanel : this.loginPanel;
-    panel?.querySelector("input:not([disabled])")?.focus();
-  }
-
-  clearPasswords() {
-    this.modal?.querySelectorAll('input[type="password"]').forEach((input) => {
-      input.value = "";
-      input.setCustomValidity("");
-    });
-  }
-
-  handleKeydown(event) {
-    // [Customer 10.4.10] Escape cierra; Tab y Shift+Tab permanecen dentro del diálogo abierto.
-    if (!this.modal || this.modal.hidden) return;
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      this.close({ dismissed: true });
-      return;
-    }
-
-    if (event.key !== "Tab" || !this.dialog) return;
-    const focusable = [...this.dialog.querySelectorAll(
-      'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([type="hidden"]), a[href]'
-    )].filter((element) => !element.closest("[hidden]"));
-
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-}
 
 // [Customer 3.3] Esta clase es el coordinador: conecta API, estado, renderizadores,
 // precios, variaciones, carrito y autenticación en un único flujo.
@@ -281,7 +66,7 @@ class CustomerPreviewApp {
       api: this.api,
       store: this.store,
       getSku: () => this.sku,
-      onSummaryChange: (summary) => this.updatePurchaseActions(summary)
+      onSummaryChange: summary => this.updatePurchaseActions(summary)
     });
     this.variations = new VariationsController({
       api: this.api,
@@ -289,7 +74,7 @@ class CustomerPreviewApp {
       prices: this.prices,
       preferredOptions: this.variationInput.options,
       renderPath: () => this.renderSelectedPath(),
-      onError: (message) => this.showMessage(message, "error")
+      onError: message => this.showMessage(message, "error")
     });
 
     // [Customer 3.3.3] Guardamos una sola referencia a cada elemento importante del DOM.
@@ -305,7 +90,6 @@ class CustomerPreviewApp {
       itemsSection: document.getElementById("items_section"),
       artworkSection: document.getElementById("artwork_section")
     };
-
     this.purchaseReady = false;
     this.purchasePending = false;
     this.pendingPurchase = null;
@@ -314,31 +98,31 @@ class CustomerPreviewApp {
       onAuthenticated: () => this.resumePendingPurchase(),
       onDismissed: () => this.cancelPendingPurchase()
     });
-
-    this.bindEvents();
+    {
+      // [Customer 3.4] Los eventos se conectan una sola vez al construir la aplicación.
+      this.elements.back?.addEventListener("click", () => this.goBack());
+      this.elements.addToCart?.addEventListener("click", () => this.submitPurchase(false));
+      this.elements.buyNow?.addEventListener("click", () => this.submitPurchase(true));
+    }
+    this.getProduct();
   }
 
-  bindEvents() {
-    // [Customer 3.4] Los eventos se conectan una sola vez al construir la aplicación.
-    this.elements.back?.addEventListener("click", () => this.goBack());
-    this.elements.addToCart?.addEventListener("click", () => this.submitPurchase(false));
-    this.elements.buyNow?.addEventListener("click", () => this.submitPurchase(true));
-  }
-
-  async init() {
+  async getProduct() {
     // [Customer 3.5] Sin SKU no existe una consulta que hacer, así que mostramos un error y terminamos.
     if (!this.sku) {
       this.showFatal("The product SKU is missing from this link.");
       return;
     }
-
     this.setLoading(true);
     this.loadController?.abort();
     this.loadController = new AbortController();
-
     try {
-      // [Customer 4] PreviewApi envía el SKU al endpoint público del servidor.
-      const payload = await this.api.getCustomerPreview(this.sku, {
+      // [Customer 4] El método consulta el producto con su makeRequest local.
+      const payload = await this.makeRequest(this.api.previewUrl, {
+        action: "get_customer_preview",
+        sku: this.sku
+      }, {
+        requireSuccess: true,
         signal: this.loadController.signal
       });
 
@@ -364,7 +148,6 @@ class CustomerPreviewApp {
     const product = payload.product || {};
     const category = product.category?.name || "Uncategorised";
     const group = product.group?.name || "No group";
-
     this.setText("sp_category", category);
     this.setText("sp-title", product.name || "Untitled product");
     this.setText("sp-brand", product.supplier_name || "Supplier");
@@ -385,7 +168,6 @@ class CustomerPreviewApp {
         breadcrumbs.appendChild(item);
       });
     }
-
   }
 
   renderSelectedPath() {
@@ -395,7 +177,6 @@ class CustomerPreviewApp {
     this.items.clear();
     this.artwork.clear();
     this.gallery.clear();
-
     const imageKeys = new Set();
     const itemKeys = new Set();
     let renderedItems = 0;
@@ -403,13 +184,12 @@ class CustomerPreviewApp {
 
     // [Customer 7.1] Store devuelve la raíz y todas las variaciones elegidas en orden.
     const selectedRows = this.store.getSelectedRows();
-
     for (const row of selectedRows) {
       const variation = row?.variation || {};
       const variationName = String(variation.name || "").trim();
 
       // [Customer 7.2] Los Set impiden pintar dos veces recursos que llegan desde varios niveles.
-      const uniqueImages = (Array.isArray(row?.images) ? row.images : []).filter((image) => {
+      const uniqueImages = (Array.isArray(row?.images) ? row.images : []).filter(image => {
         const key = String(image?.image_id ?? image?.link ?? "");
         if (!key || imageKeys.has(key)) return false;
         imageKeys.add(key);
@@ -421,8 +201,7 @@ class CustomerPreviewApp {
         productName: this.store.product?.name,
         variationName
       });
-
-      const uniqueItems = (Array.isArray(row?.items) ? row.items : []).filter((item) => {
+      const uniqueItems = (Array.isArray(row?.items) ? row.items : []).filter(item => {
         const key = String(item?.item_id ?? `${item?.name}:${item?.description}`);
         if (!key || itemKeys.has(key)) return false;
         itemKeys.add(key);
@@ -430,31 +209,30 @@ class CustomerPreviewApp {
       });
       // [Customer 7.3.2] ItemsRenderer agrega datos complementarios del producto.
       renderedItems += this.items.render(uniqueItems);
-
       if (row?.artwork) {
         // [Customer 7.3.3] ArtworkRenderer agrega el PDF asociado, si existe.
-        renderedArtwork += this.artwork.render(row.artwork, { variationName }) ? 1 : 0;
+        renderedArtwork += this.artwork.render(row.artwork, {
+          variationName
+        }) ? 1 : 0;
       }
     }
 
     // [Customer 7.4] Se pinta el estado vacío si corresponde y la galería vuelve a empezar.
     this.images.renderEmpty();
-    this.gallery.refresh({ keepIndex: false });
-
+    this.gallery.refresh({
+      keepIndex: false
+    });
     if (this.elements.itemsSection) this.elements.itemsSection.hidden = renderedItems === 0;
     if (this.elements.artworkSection) this.elements.artworkSection.hidden = renderedArtwork === 0;
 
     // [Customer 7.5] El precio base viene del nivel más específico con modo "prices";
     // las opciones con modo "variation" se calculan como extras.
-    const priceSource = [...selectedRows].reverse().find((row) => {
-      return String(row?.variation?.price_display_mode ?? "prices") === "prices"
-        && Array.isArray(row?.prices)
-        && row.prices.length > 0;
+    const priceSource = [...selectedRows].reverse().find(row => {
+      return String(row?.variation?.price_display_mode ?? "prices") === "prices" && Array.isArray(row?.prices) && row.prices.length > 0;
     });
-
     if (priceSource) {
       // [Customer 8] PricesController pinta los rangos, selecciona uno y calcula el resumen.
-      const rows = priceSource.prices.map((price) => ({
+      const rows = priceSource.prices.map(price => ({
         ...price,
         price_display_mode: priceSource.variation?.price_display_mode || "prices"
       }));
@@ -485,15 +263,11 @@ class CustomerPreviewApp {
     // tomamos la cantidad, price_id y variaciones seleccionadas actualmente.
     const quantity = Number(savedPayload?.quantity ?? this.store.selectedQuantity);
     const priceId = Number(savedPayload?.price_id ?? this.store.selectedPriceId);
-    const variationIds = savedPayload?.variation_ids
-      ? [...savedPayload.variation_ids]
-      : [...new Set(this.store.getSelectedVariationIds())];
-
+    const variationIds = savedPayload?.variation_ids ? [...savedPayload.variation_ids] : [...new Set(this.store.getSelectedVariationIds())];
     if (!Number.isInteger(quantity) || quantity <= 0 || !Number.isInteger(priceId) || priceId <= 0) {
       this.showMessage("Please choose a valid product quantity before continuing.", "error");
       return;
     }
-
     const purchasePayload = savedPayload || {
       sku: this.sku,
       quantity,
@@ -501,21 +275,25 @@ class CustomerPreviewApp {
       variation_ids: variationIds,
       intent: buyNow ? "buy_now" : "add_to_cart"
     };
-
     this.setPurchasePending(true, buyNow ? this.elements.buyNow : this.elements.addToCart);
     this.hideMessage();
-
     try {
       // [Customer 10.2] PreviewApi envía la selección a controller/order/cart.php.
-      const result = await this.api.addToCart(purchasePayload);
+      const result = await this.makeRequest(this.api.cartUrl, {
+        action: "add_to_cart",
+        ...purchasePayload
+      }, {
+        requireSuccess: true
+      });
 
       // [Customer 10.3] En éxito limpiamos el intento pendiente y avisamos al contador global del carrito.
       this.pendingPurchase = null;
       this.showMessage(result.message || "The product was added to your cart.", "success");
       window.dispatchEvent(new CustomEvent("promoflow:cart-updated", {
-        detail: { count: Number(result.cart_count) || 1 }
+        detail: {
+          count: Number(result.cart_count) || 1
+        }
       }));
-
       if (buyNow) {
         // [Customer 10.7] "Buy now" usa el mismo carrito y luego lleva al cliente a revisarlo.
         window.location.assign(new URL("../../view/shopping_cart/index.php", window.location.href));
@@ -523,12 +301,14 @@ class CustomerPreviewApp {
     } catch (error) {
       // [Customer 10.4] Un 401/AUTH_REQUIRED no descarta la configuración: la guardamos y abrimos el modal.
       if (error.status === 401 && (!error.code || error.code === "AUTH_REQUIRED")) {
-        this.pendingPurchase = { buyNow, payload: purchasePayload };
+        this.pendingPurchase = {
+          buyNow,
+          payload: purchasePayload
+        };
         this.showMessage(error.message, "info");
         this.auth.open("login", error.message);
         return;
       }
-
       this.pendingPurchase = null;
       this.showMessage(error.message || "The product could not be added to your cart.", "error");
     } finally {
@@ -540,7 +320,6 @@ class CustomerPreviewApp {
     // [Customer 10.6] Después de login/registro se repite exactamente el payload que había fallado.
     const pending = this.pendingPurchase;
     if (!pending) return;
-
     this.showMessage("You are signed in. Adding your selected product…", "info");
     await this.submitPurchase(pending.buyNow, pending.payload);
   }
@@ -554,8 +333,7 @@ class CustomerPreviewApp {
   setPurchasePending(pending, activeButton = null) {
     // [Customer 10.1.2] Mientras el servidor responde, ambos botones quedan bloqueados.
     this.purchasePending = pending;
-
-    [this.elements.addToCart, this.elements.buyNow].forEach((button) => {
+    [this.elements.addToCart, this.elements.buyNow].forEach(button => {
       if (!button) return;
       button.disabled = pending || !this.purchaseReady;
       button.classList.toggle("is-loading", pending && button === activeButton);
@@ -564,6 +342,7 @@ class CustomerPreviewApp {
   }
 
   // [Customer 11] Estos métodos pequeños concentran cambios repetidos de interfaz.
+
   setLoading(loading) {
     if (this.elements.loading) this.elements.loading.hidden = !loading;
     if (this.elements.content) this.elements.content.hidden = loading;
@@ -592,8 +371,40 @@ class CustomerPreviewApp {
     const element = document.getElementById(id);
     if (element) element.textContent = String(value ?? "");
   }
-}
 
-// [Customer 3.5.1] Con todos los módulos definidos, se crea una sola aplicación y comienza init().
+  async makeRequest(url, data, options = {}) {
+    const {
+      requireSuccess = false,
+      responseType = "json",
+      ...requestOptions
+    } = options;
+    const isFormData = data instanceof FormData;
+    const headers = new Headers(requestOptions.headers || {});
+    if (!isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      ...requestOptions,
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = responseType === "text" ? text : JSON.parse(text);
+    } catch {
+      const error = new Error("The server returned an invalid response.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok || requireSuccess && !result?.success) {
+      const error = new Error(result?.error || result?.message || "The request could not be completed.");
+      error.status = response.status;
+      error.code = result?.code || null;
+      error.details = result;
+      throw error;
+    }
+    return result;
+  }
+}
 const app = new CustomerPreviewApp();
-app.init();

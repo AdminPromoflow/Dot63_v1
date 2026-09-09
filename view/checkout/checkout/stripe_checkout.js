@@ -25,36 +25,25 @@ class StripeCheckoutInterface {
     this.isPaying = false;
     this.pendingAddressId = 0;
     this.toastTimer = null;
-
-    if (this.page) this.init();
-  }
-
-  init() {
-    this.preparePaymentSurface();
-    this.bindEvents();
-    this.syncSelectedAddress();
-
-    const selectedAddress = this.selectedAddressId();
-    if (selectedAddress > 0 && this.canUseStripe()) {
-      this.setupPayment(selectedAddress);
-    } else {
-      this.updatePaymentAvailability();
-    }
-  }
-
-  bindEvents() {
-    this.addAddressButton?.addEventListener("click", () => this.openAddressPanel());
-    this.closeAddressButton?.addEventListener("click", () => this.closeAddressPanel());
-    this.cancelAddressButton?.addEventListener("click", () => this.closeAddressPanel());
-    this.addressForm?.addEventListener("submit", (event) => this.saveAddress(event));
-    this.addressForm?.addEventListener("input", (event) => this.clearFieldError(event.target));
-    this.addressList?.addEventListener("change", (event) => {
-      if (!(event.target instanceof HTMLInputElement) || event.target.name !== "delivery_address") return;
+    if (this.page) {
+      this.preparePaymentSurface();
+      {
+        this.addAddressButton?.addEventListener("click", () => this.openAddressPanel());
+        this.closeAddressButton?.addEventListener("click", () => this.closeAddressPanel());
+        this.cancelAddressButton?.addEventListener("click", () => this.closeAddressPanel());
+        this.addressForm?.addEventListener("submit", event => this.saveAddress(event));
+        this.addressForm?.addEventListener("input", event => this.clearFieldError(event.target));
+        this.addressList?.addEventListener("change", event => this.handleAddressListChange(event));
+        this.payButton?.addEventListener("click", () => this.confirmPayment());
+      }
       this.syncSelectedAddress();
-      const addressId = this.selectedAddressId();
-      if (addressId > 0 && this.canUseStripe()) this.setupPayment(addressId);
-    });
-    this.payButton?.addEventListener("click", () => this.confirmPayment());
+      const selectedAddress = this.selectedAddressId();
+      if (selectedAddress > 0 && this.canUseStripe()) {
+        this.setupPayment(selectedAddress);
+      } else {
+        this.updatePaymentAvailability();
+      }
+    }
   }
 
   preparePaymentSurface() {
@@ -62,27 +51,21 @@ class StripeCheckoutInterface {
     const status = document.querySelector(".stripe-status");
     const disclaimer = document.querySelector(".summary-disclaimer");
     if (!placeholder) return;
-
     placeholder.classList.add("is-live");
     placeholder.replaceChildren();
-
     this.paymentLoading = document.createElement("div");
     this.paymentLoading.className = "stripe-loading-state";
     this.paymentLoading.innerHTML = '<span aria-hidden="true"></span><div><strong>Preparing secure payment</strong><p>Stripe will collect your card details in this protected form.</p></div>';
-
     this.paymentElementContainer = document.createElement("div");
     this.paymentElementContainer.id = "payment-element";
     this.paymentElementContainer.className = "stripe-element-container";
     this.paymentElementContainer.hidden = true;
-
     this.paymentMessage = document.createElement("p");
     this.paymentMessage.id = "payment-message";
     this.paymentMessage.className = "stripe-payment-message";
     this.paymentMessage.setAttribute("role", "alert");
     this.paymentMessage.setAttribute("aria-live", "polite");
-
     placeholder.append(this.paymentLoading, this.paymentElementContainer, this.paymentMessage);
-
     if (status) {
       status.replaceChildren();
       const dot = document.createElement("span");
@@ -90,24 +73,17 @@ class StripeCheckoutInterface {
       status.classList.toggle("is-unavailable", !this.canUseStripe());
     }
     if (disclaimer) {
-      disclaimer.textContent = this.canUseStripe()
-        ? "Payment is processed securely by Stripe. PromoFlow never receives or stores your card number."
-        : "Add the Stripe environment keys to enable secure card payment.";
+      disclaimer.textContent = this.canUseStripe() ? "Payment is processed securely by Stripe. PromoFlow never receives or stores your card number." : "Add the Stripe environment keys to enable secure card payment.";
     }
   }
 
   canUseStripe() {
-    return this.config.authenticated === true
-      && this.config.stripeConfigured === true
-      && typeof window.Stripe === "function"
-      && Boolean(this.config.publishableKey)
-      && this.page?.dataset.hasItems === "true";
+    return this.config.authenticated === true && this.config.stripeConfigured === true && typeof window.Stripe === "function" && Boolean(this.config.publishableKey) && this.page?.dataset.hasItems === "true";
   }
 
   updatePaymentAvailability() {
     this.paymentReady = false;
     if (this.payButton) this.payButton.disabled = true;
-
     if (this.config.authenticated !== true) {
       this.setPaymentState("Sign in to continue", "Checkout payment is available to signed-in customers.", "error");
     } else if (this.page?.dataset.hasItems !== "true") {
@@ -130,31 +106,32 @@ class StripeCheckoutInterface {
       this.updatePaymentAvailability();
       return false;
     }
-
     this.isPreparing = true;
     this.paymentReady = false;
     const previousClientSecret = this.clientSecret;
     const previousCardComplete = this.cardComplete;
     this.setPaymentState("Preparing secure payment", "Stripe is creating a protected payment session.", "loading");
     this.setPayButtonState(true, "Preparing payment…");
-
     try {
       const promotionCode = this.readPromotionCode();
-      const data = await this.request("create_payment_intent", {
+      const data = await this.makeRequest(this.config.apiUrl, {
+        action: "create_payment_intent",
         address_id: addressId,
         promotion_code: promotionCode
+      }, {
+        requireSuccess: true,
+        headers: {
+          "X-CSRF-Token": this.config.csrfToken || ""
+        }
       });
-
       this.orderId = Number(data.order_id) || 0;
       this.updateTotals(data);
       if (data.already_paid) {
         window.location.assign(`complete.php?order_id=${encodeURIComponent(this.orderId)}`);
         return true;
       }
-
       if (!data.client_secret) throw new Error("Stripe did not return a payment session.");
       if (!this.stripe) this.stripe = window.Stripe(this.config.publishableKey);
-
       if (data.client_secret !== this.clientSecret) {
         this.cardComplete = false;
         this.paymentElement?.unmount();
@@ -172,16 +149,27 @@ class StripeCheckoutInterface {
               spacingUnit: "4px"
             },
             rules: {
-              ".Input": { border: "1px solid #d1d5db", boxShadow: "none" },
-              ".Input:focus": { borderColor: "#b86f42", boxShadow: "0 0 0 3px rgba(184,111,66,.10)" },
-              ".Label": { color: "#374151", fontWeight: "600" }
+              ".Input": {
+                border: "1px solid #d1d5db",
+                boxShadow: "none"
+              },
+              ".Input:focus": {
+                borderColor: "#b86f42",
+                boxShadow: "0 0 0 3px rgba(184,111,66,.10)"
+              },
+              ".Label": {
+                color: "#374151",
+                fontWeight: "600"
+              }
             }
           }
         });
         this.paymentElement = this.elements.create("payment", {
           layout: "tabs",
           defaultValues: {
-            billingDetails: { email: this.config.customerEmail || undefined }
+            billingDetails: {
+              email: this.config.customerEmail || undefined
+            }
           }
         });
         this.paymentElement.on("ready", () => {
@@ -190,7 +178,7 @@ class StripeCheckoutInterface {
           this.paymentElementContainer.hidden = false;
           this.setPayButtonState(!this.cardComplete, this.payButtonLabel(data.total, data.currency));
         });
-        this.paymentElement.on("change", (event) => {
+        this.paymentElement.on("change", event => {
           this.cardComplete = Boolean(event.complete);
           this.showPaymentMessage(event.error?.message || "", Boolean(event.error));
           this.setPayButtonState(!this.paymentReady || !this.cardComplete, this.payButtonLabel(data.total, data.currency));
@@ -203,7 +191,6 @@ class StripeCheckoutInterface {
         this.paymentElementContainer.hidden = false;
         this.setPayButtonState(!this.cardComplete, this.payButtonLabel(data.total, data.currency));
       }
-
       this.showPaymentMessage("");
       return true;
     } catch (error) {
@@ -229,29 +216,31 @@ class StripeCheckoutInterface {
       this.showPaymentMessage("Complete the card details before paying.", true);
       return false;
     }
-
     this.isPaying = true;
     this.setPayButtonState(true, "Processing securely…", true);
     this.showPaymentMessage("");
-
     try {
-      const { error: submitError } = await this.elements.submit();
+      const {
+        error: submitError
+      } = await this.elements.submit();
       if (submitError) throw submitError;
-
       const returnUrl = new URL("complete.php", window.location.href);
       returnUrl.searchParams.set("order_id", String(this.orderId));
-      const { error, paymentIntent } = await this.stripe.confirmPayment({
+      const {
+        error,
+        paymentIntent
+      } = await this.stripe.confirmPayment({
         elements: this.elements,
-        confirmParams: { return_url: returnUrl.toString() },
+        confirmParams: {
+          return_url: returnUrl.toString()
+        },
         redirect: "if_required"
       });
-
       if (error) throw error;
       if (paymentIntent && ["succeeded", "processing", "requires_action"].includes(paymentIntent.status)) {
         window.location.assign(returnUrl.toString());
         return true;
       }
-
       throw new Error("The payment was not completed. Please check the card details and try again.");
     } catch (error) {
       this.showPaymentMessage(error.message || "Stripe could not confirm the payment.", true);
@@ -265,16 +254,22 @@ class StripeCheckoutInterface {
   async saveAddress(event) {
     event.preventDefault();
     if (!this.addressForm || !this.addressList || !this.validateForm()) return false;
-
     const submitButton = this.addressForm.querySelector('button[type="submit"]');
     const values = Object.fromEntries(new FormData(this.addressForm).entries());
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.classList.add("is-loading");
     }
-
     try {
-      const data = await this.request("save_address", { address: values });
+      const data = await this.makeRequest(this.config.apiUrl, {
+        action: "save_address",
+        address: values
+      }, {
+        requireSuccess: true,
+        headers: {
+          "X-CSRF-Token": this.config.csrfToken || ""
+        }
+      });
       const card = this.buildAddressCard(data.address);
       this.addressEmptyState?.classList.add("is-hidden");
       this.addressList.classList.remove("is-empty");
@@ -285,7 +280,10 @@ class StripeCheckoutInterface {
       this.closeAddressPanel();
       this.showToast("Delivery address saved.");
       await this.setupPayment(Number(data.address.address_id));
-      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
       return true;
     } catch (error) {
       this.showToast(error.message || "The address could not be saved.", true);
@@ -296,26 +294,6 @@ class StripeCheckoutInterface {
         submitButton.classList.remove("is-loading");
       }
     }
-  }
-
-  async request(action, payload = {}) {
-    const response = await fetch(this.config.apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": this.config.csrfToken || ""
-      },
-      credentials: "same-origin",
-      body: JSON.stringify({ action, ...payload })
-    });
-
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data?.success) {
-      const error = new Error(data?.error || "The checkout request could not be completed.");
-      error.code = data?.code || "CHECKOUT_ERROR";
-      throw error;
-    }
-    return data;
   }
 
   readPromotionCode() {
@@ -337,12 +315,11 @@ class StripeCheckoutInterface {
     if (!totals) return;
     const rows = totals.querySelectorAll(":scope > div");
     const subtotalValue = rows[0]?.querySelector(":scope > strong");
-    const deliveryValue = Array.from(rows).find((row) => row.firstElementChild?.textContent?.trim() === "Delivery")?.querySelector(":scope > strong");
+    const deliveryValue = Array.from(rows).find(row => row.firstElementChild?.textContent?.trim() === "Delivery")?.querySelector(":scope > strong");
     const totalValue = totals.querySelector(".summary-grand-total > strong");
     if (subtotalValue) subtotalValue.textContent = this.formatCurrency(data.subtotal, data.currency);
     if (deliveryValue) deliveryValue.textContent = Number(data.delivery) === 0 ? "Free" : this.formatCurrency(data.delivery, data.currency);
     if (totalValue) totalValue.textContent = this.formatCurrency(data.total, data.currency);
-
     let discountRow = totals.querySelector(".summary-line-discount");
     if (Number(data.discount) > 0) {
       if (!discountRow) {
@@ -405,8 +382,13 @@ class StripeCheckoutInterface {
     this.closeAddressButton?.removeAttribute("hidden");
     this.cancelAddressButton?.removeAttribute("hidden");
     window.setTimeout(() => {
-      this.addressPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
-      this.addressForm?.querySelector("input")?.focus({ preventScroll: true });
+      this.addressPanel?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+      this.addressForm?.querySelector("input")?.focus({
+        preventScroll: true
+      });
     }, 120);
     return true;
   }
@@ -425,11 +407,9 @@ class StripeCheckoutInterface {
     if (!this.addressForm) return false;
     let valid = true;
     let firstInvalid = null;
-    this.addressForm.querySelectorAll("input[required]").forEach((field) => {
+    this.addressForm.querySelectorAll("input[required]").forEach(field => {
       const value = field.value.trim();
-      const message = !value
-        ? "This field is required."
-        : (field.type === "email" && !field.validity.valid ? "Enter a valid email address." : "");
+      const message = !value ? "This field is required." : field.type === "email" && !field.validity.valid ? "Enter a valid email address." : "";
       this.setFieldError(field, message);
       if (message) {
         valid = false;
@@ -498,7 +478,7 @@ class StripeCheckoutInterface {
   }
 
   syncSelectedAddress() {
-    this.addressList?.querySelectorAll(".address-card").forEach((card) => {
+    this.addressList?.querySelectorAll(".address-card").forEach(card => {
       const radio = card.querySelector('input[name="delivery_address"]');
       card.classList.toggle("is-selected", Boolean(radio?.checked));
       const badge = card.querySelector(".address-card-top em");
@@ -514,6 +494,49 @@ class StripeCheckoutInterface {
     this.toast.classList.add("is-visible");
     this.toastTimer = window.setTimeout(() => this.toast?.classList.remove("is-visible"), 4200);
   }
-}
 
-document.addEventListener("DOMContentLoaded", () => new StripeCheckoutInterface(), { once: true });
+  handleAddressListChange(event) {
+    if (!(event.target instanceof HTMLInputElement) || event.target.name !== "delivery_address") return;
+    this.syncSelectedAddress();
+    const addressId = this.selectedAddressId();
+    if (addressId > 0 && this.canUseStripe()) this.setupPayment(addressId);
+  }
+
+  async makeRequest(url, data, options = {}) {
+    const {
+      requireSuccess = false,
+      responseType = "json",
+      ...requestOptions
+    } = options;
+    const isFormData = data instanceof FormData;
+    const headers = new Headers(requestOptions.headers || {});
+    if (!isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      ...requestOptions,
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = responseType === "text" ? text : JSON.parse(text);
+    } catch {
+      const error = new Error("The server returned an invalid response.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok || requireSuccess && !result?.success) {
+      const error = new Error(result?.error || result?.message || "The request could not be completed.");
+      error.status = response.status;
+      error.code = result?.code || null;
+      error.details = result;
+      throw error;
+    }
+    return result;
+  }
+}
+document.addEventListener("DOMContentLoaded", () => new StripeCheckoutInterface(), {
+  once: true
+});

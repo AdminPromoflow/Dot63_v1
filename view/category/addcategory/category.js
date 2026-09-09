@@ -1,173 +1,112 @@
 class ClassCategory {
   constructor() {
-
     const edit_categories = document.getElementById("edit_categories");
     const cancel_editing = document.getElementById("cancel_editing");
     const next_category = document.getElementById("next_category");
-
-    next_category.addEventListener("click", function(){
+    next_category.addEventListener("click", () => {
       headerAddProduct.goNext('../../view/group/index.php');
-    })
-
-    edit_categories.addEventListener("click", function(){
-      classCategory.editCategories();
-    })
-
-    cancel_editing.addEventListener("click", function(){
-      classCategory.cancelCategoryEdit();
-    })
-
+    });
+    edit_categories.addEventListener("click", () => {
+      this.editCategories();
+    });
+    cancel_editing.addEventListener("click", () => {
+      this.cancelCategoryEdit();
+    });
     document.addEventListener('DOMContentLoaded', () => {
-     headerAddProduct.setCurrentHeader('category');
-   });
+      headerAddProduct.setCurrentHeader('category');
+    });
     this.getCategories();
+    document.addEventListener("click", event => this.handleListClick(event));
   }
 
   async cancelCategoryEdit() {
-    const edit_categories = document.getElementById("edit_categories");
-    const cancel_editing = document.getElementById("cancel_editing");
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
-
-    const url = "../../controller/products/category.php";
-
-    const data = {
-      action: "get_categories",
-      sku: sku
-    };
-
-    const response = await this.makeRequest(url, data);
-
-    if (!response) return;
-    edit_categories.style.display = "block";
-    cancel_editing.style.display = "none";
-    this.drawListCategories(response.category_selected);
-
-  }
-
-  async editCategories() {
-    const edit_categories = document.getElementById("edit_categories");
-    const cancel_editing = document.getElementById("cancel_editing");
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
-
-    const url = "../../controller/products/category.php";
-
-    const data = {
-      action: "get_categories",
-      sku: sku
-    };
-
-    const response = await this.makeRequest(url, data);
-
-    if (!response) return;
-    edit_categories.style.display = "none";
-    cancel_editing.style.display = "block";
-    this.drawListCategories(response);
-
-  }
-
-  async getCategories() {
-    const params = new URLSearchParams(window.location.search);
-    const sku = params.get("sku");
-
-    const url = "../../controller/products/category.php";
-
-    const data = {
-      action: "get_categories",
-      sku: sku
-    };
-
-    const response = await this.makeRequest(url, data);
-
-    if (!response) return;
-
-    if (response.category_selected?.data?.[0]?.name === "Unassigned Category") {
-      this.drawListCategories(response);
-    } else {
-      this.drawListCategories(response.category_selected);
-
-    }
-  }
-
-  async makeRequest(url, data) {
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-      });
-
-      if (!response.ok) {
-        throw new Error("Network error.");
-      }
-
-      return await response.json();
-
+      const edit_categories = document.getElementById("edit_categories");
+      const cancel_editing = document.getElementById("cancel_editing");
+      const params = new URLSearchParams(window.location.search);
+      const sku = params.get("sku");
+      const url = "../../controller/products/category.php";
+      const data = {
+        action: "get_categories",
+        sku: sku
+      };
+      const response = await this.makeRequest(url, data);
+      if (!response) return;
+      edit_categories.style.display = "block";
+      cancel_editing.style.display = "none";
+      this.drawListCategories(response.category_selected);
     } catch (error) {
       console.error("Error:", error);
-      alert(
-      "Connection error.\n\n" +
-      "The page will be refreshed automatically in a few seconds."
-
-    );
       return null;
     }
   }
 
-  getCategorySelected(){
+  async editCategories() {
+    try {
+      const edit_categories = document.getElementById("edit_categories");
+      const cancel_editing = document.getElementById("cancel_editing");
+      const params = new URLSearchParams(window.location.search);
+      const sku = params.get("sku");
+      const url = "../../controller/products/category.php";
+      const data = {
+        action: "get_categories",
+        sku: sku
+      };
+      const response = await this.makeRequest(url, data);
+      if (!response) return;
+      edit_categories.style.display = "none";
+      cancel_editing.style.display = "block";
+      this.drawListCategories(response);
+    } catch (error) {
+      console.error("Error:", error);
+      return null;
+    }
+  }
+
+  async getCategories() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const sku = params.get("sku");
+      const url = "../../controller/products/category.php";
+      const data = {
+        action: "get_categories",
+        sku: sku
+      };
+      const response = await this.makeRequest(url, data);
+      if (!response) return;
+      if (response.category_selected?.data?.[0]?.name === "Unassigned Category") {
+        this.drawListCategories(response);
+      } else {
+        this.drawListCategories(response.category_selected);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      return null;
+    }
+  }
+
+  async getCategorySelected() {
     const params = new URLSearchParams(window.location.search);
     const sku = params.get('sku');
-
-
     const url = "../../controller/products/category.php";
     const data = {
       action: "get_category_selected",
       sku: sku
     };
-    // Make a fetch request to the given URL with the specified data.
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        // Check if the response is okay, if so, return the response text.
-        if (response.ok) {
-          return response.text();
-        }
-        // If the response is not okay, throw an error.
-        throw new Error("Network error.");
-      })
-      .then(data => {
-        // alert(data);
-        var data = JSON.parse(data);
-
-        if (data["success"]) {
-
-
-          const params = new URLSearchParams(window.location.search);
-          const mode = params.get("mode");
-
-            const id = Number.parseInt(data["data"][0]["category_id"], 10);
-            if (!Number.isNaN(id)) classCategory.drawBorderCategory(id);
-
-
-
+    try {
+      const response = await this.makeRequest(url, data);
+      if (response["success"]) {
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get("mode");
+        const id = Number.parseInt(response["data"][0]["category_id"], 10);
+        if (!Number.isNaN(id)) this.drawBorderCategory(id);
       }
-      })
-      .catch(error => {
-        // Log any errors to the console.
-        console.error("Error:", error);
-      });
-  //  alert(sku);
+    } catch (error) {
+      console.error("Error:", error);
+    } //  alert(sku);
   }
 
-  updatedCategory(goNext = false){
+  async updatedCategory(goNext = false) {
     const params = new URLSearchParams(window.location.search);
     const sku = params.get('sku');
     // alert(email.value + password.value);
@@ -178,71 +117,39 @@ class ClassCategory {
       id: this.category_selected,
       sku: sku
     };
-    // Make a fetch request to the given URL with the specified data.
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        // Check if the response is okay, if so, return the response text.
-        if (response.ok) {
-          return response.text();
+    try {
+      const response = await this.makeRequest(url, data);
+      if (response["success"]) {
+        if (goNext) {
+          headerAddProduct.goNext('../../view/group/index.php');
         }
-        // If the response is not okay, throw an error.
-        throw new Error("Network error.");
-      })
-      .then(data => {
-      //  alert(data);
-        var data = JSON.parse(data);
-        if (data["success"]) {
-          if (goNext) {
-            headerAddProduct.goNext('../../view/group/index.php');
-          }
-        }
-        else {
-          alert("Error saving category");
-        }
-
-      })
-      .catch(error => {
-        // Log any errors to the console.
-        console.error("Error:", error);
-      });
-
+      } else {
+        alert("Error saving category");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
   }
 
-  drawListCategories(data){
+  drawListCategories(data) {
     if (!window.category_list) return;
 
     // 1) Limpiar
     category_list.innerHTML = "";
 
     // 2) Arreglo de categorías
-    var list = (data && data.success && Array.isArray(data.data)) ? data.data : [];
-
-    // 3) Pintar y asignar onclick con el índice
+    var list = data && data.success && Array.isArray(data.data) ? data.data : [];
     for (var i = 0; i < list.length; i++) {
-      var name  = list[i].name || "";
+      var name = list[i].name || "";
       var count = Number(list[i].products_count) || 0;
       var id = list[i].category_id;
-
-      category_list.innerHTML +=
-        '<div class="cp-cat" role="listitem" id="' + id + '" onclick="classCategory.selectCategory(' + id + ')">' +
-          '<span class="cp-cat-name">' + name + '</span>' +
-          '<small class="cp-cat-meta">' + count + ' products</small>' +
-        '</div>';
+      category_list.innerHTML += '<div class="cp-cat" role="listitem" id="' + id + '">' + '<span class="cp-cat-name">' + name + '</span>' + '<small class="cp-cat-meta">' + count + ' products</small>' + '</div>';
     }
-
     this.getCategorySelected();
-
   }
 
   selectCategory(divId) {
     if (!window.category_list) return;
-
     var boxes = category_list.querySelectorAll('.cp-cat');
 
     // Limpiar bordes
@@ -254,19 +161,16 @@ class ClassCategory {
     // Pintar borde del seleccionado
     var el = document.getElementById(divId);
     if (!el) return;
-
     el.style.border = '2px solid var(--brand, #005548)';
     el.style.borderRadius = '12px';
 
     // Guardar el ID del div seleccionado
     this.category_selected = divId;
-
     this.updatedCategory(true);
   }
 
-  drawBorderCategory(divId){
+  drawBorderCategory(divId) {
     if (!window.category_list) return;
-
     var boxes = category_list.querySelectorAll('.cp-cat');
 
     // Limpiar bordes
@@ -278,7 +182,6 @@ class ClassCategory {
     // Pintar borde del seleccionado
     var el = document.getElementById(divId);
     if (!el) return;
-
     el.style.border = '2px solid var(--brand, #005548)';
     el.style.borderRadius = '12px';
 
@@ -286,7 +189,45 @@ class ClassCategory {
     this.category_selected = divId;
   }
 
+  handleListClick(event) {
+    const item = event.target.closest("#category_list .cp-cat");
+    if (item) this.selectCategory(Number(item.id));
+  }
 
+  async makeRequest(url, data, options = {}) {
+    const {
+      requireSuccess = false,
+      responseType = "json",
+      ...requestOptions
+    } = options;
+    const isFormData = data instanceof FormData;
+    const headers = new Headers(requestOptions.headers || {});
+    if (!isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      ...requestOptions,
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = responseType === "text" ? text : JSON.parse(text);
+    } catch {
+      const error = new Error("The server returned an invalid response.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok || requireSuccess && !result?.success) {
+      const error = new Error(result?.error || result?.message || "The request could not be completed.");
+      error.status = response.status;
+      error.code = result?.code || null;
+      error.details = result;
+      throw error;
+    }
+    return result;
+  }
 }
 
 // const btn_create_new_category = document.getElementById("btn-create-new-category");

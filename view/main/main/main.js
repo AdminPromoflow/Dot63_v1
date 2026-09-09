@@ -1,225 +1,240 @@
-(() => {
-  "use strict";
+class MainAuth {
+  constructor() {
+    "use strict";
 
-  const dialog = document.getElementById("auth-dialog");
-  if (!dialog) return;
+    this.dialog = document.getElementById("auth-dialog");
+    if (!this.dialog) return;
+    this.tabs = [...this.dialog.querySelectorAll("[data-auth-tab]")];
+    this.panels = [...this.dialog.querySelectorAll("[data-auth-panel]")];
+    this.loginForm = document.getElementById("main-login-form");
+    this.registerForm = document.getElementById("main-register-form");
+    this.lastFocusedElement = null;
+    document.querySelectorAll("[data-auth-open]").forEach(trigger => {
+      trigger.addEventListener("click", () => this.openDialog(trigger.dataset.authOpen));
+    });
+    [[".general-menu__login", "login"], [".general-menu__signup", "register"], ['.site-header a[href*="/log_in/"]', "login"], ['.site-header a[href*="/sign_up/"]', "register"]].forEach(([selector, mode]) => {
+      document.querySelectorAll(selector).forEach(trigger => {
+        trigger.addEventListener("click", event => this.handleTriggerClick(event, mode));
+      });
+    });
+    this.dialog.querySelectorAll("[data-auth-close]").forEach(button => {
+      button.addEventListener("click", () => this.closeDialog());
+    });
+    this.dialog.querySelectorAll("[data-auth-switch]").forEach(button => {
+      button.addEventListener("click", () => this.setMode(button.dataset.authSwitch, true));
+    });
+    this.tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => this.setMode(tab.dataset.authTab, true));
+      tab.addEventListener("keydown", event => this.handleTabKeydown(event, index));
+    });
+    this.dialog.querySelectorAll("[data-password-toggle]").forEach(button => {
+      button.addEventListener("click", () => this.handleButtonClick(button));
+    });
+    this.dialog.addEventListener("click", event => this.handleDialogClick(event));
+    this.dialog.addEventListener("close", () => this.handleClose());
+    this.dialog.addEventListener("cancel", () => document.body.classList.remove("is-modal-open"));
+    this.loginForm?.addEventListener("submit", event => this.handleLoginFormSubmit(event));
+    this.registerForm?.addEventListener("submit", event => this.handleRegisterFormSubmit(event));
+    const requestedMode = window.location.hash.replace("#", "").toLowerCase();
+    if (requestedMode === "login" || requestedMode === "register" || requestedMode === "signup") {
+      this.openDialog(requestedMode === "login" ? "login" : "register");
+    }
+  }
 
-  const tabs = [...dialog.querySelectorAll("[data-auth-tab]")];
-  const panels = [...dialog.querySelectorAll("[data-auth-panel]")];
-  const loginForm = document.getElementById("main-login-form");
-  const registerForm = document.getElementById("main-register-form");
-  let lastFocusedElement = null;
+  statusFor(mode) {
+    return this.dialog.querySelector(`[data-auth-status="${mode}"]`);
+  }
 
-  const statusFor = (mode) => dialog.querySelector(`[data-auth-status="${mode}"]`);
-
-  function setStatus(mode, message = "", state = "") {
-    const status = statusFor(mode);
+  setStatus(mode, message = "", state = "") {
+    const status = this.statusFor(mode);
     if (!status) return;
     status.textContent = message;
     status.dataset.state = state;
   }
 
-  function setMode(mode, moveFocus = false) {
+  setMode(mode, moveFocus = false) {
     const nextMode = mode === "register" ? "register" : "login";
-
-    tabs.forEach((tab) => {
+    this.tabs.forEach(tab => {
       const active = tab.dataset.authTab === nextMode;
       tab.setAttribute("aria-selected", String(active));
       tab.tabIndex = active ? 0 : -1;
     });
-
-    panels.forEach((panel) => {
+    this.panels.forEach(panel => {
       panel.hidden = panel.dataset.authPanel !== nextMode;
     });
-
-    dialog.dataset.mode = nextMode;
-    setStatus("login");
-    setStatus("register");
-
+    this.dialog.dataset.mode = nextMode;
+    this.setStatus("login");
+    this.setStatus("register");
     if (moveFocus) {
-      panels.find((panel) => panel.dataset.authPanel === nextMode)
-        ?.querySelector("input")
-        ?.focus({ preventScroll: true });
-    }
-  }
-
-  function openDialog(mode) {
-    lastFocusedElement = document.activeElement;
-    setMode(mode);
-
-    if (typeof dialog.showModal === "function") {
-      if (!dialog.open) dialog.showModal();
-    } else {
-      dialog.setAttribute("open", "");
-    }
-
-    document.body.classList.add("is-modal-open");
-    window.setTimeout(() => setMode(mode, true), 40);
-  }
-
-  function closeDialog() {
-    if (typeof dialog.close === "function" && dialog.open) {
-      dialog.close();
-    } else {
-      dialog.removeAttribute("open");
-      handleClose();
-    }
-  }
-
-  function handleClose() {
-    document.body.classList.remove("is-modal-open");
-    if (lastFocusedElement instanceof HTMLElement) {
-      lastFocusedElement.focus({ preventScroll: true });
-    }
-  }
-
-  document.querySelectorAll("[data-auth-open]").forEach((trigger) => {
-    trigger.addEventListener("click", () => openDialog(trigger.dataset.authOpen));
-  });
-
-  [
-    [".general-menu__login", "login"],
-    [".general-menu__signup", "register"],
-    ['.site-header a[href*="/log_in/"]', "login"],
-    ['.site-header a[href*="/sign_up/"]', "register"]
-  ].forEach(([selector, mode]) => {
-    document.querySelectorAll(selector).forEach((trigger) => {
-      trigger.addEventListener("click", (event) => {
-        event.preventDefault();
-        openDialog(mode);
+      this.panels.find(panel => panel.dataset.authPanel === nextMode)?.querySelector("input")?.focus({
+        preventScroll: true
       });
-    });
-  });
+    }
+  }
 
-  dialog.querySelectorAll("[data-auth-close]").forEach((button) => {
-    button.addEventListener("click", closeDialog);
-  });
+  openDialog(mode) {
+    this.lastFocusedElement = document.activeElement;
+    this.setMode(mode);
+    if (typeof this.dialog.showModal === "function") {
+      if (!this.dialog.open) this.dialog.showModal();
+    } else {
+      this.dialog.setAttribute("open", "");
+    }
+    document.body.classList.add("is-modal-open");
+    window.setTimeout(() => this.setMode(mode, true), 40);
+  }
 
-  dialog.querySelectorAll("[data-auth-switch]").forEach((button) => {
-    button.addEventListener("click", () => setMode(button.dataset.authSwitch, true));
-  });
+  closeDialog() {
+    if (typeof this.dialog.close === "function" && this.dialog.open) {
+      this.dialog.close();
+    } else {
+      this.dialog.removeAttribute("open");
+      this.handleClose();
+    }
+  }
 
-  tabs.forEach((tab, index) => {
-    tab.addEventListener("click", () => setMode(tab.dataset.authTab, true));
-    tab.addEventListener("keydown", (event) => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-      event.preventDefault();
-      const direction = event.key === "ArrowRight" ? 1 : -1;
-      const nextTab = tabs[(index + direction + tabs.length) % tabs.length];
-      setMode(nextTab.dataset.authTab);
-      nextTab.focus();
-    });
-  });
+  handleClose() {
+    document.body.classList.remove("is-modal-open");
+    if (this.lastFocusedElement instanceof HTMLElement) {
+      this.lastFocusedElement.focus({
+        preventScroll: true
+      });
+    }
+  }
 
-  dialog.querySelectorAll("[data-password-toggle]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const input = button.parentElement?.querySelector("input");
-      if (!input) return;
-      const show = input.type === "password";
-      input.type = show ? "text" : "password";
-      button.textContent = show ? "Hide" : "Show";
-      button.setAttribute("aria-label", show ? "Hide password" : "Show password");
-    });
-  });
-
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) closeDialog();
-  });
-  dialog.addEventListener("close", handleClose);
-  dialog.addEventListener("cancel", () => document.body.classList.remove("is-modal-open"));
-
-  function validateRegistration(form) {
+  validateRegistration(form) {
     const password = form.elements.password.value;
-    if (password.length < 8
-      || !/[A-Z]/.test(password)
-      || !/[a-z]/.test(password)
-      || !/[0-9]/.test(password)
-      || !/[^A-Za-z0-9]/.test(password)) {
-      setStatus("register", "Use 8+ characters with uppercase, lowercase, a number and a symbol.", "error");
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      this.setStatus("register", "Use 8+ characters with uppercase, lowercase, a number and a symbol.", "error");
       form.elements.password.focus();
       return false;
     }
     return true;
   }
 
-  async function sendAuthRequest({ form, mode, url, payload }) {
+  async sendAuthRequest({
+    form,
+    mode,
+    url,
+    payload
+  }) {
     if (form.dataset.loading === "true") return;
-
     const button = form.querySelector("button[type=submit]");
     const originalLabel = button.innerHTML;
     form.dataset.loading = "true";
     button.disabled = true;
     button.innerHTML = mode === "login" ? "Logging in…" : "Creating account…";
-    setStatus(mode, mode === "login" ? "Checking your details…" : "Setting up your account…", "loading");
-
+    this.setStatus(mode, mode === "login" ? "Checking your details…" : "Setting up your account…", "loading");
     try {
-      const response = await fetch(new URL(url, window.location.href), {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "We couldn't complete that request. Please try again.");
+      const response = await this.makeRequest(new URL(url, window.location.href), payload);
+      if (!response.success) {
+        throw new Error(response.error || "We couldn't complete that request. Please try again.");
       }
-
-      setStatus(
-        mode,
-        mode === "login"
-          ? "Welcome back! Taking you to the catalog…"
-          : (result.message || "Account created! A welcome email has been sent."),
-        "success"
-      );
+      this.setStatus(mode, mode === "login" ? "Welcome back! Taking you to the catalog…" : response.message || "Account created! A welcome email has been sent.", "success");
       window.setTimeout(() => {
-        window.location.assign(new URL(dialog.dataset.successUrl, window.location.href));
+        window.location.assign(new URL(this.dialog.dataset.successUrl, window.location.href));
       }, 650);
     } catch (error) {
-      setStatus(mode, error.message || "Connection error. Please try again.", "error");
+      this.setStatus(mode, error.message || "Connection error. Please try again.", "error");
       button.disabled = false;
       button.innerHTML = originalLabel;
       form.dataset.loading = "false";
     }
   }
 
-  loginForm?.addEventListener("submit", (event) => {
+  handleTriggerClick(event, mode) {
     event.preventDefault();
-    setStatus("login");
-    if (!loginForm.reportValidity()) return;
+    this.openDialog(mode);
+  }
 
-    sendAuthRequest({
-      form: loginForm,
+  handleTabKeydown(event, index) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const nextTab = this.tabs[(index + direction + this.tabs.length) % this.tabs.length];
+    this.setMode(nextTab.dataset.authTab);
+    nextTab.focus();
+  }
+
+  handleButtonClick(button) {
+    const input = button.parentElement?.querySelector("input");
+    if (!input) return;
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    button.textContent = show ? "Hide" : "Show";
+    button.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  }
+
+  handleDialogClick(event) {
+    if (event.target === this.dialog) this.closeDialog();
+  }
+
+  handleLoginFormSubmit(event) {
+    event.preventDefault();
+    this.setStatus("login");
+    if (!this.loginForm.reportValidity()) return;
+    this.sendAuthRequest({
+      form: this.loginForm,
       mode: "login",
-      url: dialog.dataset.loginUrl,
+      url: this.dialog.dataset.loginUrl,
       payload: {
         action: "requestLogin",
-        email: loginForm.elements.email.value.trim(),
-        password: loginForm.elements.password.value
+        email: this.loginForm.elements.email.value.trim(),
+        password: this.loginForm.elements.password.value
       }
     });
-  });
+  }
 
-  registerForm?.addEventListener("submit", (event) => {
+  handleRegisterFormSubmit(event) {
     event.preventDefault();
-    setStatus("register");
-    if (!registerForm.reportValidity() || !validateRegistration(registerForm)) return;
-
-    sendAuthRequest({
-      form: registerForm,
+    this.setStatus("register");
+    if (!this.registerForm.reportValidity() || !this.validateRegistration(this.registerForm)) return;
+    this.sendAuthRequest({
+      form: this.registerForm,
       mode: "register",
-      url: dialog.dataset.registerUrl,
+      url: this.dialog.dataset.registerUrl,
       payload: {
         action: "requestSignUp",
-        name: registerForm.elements.name.value.trim(),
-        email: registerForm.elements.email.value.trim(),
-        password: registerForm.elements.password.value
+        name: this.registerForm.elements.name.value.trim(),
+        email: this.registerForm.elements.email.value.trim(),
+        password: this.registerForm.elements.password.value
       }
     });
-  });
-
-  const requestedMode = window.location.hash.replace("#", "").toLowerCase();
-  if (requestedMode === "login" || requestedMode === "register" || requestedMode === "signup") {
-    openDialog(requestedMode === "login" ? "login" : "register");
   }
-})();
+
+  async makeRequest(url, data, options = {}) {
+    const {
+      requireSuccess = false,
+      responseType = "json",
+      ...requestOptions
+    } = options;
+    const isFormData = data instanceof FormData;
+    const headers = new Headers(requestOptions.headers || {});
+    if (!isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      ...requestOptions,
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = responseType === "text" ? text : JSON.parse(text);
+    } catch {
+      const error = new Error("The server returned an invalid response.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok || requireSuccess && !result?.success) {
+      const error = new Error(result?.error || result?.message || "The request could not be completed.");
+      error.status = response.status;
+      error.code = result?.code || null;
+      error.details = result;
+      throw error;
+    }
+    return result;
+  }
+}
+const mainAuth = new MainAuth();

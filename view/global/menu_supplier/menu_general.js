@@ -14,22 +14,14 @@ class Menu_Supplier {
         this.logout();
       });
     }
-
-    // Inicializar comportamiento de esconder header al hacer scroll
-    this.initScrollHideHeader();
+    {
+      if (this.header) {
+        window.addEventListener('scroll', () => this.handleWindowScroll());
+      }
+    }
   }
 
   // ====== HEADER SCROLL HIDE ======
-  initScrollHideHeader() {
-    if (!this.header) return;
-
-    window.addEventListener('scroll', () => {
-      if (!this.ticking) {
-        window.requestAnimationFrame(() => this.handleScroll());
-        this.ticking = true;
-      }
-    });
-  }
 
   handleScroll() {
     const currentScroll = window.scrollY;
@@ -41,41 +33,31 @@ class Menu_Supplier {
       // Si subimos o estamos muy arriba -> mostrar
       this.header.classList.remove('site-header--hidden');
     }
-
     this.lastScrollY = currentScroll;
     this.ticking = false;
   }
 
   // ====== LOGOUT ======
-  logout() {
+
+  async logout() {
     const url = "../../controller/users/login.php";
     const data = {
       action: "logout_supplier"
     };
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-      .then(res => res.json())
-      .then(data => {
-
-        if (JSON.parse(data["response"])) {
-          location.reload();
-        } else {
-          alert("Sign-out failed. Please try again.");
-        }
-
-      })
-      .catch(() => {
-        alert("Error de red. Intenta nuevamente.");
-      });
+    try {
+      const response = await this.makeRequest(url, data);
+      if (JSON.parse(response["response"])) {
+        location.reload();
+      } else {
+        alert("Sign-out failed. Please try again.");
+      }
+    } catch (error) {
+      alert("Error de red. Intenta nuevamente.");
+    }
   }
 
   showHideLogoutButton(visible) {
     if (!logout) return;
-
     if (visible) {
       logout.style.display = "block";
     } else {
@@ -84,46 +66,79 @@ class Menu_Supplier {
   }
 
   // ====== VERIFICAR LOGIN ======
-  verifyLogin() {
+
+  async verifyLogin() {
     const url = "../../controller/users/login.php";
     const data = {
       action: "verify_login_supplier"
     };
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-      .then(res => res.json())
-      .then(data => {
+    try {
+      const response = await this.makeRequest(url, data);
       //  alert(JSON.stringify(data));
 
-        // Más claro: si NO está logueado
-        if (data['response'] !== true) {
-          if (window.location.href.slice(-29) != "view/log_inSupplier/index.php") {
-            if (window.location.href.slice(-31) != "view/sign_up_supplier/index.php") {
-              window.location.href = "../../view/log_inSupplier/index.php";
-            }
+      // Más claro: si NO está logueado
+      if (response['response'] !== true) {
+        if (window.location.href.slice(-29) != "view/log_inSupplier/index.php") {
+          if (window.location.href.slice(-31) != "view/sign_up_supplier/index.php") {
+            window.location.href = "../../view/log_inSupplier/index.php";
           }
-          this.showHideLogoutButton(false);
         }
-        // Si está logueado y está en login o sign up -> mandar al dashboard
-        else if (
-          window.location.href.slice(-29) == "view/log_inSupplier/index.php" ||
-          window.location.href.slice(-29) == "view/sign_up_supplier/index.php"
-        ) {
-          window.location.href = "../../view/dashboard_supplier/index.php";
-          this.showHideLogoutButton(true);
-        }
-        // Logueado y en cualquier otra página
-        else {
-          this.showHideLogoutButton(true);
-        }
-      })
-      .catch(() => {
-        alert("Error de red. Intenta nuevamente.");
-      });
+        this.showHideLogoutButton(false);
+      }
+      // Si está logueado y está en login o sign up -> mandar al dashboard
+      else if (window.location.href.slice(-29) == "view/log_inSupplier/index.php" || window.location.href.slice(-29) == "view/sign_up_supplier/index.php") {
+        window.location.href = "../../view/dashboard_supplier/index.php";
+        this.showHideLogoutButton(true);
+      }
+      // Logueado y en cualquier otra página
+      else {
+        this.showHideLogoutButton(true);
+      }
+    } catch (error) {
+      alert("Error de red. Intenta nuevamente.");
+    }
+  }
+
+  handleWindowScroll() {
+    if (!this.ticking) {
+      window.requestAnimationFrame(() => this.handleScroll());
+      this.ticking = true;
+    }
+  }
+
+  async makeRequest(url, data, options = {}) {
+    const {
+      requireSuccess = false,
+      responseType = "json",
+      ...requestOptions
+    } = options;
+    const isFormData = data instanceof FormData;
+    const headers = new Headers(requestOptions.headers || {});
+    if (!isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      ...requestOptions,
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = responseType === "text" ? text : JSON.parse(text);
+    } catch {
+      const error = new Error("The server returned an invalid response.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok || requireSuccess && !result?.success) {
+      const error = new Error(result?.error || result?.message || "The request could not be completed.");
+      error.status = response.status;
+      error.code = result?.code || null;
+      error.details = result;
+      throw error;
+    }
+    return result;
   }
 }
 

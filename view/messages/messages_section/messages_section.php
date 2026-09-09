@@ -119,4 +119,5 @@ $jsVLogic  = is_file($jsPathLogic)  ? filemtime($jsPathLogic)  : time();
 </div>
 
 <script defer src="<?= $jsPathLogic ?>?v=<?= $jsVLogic ?>"></script>
+<script defer src="../../view/messages/messages_section/create_case.js?v=<?= filemtime(__DIR__ . '/create_case.js') ?>"></script>
 <script defer src="<?= $jsPath ?>?v=<?= $jsV ?>"></script>

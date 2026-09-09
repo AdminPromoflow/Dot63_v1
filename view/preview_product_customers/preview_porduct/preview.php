@@ -10,6 +10,7 @@ $cssFile = __DIR__ . '/preview.css';
 $moduleFiles = [
   __DIR__ . '/preview_logic.js',
   __DIR__ . '/preview_api.js',
+  __DIR__ . '/auth.js',
   __DIR__ . '/preview_store.js',
   __DIR__ . '/preview.js',
   dirname(__DIR__) . '/images/images.js',
