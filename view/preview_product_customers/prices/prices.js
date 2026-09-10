@@ -1,3 +1,5 @@
+const { QuantitySelector } = await import(new URL("../../global/quantity_selector/quantity_selector.js" + new URL(import.meta.url).search, import.meta.url));
+
 /*
  * [Customer 8]
  * Este controlador une rangos de cantidad, extras de variaciones, disponibilidad
@@ -26,6 +28,7 @@ export class PricesController {
       quantityLabel: document.getElementById("var_label_quantity"),
       unitHint: document.getElementById("sp_unit_hint")
     };
+    this.quantitySelector = new QuantitySelector(this);
     this.root?.addEventListener("click", event => this.handlePriceClick(event));
   }
 
@@ -38,6 +41,7 @@ export class PricesController {
     this.store.selectedPrice = null;
     this.store.selectedPriceId = null;
     this.store.selectedQuantity = null;
+    this.quantitySelector.sync(null);
     this.setEmptyState(true);
     this.updateSummary();
   }
@@ -57,7 +61,8 @@ export class PricesController {
       const min = Number(row?.min_quantity);
       const max = Number(row?.max_quantity);
       const price = Number(row?.price);
-      if (!Number.isFinite(min) || min <= 0 || !Number.isFinite(price)) continue;
+      if (!Number.isSafeInteger(min) || min <= 0 || !Number.isFinite(price)
+        || (max > 0 && (!Number.isSafeInteger(max) || max < min))) continue;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "price-tier";
@@ -82,13 +87,13 @@ export class PricesController {
     if (!first) return false;
 
     // [Customer 8.2] Se elige la cantidad anterior si todavía existe; de lo contrario, el primer rango.
-    const preferred = Number.isFinite(preferredQuantity) ? Array.from(this.root.querySelectorAll(".price-tier")).find(button => Number(button.dataset.quantity) === preferredQuantity) : null;
+    const preferred = this.quantitySelector.find(preferredQuantity);
     this.setEmptyState(false);
-    this.select(preferred || first);
+    this.select(preferred || first, preferred ? preferredQuantity : Number(first.dataset.quantity));
     return true;
   }
 
-  select(button) {
+  select(button, quantity = Number(button?.dataset.quantity)) {
     // [Customer 8.2.1] La selección visual, cantidad, precio y price_id se actualizan juntos.
     if (!button || !this.root) return false;
     this.root.querySelectorAll(".price-tier").forEach(item => {
@@ -96,10 +101,10 @@ export class PricesController {
       item.classList.toggle("is-selected", selected);
       item.setAttribute("aria-pressed", String(selected));
     });
-    const quantity = Number(button.dataset.quantity);
     const price = Number(button.dataset.price);
     const priceId = Number(button.dataset.priceId);
     this.store.selectedQuantity = Number.isFinite(quantity) ? quantity : null;
+    this.quantitySelector.sync(this.store.selectedQuantity);
     this.store.selectedPrice = Number.isFinite(price) ? price : null;
     this.store.selectedPriceId = Number.isInteger(priceId) && priceId > 0 ? priceId : null;
 

@@ -8,6 +8,7 @@ $cssFile = __DIR__ . '/preview.css';
 // [Supplier 2.2] Todos estos módulos forman una sola funcionalidad. Si cambia cualquiera,
 // se actualiza la versión del entry point para evitar que el navegador use lógica antigua de caché.
 $moduleFiles = [
+  dirname(__DIR__, 2) . '/global/quantity_selector/quantity_selector.js',
   __DIR__ . '/preview_logic.js',
   __DIR__ . '/preview_api.js',
   __DIR__ . '/preview_store.js',
@@ -150,6 +151,7 @@ foreach ($moduleFiles as $moduleFile) {
           </div>
 
           <div id="wrap-prices-group" class="price-tiers"></div>
+          <?php include dirname(__DIR__, 2) . "/global/quantity_selector/quantity_selector.php"; ?>
           <div id="prices_empty" class="preview-empty" hidden>
             <strong>Pricing is not configured</strong>
             <span>Add at least one quantity and price range before submitting.</span>
