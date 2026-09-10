@@ -10,14 +10,13 @@ require_once __DIR__ . '/../../model/jobs.php';
 
 $cartItems = [];
 $cartLoadError = '';
-$isSupplierCartAuthenticated = !empty($_SESSION['login']) && trim((string)($_SESSION['email'] ?? '')) !== '';
 $isCustomerCartAuthenticated = !empty($_SESSION['customer_login'])
   && (int)($_SESSION['customer_id'] ?? 0) > 0
   && trim((string)($_SESSION['customer_email'] ?? '')) !== '';
-$isCartAuthenticated = $isSupplierCartAuthenticated || $isCustomerCartAuthenticated;
+$isCartAuthenticated = $isCustomerCartAuthenticated;
 $cartEmail = $isCustomerCartAuthenticated
   ? (string)$_SESSION['customer_email']
-  : (string)($_SESSION['email'] ?? '');
+  : '';
 
 if ($isCartAuthenticated) {
   $cartResult = (new Jobs(new Database()))->getCartItems($cartEmail);

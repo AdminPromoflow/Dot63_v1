@@ -39,9 +39,15 @@ class Login {
           session_start();
       }
 
-      // Vaciar y destruir
-      $_SESSION = [];
-      $ok = session_destroy();
+      // Clear only supplier authentication and supplier editing context.
+      unset(
+          $_SESSION['login'],
+          $_SESSION['email'],
+          $_SESSION['idCategory'],
+          $_SESSION['idProduct'],
+          $_SESSION['group_id']
+      );
+      $ok = session_regenerate_id(true);
 
       header('Content-Type: application/json');
       echo json_encode(['response' => $ok]);
@@ -105,7 +111,8 @@ class Login {
     if (session_status() !== PHP_SESSION_ACTIVE) {
       session_start();
     }
-    echo json_encode(['response' => $_SESSION['login']]);
+    echo json_encode(['response' => !empty($_SESSION['login'])
+      && trim((string)($_SESSION['email'] ?? '')) !== '']);
   }
 
 }

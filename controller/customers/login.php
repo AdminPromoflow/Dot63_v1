@@ -115,7 +115,9 @@ class CustomerLoginController
             $_SESSION['customer_email'],
             $_SESSION['shopping_cart_count'],
             $_SESSION['shopping_cart_job_ids'],
-            $_SESSION['shopping_cart']
+            $_SESSION['shopping_cart'],
+            $_SESSION['checkout_csrf_token'],
+            $_SESSION['stripe_checkout_order_id']
         );
         session_regenerate_id(true);
 

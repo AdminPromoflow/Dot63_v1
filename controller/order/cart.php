@@ -36,13 +36,11 @@ class CartController
         $customerAuthenticated = !empty($_SESSION['customer_login'])
             && (int)($_SESSION['customer_id'] ?? 0) > 0
             && trim((string)($_SESSION['customer_email'] ?? '')) !== '';
-        $supplierAuthenticated = !empty($_SESSION['login'])
-            && trim((string)($_SESSION['email'] ?? '')) !== '';
-        $email = strtolower(trim((string)($customerAuthenticated
-            ? $_SESSION['customer_email']
-            : ($_SESSION['email'] ?? ''))));
+        $email = $customerAuthenticated
+            ? strtolower(trim((string)$_SESSION['customer_email']))
+            : '';
 
-        if ((!$customerAuthenticated && !$supplierAuthenticated) || $email === '') {
+        if (!$customerAuthenticated || $email === '') {
             $this->respond([
                 'success' => false,
                 'code' => 'AUTH_REQUIRED',

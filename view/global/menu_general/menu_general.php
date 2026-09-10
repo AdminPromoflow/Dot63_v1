@@ -11,15 +11,13 @@ $menuJsVersion = is_file($menuJsFile) ? filemtime($menuJsFile) : time();
 $isCustomerLoggedIn = !empty($_SESSION['customer_login'])
     && (int)($_SESSION['customer_id'] ?? 0) > 0
     && trim((string)($_SESSION['customer_email'] ?? '')) !== '';
-$isSupplierLoggedIn = !empty($_SESSION['login'])
-    && trim((string)($_SESSION['email'] ?? '')) !== '';
-$isLoggedIn = $isCustomerLoggedIn || $isSupplierLoggedIn;
-$sessionType = $isCustomerLoggedIn ? 'customer' : ($isSupplierLoggedIn ? 'supplier' : 'guest');
+$isLoggedIn = $isCustomerLoggedIn;
+$sessionType = $isCustomerLoggedIn ? 'customer' : 'guest';
 
 $customerName = trim((string)($_SESSION['customer_name'] ?? ''));
 $customerEmail = $isCustomerLoggedIn
     ? trim((string)($_SESSION['customer_email'] ?? ''))
-    : trim((string)($_SESSION['email'] ?? ''));
+    : '';
 $customerLabel = $customerName !== '' ? $customerName : $customerEmail;
 $initialSource = $customerName !== '' ? $customerName : $customerEmail;
 $customerInitial = $initialSource !== ''
@@ -37,6 +35,10 @@ if ($cartCount === 0 && !empty($_SESSION['shopping_cart']) && is_array($_SESSION
     $cartCount = count($_SESSION['shopping_cart']);
 }
 
+if (!$isCustomerLoggedIn) {
+    $cartCount = 0;
+}
+
 $currentPath = (string)(parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?? '');
 $isProductPage = strpos($currentPath, '/view/product/') !== false
     || strpos($currentPath, '/view/preview_product_customers/') !== false;
@@ -44,10 +46,8 @@ $isAboutPage = strpos($currentPath, '/view/about_us/') !== false;
 $isCartPage = strpos($currentPath, '/view/shopping_cart/') !== false
     || strpos($currentPath, '/view/checkout/') !== false;
 $escapeMenu = static fn($value): string => htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-$logoutUrl = $isCustomerLoggedIn
-    ? '../../controller/customers/login.php'
-    : '../../controller/users/login.php';
-$logoutAction = $isCustomerLoggedIn ? 'logout_customer' : 'logout_supplier';
+$logoutUrl = '../../controller/customers/login.php';
+$logoutAction = 'logout_customer';
 ?>
 
 <link rel="stylesheet" href="../../view/global/menu_general/menu_general.css?v=<?= $menuCssVersion ?>">
