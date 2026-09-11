@@ -37,17 +37,29 @@ const root = path.resolve(__dirname, '..');
   assert.equal(await page.locator('#quantity_input').inputValue(),'150');
   await page.locator('.price-tier').first().click();
   assert.equal(await page.locator('#quantity_input').inputValue(),'10');
-  for (const [value,expected] of [['999','200'],['-2','10'],['','10'],['20.5','21']]) {
+  for (const [value,expected] of [['999','999'],['-2','1'],['','1'],['20.5','21']]) {
    await page.locator('#quantity_input').fill(value);
    await page.locator('#quantity_input').press('Enter');
    assert.equal(await page.locator('#quantity_input').inputValue(),expected);
   }
   await page.evaluate(()=>controller.render([{min_quantity:10,max_quantity:20,price:5},{min_quantity:50,max_quantity:60,price:4}]));
   await page.locator('#quantity_input').fill('40');await page.locator('#quantity_input').press('Enter');
-  assert.equal(await page.locator('#quantity_input').inputValue(),'50');
+  assert.equal(await page.locator('#quantity_input').inputValue(),'40');
   await page.evaluate(()=>controller.render([{min_quantity:100,max_quantity:null,price:4}]));
   await page.locator('#quantity_input').fill('1500');
   assert.equal(await page.locator('#bb_total').textContent(),'£6000.00');
+  assert.equal(await page.locator('#quantity_slider').getAttribute('max'),'20000');
+  assert.equal(await page.locator('#quantity_input').getAttribute('max'),null);
+  await page.locator('#quantity_input').fill('30000');
+  await page.locator('#quantity_input').press('Tab');
+  assert.equal(await page.locator('#quantity_input').inputValue(),'30000');
+  assert.equal(await page.locator('#quantity_slider').inputValue(),'20000');
+  assert.equal(await page.locator('#bb_total').textContent(),'£120000.00');
+  await page.locator('#quantity_input').fill('1000000');
+  assert.equal(await page.locator('#bb_total').textContent(),'£4000000.00');
+  await page.locator('#quantity_input').fill('1');
+  assert.equal(await page.locator('#quantity_input').inputValue(),'1');
+  assert.equal(await page.locator('#bb_total').textContent(),'—');
   await page.setViewportSize({width:375,height:700});
   assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth));
   await page.screenshot({path:`/private/tmp/dot63-quantity-${preview}.png`});

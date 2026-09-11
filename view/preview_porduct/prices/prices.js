@@ -93,13 +93,13 @@ export class PricesController {
 
   select(button, quantity = Number(button?.dataset.quantity)) {
     // [Supplier 8.2.1] La selección visual y el estado numérico se actualizan juntos.
-    if (!button || !this.root) return false;
+    if (!this.root) return false;
     this.root.querySelectorAll(".price-tier").forEach(item => {
       const selected = item === button;
       item.classList.toggle("is-selected", selected);
       item.setAttribute("aria-pressed", String(selected));
     });
-    const price = Number(button.dataset.price);
+    const price = Number(button?.dataset.price);
     this.store.selectedQuantity = Number.isFinite(quantity) ? quantity : null;
     this.quantitySelector.sync(this.store.selectedQuantity);
     this.store.selectedPrice = Number.isFinite(price) ? price : null;
@@ -172,7 +172,7 @@ export class PricesController {
     // [Supplier 8.4] Se suman precio base y extras por unidad, luego se multiplican por cantidad.
     const quantity = Number(this.store.selectedQuantity);
     const basePrice = Number(this.store.selectedPrice);
-    const hasPrice = Number.isFinite(quantity) && quantity > 0 && Number.isFinite(basePrice);
+    const hasPrice = Number.isFinite(quantity) && quantity > 0 && this.store.selectedPrice !== null && Number.isFinite(basePrice);
     let extrasPerUnit = 0;
     document.querySelectorAll("#wrap-variations-group .var-option.is-selected").forEach(button => {
       const value = Number(button.dataset.extraPrice);

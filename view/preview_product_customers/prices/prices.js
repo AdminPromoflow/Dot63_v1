@@ -95,14 +95,14 @@ export class PricesController {
 
   select(button, quantity = Number(button?.dataset.quantity)) {
     // [Customer 8.2.1] La selección visual, cantidad, precio y price_id se actualizan juntos.
-    if (!button || !this.root) return false;
+    if (!this.root) return false;
     this.root.querySelectorAll(".price-tier").forEach(item => {
       const selected = item === button;
       item.classList.toggle("is-selected", selected);
       item.setAttribute("aria-pressed", String(selected));
     });
-    const price = Number(button.dataset.price);
-    const priceId = Number(button.dataset.priceId);
+    const price = Number(button?.dataset.price);
+    const priceId = Number(button?.dataset.priceId);
     this.store.selectedQuantity = Number.isFinite(quantity) ? quantity : null;
     this.quantitySelector.sync(this.store.selectedQuantity);
     this.store.selectedPrice = Number.isFinite(price) ? price : null;
@@ -190,7 +190,7 @@ export class PricesController {
     // [Customer 8.4] Se suman precio base y extras por unidad, luego se multiplican por cantidad.
     const quantity = Number(this.store.selectedQuantity);
     const basePrice = Number(this.store.selectedPrice);
-    const hasPrice = Number.isFinite(quantity) && quantity > 0 && Number.isFinite(basePrice);
+    const hasPrice = Number.isFinite(quantity) && quantity > 0 && this.store.selectedPrice !== null && Number.isFinite(basePrice);
     let extrasPerUnit = 0;
     const selectedOptions = Array.from(document.querySelectorAll("#wrap-variations-group .var-option.is-selected"));
     const hasUnavailableSelection = selectedOptions.some(button => button.classList.contains("is-price-unavailable"));
