@@ -4,6 +4,9 @@
 /*  DBMS       : MySql 						*/
 /* ---------------------------------------------------- */
 
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci
+;
+
 SET FOREIGN_KEY_CHECKS=0
 ;
 /* Drop Tables */
@@ -76,7 +79,7 @@ CREATE TABLE `addresses`
 	`postcode` VARCHAR(50) NULL,
 	`customer_id` INT NULL,
 	CONSTRAINT `PK_addresses` PRIMARY KEY (`address_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -86,7 +89,7 @@ CREATE TABLE `categories`
 	`name` VARCHAR(150) NULL,
 	`approved` BOOL NULL,
 	CONSTRAINT `PK_categories` PRIMARY KEY (`category_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -99,7 +102,7 @@ CREATE TABLE `customers`
 	`notes` VARCHAR(50) NULL,
 	`group` VARCHAR(50) NULL,
 	CONSTRAINT `PK_customers` PRIMARY KEY (`customer_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -110,7 +113,7 @@ CREATE TABLE `groups`
 	`approved` BOOL NULL DEFAULT 0,
 	`category_id` INT NULL,
 	CONSTRAINT `PK_groups` PRIMARY KEY (`group_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -121,7 +124,7 @@ CREATE TABLE `images`
 	`updated` INT NULL,
 	`variation_id` INT NULL,
 	CONSTRAINT `PK_images` PRIMARY KEY (`image_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -132,7 +135,7 @@ CREATE TABLE `items`
 	`description` VARCHAR(50) NULL,
 	`variation_id` INT NULL,
 	CONSTRAINT `PK_items` PRIMARY KEY (`item_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -145,7 +148,7 @@ CREATE TABLE `job_details`
 	`price` VARCHAR(50) NULL,
 	`quantity` VARCHAR(50) NULL,
 	CONSTRAINT `PK_job_details` PRIMARY KEY (`job_id` ASC, `variation_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -163,7 +166,7 @@ CREATE TABLE `jobs`
 	`id_order` INT NULL,
 	`order_id` INT NULL,
 	CONSTRAINT `PK_jobs` PRIMARY KEY (`job_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -188,7 +191,7 @@ CREATE TABLE `orders`
 	`paid_at` DATETIME NULL,
 	`updated_at` DATETIME NULL,
 	CONSTRAINT `PK_orders` PRIMARY KEY (`order_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -200,7 +203,7 @@ CREATE TABLE `prices`
 	`price` FLOAT(8,2) NULL,
 	`variation_id` INT NULL,
 	CONSTRAINT `PK_prices` PRIMARY KEY (`price_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -217,7 +220,7 @@ CREATE TABLE `products`
 	`supplier_id` INT NULL,
 	`group_id` INT NULL,
 	CONSTRAINT `PK_products` PRIMARY KEY (`product_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -230,7 +233,7 @@ CREATE TABLE `promotions`
 	`start_at` DATETIME NULL,
 	`end_at` DATETIME NULL,
 	CONSTRAINT `PK_promotions` PRIMARY KEY (`promotion_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -248,7 +251,7 @@ CREATE TABLE `suppliers`
 	`postal_code` VARCHAR(50) NULL,
 	`password` TEXT NULL,
 	CONSTRAINT `PK_Suppliers` PRIMARY KEY (`supplier_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -259,7 +262,7 @@ CREATE TABLE `stripe_webhook_events`
 	`payment_intent_id` VARCHAR(255) NULL,
 	`processed_at` DATETIME NOT NULL,
 	CONSTRAINT `PK_stripe_webhook_events` PRIMARY KEY (`event_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -270,7 +273,7 @@ CREATE TABLE `type_variations`
 	`description` MEDIUMTEXT NULL,
 	`category_id` INT NULL,
 	CONSTRAINT `PK_type_variations` PRIMARY KEY (`type_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -279,7 +282,7 @@ CREATE TABLE `variation_promotions`
 	`variation_id` INT NOT NULL,
 	`promotion_id` INT NOT NULL,
 	CONSTRAINT `PK_Table1` PRIMARY KEY (`variation_id` ASC, `promotion_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ;
 
@@ -296,7 +299,7 @@ CREATE TABLE `variations`
 	`product_id` INT NULL,
 	`type_id` INT NULL,
 	CONSTRAINT `PK_variations` PRIMARY KEY (`variation_id` ASC)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT = 'a'
 
 ;
@@ -329,10 +332,6 @@ ALTER TABLE `job_details`
 
 ALTER TABLE `jobs`
  ADD INDEX `IXFK_jobs_orders` (`order_id` ASC)
-;
-
-ALTER TABLE `jobs`
- ADD INDEX `IXFK_jobs_orders_02` (`order_id` ASC)
 ;
 
 ALTER TABLE `orders`
