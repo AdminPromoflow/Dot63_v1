@@ -157,6 +157,7 @@ CREATE TABLE `jobs`
 	`notes` TEXT NULL,
 	`quantity` INT NULL,
 	`price_per_unit` FLOAT(10,2) NULL,
+	`discount_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
 	`subtotal` FLOAT(10,2) NULL,
 	`pdf_artwork_link` TEXT NULL,
 	`id_order` INT NULL,
