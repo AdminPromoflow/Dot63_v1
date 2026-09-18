@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/product_status.php";
 class Products {
   /** @var Database $connection Debe exponer getConnection(): PDO */
   private $connection;
@@ -159,43 +160,7 @@ class Products {
 
   public function changeStatusForPending(): array
   {
-      $sku = trim((string)($this->sku ?? ''));
-
-      if ($sku === '' || mb_strlen($sku) > 50) {
-          return [
-              'success' => false,
-              'error'   => 'SKU required/invalid'
-          ];
-      }
-
-      try {
-          $pdo = $this->connection->getConnection();
-
-          $stmt = $pdo->prepare("
-              UPDATE products
-              SET status = :status
-              WHERE SKU = :sku
-              LIMIT 1
-          ");
-
-          $stmt->execute([
-              ':status' => '2',
-              ':sku'    => $sku
-          ]);
-
-          return [
-              'success' => true,
-              'updated' => $stmt->rowCount()
-          ];
-
-      } catch (PDOException $e) {
-          error_log('changeStatusForPending error: ' . $e->getMessage());
-
-          return [
-              'success' => false,
-              'error'   => 'DB error'
-          ];
-      }
+      return ['success' => false, 'error' => 'Submit a status change through Product details.'];
   }
   /** Verifica si ya existe un producto con el mismo SKU para el mismo proveedor (case-insensitive) */
 
@@ -219,62 +184,11 @@ class Products {
     }
   }
 
-  public function approveProductWithSKU(): bool
+  public function approveProductWithSKU(?int $version = null, ?int $status = null): bool
   {
-      try {
-          $sku = trim((string)($this->sku ?? ''));
-
-          if ($sku === '') {
-              return false;
-          }
-
-          $pdo = $this->connection->getConnection();
-
-          $sql = "
-              UPDATE products
-              SET
-                  is_approved = 1,
-                  status = '2'
-              WHERE LOWER(TRIM(SKU)) = LOWER(:sku)
-              LIMIT 1
-          ";
-
-          $stmt = $pdo->prepare($sql);
-
-          $stmt->execute([
-              ':sku' => $sku
-          ]);
-
-          if ($stmt->rowCount() > 0) {
-              return true;
-          }
-
-          /*
-           * rowCount() can return 0 when the product already
-           * has is_approved = 1 and status = 2.
-           * We therefore verify whether the SKU exists.
-           */
-          $checkSql = "
-              SELECT product_id
-              FROM products
-              WHERE LOWER(TRIM(SKU)) = LOWER(:sku)
-              LIMIT 1
-          ";
-
-          $checkStmt = $pdo->prepare($checkSql);
-
-          $checkStmt->execute([
-              ':sku' => $sku
-          ]);
-
-          return (bool)$checkStmt->fetchColumn();
-
-      } catch (PDOException $e) {
-          error_log('approveProductWithSKU error: ' . $e->getMessage());
-          return false;
-      }
+      if ($version === null || $status === null) return false;
+      return (new ProductStatus($this->connection))->approve((string)$this->sku, $version, $status)['success'];
   }
-
 
   public function getSupplierDetailsBySKU(): ?array
   {
@@ -581,7 +495,7 @@ class Products {
      }
 
   /* ===========================
-     UPDATE (lote): name, description, status, category_id
+     UPDATE (lote): name, description, descriptive_tagline
      Solo actualiza los campos provistos (no null)
      =========================== */
      public function update(): array
@@ -599,8 +513,7 @@ class Products {
          $sql = "UPDATE products
                    SET name        = COALESCE(:name, name),
                        description = COALESCE(:description, description),
-                       descriptive_tagline = COALESCE(:descriptive_tagline, descriptive_tagline),
-                       status      = COALESCE(:status, status)
+                       descriptive_tagline = COALESCE(:descriptive_tagline, descriptive_tagline)
                  WHERE SKU = :sku
                  LIMIT 1";
          // Si tu colación fuese case-sensitive, usa:
@@ -612,7 +525,6 @@ class Products {
            ':name'        => $this->name,
            ':description' => $this->description,
            ':descriptive_tagline' => $this->pd_tagline,
-           ':status'      => $this->status,
            ':sku'         => $sku,
          ]);
 
@@ -992,19 +904,7 @@ class Products {
   }
 
   public function updateStatus($id, $status) {
-    $status = $this->normalizeText($status);
-    if ($status !== '' && mb_strlen($status) > 50) {
-      return ['success' => false, 'error' => 'Status too long'];
-    }
-    try {
-      $pdo = $this->connection->getConnection();
-      $stmt = $pdo->prepare("UPDATE products SET status = :status WHERE product_id = :id LIMIT 1");
-      $stmt->execute([':status' => $status, ':id' => (int)$id]);
-      return ['success' => true, 'updated' => $stmt->rowCount()];
-    } catch (PDOException $e) {
-      error_log('updateStatus error: ' . $e->getMessage());
-      return ['success' => false, 'error' => 'DB error'];
-    }
+    return ['success' => false, 'error' => 'Status changes require Promoflow approval.'];
   }
 
   public function updateCategoryIdBySKU() {
@@ -1176,7 +1076,7 @@ class Products {
                   p.name AS product_name,
                   p.description,
                   p.descriptive_tagline,
-                  p.status,
+                  p.status, p.pending_status, p.status_request_version, p.status_requested_at,
                   p.is_approved
               FROM products p
               WHERE p.SKU = :sku
@@ -1193,7 +1093,7 @@ class Products {
           }
 
           return [
-              'product_details' => $row
+              'product_details' => array_merge($row, ProductStatus::describe($row))
           ];
       } catch (PDOException $e) {
           error_log(
@@ -1214,7 +1114,7 @@ class Products {
           p.name,
           p.date_status,
           p.is_approved,
-          p.status,
+          p.status, p.pending_status, p.status_request_version, p.status_requested_at,
           p.supplier_id,
 
           s.contact_name,
@@ -1240,8 +1140,8 @@ class Products {
         ) vfirst
           ON vfirst.product_id = p.product_id
 
-        WHERE p.status = '2'
-        ORDER BY p.date_status DESC, p.product_id DESC
+        WHERE p.pending_status IS NOT NULL OR (p.status = '2' AND p.is_approved = 0)
+        ORDER BY p.status_requested_at DESC, p.product_id DESC
       ");
 
       $stmt->execute();
@@ -1250,7 +1150,13 @@ class Products {
       $items = [];
 
       foreach ($rows as $r) {
+        $r = array_merge($r, ProductStatus::describe($r));
         $items[] = [
+          'pending_status' => $r['pending_status'],
+          'status_label' => $r['status_label'],
+          'pending_status_label' => $r['pending_status_label'],
+          'status_request_version' => $r['status_request_version'],
+          'status_requested_at' => $r['status_requested_at'],
           'SKU'            => (string)($r['product_sku'] ?? ''),
           'sku_variations' => (string)($r['sku_variations'] ?? ''),
           'name'           => (string)($r['name'] ?? ''),

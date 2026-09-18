@@ -17,6 +17,22 @@ class Resques63API
       exit;
     }
 
+    if (in_array($data['action'] ?? '', ['approve_product', 'publish_product'], true)) {
+      if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
+        http_response_code(415);
+        echo json_encode(['success' => false, 'message' => 'A JSON POST request is required.']);
+        exit;
+      }
+      if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+      $authorized = ($_SESSION['is_logged'] ?? false) === true && !empty($_SESSION['user_email']);
+      session_write_close();
+      if (!$authorized) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Sign in to Promoflow to approve changes.']);
+        exit;
+      }
+    }
+
     switch ($data["action"] ?? null) {
       case 'get_API_overview_data':
         $this->getAPIOverviewData($data);
@@ -70,22 +86,7 @@ class Resques63API
 
   private function approveProduct($data)
   {
-    if (empty($data['sku'])) {
-      echo json_encode([
-        'success' => false,
-        'message' => 'SKU is missing.'
-      ]);
-      exit;
-    }
-
-    $connection = new Database();
-    $product = new Products($connection);
-    $product->setSku($data['sku']);
-
-    $result = $product->approveProductWithSKU();
-
-    echo json_encode($result);
-    exit;
+    $this->publishProduct($data);
   }
 
   private function getAPIOverviewData($data)
@@ -101,65 +102,23 @@ class Resques63API
 
   private function publishProduct($data)
   {
-    if (empty($data['sku'])) {
-      echo json_encode([
-        'success' => false,
-        'message' => 'SKU is missing.'
-      ]);
-      exit;
+    try {
+      if (empty($data['sku']) || !isset($data['status_request_version'], $data['requested_status'])
+          || filter_var($data['status_request_version'], FILTER_VALIDATE_INT) === false
+          || !in_array($data['requested_status'], [0, 1, 2, 3, '0', '1', '2', '3'], true)) {
+        throw new InvalidArgumentException('Reload the product and review the pending status before approving.', 422);
+      }
+      $result = (new ProductStatus(new Database()))->approve(
+        (string)$data['sku'], (int)$data['status_request_version'], (int)$data['requested_status']
+      );
+      echo json_encode($result);
+    } catch (Throwable $error) {
+      $code = (int)$error->getCode();
+      http_response_code(in_array($code, [404, 409, 422], true) ? $code : 500);
+      if (!in_array($code, [404, 409, 422], true)) error_log('Approval failed: ' . $error->getMessage());
+      echo json_encode(['success' => false, 'message' => in_array($code, [404, 409, 422], true) ? $error->getMessage() : 'Unable to approve this change.']);
     }
-
-
-    $connection = new Database();
-    $product = new Products($connection);
-    $product->setSku($data['sku']);
-
-
-    $result = $product->approveProductWithSKU();
-
-
-    if ($result) {
-      echo json_encode([
-        'success' => true,
-        'message' => 'The product has been approved.'
-      ]);
-      exit;
-    }
-
-
-
-    //
-    // $result = $product->getDataForSendEmail();
-    //
-    // if (empty($result['success'])) {
-    //   echo json_encode([
-    //     'success' => false,
-    //     'message' => 'Could not get product data.'
-    //   ]);
-    //   exit;
-    // }
-    //
-    // $emailData = $result['data'];
-    //
-    // $emailSender = new EmailsSender();
-    //
-    // $emailSender->setRecipientEmail('admin@promoflow.net');
-    // $emailSender->setRecipientName('Admin');
-    //
-    // $emailSender->setProductName($emailData['product_name']);
-    // $emailSender->setProductSku($emailData['product_sku']);
-    // $emailSender->setSupplierName($emailData['supplier_name']);
-    // $emailSender->setSupplierEmail($emailData['supplier_email']);
-    //
-    // $emailSent = $emailSender->sendEmailProductApprovalNotice();
-    //
-    // echo json_encode([
-    //   'success' => $emailSent,
-    //   'message' => $emailSent
-    //     ? 'Email sent successfully.'
-    //     : 'Email could not be sent.'
-    // ]);
-    // exit;
+    exit;
   }
 
   private function getPreviewProductDetails($data)
@@ -291,17 +250,13 @@ class Resques63API
   }
 }
 
-include "../../controller/config/database.php";
-
-include "../../model/products.php";
-include "../../model/users.php";
-include "../../model/categories.php";
-include "../../model/groups.php";
-include "../../model/variations.php";
-include "../../model/prices.php";
-
-include "../../controller/products/variations.php";
-include "../../controller/emails/emails_sender.php";
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../../model/products.php';
+require_once __DIR__ . '/../../model/users.php';
+require_once __DIR__ . '/../../model/categories.php';
+require_once __DIR__ . '/../../model/groups.php';
+require_once __DIR__ . '/../../model/variations.php';
+require_once __DIR__ . '/../../model/prices.php';
 
 $payload = json_decode(file_get_contents("php://input"), true);
 

@@ -10,6 +10,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/stripe.php';
 require_once __DIR__ . '/../emails/send_emails.php';
 require_once __DIR__ . '/../../model/checkout_payments.php';
+require_once __DIR__ . '/../../model/order_notifications.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     http_response_code(405);
@@ -71,20 +72,42 @@ try {
         throw new RuntimeException('Stripe PaymentIntent data is invalid.');
     }
 
-    $payments = new CheckoutPayments(new Database());
+    $database = new Database();
+    $payments = new CheckoutPayments($database);
     $result = $payments->processWebhookEvent((string)$event->id, (string)$event->type, $intent);
 
     if ((string)$event->type === 'payment_intent.succeeded') {
-        $result['payment_notification'] = $payments->dispatchPaymentNotification(
-            (string)($intent['id'] ?? ''),
-            static function (array $order): bool {
-                $emailSender = new EmailsSender();
-                $emailSender->setRecipientEmail((string)($order['customer_email'] ?? ''));
-                $emailSender->setRecipientName((string)($order['customer_name'] ?? ''));
+        $notificationError = null;
+        try {
+            $result['order_notifications'] = (new OrderNotifications($database))->dispatchForPaidOrder(
+                (string)($intent['id'] ?? ''),
+                static function (array $order, array $recipient): bool {
+                    $emailSender = new EmailsSender();
+                    $emailSender->setRecipientEmail($recipient['email']);
+                    $emailSender->setRecipientName($recipient['name']);
+                    return $emailSender->sendEmailOrderNotification($order, $recipient['jobs']);
+                }
+            );
+        } catch (Throwable $error) {
+            $notificationError = $error;
+        }
+        try {
+            $result['payment_notification'] = $payments->dispatchPaymentNotification(
+                (string)($intent['id'] ?? ''),
+                static function (array $order): bool {
+                    $emailSender = new EmailsSender();
+                    $emailSender->setRecipientEmail((string)($order['customer_email'] ?? ''));
+                    $emailSender->setRecipientName((string)($order['customer_name'] ?? ''));
 
-                return $emailSender->sendEmailPaymentConfirmation($order);
-            }
-        );
+                    return $emailSender->sendEmailPaymentConfirmation($order);
+                }
+            );
+        } catch (Throwable $error) {
+            $notificationError = $error;
+        }
+        if ($notificationError !== null) {
+            throw $notificationError;
+        }
     }
 
     http_response_code(200);

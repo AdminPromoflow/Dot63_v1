@@ -74,7 +74,7 @@ class ProductsClass {
 
   async prepareProductSets(products, signal = null) {
     const publishedProducts = this.getPublishedProducts(products);
-    const normalProducts = publishedProducts.filter(product => Number(product.status) === 2);
+    const normalProducts = publishedProducts.filter(product => [1, 2].includes(Number(product.status)));
     const statusThreeSourceProducts = publishedProducts.filter(product => Number(product.status) === 3);
     const [variationRows, statusThreeProducts] = await Promise.all([this.fetchTypeVariations(normalProducts.map(product => product.product_id), signal), this.prepareStatusThreeProducts(statusThreeSourceProducts, signal)]);
     return {

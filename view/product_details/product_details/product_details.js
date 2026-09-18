@@ -3,6 +3,8 @@ class ClassAddProductDetails {
     /*
      * Capture the page buttons.
      */
+    this.statusRequestVersion = null;
+    this.saving = false;
     const resetButton = document.getElementById("reset");
     const saveButton = document.getElementById("save");
 
@@ -96,30 +98,39 @@ class ClassAddProductDetails {
       sku: sku
     };
     try {
-      const response = await this.makeRequest(url, data);
+      const response = await this.makeRequest(url, data, { requireSuccess: true });
       if (response.success) {
         pd_name.value = response.data.name ?? "";
         pd_desc.value = response.data.description ?? "";
-        pd_status.value = response.data.status ?? "";
+        this.renderApprovalState(response.data);
         pd_tagline.value = response.data.descriptive_tagline ?? "";
       }
-      const isApproved = response.data?.is_approved != 0;
-      this.toggleProductActiveStatus(isApproved);
+
     } catch (error) {
-      console.error("Error loading product details:", error);
+      this.showFeedback(error.message, true);
     }
   }
 
   /*
-   * Enable or disable the Active status option.
+   * Show the effective status and the request awaiting review.
    */
 
-  toggleProductActiveStatus(active) {
-    const activeProductOption = document.getElementById("active_product");
-    if (!activeProductOption) {
-      return;
+  renderApprovalState(product) {
+    this.statusRequestVersion = product.status_request_version;
+    pd_status.value = String(product.pending_status ?? product.status ?? 0);
+    const state = document.getElementById("pd_approval_state");
+    if (state) {
+      state.textContent = product.pending_status !== null && product.pending_status !== undefined
+        ? `Current status: ${product.status_label}. Awaiting approval: ${product.pending_status_label}.`
+        : `Current status: ${product.status_label || "Draft"}.`;
     }
-    activeProductOption.disabled = !active;
+  }
+
+  showFeedback(message, error = false) {
+    const feedback = document.getElementById("pd_feedback");
+    if (!feedback) return;
+    feedback.textContent = message;
+    feedback.setAttribute("role", error ? "alert" : "status");
   }
 
   /*
@@ -127,24 +138,35 @@ class ClassAddProductDetails {
    */
 
   async saveProductDetails(goNext = false) {
+    if (this.saving || this.statusRequestVersion === null) return;
+    this.saving = true;
+    const buttons = ["save", "next_product_details", "reset"].map(id => document.getElementById(id)).filter(Boolean);
+    buttons.forEach(button => button.disabled = true);
+    this.showFeedback("Saving…");
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");
     const url = "../../controller/products/product.php";
     const data = {
       action: "save_product_details",
       name: pd_name.value,
-      status: pd_status.value,
+      status: Number(pd_status.value),
+      status_request_version: this.statusRequestVersion,
       description: pd_desc.value,
       pd_tagline: pd_tagline.value,
       sku: sku
     };
     try {
-      const response = await this.makeRequest(url, data);
+      const response = await this.makeRequest(url, data, { requireSuccess: true });
+      this.renderApprovalState(response.data);
+      this.showFeedback(response.message || "Product details saved.");
       if (response.success && goNext) {
         headerAddProduct.goNext("../../view/variations/index.php");
       }
     } catch (error) {
-      console.error("Error saving product details:", error);
+      this.showFeedback(error.message, true);
+    } finally {
+      this.saving = false;
+      buttons.forEach(button => button.disabled = false);
     }
   }
 
@@ -264,17 +286,12 @@ class ClassAddProductDetails {
   }
 
   handleResetButtonClick() {
-    pd_name.value = "";
-    pd_status.value = "";
-    pd_desc.value = "";
-    pd_tagline.value = "";
-    this.saveProductDetails(false);
-    alert("The product fields have been reset.");
+    this.getProductDetails();
+    this.showFeedback("Unsaved changes discarded.");
   }
 
   handleSaveButtonClick() {
-    this.saveProductDetails(false);
-    alert("The product details have been saved.");
+    return this.saveProductDetails(false);
   }
 
   async makeRequest(url, data, options = {}) {

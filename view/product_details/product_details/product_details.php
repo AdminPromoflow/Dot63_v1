@@ -72,22 +72,14 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
           name="status"
           aria-describedby="pd_status_help"
         >
-          <option value="">Select status…</option>
-          <option value="draft">Draft</option>
-
-          <option
-            id="active_product"
-            value="active"
-          >
-            Active
-          </option>
-
-          <option value="inactive">Inactive</option>
-          <option value="archived">Archived</option>
+          <option value="0">Draft</option>
+          <option value="1">Published</option>
+          <option value="2">Configurable product</option>
+          <option value="3">Separate combinations</option>
         </select>
 
         <small id="pd_status_help" class="cp-hint">
-          Choose how the product should be treated in listings.
+          Changes are sent to Promoflow for approval. The current status stays in effect until approved.
         </small>
 
       </div>
@@ -132,6 +124,8 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
 
       </div>
 
+      <div id="pd_approval_state" class="cp-field cp-field-full cp-hint" aria-live="polite"></div>
+      <div id="pd_feedback" class="cp-field cp-field-full cp-hint" role="status" aria-live="polite"></div>
     </form>
 
   </section>

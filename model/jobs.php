@@ -664,7 +664,7 @@ class Jobs
             SELECT product_id, SKU AS sku, name
             FROM products
             WHERE LOWER(TRIM(SKU)) = LOWER(:sku)
-              AND is_approved = 1
+              AND is_approved = 1 AND status IN ('1', '2', '3')
             LIMIT 1
         ");
         $statement->execute([':sku' => $sku]);

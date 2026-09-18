@@ -107,4 +107,33 @@ assertEmailNotification(
     'Payment confirmation total is missing.'
 );
 
+$orderNotice = new RecordingEmailsSender();
+$orderNotice->setRecipientEmail(' SUPPLIER@example.test ');
+$orderNotice->setRecipientName('Supplier <Test>');
+assertEmailNotification($orderNotice->sendEmailOrderNotification([
+    'order_id' => 124,
+    'currency' => 'gbp',
+    'paid_at' => '2026-09-17 12:00:00',
+], [[
+    'job_id' => 15,
+    'product_name' => 'Lanyard <script>test</script>',
+    'product_sku' => 'ORDER-TEST',
+    'quantity' => 10,
+    'subtotal' => 54.60,
+]]), 'Supplier order notification was not prepared.');
+assertEmailNotification(recipientEmails($orderNotice->messages[0]) === ['supplier@example.test'], 'Order notification recipient is incorrect.');
+assertEmailNotification($orderNotice->messages[0]['subject'] === 'New order #124', 'Order notification subject is incorrect.');
+assertEmailNotification(strpos($orderNotice->messages[0]['body'], '<script>') === false, 'Order notification HTML was not escaped.');
+assertEmailNotification(strpos($orderNotice->messages[0]['body'], 'GBP 54.60') !== false, 'Order subtotal is missing.');
+assertEmailNotification(strpos($orderNotice->messages[0]['alt_body'], 'Quantity: 10') !== false, 'Plain-text order details are missing.');
+
+$statusNotice = new RecordingEmailsSender();
+$statusNotice->setProductName('Status test');
+$statusNotice->setProductSku('STATUS-TEST');
+$statusNotice->setProductStatusChange('Published', 'Draft');
+assertEmailNotification($statusNotice->sendEmailProductApprovalNotice(), 'Status approval notice was not prepared.');
+assertEmailNotification($statusNotice->messages[0]['subject'] === 'Product status change awaiting approval', 'Incorrect approval subject.');
+assertEmailNotification(strpos($statusNotice->messages[0]['body'], 'Current status:</strong> Published') !== false, 'Current status missing from approval email.');
+assertEmailNotification(strpos($statusNotice->messages[0]['alt_body'], 'Requested status: Draft') !== false, 'Requested status missing from approval email.');
+
 fwrite(STDOUT, "Email notification tests passed.\n");

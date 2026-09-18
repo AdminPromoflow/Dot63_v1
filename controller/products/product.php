@@ -125,185 +125,61 @@ class Product {
     echo json_encode($response);
   }
 
-  private function publishProduct($data){
-    header('Content-Type: application/json; charset=utf-8');
-
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
-    }
-
+  private function supplierEmail(): string
+  {
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
     $email = strtolower(trim((string)($_SESSION['email'] ?? '')));
-    $isLoggedIn = !empty($_SESSION['login']);
-
-    if (!$isLoggedIn || $email === '') {
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Your supplier session has expired. Please sign in again.'
-        ]);
-        exit;
+    if (empty($_SESSION['login']) || $email === '') {
+      throw new RuntimeException('Your supplier session has expired. Please sign in again.', 401);
     }
+    return $email;
+  }
 
-    $sku = trim((string)($data['sku'] ?? ''));
-    if ($sku === '') {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'SKU is missing.'
-        ]);
-        exit;
+  private function statusError(Throwable $error): void
+  {
+    $code = (int)$error->getCode();
+    http_response_code(in_array($code, [401, 403, 404, 409, 422, 502], true) ? $code : 500);
+    if ($code < 400 || $code > 599) error_log('Product status error: ' . $error->getMessage());
+    echo json_encode(['success' => false, 'message' => $code >= 400 && $code <= 599 ? $error->getMessage() : 'Unable to save the product. Please try again.']);
+  }
+
+  private function sendStatusNotice(array $product): bool
+  {
+    $sender = new EmailsSender();
+    $sender->setRecipientEmail('admin@promoflow.net');
+    $sender->setRecipientName('PromoFlow Admin');
+    $sender->setProductName($product['name']);
+    $sender->setProductSku($product['SKU']);
+    $sender->setSupplierName($product['supplier_name']);
+    $sender->setSupplierEmail($product['supplier_email']);
+    $sender->setProductStatusChange($product['status_label'], $product['pending_status_label']);
+    return $sender->sendEmailProductApprovalNotice();
+  }
+
+  private function publishProduct($data)
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    try {
+      $email = $this->supplierEmail();
+      $workflow = new ProductStatus(new Database());
+      $sku = trim((string)($data['sku'] ?? ''));
+      $product = $workflow->getOwned($sku, $email);
+      if ($product['pending_status'] !== null) {
+        echo json_encode(['success' => true, 'message' => 'This product already has a request awaiting approval.', 'data' => $product]);
+        return;
+      }
+      if ($product['status'] !== 0 && !empty($product['is_approved'])) {
+        echo json_encode(['success' => true, 'message' => 'This product is already approved.', 'data' => $product]);
+        return;
+      }
+      $result = $workflow->saveDetails($sku, $email, [
+        'status' => 1,
+        'status_request_version' => $data['status_request_version'] ?? null,
+      ], fn(array $notice): bool => $this->sendStatusNotice($notice));
+      echo json_encode($result);
+    } catch (Throwable $error) {
+      $this->statusError($error);
     }
-
-    $database = new Database();
-    $pdo = $database->getConnection();
-
-    $stmt = $pdo->prepare("
-      SELECT
-        p.product_id,
-        p.name AS product_name,
-        p.description,
-        p.SKU AS product_sku,
-        p.status,
-        p.is_approved,
-        p.group_id,
-        c.category_id,
-        COALESCE(s.company_name, s.contact_name, '') AS supplier_name,
-        s.email AS supplier_email,
-        g.name AS group_name,
-        c.name AS category_name,
-        (
-          SELECT COUNT(*)
-          FROM variations v
-          WHERE v.product_id = p.product_id
-            AND v.type_id IS NOT NULL
-            AND TRIM(COALESCE(v.name, '')) <> ''
-            AND LOWER(TRIM(v.name)) <> 'default'
-        ) AS variations_count,
-        (
-          SELECT COUNT(*)
-          FROM images i
-          INNER JOIN variations v ON v.variation_id = i.variation_id
-          WHERE v.product_id = p.product_id
-            AND TRIM(COALESCE(i.link, '')) <> ''
-        ) AS images_count,
-        (
-          SELECT COUNT(*)
-          FROM prices pr
-          INNER JOIN variations v ON v.variation_id = pr.variation_id
-          WHERE v.product_id = p.product_id
-            AND COALESCE(NULLIF(TRIM(v.price_display_mode), ''), 'prices') = 'prices'
-        ) AS prices_count
-      FROM products p
-      INNER JOIN suppliers s ON s.supplier_id = p.supplier_id
-      LEFT JOIN `groups` g ON g.group_id = p.group_id
-      LEFT JOIN categories c ON c.category_id = g.category_id
-      WHERE LOWER(TRIM(p.SKU)) = LOWER(:sku)
-        AND LOWER(TRIM(s.email)) = LOWER(:email)
-      LIMIT 1
-    ");
-    $stmt->execute([
-      ':sku' => $sku,
-      ':email' => $email,
-    ]);
-    $productData = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$productData) {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'message' => 'This product was not found or does not belong to your account.'
-        ]);
-        exit;
-    }
-
-    if ((int)$productData['is_approved'] === 1) {
-        echo json_encode([
-            'success' => true,
-            'message' => 'This product is already approved.',
-            'status' => 'approved',
-        ]);
-        exit;
-    }
-
-    if ((string)$productData['status'] === '2') {
-        echo json_encode([
-            'success' => true,
-            'message' => 'This product has already been submitted for approval.',
-            'status' => 'pending_approval',
-        ]);
-        exit;
-    }
-
-    $missing = [];
-    if (trim((string)$productData['product_name']) === '') $missing[] = 'product name';
-    if (trim((string)$productData['description']) === '') $missing[] = 'product description';
-    if (empty($productData['category_id'])
-        || empty($productData['group_id'])
-        || ($productData['group_name'] ?? '') === 'Unassigned Group'
-        || ($productData['category_name'] ?? '') === 'Unassigned Category') {
-        $missing[] = 'category and group';
-    }
-    if ((int)$productData['variations_count'] <= 0) $missing[] = 'variations';
-    if ((int)$productData['images_count'] <= 0) $missing[] = 'images';
-    if ((int)$productData['prices_count'] <= 0) $missing[] = 'pricing';
-
-    if (!empty($missing)) {
-        http_response_code(422);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Complete the product before submitting it for approval.',
-            'missing' => $missing,
-        ]);
-        exit;
-    }
-
-    $emailSender = new EmailsSender();
-
-    $emailSender->setRecipientEmail('admin@promoflow.net');
-    $emailSender->setRecipientName('Admin');
-
-    $emailSender->setProductName($productData['product_name']);
-    $emailSender->setProductSku($productData['product_sku']);
-    $emailSender->setSupplierName($productData['supplier_name']);
-    $emailSender->setSupplierEmail($productData['supplier_email']);
-
-    $emailSent = $emailSender->sendEmailProductApprovalNotice();
-
-    if (!$emailSent) {
-      http_response_code(502);
-      echo json_encode([
-          'success' => false,
-          'message' => 'The approval request could not be sent. Your product remains a draft.'
-      ]);
-      exit;
-    }
-
-    $stmt = $pdo->prepare("
-      UPDATE products
-      SET status = '2'
-      WHERE product_id = :product_id
-        AND (status IS NULL OR status <> '2')
-      LIMIT 1
-    ");
-    $updated = $stmt->execute([
-      ':product_id' => (int)$productData['product_id'],
-    ]);
-
-    if (!$updated) {
-      http_response_code(500);
-      echo json_encode([
-          'success' => false,
-          'message' => 'The request was emailed, but the product status could not be updated. Please contact support.'
-      ]);
-      exit;
-    }
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'Product submitted for approval successfully.',
-        'status' => 'pending_approval',
-    ]);
-    exit;
   }
 
   private function getPreviewProductDetails($data){
@@ -312,16 +188,16 @@ class Product {
     echo json_encode("response");
   }
 
-  private function getProductBasicBySKU($data){
+  private function getProductBasicBySKU($data)
+  {
     header('Content-Type: application/json; charset=utf-8');
-
-    $connection = new Database();
-    $product   = new Products($connection);
-
-    $product->setSku($data['sku'] ?? '');
-    $response = $product->getProductBasicBySKU();
-
-    echo ($response);
+    try {
+      $email = $this->supplierEmail();
+      $product = (new ProductStatus(new Database()))->getOwned((string)($data['sku'] ?? ''), $email);
+      echo json_encode(['success' => true, 'data' => $product]);
+    } catch (Throwable $error) {
+      $this->statusError($error);
+    }
   }
 
   private function getProductsBasicBySupplierEmail(){
@@ -339,27 +215,20 @@ class Product {
     echo ($response);
   }
 
-  private function saveProductDetails($data){
+  private function saveProductDetails($data)
+  {
     header('Content-Type: application/json; charset=utf-8');
-
-    $connection = new Database();
-    $product   = new Products($connection);
-
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+    try {
+      $email = $this->supplierEmail();
+      $data['descriptive_tagline'] = $data['pd_tagline'] ?? '';
+      $response = (new ProductStatus(new Database()))->saveDetails(
+        (string)($data['sku'] ?? ''), $email, $data,
+        fn(array $notice): bool => $this->sendStatusNotice($notice)
+      );
+      echo json_encode($response);
+    } catch (Throwable $error) {
+      $this->statusError($error);
     }
-
-    $product->setId($_SESSION['idProduct']);
-
-    $product->setName($data["name"]);
-    $product->setStatus($data["status"]);
-    $product->setDescription($data["description"]);
-    $product->setTaglineDescription($data["pd_tagline"]);
-    $product->setSku($data["sku"]);
-
-    $response = $product->update();
-
-    echo json_encode($response);
   }
 
   private function updateCategory(array $data) {
@@ -510,6 +379,7 @@ class Product {
 include "../../controller/config/database.php";
 
 include "../../model/products.php";
+require_once __DIR__ . "/../../model/product_status.php";
 
 include "../../controller/products/variations.php";
 include "../../controller/emails/send_emails.php";

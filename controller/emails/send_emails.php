@@ -17,6 +17,8 @@ class EmailsSender
     private $productSku = '';
     private $approvalUrl = '';
     private $notificationType = 'unknown';
+    private $currentProductStatus = '';
+    private $requestedProductStatus = '';
 
     public function setRecipientEmail($recipientEmail): void
     {
@@ -61,6 +63,12 @@ class EmailsSender
         $this->approvalUrl = trim((string)$approvalUrl);
     }
 
+    public function setProductStatusChange(string $current, string $requested): void
+    {
+        $this->currentProductStatus = $current;
+        $this->requestedProductStatus = $requested;
+    }
+
     public function sendEmailProductApprovalNotice(): bool
     {
         try {
@@ -84,15 +92,17 @@ class EmailsSender
                 $this->approvalUrl !== '' ? $this->approvalUrl : 'https://promoflow.net'
             );
 
-            $mail->Subject = 'Product sent for approval';
+            $statusChange = $this->requestedProductStatus !== '';
+            $mail->Subject = $statusChange ? 'Product status change awaiting approval' : 'Product sent for approval';
             $mail->isHTML(true);
             $mail->Body = $this->htmlTemplate(
                 'PromoFlow approval',
-                'Product sent for approval',
+                $mail->Subject,
                 '<p>A supplier has submitted a product and it is waiting for review in PromoFlow.</p>'
                 . '<div style="margin:20px 0;padding:16px;background:#f8fafc;border:1px solid #dce3ea;border-radius:10px;">'
                 . '<p><strong>Product:</strong> ' . $productName . '</p>'
                 . '<p><strong>SKU:</strong> ' . $productSku . '</p>'
+                . ($statusChange ? '<p><strong>Current status:</strong> ' . $this->escape($this->currentProductStatus) . '</p><p><strong>Requested status:</strong> ' . $this->escape($this->requestedProductStatus) . '</p>' : '')
                 . '<p><strong>Supplier:</strong> ' . $supplierName . '</p>'
                 . '<p><strong>Supplier email:</strong> ' . $supplierEmail . '</p>'
                 . '</div>'
@@ -103,6 +113,7 @@ class EmailsSender
                 "A product is waiting for approval in PromoFlow.\n\n"
                 . "Product: {$this->productName}\n"
                 . "SKU: {$this->productSku}\n"
+                . ($statusChange ? "Current status: {$this->currentProductStatus}\nRequested status: {$this->requestedProductStatus}\n" : '')
                 . "Supplier: {$this->supplierName}\n"
                 . "Supplier email: {$this->supplierEmail}\n\n"
                 . 'Review product: ' . ($this->approvalUrl !== '' ? $this->approvalUrl : 'https://promoflow.net');
@@ -185,6 +196,65 @@ class EmailsSender
             return $this->deliver($mail);
         } catch (Throwable $error) {
             error_log('EmailsSender::sendEmailPaymentConfirmation error -> ' . $error->getMessage());
+            return false;
+        }
+    }
+
+    public function sendEmailOrderNotification(array $order, array $jobs): bool
+    {
+        try {
+            $this->notificationType = 'supplier_order_notification';
+            if (!filter_var($this->recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                throw new InvalidArgumentException('A valid order notification recipient is required.');
+            }
+            $orderId = (int)($order['order_id'] ?? 0);
+            if ($orderId <= 0) {
+                throw new InvalidArgumentException('A valid order ID is required.');
+            }
+            $currency = preg_replace('/[^A-Z]/', '', strtoupper((string)($order['currency'] ?? 'GBP'))) ?: 'GBP';
+            $rows = '';
+            $lines = [];
+            $subtotal = 0.0;
+            foreach ($jobs as $job) {
+                $jobId = (int)($job['job_id'] ?? 0);
+                $name = trim((string)($job['product_name'] ?? '')) ?: 'Job #' . $jobId;
+                $sku = trim((string)($job['product_sku'] ?? ''));
+                $quantity = (int)($job['quantity'] ?? 0);
+                $amount = (float)($job['subtotal'] ?? 0);
+                $subtotal += $amount;
+                $money = $currency . ' ' . number_format($amount, 2, '.', ',');
+                $rows .= '<tr><td style="padding:10px;border-bottom:1px solid #dce3ea;">'
+                    . '<strong>' . $this->escape($name) . '</strong><br>'
+                    . $this->escape('Job #' . $jobId . ($sku !== '' ? ' · ' . $sku : ''))
+                    . '</td><td style="padding:10px;border-bottom:1px solid #dce3ea;">' . $quantity
+                    . '</td><td style="padding:10px;border-bottom:1px solid #dce3ea;white-space:nowrap;">'
+                    . $this->escape($money) . '</td></tr>';
+                $lines[] = "Job #{$jobId}: {$name}" . ($sku !== '' ? " ({$sku})" : '')
+                    . " — Quantity: {$quantity} — Subtotal: {$money}";
+            }
+            $paidAt = trim((string)($order['paid_at'] ?? ''));
+            $total = $currency . ' ' . number_format($subtotal, 2, '.', ',');
+            $mail = $this->createMailer();
+            $mail->addAddress(strtolower(trim($this->recipientEmail)), $this->recipientName);
+            $mail->Subject = 'New order #' . $orderId;
+            $mail->isHTML(true);
+            $mail->Body = $this->htmlTemplate(
+                '.63 order notification',
+                'New order #' . $orderId,
+                '<p>Hello ' . $this->escape($this->recipientName !== '' ? $this->recipientName : 'there') . ',</p>'
+                . '<p>Payment has been confirmed. The following jobs are ready to process.</p>'
+                . ($paidAt !== '' ? '<p><strong>Confirmed:</strong> ' . $this->escape($paidAt) . '</p>' : '')
+                . '<table style="width:100%;border-collapse:collapse;text-align:left;">'
+                . '<thead><tr><th style="padding:10px;">Product / job</th><th style="padding:10px;">Quantity</th>'
+                . '<th style="padding:10px;">Subtotal</th></tr></thead><tbody>' . $rows . '</tbody></table>'
+                . '<p><strong>Included jobs subtotal:</strong> ' . $this->escape($total) . '</p>'
+            );
+            $mail->AltBody = "New order #{$orderId}\n\nPayment has been confirmed. These jobs are ready to process.\n"
+                . ($paidAt !== '' ? "Confirmed: {$paidAt}\n" : '') . "\n"
+                . implode("\n", $lines) . "\n\nIncluded jobs subtotal: {$total}";
+            return $this->deliver($mail);
+        } catch (Throwable $error) {
+            error_log('EmailsSender::sendEmailOrderNotification error -> ' . $error->getMessage());
             return false;
         }
     }

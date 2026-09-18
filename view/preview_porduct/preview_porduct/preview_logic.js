@@ -165,7 +165,7 @@ class SupplierPreviewApp {
     this.renderReadiness(payload.readiness || {});
     const canSubmit = Boolean(payload.permissions?.can_submit);
     if (this.elements.publish) {
-      this.elements.publish.hidden = product.is_approved || String(product.status) === "2";
+      this.elements.publish.hidden = product.pending_status != null || Number(product.status) !== 0;
       this.elements.publish.disabled = !canSubmit;
       this.elements.publish.title = canSubmit ? "Submit this product for approval" : "Complete every readiness check before submitting";
     }
@@ -174,13 +174,10 @@ class SupplierPreviewApp {
   renderStatus(product) {
     // [Supplier 5.3.1] Traducimos los valores del servidor a una etiqueta y tono entendibles.
     if (!this.elements.status) return;
-    let label = "Draft";
-    let tone = "draft";
-    if (product.is_approved) {
-      label = "Approved";
-      tone = "approved";
-    } else if (String(product.status) === "2") {
-      label = "Pending approval";
+    let label = product.status_label || "Draft";
+    let tone = Number(product.status) === 0 ? "draft" : "approved";
+    if (product.pending_status != null) {
+      label = `Awaiting approval: ${product.pending_status_label}`;
       tone = "pending";
     }
     this.elements.status.textContent = label;
@@ -296,14 +293,15 @@ class SupplierPreviewApp {
       // [Supplier 10.2] PreviewApi envía el SKU a controller/products/product.php.
       const result = await this.makeRequest(this.api.productUrl, {
         action: "publish_product",
-        sku: this.sku
+        sku: this.sku,
+        status_request_version: this.store.product.status_request_version
       }, {
         requireSuccess: true,
         signal: this.submitController.signal
       });
 
       // [Supplier 10.4] Cuando PHP confirma el envío, actualizamos el estado local sin recargar la página.
-      this.store.product.status = "2";
+      Object.assign(this.store.product, result.data);
       this.store.permissions.can_submit = false;
       this.renderStatus(this.store.product);
       this.elements.publish.hidden = true;

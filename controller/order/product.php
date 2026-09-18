@@ -97,7 +97,7 @@ class Product {
               p.name,
               p.description,
               p.descriptive_tagline,
-              p.status,
+              p.status, p.pending_status, p.status_request_version, p.status_requested_at,
               p.is_approved,
               p.group_id,
               s.supplier_id,
@@ -242,7 +242,8 @@ class Product {
       // [Supplier 4.2.2.3] Se calculan estado, checklist y permiso de envío antes de responder.
       $readiness = $this->buildReadiness($product);
       $isApproved = (int)$product['is_approved'] === 1;
-      $isPending = (string)$product['status'] === '2';
+      $product = array_merge($product, ProductStatus::describe($product));
+      $isPending = $product['pending_status'] !== null;
 
       // [Supplier 4.3] preview_api.js recibe producto, root_variation_id, readiness y permissions.
       echo json_encode([
@@ -253,7 +254,11 @@ class Product {
               'name' => (string)($product['name'] ?? ''),
               'description' => (string)($product['description'] ?? ''),
               'tagline' => (string)($product['descriptive_tagline'] ?? ''),
-              'status' => (string)($product['status'] ?? ''),
+              'status' => $product['status'],
+              'status_label' => $product['status_label'],
+              'pending_status' => $product['pending_status'],
+              'pending_status_label' => $product['pending_status_label'],
+              'status_request_version' => $product['status_request_version'],
               'is_approved' => $isApproved,
               'supplier_name' => (string)($product['company_name'] ?: $product['contact_name']),
               'category' => [
@@ -268,8 +273,8 @@ class Product {
           'root_variation_id' => (int)($product['root_variation_id'] ?? 0),
           'readiness' => $readiness,
           'permissions' => [
-              'can_edit' => !$isApproved,
-              'can_submit' => !$isApproved && !$isPending && $readiness['complete'],
+              'can_edit' => true,
+              'can_submit' => $product['status'] === 0 && !$isPending && $readiness['complete'],
           ],
       ], JSON_UNESCAPED_UNICODE);
   }
@@ -466,7 +471,7 @@ class Product {
           LEFT JOIN `groups` g ON g.group_id = p.group_id
           LEFT JOIN categories c ON c.category_id = g.category_id
           WHERE LOWER(TRIM(p.SKU)) = LOWER(:sku)
-            AND p.is_approved = 1
+            AND p.is_approved = 1 AND p.status IN ('1', '2', '3')
           LIMIT 1
       ");
       $stmt->execute([':sku' => $sku]);
@@ -538,7 +543,7 @@ class Product {
           FROM variations v
           INNER JOIN products p ON p.product_id = v.product_id
           WHERE v.variation_id = :variation_id
-            AND p.is_approved = 1
+            AND p.is_approved = 1 AND p.status IN ('1', '2', '3')
           LIMIT 1
       ");
       $stmt->execute([':variation_id' => $variationId]);
