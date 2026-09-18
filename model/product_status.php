@@ -57,7 +57,7 @@ final class ProductStatus
         return array_merge($product, self::describe($product));
     }
 
-    public function saveDetails(string $sku, string $email, array $data, callable $notify): array
+    public function saveDetails(string $sku, string $email, array $data, callable $notify, bool $requireReady = false): array
     {
         $requested = $data['status'] ?? null;
         if (!in_array($requested, [0, 1, 2, 3, '0', '1', '2', '3'], true)) {
@@ -87,7 +87,9 @@ final class ProductStatus
             $needsReview = $requestChanged || ($pending !== null && $detailsChanged);
             $version = $product['status_request_version'];
             if ($needsReview) {
-                if ($requested !== 0) $this->assertReady(array_merge($product, $fields));
+                // Details can be saved while the product is being completed. Publication
+                // and approval still validate readiness before making it available.
+                if ($requireReady && $requested !== 0) $this->assertReady(array_merge($product, $fields));
                 $pending = $requested;
                 $version++;
             }

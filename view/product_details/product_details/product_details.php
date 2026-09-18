@@ -1,6 +1,6 @@
 <?php
-$cssFs = __DIR__ . '/../../view/product_details/product_details/product_details.css';
-$jsFs  = __DIR__ . '/../../view/product_details/product_details/product_details.js';
+$cssFs = __DIR__ . '/product_details.css';
+$jsFs  = __DIR__ . '/product_details.js';
 
 $cssTime = is_file($cssFs) ? filemtime($cssFs) : time();
 $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
@@ -125,13 +125,14 @@ $jsTime  = is_file($jsFs)  ? filemtime($jsFs)  : time();
       </div>
 
       <div id="pd_approval_state" class="cp-field cp-field-full cp-hint" aria-live="polite"></div>
-      <div id="pd_feedback" class="cp-field cp-field-full cp-hint" role="status" aria-live="polite"></div>
     </form>
 
   </section>
 
   <!-- Footer buttons -->
   <div class="cp-footer">
+
+    <div id="pd_feedback" class="pd-feedback" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 
     <!-- Left footer section -->
     <div class="cp-footer-left">

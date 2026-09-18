@@ -50,9 +50,17 @@ $save(0, ['description'=>'A saved draft']);
 statusCheck(count($notices) === 0, 'Saving a draft without changing its status sent an approval request.');
 statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'another@example.test', ['status'=>1,'status_request_version'=>0], $notify), 403);
 statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'status-test@example.test', ['status'=>'active','status_request_version'=>0], $notify), 422);
-statusError(fn() => $save(1, ['description'=>'']), 422);
+statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'status-test@example.test', ['status'=>1,'status_request_version'=>0,'description'=>''], $notify, true), 422);
 statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'status-test@example.test', ['status'=>1,'status_request_version'=>0], static fn() => false), 502);
 statusCheck($read()['pending_status'] === null && $read()['status'] === 0, 'Failed notification changed the status.');
+
+// Save must accept an incomplete product; only publication/approval requires readiness.
+$save(1, ['description'=>'']);
+$incompleteReview = $read();
+statusCheck($incompleteReview['description'] === '' && $incompleteReview['pending_status'] === 1 && $incompleteReview['status'] === 0, 'Saving incomplete details did not queue the requested status.');
+statusError(fn() => $workflow->approve('STATUS-TEST', $incompleteReview['status_request_version'], 1), 422);
+$save(1, ['description'=>'Completed after saving']);
+statusError(fn() => $workflow->approve('STATUS-TEST', $incompleteReview['status_request_version'], 1), 409);
 
 foreach ([1, 2, 3, 0] as $target) {
     $old = $read()['status'];
@@ -84,6 +92,20 @@ $cartResult = (new Jobs($database))->addProductToJobs([
     'sku'=>'STATUS-TEST', 'quantity'=>1, 'price_id'=>$priceId, 'variation_ids'=>[$variationId],
 ], 'customer@example.test');
 statusCheck(!$cartResult['success'] && $cartResult['status'] === 404, 'An approved draft can still be purchased.');
+
+// Existing approved products can have no description (the Super Lanyard case).
+$pdo->exec("UPDATE products SET status=2,is_approved=1,pending_status=NULL,description='' WHERE product_id=$productId");
+$save(2, ['descriptive_tagline'=>'Saved without changing status']);
+statusCheck($read()['pending_status'] === null, 'Saving an unchanged approved status created a review.');
+$save(0);
+$draftReview = $read();
+statusCheck($draftReview['pending_status'] === 0 && $draftReview['status'] === 2, 'An incomplete approved product cannot request Draft.');
+$workflow->approve('STATUS-TEST', $draftReview['status_request_version'], 0);
+$save(3);
+$incompleteReview = $read();
+statusCheck($incompleteReview['pending_status'] === 3 && $incompleteReview['status'] === 0, 'Separate combinations was rejected while saving incomplete details.');
+statusError(fn() => $workflow->approve('STATUS-TEST', $incompleteReview['status_request_version'], 3), 422);
+$save(3, ['description'=>'Ready for approval']);
 
 // Existing publication requests use status=2 and is_approved=0 without a separate pending field.
 $pdo->exec("INSERT INTO products (SKU,name,description,supplier_id,group_id,status,is_approved) VALUES ('LEGACY-STATUS','Legacy request','Existing pending publication',$supplierId,$groupId,2,0)");
@@ -155,6 +177,13 @@ try {
     statusCheck($code === 401, 'Anonymous supplier changes were accepted.');
     [$code,$details] = $request($ports[0], '/controller/products/product.php', ['action'=>'get_product_details','sku'=>'STATUS-TEST'], $supplierSession);
     statusCheck($code === 200 && $details['data']['status'] === 3, 'Product details did not load the approved status.');
+    // No status change here, so this real Save request cannot send SMTP mail.
+    [$code,$saved] = $request($ports[0], '/controller/products/product.php', [
+        'action'=>'save_product_details','sku'=>'STATUS-TEST','status'=>3,
+        'status_request_version'=>$details['data']['status_request_version'],
+        'name'=>'Super Lanyard','description'=>'','pd_tagline'=>'',
+    ], $supplierSession);
+    statusCheck($code === 200 && $saved['success'] && $read()['description'] === '', 'The HTTP Save endpoint rejected incomplete details.');
     echo "Product status integration passed: all modes, pending visibility, notifications, ownership, stale reviews, draft purchasing and Promoflow HTTP approval.\n";
 } finally {
     foreach ($servers as $server) { if (is_resource($server)) { proc_terminate($server); proc_close($server); } }

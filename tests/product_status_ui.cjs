@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '..');
 const promo = path.resolve(root, '../Promoflow_v1');
 const elements = new Map();
 const element = id => {
-  if (!elements.has(id)) elements.set(id, {value: '', textContent: '', disabled: false, setAttribute() {}});
+  if (!elements.has(id)) elements.set(id, {value: '', textContent: '', disabled: false, hidden: true, attributes: {}, setAttribute(name, value) {this.attributes[name] = value;}});
   return elements.get(id);
 };
 const navigations = [];
@@ -37,14 +37,20 @@ const approved = {status: 1, status_label: 'Published', pending_status: null, st
   assert.equal(details.statusRequestVersion, 5);
   assert.equal(element('pd_status').value, '3');
   assert.equal(element('pd_feedback').textContent, 'Awaiting approval');
+  assert.equal(element('pd_feedback').hidden, false);
+  assert.equal(element('pd_feedback').attributes['data-error'], 'false');
   assert.equal(element('save').disabled, false);
   details.makeRequest = async () => { throw new Error('This request has changed'); };
   await details.saveProductDetails(true);
   assert.equal(navigations.length, 0);
   assert.equal(element('pd_feedback').textContent, 'This request has changed');
+  assert.equal(element('pd_feedback').hidden, false);
+  assert.equal(element('pd_feedback').attributes.role, 'alert');
+  assert.equal(element('pd_feedback').attributes['data-error'], 'true');
   assert.equal(element('save').disabled, false);
 
   const markup = fs.readFileSync(path.join(root,'view/product_details/product_details/product_details.php'),'utf8');
+  assert.ok(markup.indexOf('id="pd_feedback"') > markup.indexOf('<div class="cp-footer">'), 'Save feedback must stay beside the sticky buttons.');
   const options = [...markup.matchAll(/<option value="([0-3])">([^<]+)<\/option>/g)];
   assert.equal(options.length, 4);
   assert.deepEqual(options.map(option=>option[1]), ['0','1','2','3']);

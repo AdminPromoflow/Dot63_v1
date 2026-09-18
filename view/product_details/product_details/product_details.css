@@ -525,6 +525,25 @@ body {
 }
 
 /* Footer left buttons */
+.pd-feedback {
+  flex: 0 0 100%;
+  padding: .65rem .8rem;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #192d46;
+  font-size: .9rem;
+  overflow-wrap: anywhere;
+}
+
+.pd-feedback[data-error="true"] {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.pd-feedback[hidden] {
+  display: none;
+}
+
 .cp-footer-left {
   display: flex;
   align-items: center;

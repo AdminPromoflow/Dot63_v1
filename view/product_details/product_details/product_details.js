@@ -131,6 +131,8 @@ class ClassAddProductDetails {
     if (!feedback) return;
     feedback.textContent = message;
     feedback.setAttribute("role", error ? "alert" : "status");
+    feedback.setAttribute("data-error", String(error));
+    feedback.hidden = !message;
   }
 
   /*

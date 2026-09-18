@@ -175,7 +175,7 @@ class Product {
       $result = $workflow->saveDetails($sku, $email, [
         'status' => 1,
         'status_request_version' => $data['status_request_version'] ?? null,
-      ], fn(array $notice): bool => $this->sendStatusNotice($notice));
+      ], fn(array $notice): bool => $this->sendStatusNotice($notice), true);
       echo json_encode($result);
     } catch (Throwable $error) {
       $this->statusError($error);
