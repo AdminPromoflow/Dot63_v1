@@ -17,6 +17,7 @@ export class PreviewStore {
     this.selectedPrice = null;
     this.selectedPriceId = null;
     this.selectedQuantity = null;
+    this.selectedDelivery = "normal";
     this.loading = false;
     this.error = null;
     this.clearVariationSelections();

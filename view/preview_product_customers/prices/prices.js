@@ -16,6 +16,7 @@ export class PricesController {
     this.empty = document.getElementById("prices_empty");
     this.abortController = null;
     this.extraVersion = 0;
+    this.deliveryOptions = document.getElementById("delivery_options");
     this.elements = {
       unit: document.getElementById("bb_unit"),
       quantity: document.getElementById("bb_unit_quantity"),
@@ -23,6 +24,8 @@ export class PricesController {
       extraUnit: document.getElementById("bb_extra_unit"),
       extraQuantity: document.getElementById("bb_extra_quantity"),
       extraTotal: document.getElementById("bb_extra_total"),
+      deliveryPercentage: document.getElementById("bb_delivery_percentage"),
+      deliverySurcharge: document.getElementById("bb_delivery_surcharge"),
       total: document.getElementById("bb_total"),
       mainPrice: document.getElementById("sp_price"),
       quantityLabel: document.getElementById("var_label_quantity"),
@@ -30,6 +33,11 @@ export class PricesController {
     };
     this.quantitySelector = new QuantitySelector(this);
     this.root?.addEventListener("click", event => this.handlePriceClick(event));
+    this.deliveryOptions?.addEventListener("change", event => {
+      if (!event.target.matches('input[name="delivery_option"]')) return;
+      this.store.selectedDelivery = event.target.value;
+      this.updateSummary();
+    });
   }
 
   clear() {
@@ -202,7 +210,15 @@ export class PricesController {
     const safeBase = hasPrice ? basePrice : 0;
     const baseTotal = safeBase * safeQuantity;
     const extrasTotal = extrasPerUnit * safeQuantity;
-    const total = baseTotal + extrasTotal;
+    const deliveryInputs = Array.from(this.deliveryOptions?.querySelectorAll('input[name="delivery_option"]') || []);
+    const delivery = deliveryInputs.find(input => input.value === this.store.selectedDelivery)
+      || deliveryInputs.find(input => input.defaultChecked);
+    deliveryInputs.forEach(input => { input.checked = input === delivery; });
+    const deliveryPercentage = Math.max(0, Number(delivery?.dataset.surcharge) || 0);
+    const subtotalPence = Math.round((baseTotal + extrasTotal) * 100);
+    const deliveryPence = Math.round(subtotalPence * deliveryPercentage / 100);
+    const deliverySurcharge = deliveryPence / 100;
+    const total = (subtotalPence + deliveryPence) / 100;
 
     // [Customer 8.4.1] Si la opción seleccionada no tiene precio, no mostramos un total engañoso.
     this.setText(this.elements.unit, hasPrice ? `£${this.formatMoney(safeBase)}` : "—");
@@ -211,6 +227,8 @@ export class PricesController {
     this.setText(this.elements.extraUnit, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasPerUnit)}` : "—");
     this.setText(this.elements.extraQuantity, hasPrice && !hasUnavailableSelection && extrasPerUnit > 0 ? safeQuantity.toLocaleString("en-GB") : "—");
     this.setText(this.elements.extraTotal, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasTotal)}` : "—");
+    this.setText(this.elements.deliveryPercentage, `(+${deliveryPercentage}%)`);
+    this.setText(this.elements.deliverySurcharge, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(deliverySurcharge)}` : "—");
     this.setText(this.elements.total, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(total)}` : "—");
     this.setText(this.elements.mainPrice, hasPrice ? this.formatMoney(safeBase) : "—");
     this.setText(this.elements.quantityLabel, hasPrice ? `${safeQuantity.toLocaleString("en-GB")} units` : "Select a price tier");
@@ -222,6 +240,9 @@ export class PricesController {
       quantity: safeQuantity,
       basePrice: safeBase,
       extrasPerUnit,
+      deliveryOption: delivery?.value || "normal",
+      deliveryPercentage,
+      deliverySurcharge,
       total
     });
   }
