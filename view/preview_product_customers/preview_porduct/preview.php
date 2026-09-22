@@ -5,13 +5,6 @@ $cssPath = '../../view/preview_product_customers/preview_porduct/preview.css';
 $entryPath = '../../view/preview_product_customers/preview_porduct/preview_logic.js';
 $cssFile = __DIR__ . '/preview.css';
 
-// Delivery estimate options: update the labels and percentages here when rates change.
-$deliveryOptions = [
-  ['id' => 'normal', 'label' => 'Normal', 'surcharge' => 0],
-  ['id' => '10wd', 'label' => '10 working days (wd)', 'surcharge' => 25],
-  ['id' => '8wd', 'label' => '8 working days (wd)', 'surcharge' => 50],
-];
-
 // [Customer 2.2] Todos estos módulos forman una sola funcionalidad. Si cambia cualquiera,
 // se actualiza la versión del entry point para evitar que el navegador use lógica antigua de caché.
 $moduleFiles = [
@@ -213,25 +206,7 @@ foreach ($moduleFiles as $moduleFile) {
             </div>
           </dl>
 
-          <fieldset class="delivery-options" id="delivery_options" aria-describedby="delivery_help">
-            <legend>Delivery</legend>
-            <p id="delivery_help">Choose a delivery option. The surcharge applies to the base subtotal and extras.</p>
-            <div class="delivery-options-list">
-              <?php foreach ($deliveryOptions as $deliveryOption): ?>
-                <label class="delivery-option">
-                  <input type="radio" name="delivery_option"
-                    value="<?= htmlspecialchars($deliveryOption['id']) ?>"
-                    data-surcharge="<?= (int)$deliveryOption['surcharge'] ?>"
-                    <?= $deliveryOption['id'] === 'normal' ? 'checked' : '' ?>>
-                  <span class="delivery-option-copy">
-                    <strong><?= htmlspecialchars($deliveryOption['label']) ?></strong>
-                    <small><?= 100 + (int)$deliveryOption['surcharge'] ?>% of job value</small>
-                  </span>
-                  <span class="delivery-option-rate">+<?= (int)$deliveryOption['surcharge'] ?>%</span>
-                </label>
-              <?php endforeach; ?>
-            </div>
-          </fieldset>
+          <?php include dirname(__DIR__, 2) . "/global/delivery_options/delivery_options.php"; ?>
 
           <dl class="price-summary" aria-live="polite" aria-atomic="true">
             <div>

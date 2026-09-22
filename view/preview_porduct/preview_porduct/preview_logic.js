@@ -164,10 +164,14 @@ class SupplierPreviewApp {
     this.renderStatus(product);
     this.renderReadiness(payload.readiness || {});
     const canSubmit = Boolean(payload.permissions?.can_submit);
+    const approvalAvailable = payload.permissions?.approval_available !== false;
     if (this.elements.publish) {
       this.elements.publish.hidden = product.pending_status != null || Number(product.status) !== 0;
       this.elements.publish.disabled = !canSubmit;
-      this.elements.publish.title = canSubmit ? "Submit this product for approval" : "Complete every readiness check before submitting";
+      this.elements.publish.title = !approvalAvailable ? "Approval requests are temporarily unavailable" : canSubmit ? "Submit this product for approval" : "Complete every readiness check before submitting";
+    }
+    if (!approvalAvailable && Number(product.status) === 0) {
+      this.showMessage("Approval requests are temporarily unavailable. You can still preview and edit this product.", "info");
     }
   }
 

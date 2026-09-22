@@ -28,6 +28,7 @@ export class VariationsController {
     this.api = options.api;
     this.store = options.store;
     this.prices = options.prices;
+    this.variationChildrenAction = options.variationChildrenAction || "get_customer_variation_children";
     this.preferredOptions = new Map(Object.entries(options.preferredOptions || {}).map(([typeName, optionName]) => [this.normalizeOptionText(typeName), String(optionName || "").trim()]));
     this.hasVariationInput = this.preferredOptions.size > 0;
     this.renderPath = options.renderPath || (() => {});
@@ -93,7 +94,7 @@ export class VariationsController {
     try {
       // [Customer 6.2.3] PreviewApi continúa la ejecución en controller/order/product.php.
       const result = await this.makeRequest(this.api.previewUrl, {
-        action: "get_customer_variation_children",
+        action: this.variationChildrenAction,
         variation_id: id
       }, {
         requireSuccess: true,

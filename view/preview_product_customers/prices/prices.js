@@ -11,6 +11,7 @@ export class PricesController {
     this.api = options.api;
     this.store = options.store;
     this.getSku = options.getSku || (() => "");
+    this.variationPricesAction = options.variationPricesAction || "get_customer_variation_prices";
     this.onSummaryChange = options.onSummaryChange || (() => {});
     this.root = document.getElementById("wrap-prices-group");
     this.empty = document.getElementById("prices_empty");
@@ -144,7 +145,7 @@ export class PricesController {
     try {
       // [Customer 8.3.2] PreviewApi continúa el flujo en controller/order/product.php.
       const result = await this.makeRequest(this.api.previewUrl, {
-        action: "get_customer_variation_prices",
+        action: this.variationPricesAction,
         sku: this.getSku(),
         ids: ids,
         quantity: quantity

@@ -4,10 +4,14 @@
 $cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
 $entryPath = '../../view/preview_porduct/preview_porduct/preview_logic.js';
 $cssFile = __DIR__ . '/preview.css';
+$customerCssTime = filemtime(dirname(__DIR__, 2) . '/preview_product_customers/preview_porduct/preview.css');
 
 // [Supplier 2.2] Todos estos módulos forman una sola funcionalidad. Si cambia cualquiera,
 // se actualiza la versión del entry point para evitar que el navegador use lógica antigua de caché.
 $moduleFiles = [
+  dirname(__DIR__, 2) . '/preview_product_customers/preview_porduct/preview_store.js',
+  dirname(__DIR__, 2) . '/preview_product_customers/prices/prices.js',
+  dirname(__DIR__, 2) . '/preview_product_customers/variations/variations.js',
   dirname(__DIR__, 2) . '/global/quantity_selector/quantity_selector.js',
   __DIR__ . '/preview_logic.js',
   __DIR__ . '/preview_api.js',
@@ -30,10 +34,11 @@ foreach ($moduleFiles as $moduleFile) {
 ?>
 
 <!-- [Supplier 2.3] El navegador carga los estilos del preview con su versión actual. -->
+<link rel="stylesheet" href="../../view/preview_product_customers/preview_porduct/preview.css?v=<?= $customerCssTime ?>">
 <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>?v=<?= $cssTime ?>">
 
 <!-- [Supplier 2.4] Se entrega primero una estructura vacía; JavaScript la llenará con datos seguros del servidor. -->
-<main class="supplier-preview" aria-labelledby="sp-title">
+<main class="supplier-preview supplier-product-preview" aria-labelledby="sp-title">
   <!-- [Supplier 2.4.1] Este estado permanece visible mientras se buscan el producto y sus opciones. -->
   <section id="preview_loading" class="preview-state preview-state--loading" aria-live="polite">
     <span class="preview-spinner" aria-hidden="true"></span>
@@ -180,18 +185,7 @@ foreach ($moduleFiles as $moduleFile) {
       </article>
 
       <aside class="preview-sidebar">
-        <section class="readiness-card" aria-labelledby="readiness_heading">
-          <div class="readiness-header">
-            <span class="readiness-mark" aria-hidden="true">✓</span>
-            <div>
-              <span class="section-kicker">Readiness</span>
-              <h2 id="readiness_heading">Product checklist</h2>
-            </div>
-          </div>
 
-          <p id="readiness_summary" class="readiness-summary"></p>
-          <ul id="readiness_list" class="readiness-list"></ul>
-        </section>
 
         <section class="buybox" aria-labelledby="summary_heading">
           <div class="buybox-header">
@@ -224,6 +218,15 @@ foreach ($moduleFiles as $moduleFile) {
               <dt>Extras subtotal</dt>
               <dd id="bb_extra_total">—</dd>
             </div>
+          </dl>
+
+          <?php include dirname(__DIR__, 2) . "/global/delivery_options/delivery_options.php"; ?>
+
+          <dl class="price-summary" aria-live="polite" aria-atomic="true">
+            <div>
+              <dt>Delivery surcharge <span id="bb_delivery_percentage">(+0%)</span></dt>
+              <dd id="bb_delivery_surcharge">—</dd>
+            </div>
             <div class="price-summary-total">
               <dt>Estimated total</dt>
               <dd id="bb_total">—</dd>
@@ -233,7 +236,10 @@ foreach ($moduleFiles as $moduleFile) {
           <p class="preview-only-note">
             Checkout actions are disabled in supplier preview mode.
           </p>
-          <button type="button" class="btn btn-customer-preview" disabled>Add to basket</button>
+          <div class="purchase-actions" aria-label="Purchase actions">
+            <button type="button" class="btn btn-primary purchase-button" disabled>addToCart</button>
+            <button type="button" class="btn btn-secondary purchase-button" disabled>Buy now</button>
+          </div>
         </section>
       </aside>
     </section>
@@ -249,6 +255,11 @@ foreach ($moduleFiles as $moduleFile) {
       </div>
       <div id="wrap-artworks-group" class="artwork-grid"></div>
     </section>
+    <details class="readiness-card supplier-readiness">
+      <summary>Product checklist</summary>
+      <p id="readiness_summary" class="readiness-summary"></p>
+      <ul id="readiness_list" class="readiness-list"></ul>
+    </details>
   </div>
 </main>
 

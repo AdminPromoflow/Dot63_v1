@@ -92,14 +92,8 @@ class Product {
       // También cuenta requisitos y resuelve la variación raíz en una sola ida a la base de datos.
       $stmt = $pdo->prepare("
           SELECT
-              p.product_id,
+              p.*,
               p.SKU AS sku,
-              p.name,
-              p.description,
-              p.descriptive_tagline,
-              p.status, p.pending_status, p.status_request_version, p.status_requested_at,
-              p.is_approved,
-              p.group_id,
               s.supplier_id,
               s.company_name,
               s.contact_name,
@@ -242,6 +236,11 @@ class Product {
       // [Supplier 4.2.2.3] Se calculan estado, checklist y permiso de envío antes de responder.
       $readiness = $this->buildReadiness($product);
       $isApproved = (int)$product['is_approved'] === 1;
+      // Previewing remains available on databases that predate status requests.
+      // Never offer a write operation until its required fields exist.
+      $approvalAvailable = array_key_exists('pending_status', $product)
+          && array_key_exists('status_request_version', $product)
+          && array_key_exists('status_requested_at', $product);
       $product = array_merge($product, ProductStatus::describe($product));
       $isPending = $product['pending_status'] !== null;
 
@@ -274,7 +273,8 @@ class Product {
           'readiness' => $readiness,
           'permissions' => [
               'can_edit' => true,
-              'can_submit' => $product['status'] === 0 && !$isPending && $readiness['complete'],
+              'approval_available' => $approvalAvailable,
+              'can_submit' => $approvalAvailable && $product['status'] === 0 && !$isPending && $readiness['complete'],
           ],
       ], JSON_UNESCAPED_UNICODE);
   }
@@ -429,10 +429,22 @@ class Product {
           }
       }
 
-      // [Supplier 8.3.2.2] El navegador recibe un arreglo compacto de variation_id -> price.
+      $configuredStmt = $pdo->prepare("
+          SELECT DISTINCT v.variation_id
+          FROM variations v
+          INNER JOIN prices pr ON pr.variation_id = v.variation_id
+          WHERE v.product_id = ?
+            AND v.variation_id IN ($placeholders)
+            AND v.price_display_mode = 'variation'
+            AND pr.price > 0
+      ");
+      $configuredStmt->execute(array_merge([(int)$product['product_id']], $ids));
+
+      // Use the same availability information as the customer preview.
       echo json_encode([
           'success' => true,
           'prices' => array_values($pricesByVariation),
+          'priced_variation_ids' => array_map('intval', $configuredStmt->fetchAll(PDO::FETCH_COLUMN)),
       ], JSON_UNESCAPED_UNICODE);
   }
 
@@ -766,15 +778,21 @@ class Product {
 }
 
 // [Servidor 4.2.0] Estas clases se cargan antes de despachar la petición.
-include "../../controller/config/database.php";
-include "../../model/products.php";
-include "../../model/users.php";
-include "../../model/categories.php";
-include "../../model/groups.php";
-include "../../model/prices.php";
-include "../../model/variations.php";
-include "../../controller/products/variations.php";
+require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../model/products.php";
+require_once __DIR__ . "/../../model/users.php";
+require_once __DIR__ . "/../../model/categories.php";
+require_once __DIR__ . "/../../model/groups.php";
+require_once __DIR__ . "/../../model/prices.php";
+require_once __DIR__ . "/../../model/variations.php";
 
 // [Servidor 4.2.0.1] Se crea el controlador y handleProduct() inicia el switch descrito arriba.
 $productClass = new Product();
-$productClass->handleProduct();
+try {
+    $productClass->handleProduct();
+} catch (Throwable $error) {
+    error_log('Product preview error: ' . $error->getMessage());
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'The product preview could not be loaded. Please try again.']);
+}
