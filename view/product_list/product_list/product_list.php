@@ -5,7 +5,6 @@ $jsTime  = filemtime('../../view/product_list/product_list/product_list.js');
 <link rel="stylesheet" href="../../view/product_list/product_list/product_list.css?v=<?= $cssTime ?>">
 
 <main class="product_list" aria-labelledby="pl-title">
-  <?php include "../../view/product_list/navigation/navigation.php" ?>
 
   <h1 id="pl-title" class="sr-only">Product List</h1>
 

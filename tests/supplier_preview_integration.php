@@ -87,8 +87,8 @@ return false;');
         if ($connection) { fclose($connection); break; }
         usleep(20000);
     }
-    $request = static function (string $action, array $data = [], bool $authenticated = true, bool $review = false, bool $direct = false) use ($port,$session,$reviewSession,$reviewPort): array {
-        $curl = curl_init('http://127.0.0.1:'.($review && !$direct ? $reviewPort : $port).($review && !$direct ? '/controller/dot63/requests_63_api.php' : '/controller/order/product.php'));
+    $request = static function (string $action, array $data = [], bool $authenticated = true, bool $review = false, bool $direct = false, string $endpoint = '/controller/order/product.php') use ($port,$session,$reviewSession,$reviewPort): array {
+        $curl = curl_init('http://127.0.0.1:'.($review && !$direct ? $reviewPort : $port).($review && !$direct ? '/controller/dot63/requests_63_api.php' : $endpoint));
         curl_setopt_array($curl,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_POST=>true,
             CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(array_merge(['action'=>$action],$data)),
             CURLOPT_COOKIE=>$authenticated ? 'PHPSESSID='.($review ? $reviewSession : $session) : '',CURLOPT_TIMEOUT=>10]);
@@ -97,6 +97,21 @@ return false;');
         previewCheck(is_array($json), "Invalid JSON ($code) for $action: ".substr((string)$body,0,200));
         return [$code,$json];
     };
+    $editorSelection = static function (array $input, bool $authenticated = true) use ($request): array {
+        return $request('get_editor_selection', $input, $authenticated, false, false, '/controller/products/product.php');
+    };
+    [$code,$selection] = $editorSelection(['sku'=>'PREVIEW-TEST','sku_variation'=>'BLUE']);
+    previewCheck($code===200 && $selection['selection']===['category'=>'Lanyards','group'=>'Lanyards - SuperLanyard','product'=>'Super Lanyard','variation'=>'Blue'], 'Editor summary lost the selected records.');
+    [$code,$selection] = $editorSelection(['sku'=>'PREVIEW-TEST','sku_variation'=>'OTHER-ROOT']);
+    previewCheck($code===200 && $selection['selection']['variation']===null, 'Editor summary exposed a variation from another product.');
+    [$code,$selection] = $editorSelection(['sku'=>'PREVIEW-TEST']);
+    previewCheck($code===200 && $selection['selection']['variation']===null, 'Editor summary invented a variation selection.');
+    [$code] = $editorSelection(['sku'=>'OTHER-PRODUCT','sku_variation'=>'OTHER-ROOT']);
+    previewCheck($code===403, 'Editor summary exposed another supplier product.');
+    [$code] = $editorSelection(['sku'=>'PREVIEW-TEST'],false);
+    previewCheck($code===401, 'Anonymous editor summary was allowed.');
+    echo "PASS editor selection: saved category/group/product, selected variation, empty selection and supplier ownership.\n";
+
     [$code,$preview] = $request('get_supplier_preview',['sku'=>'PREVIEW-TEST']);
     previewCheck($code===200 && $preview['success'] && $preview['root_variation_id']===1, 'Supplier preview did not load.');
     [$code] = $request('get_supplier_preview',['sku'=>'PREVIEW-TEST'],false);
@@ -144,6 +159,7 @@ return false;');
     previewCheck($afterApproval['product']['status']===0 && $afterApproval['product']['pending_status']===null && !$afterApproval['permissions']['can_approve'], 'Approval did not update review state.');
     $pdo->exec('UPDATE products SET status=2,is_approved=1,pending_status=0,status_request_version=5 WHERE product_id=1');
     if (in_array('--serve',$argv,true)) {
+        echo 'Editor fixture: http://127.0.0.1:'.$port."/__preview_test\n";
         echo 'Review fixture: http://127.0.0.1:'.$reviewPort."/__review_test\nPress Enter after browser checks.\n";
         fgets(STDIN);
         // Browser QA may approve Draft; reset the fixture for the remaining schema checks.

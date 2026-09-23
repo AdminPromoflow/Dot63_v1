@@ -542,6 +542,7 @@ class Variations {
         alert(response?.message || "Could not save the variation.");
         return false;
       }
+      window.headerAddProduct?.refreshSelection?.();
       if (goNext) {
         const destination = "../../view/images/index.php";
         if (window.headerAddProduct?.goNext) {

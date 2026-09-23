@@ -30,13 +30,6 @@ $jsVersion =
     <?php
 
     include
-      "../../view/variations/navigation/navigation.php";
-
-    ?>
-
-    <?php
-
-    include
       "../../view/global/header_add_product/header_add_product.php";
 
     ?>

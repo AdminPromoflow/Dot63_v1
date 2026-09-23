@@ -60,3 +60,69 @@
 .cp-form input:focus, .cp-form textarea:focus, .cp-form select:focus{
   border-color:var(--brand); box-shadow:0 0 0 3px rgba(0,85,72,.14);
 }
+
+/* The editor shows its selected records above the step navigation. */
+.editor-selection {
+  margin: 1.3rem 0 .85rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--supplier-line, #dce3eb);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .78);
+  color: var(--supplier-ink, #182a42);
+}
+
+.editor-selection__list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1rem 1.4rem;
+  margin: 0;
+}
+
+.editor-selection__entry {
+  min-width: 0;
+}
+
+.editor-selection__entry dt {
+  margin: 0 0 .25rem;
+  color: var(--supplier-muted, #68768b);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.editor-selection__entry dd {
+  margin: 0;
+  font-size: .88rem;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.editor-selection__entry dd.is-empty,
+.editor-selection__notice {
+  color: var(--supplier-muted, #68768b);
+  font-weight: 400;
+}
+
+.editor-selection__notice {
+  margin: .65rem 0 0;
+  font-size: .8rem;
+}
+
+@media (max-width: 900px) {
+  .editor-selection__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .editor-selection {
+    margin-top: .9rem;
+    padding: .85rem;
+  }
+
+  .editor-selection__list {
+    gap: .8rem;
+  }
+}

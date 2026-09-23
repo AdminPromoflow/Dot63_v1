@@ -161,6 +161,7 @@ class ClassAddProductDetails {
       const response = await this.makeRequest(url, data, { requireSuccess: true });
       this.renderApprovalState(response.data);
       this.showFeedback(response.message || "Product details saved.");
+      window.headerAddProduct?.refreshSelection?.();
       if (response.success && goNext) {
         headerAddProduct.goNext("../../view/variations/index.php");
       }

@@ -1,11 +1,60 @@
 // header_add_product.js
 class HeaderAddProduct {
   constructor(root = '.cp-tabs') {
-    const sku = new URLSearchParams(location.search).get('sku');
+    this.selectionRoot = document.getElementById('editor_selection');
+    this.selectionRequest = null;
+    this.refreshSelection();
     const cp_tab = document.querySelectorAll(".cp-tab");
     for (var i = 0; i < cp_tab.length; i++) {
       cp_tab[i].addEventListener("click", e => this.handleIClick(e));
     }
+  }
+
+  async refreshSelection() {
+    if (!this.selectionRoot) return;
+    this.selectionRequest?.abort();
+    const request = new AbortController();
+    this.selectionRequest = request;
+    const params = new URLSearchParams(window.location.search);
+    const sku = String(params.get('sku') || '').trim();
+    const section = this.selectionRoot.closest('.editor-selection');
+    const notice = document.getElementById('editor_selection_notice');
+    if (notice) notice.hidden = true;
+    section?.setAttribute('aria-busy', 'true');
+    if (!sku) {
+      this.renderSelection({});
+      section?.setAttribute('aria-busy', 'false');
+      return;
+    }
+    try {
+      const response = await fetch('../../controller/products/product.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        signal: request.signal,
+        body: JSON.stringify({action: 'get_editor_selection', sku, sku_variation: params.get('sku_variation') || ''})
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) throw new Error('Selection unavailable');
+      if (this.selectionRequest === request) this.renderSelection(payload.selection);
+    } catch (error) {
+      if (error.name === 'AbortError' || this.selectionRequest !== request) return;
+      this.renderSelection({}, '—');
+      if (notice) {
+        notice.textContent = 'The current selection could not be loaded. Refresh the page to try again.';
+        notice.hidden = false;
+      }
+    } finally {
+      if (this.selectionRequest === request) section?.setAttribute('aria-busy', 'false');
+    }
+  }
+
+  renderSelection(selection = {}, emptyLabel = 'Not selected') {
+    this.selectionRoot?.querySelectorAll('[data-selection-value]').forEach(element => {
+      const value = String(selection[element.dataset.selectionValue] || '').trim();
+      element.textContent = value || emptyLabel;
+      element.classList.toggle('is-empty', !value);
+    });
   }
 
   goNext(url) {

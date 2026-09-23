@@ -47,6 +47,10 @@ class Product {
         $this->getProductsBasicBySupplierEmail($data);
       break;
 
+      case 'get_editor_selection':
+        $this->getEditorSelection($data);
+      break;
+
       case 'get_product_details':
         $this->getProductBasicBySKU($data);
       break;
@@ -186,6 +190,36 @@ class Product {
     header('Content-Type: application/json; charset=utf-8');
 
     echo json_encode("response");
+  }
+
+  private function getEditorSelection(array $data): void
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    try {
+      $email = $this->supplierEmail();
+      $database = new Database();
+      $product = (new ProductStatus($database))->getOwned((string)($data['sku'] ?? ''), $email);
+      $variationName = null;
+      $variationSku = trim((string)($data['sku_variation'] ?? ''));
+      if ($variationSku !== '') {
+        // A variation from another product must never appear in this product's summary.
+        $statement = $database->getConnection()->prepare('
+          SELECT name FROM variations
+          WHERE product_id = :product_id AND LOWER(SKU) = LOWER(:sku) LIMIT 1
+        ');
+        $statement->execute([':product_id' => $product['product_id'], ':sku' => $variationSku]);
+        $variationName = $statement->fetchColumn() ?: null;
+      }
+      echo json_encode(['success' => true, 'selection' => [
+        'category' => ($product['category_name'] ?? '') === 'Unassigned Category' ? null : ($product['category_name'] ?? null),
+        'group' => ($product['group_name'] ?? '') === 'Unassigned Group' ? null : ($product['group_name'] ?? null),
+        'product' => $product['name'] ?? null,
+        'variation' => $variationName,
+      ]], JSON_UNESCAPED_UNICODE);
+    } catch (Throwable $error) {
+      $this->statusError($error);
+    }
   }
 
   private function getProductBasicBySKU($data)
