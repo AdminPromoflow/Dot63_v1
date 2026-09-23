@@ -57,7 +57,7 @@ export class ImagesRenderer {
     if (!path) return "";
 
     if (/^(https?:|data:|blob:)/i.test(path)) return path;
-    if (path.startsWith("controller/")) return `../../${path}`;
-    return `../../controller/${path}`;
+    const root = new URL("../../../", import.meta.url);
+    return new URL(path.startsWith("controller/") ? path : `controller/${path}`, root).href;
   }
 }

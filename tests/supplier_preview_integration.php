@@ -8,6 +8,8 @@ $admin = new PDO('mysql:host=localhost;charset=utf8mb4', 'root', '', [PDO::ATTR_
 $dbName = 'dot63_preview_test_' . bin2hex(random_bytes(5));
 $temp = sys_get_temp_dir() . '/' . $dbName;
 $server = null;
+$reviewServer = null;
+$promoflow = getenv('PROMOFLOW_ROOT') ?: dirname($root) . '/Promoflow_v1';
 mkdir($temp, 0700);
 $admin->exec("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 function previewCheck(bool $ok, string $message): void {
@@ -37,6 +39,10 @@ try {
     session_id($session); session_start();
     $_SESSION = ['login'=>true,'email'=>'preview@example.test'];
     session_write_close();
+    $reviewSession = 'review' . bin2hex(random_bytes(6));
+    session_id($reviewSession); session_start();
+    $_SESSION = ['is_logged'=>true,'user_email'=>'reviewer@example.test'];
+    session_write_close();
     $socket = stream_socket_server('tcp://127.0.0.1:0');
     $port = (int)substr(strrchr(stream_socket_get_name($socket, false), ':'), 1);
     fclose($socket);
@@ -51,11 +57,41 @@ try {
         if ($connection) { fclose($connection); break; }
         usleep(20000);
     }
-    $request = static function (string $action, array $data = [], bool $authenticated = true) use ($port,$session): array {
-        $curl = curl_init('http://127.0.0.1:'.$port.'/controller/order/product.php');
+    $socket = stream_socket_server('tcp://127.0.0.1:0');
+    $reviewPort = (int)substr(strrchr(stream_socket_get_name($socket, false), ':'), 1);
+    fclose($socket);
+    $reviewRouter = $temp . '/review_router.php';
+    file_put_contents($reviewRouter, '<?php
+$path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
+if ($path === "/__review_test") {
+    session_start(); $_SESSION=["is_logged"=>true,"user_email"=>"reviewer@example.test"];
+    header("Location: /view/preview_porduct/index.php?sku=PREVIEW-TEST"); return;
+}
+if (strpos($path, "/dot63/") === 0) {
+    $file = realpath(getenv("DOT63_APP_ROOT") . substr($path, 6));
+    if ($file && strpos($file, realpath(getenv("DOT63_APP_ROOT")) . "/") === 0 && is_file($file)) {
+        $type = ["js"=>"text/javascript", "css"=>"text/css", "png"=>"image/png", "pdf"=>"application/pdf"][pathinfo($file, PATHINFO_EXTENSION)] ?? null;
+        if ($type) { header("Content-Type: " . $type); readfile($file); return; }
+    }
+    http_response_code(404); return;
+}
+return false;');
+    $reviewEnv = array_merge($env, [
+        'DOT63_WEBHOOK_URL'=>'http://127.0.0.1:'.$port.'/controller/promoflow/promoflow_webhook.php',
+        'DOT63_APP_ROOT'=>$root, 'DOT63_ASSET_BASE'=>'/dot63'
+    ]);
+    $reviewServer = proc_open([PHP_BINARY,'-d','session.save_path='.$temp,'-S','127.0.0.1:'.$reviewPort,'-t',$promoflow,$reviewRouter],
+        [0=>['pipe','r'],1=>['file',$temp.'/review.log','a'],2=>['file',$temp.'/review.log','a']], $reviewPipes, $promoflow, $reviewEnv);
+    for ($i=0;$i<50;$i++) {
+        $connection = @fsockopen('127.0.0.1',$reviewPort,$errno,$error,0.1);
+        if ($connection) { fclose($connection); break; }
+        usleep(20000);
+    }
+    $request = static function (string $action, array $data = [], bool $authenticated = true, bool $review = false, bool $direct = false) use ($port,$session,$reviewSession,$reviewPort): array {
+        $curl = curl_init('http://127.0.0.1:'.($review && !$direct ? $reviewPort : $port).($review && !$direct ? '/controller/dot63/requests_63_api.php' : '/controller/order/product.php'));
         curl_setopt_array($curl,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_POST=>true,
             CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(array_merge(['action'=>$action],$data)),
-            CURLOPT_COOKIE=>$authenticated ? 'PHPSESSID='.$session : '',CURLOPT_TIMEOUT=>10]);
+            CURLOPT_COOKIE=>$authenticated ? 'PHPSESSID='.($review ? $reviewSession : $session) : '',CURLOPT_TIMEOUT=>10]);
         $body = curl_exec($curl); $code = curl_getinfo($curl,CURLINFO_HTTP_CODE); curl_close($curl);
         $json = json_decode((string)$body,true);
         previewCheck(is_array($json), "Invalid JSON ($code) for $action: ".substr((string)$body,0,200));
@@ -79,6 +115,41 @@ try {
     [$code,$pending] = $request('get_supplier_preview',['sku'=>'PREVIEW-TEST']);
     previewCheck($code===200 && $pending['product']['pending_status']===0 && !$pending['permissions']['can_submit'],'Pending Draft metadata was lost.');
 
+    // Review endpoints reuse the private preview with a Promoflow session at both ends.
+    [$code,$review] = $request('get_review_preview',['sku'=>'PREVIEW-TEST'],true,true);
+    previewCheck($code===200 && $review['product']===$pending['product'] && $review['permissions']['can_approve'], 'Review product or pending Draft differs from supplier.');
+    previewCheck(!$review['permissions']['can_submit'] && !$review['permissions']['can_edit'], 'Review exposes supplier write permissions.');
+    [$code,$reviewChildren] = $request('get_review_variation_children',['variation_id'=>1],true,true);
+    previewCheck($code===200 && $reviewChildren===$children, 'Review variations differ from supplier.');
+    foreach (['get_review_preview'=>['sku'=>'PREVIEW-TEST'], 'get_review_variation_children'=>['variation_id'=>1], 'get_review_variation_prices'=>['sku'=>'PREVIEW-TEST','ids'=>[3,5],'quantity'=>10]] as $action=>$input) {
+        [$code] = $request($action,$input,false,true);
+        previewCheck($code===401, 'Anonymous review allowed through proxy.');
+        [$code] = $request($action,$input,true,false);
+        previewCheck($code===401, 'Supplier could call reviewer endpoint directly.');
+        [$code] = $request($action,$input,false,true,true);
+        previewCheck($code===401, 'Anonymous review allowed directly.');
+    }
+    [$code,$privateReview] = $request('get_review_preview',['sku'=>'OTHER-PRODUCT'],true,true);
+    previewCheck($code===200 && $privateReview['product']['status']===0, 'Admin could not review another supplier draft.');
+    previewCheck(!$privateReview['permissions']['can_approve'], 'Unrequested change was approvable.');
+    $input = ['sku'=>'PREVIEW-TEST','ids'=>[2,3,4,5],'quantity'=>10];
+    [$code,$reviewPrices] = $request('get_review_variation_prices',$input,true,true);
+    [$customerCode,$publicPrices] = $request('get_customer_variation_prices',$input,false);
+    previewCheck($code===200 && $reviewPrices===$publicPrices, 'Review extras availability differs from customer.');
+    [$code] = $request('approve_product',['sku'=>'PREVIEW-TEST','requested_status'=>0,'status_request_version'=>2],true,true);
+    previewCheck($code===409, 'Stale review approval was accepted.');
+    [$code,$approved] = $request('approve_product',['sku'=>'PREVIEW-TEST','requested_status'=>0,'status_request_version'=>3],true,true);
+    previewCheck($code===200 && $approved['success'], 'Pending Draft could not be approved.');
+    [$code,$afterApproval] = $request('get_review_preview',['sku'=>'PREVIEW-TEST'],true,true);
+    previewCheck($afterApproval['product']['status']===0 && $afterApproval['product']['pending_status']===null && !$afterApproval['permissions']['can_approve'], 'Approval did not update review state.');
+    $pdo->exec('UPDATE products SET status=2,is_approved=1,pending_status=0,status_request_version=5 WHERE product_id=1');
+    if (in_array('--serve',$argv,true)) {
+        echo 'Review fixture: http://127.0.0.1:'.$reviewPort."/__review_test\nPress Enter after browser checks.\n";
+        fgets(STDIN);
+        // Browser QA may approve Draft; reset the fixture for the remaining schema checks.
+        $pdo->exec('UPDATE products SET status=2,is_approved=1 WHERE product_id=1');
+    }
+
     // Reproduce the deployed database before the approval columns were added.
     $pdo->exec('ALTER TABLE products DROP pending_status, DROP status_request_version, DROP status_requested_at');
     [$code,$legacy] = $request('get_supplier_preview',['sku'=>'PREVIEW-TEST']);
@@ -89,12 +160,16 @@ try {
     [$customerCode,$customerPrices] = $request('get_customer_variation_prices',$priceInput,false);
     previewCheck($code===200 && $customerCode===200 && $supplierPrices===$customerPrices,'Supplier and customer extras or availability differ.');
     previewCheck(in_array(5,$supplierPrices['priced_variation_ids'],true),'An extra without an applicable tier was treated as free.');
+    [$code,$legacyReview] = $request('get_review_preview',['sku'=>'PREVIEW-TEST'],true,true);
+    previewCheck($code===200 && !$legacyReview['permissions']['approval_available'] && !$legacyReview['permissions']['can_approve'], 'Legacy schema broke the reviewer preview or offered an unavailable approval.');
+    echo "PASS Promoflow review HTTP: admin access, private drafts, shared options/prices, pending Draft approval, stale requests and older schema.\n";
     echo "PASS supplier preview HTTP: current/older schema, pending Draft, ownership, private drafts, sibling options and customer price parity.\n";
     if (in_array('--serve',$argv,true)) {
         echo 'Browser fixture: http://127.0.0.1:'.$port."/__preview_test\nPress Enter to stop and remove the disposable database.\n";
         fgets(STDIN);
     }
 } finally {
+    if (is_resource($reviewServer)) { proc_terminate($reviewServer); proc_close($reviewServer); }
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     $admin->exec("DROP DATABASE `$dbName`");
     foreach (glob($temp.'/*') as $file) unlink($file);

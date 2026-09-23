@@ -41,14 +41,15 @@ const [{
 
 // [Supplier 3.3] Esta clase es el coordinador: no hace todo por sí sola, sino que conecta API,
 // estado, galería, renderizadores, precios y variaciones en un único flujo legible.
-class SupplierPreviewApp {
-  constructor() {
+export class SupplierPreviewApp {
+  constructor(options = {}) {
+    this.previewAction = options.previewAction || "get_supplier_preview";
     // [Supplier 3.3.1] El SKU de la URL identifica el producto que se debe consultar.
     this.params = new URLSearchParams(window.location.search);
     this.sku = String(this.params.get("sku") || "").trim();
 
     // [Supplier 3.3.2] API se comunica con PHP y Store conserva el estado compartido en memoria.
-    this.api = new PreviewApi();
+    this.api = new PreviewApi(options);
     this.store = new PreviewStore();
     this.loadController = null;
     this.submitController = null;
@@ -61,12 +62,14 @@ class SupplierPreviewApp {
     this.prices = new PricesController({
       api: this.api,
       store: this.store,
-      getSku: () => this.sku
+      getSku: () => this.sku,
+      variationPricesAction: options.variationPricesAction
     });
     this.variations = new VariationsController({
       api: this.api,
       store: this.store,
       prices: this.prices,
+      variationChildrenAction: options.variationChildrenAction,
       renderPath: () => this.renderSelectedPath(),
       onError: message => this.showMessage(message, "error")
     });
@@ -92,7 +95,7 @@ class SupplierPreviewApp {
       this.elements.back?.addEventListener("click", () => this.goBack());
       this.elements.publish?.addEventListener("click", () => this.submitForApproval());
     }
-    this.getProduct();
+    if (options.autoLoad !== false) this.getProduct();
   }
 
   async getProduct() {
@@ -103,12 +106,13 @@ class SupplierPreviewApp {
       return;
     }
     this.setLoading(true);
+    if (this.elements.fatal) this.elements.fatal.hidden = true;
     this.loadController?.abort();
     this.loadController = new AbortController();
     try {
       // [Supplier 4] El método consulta el producto con su makeRequest local.
       const payload = await this.makeRequest(this.api.previewUrl, {
-        action: "get_supplier_preview",
+        action: this.previewAction,
         sku: this.sku
       }, {
         requireSuccess: true,
@@ -397,4 +401,6 @@ class SupplierPreviewApp {
     return result;
   }
 }
-const app = new SupplierPreviewApp();
+if (document.getElementById("preview_app")?.dataset.previewMode !== "review") {
+  new SupplierPreviewApp();
+}

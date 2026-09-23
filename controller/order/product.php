@@ -13,6 +13,12 @@ class Product {
 
     switch ($data["action"] ?? null) {
 
+      case 'get_review_preview':
+      case 'get_review_variation_children':
+      case 'get_review_variation_prices':
+        $this->handleReview($data);
+        break;
+
       case 'get_supplier_preview':
         // [Supplier 4.2.2] Continúa en getSupplierPreview().
         $this->getSupplierPreview($data);
@@ -62,6 +68,29 @@ class Product {
     }
   }
 
+  // Review access is checked here even when called directly instead of through Promoflow.
+  public function handleReview(array $data): void
+  {
+      if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST'
+          || stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
+          $this->jsonError('A JSON POST request is required.', 415);
+          return;
+      }
+      if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+      $authorized = ($_SESSION['is_logged'] ?? false) === true && !empty($_SESSION['user_email']);
+      session_write_close();
+      if (!$authorized) {
+          $this->jsonError('Sign in to Promoflow to review this product.', 401);
+          return;
+      }
+      switch ($data['action'] ?? '') {
+          case 'get_review_preview': $this->getSupplierPreview($data, true); break;
+          case 'get_review_variation_children': $this->getSupplierVariationChildren($data, true); break;
+          case 'get_review_variation_prices': $this->getSupplierVariationPrices($data, true); break;
+          default: $this->jsonError('Unsupported review action.');
+      }
+  }
+
   private function getSupplierSessionEmail(): ?string
   {
       // [Supplier servidor 4.2.3] Una sesión válida necesita la bandera de login y un email no vacío.
@@ -86,9 +115,9 @@ class Product {
       ], $extra), JSON_UNESCAPED_UNICODE);
   }
 
-  private function getOwnedProduct(PDO $pdo, string $sku, string $email): ?array
+  private function getOwnedProduct(PDO $pdo, string $sku, ?string $email): ?array
   {
-      // [Supplier servidor 4.2.5] La consulta exige que el SKU pertenezca al proveedor autenticado.
+      // The supplier scope is omitted only after handleReview authenticates a Promoflow reviewer.
       // También cuenta requisitos y resuelve la variación raíz en una sola ida a la base de datos.
       $stmt = $pdo->prepare("
           SELECT
@@ -141,14 +170,13 @@ class Product {
           LEFT JOIN `groups` g ON g.group_id = p.group_id
           LEFT JOIN categories c ON c.category_id = g.category_id
           WHERE LOWER(TRIM(p.SKU)) = LOWER(:sku)
-            AND LOWER(TRIM(s.email)) = LOWER(:email)
+            " . ($email === null ? '' : 'AND LOWER(TRIM(s.email)) = LOWER(:email)') . "
           LIMIT 1
       ");
 
-      $stmt->execute([
-          ':sku' => $sku,
-          ':email' => $email,
-      ]);
+      $params = [':sku' => $sku];
+      if ($email !== null) $params[':email'] = $email;
+      $stmt->execute($params);
 
       $row = $stmt->fetch(PDO::FETCH_ASSOC);
       return $row ?: null;
@@ -204,14 +232,14 @@ class Product {
       ];
   }
 
-  private function getSupplierPreview(array $data): void
+  private function getSupplierPreview(array $data, bool $review = false): void
   {
       // [Supplier 4.2.2] Este método arma la primera respuesta del preview privado.
       header('Content-Type: application/json; charset=utf-8');
 
       // [Supplier 4.2.2.1] Primero se valida sesión; después el SKU recibido.
-      $email = $this->getSupplierSessionEmail();
-      if ($email === null) {
+      $email = $review ? null : $this->getSupplierSessionEmail();
+      if (!$review && $email === null) {
           $this->jsonError('Your supplier session has expired. Please sign in again.', 401);
           return;
       }
@@ -272,14 +300,16 @@ class Product {
           'root_variation_id' => (int)($product['root_variation_id'] ?? 0),
           'readiness' => $readiness,
           'permissions' => [
-              'can_edit' => true,
+              'can_edit' => !$review,
+              'can_approve' => $review && $approvalAvailable && $isPending
+                  && ($product['pending_status'] === 0 || $readiness['complete']),
               'approval_available' => $approvalAvailable,
-              'can_submit' => $approvalAvailable && $product['status'] === 0 && !$isPending && $readiness['complete'],
+              'can_submit' => !$review && $approvalAvailable && $product['status'] === 0 && !$isPending && $readiness['complete'],
           ],
       ], JSON_UNESCAPED_UNICODE);
   }
 
-  private function getOwnedVariationProduct(PDO $pdo, int $variationId, string $email): ?array
+  private function getOwnedVariationProduct(PDO $pdo, int $variationId, ?string $email): ?array
   {
       // [Supplier servidor 6.2.2.2] Cada nodo debe pertenecer también al proveedor autenticado.
       $stmt = $pdo->prepare("
@@ -288,25 +318,24 @@ class Product {
           INNER JOIN products p ON p.product_id = v.product_id
           INNER JOIN suppliers s ON s.supplier_id = p.supplier_id
           WHERE v.variation_id = :variation_id
-            AND LOWER(TRIM(s.email)) = LOWER(:email)
+            " . ($email === null ? '' : 'AND LOWER(TRIM(s.email)) = LOWER(:email)') . "
           LIMIT 1
       ");
-      $stmt->execute([
-          ':variation_id' => $variationId,
-          ':email' => $email,
-      ]);
+      $params = [':variation_id' => $variationId];
+      if ($email !== null) $params[':email'] = $email;
+      $stmt->execute($params);
       $row = $stmt->fetch(PDO::FETCH_ASSOC);
       return $row ?: null;
   }
 
-  private function getSupplierVariationChildren(array $data): void
+  private function getSupplierVariationChildren(array $data, bool $review = false): void
   {
       // [Supplier 6.2.2.1] Este método responde una etapa del recorrido de variaciones.
       header('Content-Type: application/json; charset=utf-8');
 
       // [Supplier 6.2.2.1.1] Se repiten las validaciones porque cada fetch es una petición independiente.
-      $email = $this->getSupplierSessionEmail();
-      if ($email === null) {
+      $email = $review ? null : $this->getSupplierSessionEmail();
+      if (!$review && $email === null) {
           $this->jsonError('Your supplier session has expired.', 401);
           return;
       }
@@ -362,13 +391,13 @@ class Product {
       ], JSON_UNESCAPED_UNICODE);
   }
 
-  private function getSupplierVariationPrices(array $data): void
+  private function getSupplierVariationPrices(array $data, bool $review = false): void
   {
       // [Supplier 8.3.2.1] Este método calcula extras para una cantidad concreta.
       header('Content-Type: application/json; charset=utf-8');
 
-      $email = $this->getSupplierSessionEmail();
-      if ($email === null) {
+      $email = $review ? null : $this->getSupplierSessionEmail();
+      if (!$review && $email === null) {
           $this->jsonError('Your supplier session has expired.', 401);
           return;
       }
@@ -787,12 +816,14 @@ require_once __DIR__ . "/../../model/prices.php";
 require_once __DIR__ . "/../../model/variations.php";
 
 // [Servidor 4.2.0.1] Se crea el controlador y handleProduct() inicia el switch descrito arriba.
-$productClass = new Product();
-try {
-    $productClass->handleProduct();
-} catch (Throwable $error) {
-    error_log('Product preview error: ' . $error->getMessage());
-    http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['success' => false, 'error' => 'The product preview could not be loaded. Please try again.']);
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    $productClass = new Product();
+    try {
+        $productClass->handleProduct();
+    } catch (Throwable $error) {
+        error_log('Product preview error: ' . $error->getMessage());
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'The product preview could not be loaded. Please try again.']);
+    }
 }

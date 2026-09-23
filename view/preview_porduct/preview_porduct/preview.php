@@ -1,8 +1,12 @@
 <?php
 // [Supplier 2] index.php llegó a este archivo para construir el contenido específico del preview.
 // [Supplier 2.1] Estas rutas indican qué CSS y qué módulo JavaScript debe recibir el navegador.
-$cssPath = '../../view/preview_porduct/preview_porduct/preview.css';
-$entryPath = '../../view/preview_porduct/preview_porduct/preview_logic.js';
+// Promoflow includes this same template, using its review coordinator and Dot63 assets.
+$previewAssetBase = rtrim($previewAssetBase ?? '../..', '/');
+$isReview = ($previewMode ?? 'supplier') === 'review';
+$cssPath = $previewAssetBase . '/view/preview_porduct/preview_porduct/preview.css';
+$sharedEntryPath = $previewAssetBase . '/view/preview_porduct/preview_porduct/preview_logic.js';
+$entryPath = $previewEntryPath ?? $sharedEntryPath;
 $cssFile = __DIR__ . '/preview.css';
 $customerCssTime = filemtime(dirname(__DIR__, 2) . '/preview_product_customers/preview_porduct/preview.css');
 
@@ -25,7 +29,7 @@ $moduleFiles = [
 ];
 
 $cssTime = is_file($cssFile) ? filemtime($cssFile) : '1';
-$entryTime = 1;
+$entryTime = $previewEntryVersion ?? 1;
 foreach ($moduleFiles as $moduleFile) {
   if (is_file($moduleFile)) {
     $entryTime = max($entryTime, filemtime($moduleFile));
@@ -34,11 +38,11 @@ foreach ($moduleFiles as $moduleFile) {
 ?>
 
 <!-- [Supplier 2.3] El navegador carga los estilos del preview con su versión actual. -->
-<link rel="stylesheet" href="../../view/preview_product_customers/preview_porduct/preview.css?v=<?= $customerCssTime ?>">
+<link rel="stylesheet" href="<?= htmlspecialchars($previewAssetBase) ?>/view/preview_product_customers/preview_porduct/preview.css?v=<?= $customerCssTime ?>">
 <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>?v=<?= $cssTime ?>">
 
 <!-- [Supplier 2.4] Se entrega primero una estructura vacía; JavaScript la llenará con datos seguros del servidor. -->
-<main class="supplier-preview supplier-product-preview" aria-labelledby="sp-title">
+<main id="preview_app" data-preview-mode="<?= $isReview ? 'review' : 'supplier' ?>" data-shared-module="<?= htmlspecialchars($sharedEntryPath) ?>?v=<?= $entryTime ?>" class="supplier-preview supplier-product-preview" aria-labelledby="sp-title">
   <!-- [Supplier 2.4.1] Este estado permanece visible mientras se buscan el producto y sus opciones. -->
   <section id="preview_loading" class="preview-state preview-state--loading" aria-live="polite">
     <span class="preview-spinner" aria-hidden="true"></span>
@@ -54,7 +58,7 @@ foreach ($moduleFiles as $moduleFile) {
     <div>
       <strong>Preview unavailable</strong>
       <span id="preview_fatal_message">The product preview could not be loaded.</span>
-      <a id="preview_login_link" class="btn btn-secondary btn-compact" href="../../view/log_inSupplier/index.php" hidden>
+      <a id="preview_login_link" class="btn btn-secondary btn-compact" href="<?= $isReview ? '../../view/login/index.php' : '../../view/log_inSupplier/index.php' ?>" hidden>
         Sign in again
       </a>
     </div>
@@ -73,15 +77,21 @@ foreach ($moduleFiles as $moduleFile) {
 
       <div class="preview-actions">
         <button type="button" class="btn btn-secondary" id="btn_back_edit">
-          Back to editing
+          <?= $isReview ? 'Back to Dashboard' : 'Back to editing' ?>
         </button>
-        <button type="button" class="btn btn-primary" id="btn_publish">
-          <span class="btn-label">Submit for approval</span>
+        <?php if ($isReview): ?>
+        <button type="button" class="btn btn-secondary" id="btn_msn_supplier">Message Supplier</button>
+        <?php endif; ?>
+        <button type="button" class="btn btn-primary" id="btn_publish" disabled>
+          <span class="btn-label"><?= $isReview ? 'Approve status change' : 'Submit for approval' ?></span>
           <span class="btn-spinner" aria-hidden="true"></span>
         </button>
       </div>
     </header>
 
+    <?php if ($isReview): ?>
+    <div id="approval_status_summary" class="preview-notice" data-tone="info" role="status"></div>
+    <?php endif; ?>
     <div id="preview_notice" class="preview-notice" data-tone="info" hidden role="status"></div>
 
     <nav class="sp-breadcrumbs" aria-label="Product breadcrumb">
@@ -234,7 +244,7 @@ foreach ($moduleFiles as $moduleFile) {
           </dl>
 
           <p class="preview-only-note">
-            Checkout actions are disabled in supplier preview mode.
+            Checkout actions are disabled in <?= $isReview ? 'review' : 'supplier preview' ?> mode.
           </p>
           <div class="purchase-actions" aria-label="Purchase actions">
             <button type="button" class="btn btn-primary purchase-button" disabled>addToCart</button>

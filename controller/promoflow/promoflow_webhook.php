@@ -34,6 +34,19 @@ class Resques63API
     }
 
     switch ($data["action"] ?? null) {
+      case 'get_review_preview':
+      case 'get_review_variation_children':
+      case 'get_review_variation_prices':
+        require_once __DIR__ . '/../order/product.php';
+        try {
+          (new Product())->handleReview($data);
+        } catch (Throwable $error) {
+          error_log('Product review error: ' . $error->getMessage());
+          http_response_code(500);
+          echo json_encode(['success' => false, 'error' => 'The product preview could not be loaded. Please try again.']);
+        }
+        break;
+
       case 'get_API_overview_data':
         $this->getAPIOverviewData($data);
         break;

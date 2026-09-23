@@ -5,6 +5,6 @@ const { VariationsController: CustomerVariationsController } = await import(new 
 
 export class VariationsController extends CustomerVariationsController {
   constructor(options = {}) {
-    super({ ...options, variationChildrenAction: "get_supplier_variation_children" });
+    super({ ...options, variationChildrenAction: options.variationChildrenAction || "get_supplier_variation_children" });
   }
 }

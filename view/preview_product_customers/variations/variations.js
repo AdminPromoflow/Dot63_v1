@@ -454,10 +454,10 @@ export class VariationsController {
   resolveAssetPath(rawPath = "", fallback = "") {
     // [Customer 6.6.6] Una opción sin imagen usa el icono local del producto.
     const path = String(rawPath ?? "").trim().replace(/^\/+/, "");
-    if (!path) return fallback;
+    if (!path) return fallback ? new URL(fallback.replace(/^\.\.\/\.\.\//, ""), new URL("../../../", import.meta.url)).href : "";
     if (/^(https?:|data:|blob:)/i.test(path)) return path;
-    if (path.startsWith("controller/")) return `../../${path}`;
-    return `../../controller/${path}`;
+    const root = new URL("../../../", import.meta.url);
+    return new URL(path.startsWith("controller/") ? path : `controller/${path}`, root).href;
   }
 
   handleRootClick(event) {

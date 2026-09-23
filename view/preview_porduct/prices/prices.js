@@ -5,6 +5,6 @@ const { PricesController: CustomerPricesController } = await import(new URL(
 
 export class PricesController extends CustomerPricesController {
   constructor(options = {}) {
-    super({ ...options, variationPricesAction: "get_supplier_variation_prices" });
+    super({ ...options, variationPricesAction: options.variationPricesAction || "get_supplier_variation_prices" });
   }
 }

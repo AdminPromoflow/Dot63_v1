@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../../view/global/quantity_selector/quantity_selector.css?v=<?= filemtime(__DIR__ . '/quantity_selector.css') ?>">
+<link rel="stylesheet" href="<?= htmlspecialchars($previewAssetBase ?? '../..') ?>/view/global/quantity_selector/quantity_selector.css?v=<?= filemtime(__DIR__ . '/quantity_selector.css') ?>">
 <div id="quantity_selector" class="quantity-selector" hidden>
   <div class="quantity-selector__heading">
     <label for="quantity_input">Quantity</label>

@@ -3,10 +3,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
-const promo = path.resolve(root, '../Promoflow_v1');
+const promo = process.env.PROMOFLOW_ROOT || path.resolve(root, '../Promoflow_v1');
 const elements = new Map();
 const element = id => {
-  if (!elements.has(id)) elements.set(id, {value: '', textContent: '', disabled: false, hidden: true, attributes: {}, setAttribute(name, value) {this.attributes[name] = value;}});
+  if (!elements.has(id)) elements.set(id, {value: '', textContent: '', disabled: false, hidden: true, attributes: {}, querySelector() {return this;}, setAttribute(name, value) {this.attributes[name] = value;}});
   return elements.get(id);
 };
 const navigations = [];
@@ -57,15 +57,48 @@ const approved = {status: 1, status_label: 'Published', pending_status: null, st
   options.forEach(option=>assert.doesNotMatch(option[2], /\d/));
 
   source = fs.readFileSync(path.join(promo,'view/preview_porduct/preview_porduct/preview_logic.js'),'utf8');
-  source = source.slice(0,source.indexOf('const previewLogic = new PreviewLogic();')) + '\nthis.Preview = PreviewLogic;';
+  source = source.slice(source.indexOf('export class PreviewLogic'),source.indexOf('const previewLogic = new PreviewLogic();')).replace('export class PreviewLogic', 'class SupplierPreviewApp {}\nclass PreviewLogic') + '\nthis.Preview = PreviewLogic;';
   vm.runInContext(source,context);
   const preview = Object.create(context.Preview.prototype);
-  preview.renderApprovalRequest({...approved,pending_status:0,pending_status_label:'Draft'});
+  preview.approving = false;
+  preview.renderApprovalRequest({...approved,pending_status:0,pending_status_label:'Draft'}, {can_approve:true,approval_available:true});
   assert.equal(element('btn_publish').disabled,false);
   assert.equal(element('btn_publish').textContent,'Approve: Draft');
+  preview.renderApprovalRequest({...approved,pending_status:2,pending_status_label:'Configurable'}, {can_approve:false,approval_available:true});
+  assert.equal(element('btn_publish').disabled,true);
+  assert.match(element('btn_publish').title,/checklist/);
+  preview.renderApprovalRequest({...approved,pending_status:0,pending_status_label:'Draft'}, {can_approve:false,approval_available:false});
+  assert.equal(element('btn_publish').disabled,true);
+  assert.match(element('approval_status_summary').textContent,/temporarily unavailable/);
   preview.renderApprovalRequest(approved);
   assert.equal(element('btn_publish').disabled,true);
   assert.equal(preview.statusRequest,null);
+
+  preview.sku = 'TEST';
+  preview.api = {productUrl:'/review'};
+  preview.elements = {publish:element('btn_publish')};
+  element('btn_publish').classList = {add(){},remove(){}};
+  preview.renderApprovalRequest({...approved,pending_status:0,pending_status_label:'Draft'}, {can_approve:true});
+  let approvals = 0;
+  preview.makeRequest = async (url,data) => {
+    approvals++;
+    assert.equal(data.requested_status,0);
+    assert.equal(data.status_request_version,4);
+    const error = new Error('This request has changed'); error.status=409; throw error;
+  };
+  preview.getProduct = async () => preview.renderApprovalRequest({...approved,pending_status:3,pending_status_label:'Separate combinations',status_request_version:5}, {can_approve:true});
+  preview.showMessage = message => { preview.message = message; };
+  await Promise.all([preview.submitForApproval(),preview.submitForApproval()]);
+  assert.equal(approvals,1,'A double click submitted two approvals.');
+  assert.equal(preview.statusRequest.status_request_version,5);
+  assert.equal(element('btn_publish').disabled,false);
+  assert.match(preview.message,/changed/);
+  preview.makeRequest = async () => ({success:true,message:'Approved'});
+  preview.getProduct = async () => preview.renderApprovalRequest({...approved,status:3,status_label:'Separate combinations'});
+  await preview.submitForApproval();
+  assert.equal(preview.statusRequest,null);
+  assert.equal(element('btn_publish').disabled,true);
+  assert.equal(preview.message,'Approved');
 
   source = fs.readFileSync(path.join(promo,'view/overview/section_overview/section_overview.js'),'utf8') + '\nthis.Overview = SectionOverview;';
   vm.runInContext(source,context);
