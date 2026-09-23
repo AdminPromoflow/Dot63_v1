@@ -80,7 +80,7 @@ class ClassDashboardSupplier {
       groupId: Number(groupId),
       name: groupName
     };
-    this.setCatalogHeader(groupName || "Products", "Products assigned to this group.", true);
+    this.setCatalogHeader(groupName || "Products", "Select a product to edit it.", true);
     this.setLoading("Loading products…");
     try {
       this.activeRequest?.abort();
@@ -93,7 +93,7 @@ class ClassDashboardSupplier {
         signal: this.activeRequest.signal
       });
       this.selectedGroup.name = result.group.name;
-      this.setCatalogHeader(`${result.group.name} · Products`, "Products assigned to this group.", true);
+      this.setCatalogHeader(`${result.group.name} · Products`, "Select a product to edit it.", true);
       this.renderProducts(result.data);
     } catch (error) {
       this.handleCatalogError(error, () => this.loadProducts(groupId, groupName));
@@ -158,8 +158,10 @@ class ClassDashboardSupplier {
       if (product.status) {
         metaParts.push(product.status);
       }
-      const item = this.createCatalogItem(product.name || `Product ${productId}`, metaParts.join(" · "), "product");
+      const item = this.createCatalogButton(product.name || `Product ${productId}`, metaParts.join(" · "), "product");
       item.dataset.productId = String(productId);
+      item.dataset.sku = String(product.sku || "").trim();
+      item.disabled = !item.dataset.sku;
       this.catalogList.appendChild(item);
     });
   }
@@ -175,13 +177,6 @@ class ClassDashboardSupplier {
     arrow.textContent = "→";
     button.appendChild(arrow);
     return button;
-  }
-
-  createCatalogItem(name, meta, type) {
-    const item = document.createElement("article");
-    item.className = "catalog-item catalog-product";
-    item.append(...this.createCatalogItemContent(name, meta, type));
-    return item;
   }
 
   createCatalogItemContent(name, meta, type) {
@@ -271,7 +266,33 @@ class ClassDashboardSupplier {
   selectCatalogItem(event) {
     const item = event.target.closest("button.catalog-item");
     if (!item || !this.catalogList.contains(item)) return;
-    if (item.dataset.categoryId) this.loadGroups(Number(item.dataset.categoryId), item.dataset.name);else if (item.dataset.groupId) this.loadProducts(Number(item.dataset.groupId), item.dataset.name);
+    if (item.dataset.categoryId) {
+      this.loadGroups(Number(item.dataset.categoryId), item.dataset.name);
+    } else if (item.dataset.groupId) {
+      this.loadProducts(Number(item.dataset.groupId), item.dataset.name);
+    } else if (item.dataset.sku) {
+      this.openProduct(item.dataset.sku);
+    }
+  }
+
+  async openProduct(sku) {
+    this.setLoading("Opening product…");
+    try {
+      this.activeRequest?.abort();
+      this.activeRequest = new AbortController();
+      const result = await this.makeRequest("../../controller/products/product.php", {
+        action: "get_default_variation_by_sku",
+        sku
+      }, {
+        requireSuccess: true,
+        signal: this.activeRequest.signal
+      });
+      const variationSku = String(result.sku_variation || "").trim();
+      if (!variationSku) throw new Error("The product's default variation could not be found.");
+      window.location.href = `../../view/category/index.php?sku=${encodeURIComponent(sku)}&sku_variation=${encodeURIComponent(variationSku)}&mode=edit`;
+    } catch (error) {
+      this.handleCatalogError(error, () => this.openProduct(sku));
+    }
   }
 
   retryCatalog(event) {
