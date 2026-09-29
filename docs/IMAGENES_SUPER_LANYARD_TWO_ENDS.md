@@ -544,3 +544,7 @@ Default / Tubular / Polyester / 15mm / Screen print / Two sides / Two colours
 
 - Opción — disponible: `controller/views/uploads/1_Ian_Southworth/PRD-DOUBLE-ENDED-20260923-39/VRT-DOUBLE-ENDED-20260923-39-823/Two-Colours-TwoEnds.png`
 - Galería — disponible: `controller/uploads/1_Ian-Southworth/PRD-DOUBLE-ENDED-20260923-39/VRT-DOUBLE-ENDED-20260923-39-823/Two-Colours-TwoEnds.png`
+
+## Traslado desde Downloads completado
+
+Se movieron y renombraron las 46 imágenes originales de `/Users/aleinarossui/Downloads/SuperLanyardTwoEnds` a `/private/tmp/super-lanyard-two-ends`. Las 19 imágenes usadas por el producto conservan sus 125 destinos por variación; las otras 27 están en `extras` con nombres terminados en `-TwoEnds.png`. El archivo `IMAGENES_MOVIDAS.md` del paquete detalla cada cambio de nombre y ubicación. No quedan PNG en la carpeta de origen.
