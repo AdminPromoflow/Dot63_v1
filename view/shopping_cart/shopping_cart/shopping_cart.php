@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 function shoppingCartEscape($value): string
 {
   return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');

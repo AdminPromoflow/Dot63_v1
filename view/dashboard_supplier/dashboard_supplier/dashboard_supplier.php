@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 $cssTime = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard_supplier.css');
 $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard_supplier.js');
 ?>

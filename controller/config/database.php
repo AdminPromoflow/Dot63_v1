@@ -22,7 +22,7 @@ class Database
         } elseif (strpos(__DIR__, '/Applications/XAMPP/') === 0
             && $environmentHost === false && $environmentName === false && $environmentUser === false) {
             // Local XAMPP development only. Hosted deployments must supply environment variables.
-            $candidates = [['host' => 'localhost', 'name' => 'dot63', 'user' => 'root', 'password' => '']];
+            $candidates = [['host' => '127.0.0.1', 'name' => 'dot63', 'user' => 'root', 'password' => '']];
         } else {
             error_log('Dot63 database credentials are not configured. Set DOT63_DB_HOST, DOT63_DB_NAME, DOT63_DB_USER and DOT63_DB_PASSWORD.');
             return;

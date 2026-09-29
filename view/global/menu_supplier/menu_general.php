@@ -1,4 +1,3 @@
-<?php require_once __DIR__ . '/../../../controller/security/bootstrap.php'; ?>
 
 <?php
 $cssTime = filemtime('../../view/global/menu_supplier/menu_general.css'); // ejemplo: '../Home/5.Video/video.css'

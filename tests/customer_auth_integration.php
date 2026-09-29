@@ -31,12 +31,21 @@ $address = [
 $payload = ['action' => 'requestSignUp', 'name' => 'María Test', 'email' => $email,
     'password' => $password, 'password_confirmation' => $password, 'address' => $address];
 $request = static function (string $path, $data = null) use ($base, $cookie): array {
+    $headers = ['Content-Type: application/json'];
+    if (is_array($data) && ($data['action'] ?? '') === 'logout_customer') {
+        $tokenCurl = curl_init($base . '/controller/security/csrf.php');
+        curl_setopt_array($tokenCurl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_COOKIEFILE => $cookie,
+            CURLOPT_COOKIEJAR => $cookie, CURLOPT_TIMEOUT => 10]);
+        $tokenResponse = json_decode((string)curl_exec($tokenCurl), true);
+        curl_close($tokenCurl);
+        $headers[] = 'X-Dot63-CSRF-Token: ' . ($tokenResponse['token'] ?? '');
+    }
     $curl = curl_init($base . $path);
     curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER => true, CURLOPT_COOKIEFILE => $cookie,
         CURLOPT_COOKIEJAR => $cookie, CURLOPT_TIMEOUT => 25]);
     if ($data !== null) {
         curl_setopt_array($curl, [CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POSTFIELDS => is_array($data) ? json_encode($data) : $data]);
     }
     $body = curl_exec($curl);

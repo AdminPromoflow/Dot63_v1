@@ -6,7 +6,7 @@ class Users {
   private $email;     // User's email
   private $password;  // User's password
   private $signup_category;  // User's signup category
-  private $sku;     // sku
+  private $SKU;     // sku
 
   // Nuevos atributos
   private $phone;

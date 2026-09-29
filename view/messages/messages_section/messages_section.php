@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 $cssPath = '../../view/messages/messages_section/messages_section.css';
 $jsPath  = '../../view/messages/messages_section/messages_section.js';
 $jsPathLogic  = '../../view/messages/messages_section/messages_logics.js';

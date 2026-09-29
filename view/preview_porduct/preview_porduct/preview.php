@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 // [Supplier 2] index.php llegó a este archivo para construir el contenido específico del preview.
 // [Supplier 2.1] Estas rutas indican qué CSS y qué módulo JavaScript debe recibir el navegador.
 // Promoflow includes this same template, using its review coordinator and Dot63 assets.

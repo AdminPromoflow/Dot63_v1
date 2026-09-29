@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 $cssFs = __DIR__ . '/product_details.css';
 $jsFs  = __DIR__ . '/product_details.js';
 

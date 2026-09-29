@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 // [Customer 2] index.php llegó a este archivo para construir el configurador público del producto.
 // [Customer 2.1] Estas rutas indican qué CSS y qué módulo JavaScript debe recibir el navegador.
 $cssPath = '../../view/preview_product_customers/preview_porduct/preview.css';
