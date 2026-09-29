@@ -7,7 +7,10 @@ require_once __DIR__ . '/../controller/config/database.php';
 
 $directory = sys_get_temp_dir() . '/dot63-db-config-' . bin2hex(random_bytes(6));
 mkdir($directory, 0700);
-$keys = ['DOT63_DB_HOST', 'DOT63_DB_NAME', 'DOT63_DB_USER', 'DOT63_DB_PASSWORD', 'DOT63_DB_PORT'];
+$keys = [];
+foreach (['DOT63_DB_HOST', 'DOT63_DB_NAME', 'DOT63_DB_USER', 'DOT63_DB_PASSWORD', 'DOT63_DB_PORT'] as $key) {
+    foreach (['', 'REDIRECT_', 'REDIRECT_REDIRECT_', 'HTTP_'] as $prefix) $keys[] = $prefix . $key;
+}
 $previous = [];
 foreach ($keys as $key) {
     $previous[$key] = [getenv($key), $_ENV[$key] ?? null, $_SERVER[$key] ?? null];
@@ -23,13 +26,13 @@ function checkDatabaseConfig(bool $condition, string $message): void
     $checks++;
 }
 
-function expectConfigFailure(callable $load, string $message): void
+function expectConfigFailure(callable $load, string $message): string
 {
     try {
         $load();
     } catch (RuntimeException $error) {
         checkDatabaseConfig(true, $message);
-        return;
+        return $error->getMessage();
     }
     throw new RuntimeException($message);
 }
@@ -60,6 +63,23 @@ try {
     checkDatabaseConfig(DatabaseConfig::load($directory)['host'] === 'fastcgi.example.test', 'FastCGI configuration was ignored.');
     unset($_SERVER['DOT63_DB_HOST']);
 
+    // Internal redirects can change the names presented to PHP by the server.
+    $_SERVER['REDIRECT_DOT63_DB_HOST'] = 'redirect.example.test';
+    checkDatabaseConfig(DatabaseConfig::load($directory)['host'] === 'redirect.example.test', 'Redirected host was ignored.');
+    putenv('DOT63_DB_HOST=direct.example.test');
+    checkDatabaseConfig(DatabaseConfig::load($directory)['host'] === 'direct.example.test', 'Direct host must override redirected host.');
+    putenv('DOT63_DB_HOST');
+    unset($_SERVER['REDIRECT_DOT63_DB_HOST']);
+    $_ENV['REDIRECT_REDIRECT_DOT63_DB_HOST'] = 'nested.example.test';
+    checkDatabaseConfig(DatabaseConfig::load($directory)['host'] === 'nested.example.test', 'Nested redirect host was ignored.');
+    unset($_ENV['REDIRECT_REDIRECT_DOT63_DB_HOST']);
+    putenv('REDIRECT_DOT63_DB_PASSWORD=  redirected password  ');
+    checkDatabaseConfig(DatabaseConfig::load($directory)['password'] === '  redirected password  ', 'Redirected password was changed.');
+    putenv('REDIRECT_DOT63_DB_PASSWORD');
+    $_SERVER['HTTP_DOT63_DB_HOST'] = 'untrusted.example.test';
+    checkDatabaseConfig(DatabaseConfig::load($directory)['host'] === $fileConfig['host'], 'HTTP request header used as configuration.');
+    unset($_SERVER['HTTP_DOT63_DB_HOST']);
+
     putenv('DOT63_DB_NAME=');
     expectConfigFailure(fn() => DatabaseConfig::load($directory, true), 'Empty explicit name must not fall back.');
     putenv('DOT63_DB_NAME');
@@ -73,7 +93,9 @@ try {
     $withoutPassword = $fileConfig;
     unset($withoutPassword['password']);
     $writeConfig($withoutPassword);
-    expectConfigFailure(fn() => DatabaseConfig::load($directory), 'Missing password must not become an empty password.');
+    $message = expectConfigFailure(fn() => DatabaseConfig::load($directory), 'Missing password must not become an empty password.');
+    checkDatabaseConfig(strpos($message, 'Missing or invalid: DOT63_DB_PASSWORD.') !== false, 'Missing variable is not identified.');
+    checkDatabaseConfig(strpos($message, $fileConfig['user']) === false, 'Configuration values leaked into diagnostics.');
     file_put_contents($directory . '/database.local.php', '<?php return true;');
     expectConfigFailure(fn() => DatabaseConfig::load($directory, true), 'Invalid file must not fall back to XAMPP.');
     unlink($directory . '/database.local.php');
@@ -91,6 +113,9 @@ try {
     ini_set('error_log', $directory . '/errors.log');
     expectConfigFailure(fn() => (new Database())->getConnection(), 'Unavailable connection returned instead of throwing.');
     ini_set('error_log', (string)$oldLog);
+    $log = file_get_contents($directory . '/errors.log');
+    checkDatabaseConfig(strpos($log, 'DOT63_DB_NAME') !== false, 'Missing variable is not logged.');
+    checkDatabaseConfig(strpos($log, 'fixture-only') === false && strpos($log, 'fixture_user') === false, 'Credential values leaked into the log.');
 
     echo "PASS {$checks} database configuration checks (no database writes).\n";
 } finally {
