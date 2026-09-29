@@ -216,21 +216,10 @@ class EmailsSender
             $lines = [];
             $subtotal = 0.0;
             foreach ($jobs as $job) {
-                $jobId = (int)($job['job_id'] ?? 0);
-                $name = trim((string)($job['product_name'] ?? '')) ?: 'Job #' . $jobId;
-                $sku = trim((string)($job['product_sku'] ?? ''));
-                $quantity = (int)($job['quantity'] ?? 0);
-                $amount = (float)($job['subtotal'] ?? 0);
-                $subtotal += $amount;
-                $money = $currency . ' ' . number_format($amount, 2, '.', ',');
-                $rows .= '<tr><td style="padding:10px;border-bottom:1px solid #dce3ea;">'
-                    . '<strong>' . $this->escape($name) . '</strong><br>'
-                    . $this->escape('Job #' . $jobId . ($sku !== '' ? ' · ' . $sku : ''))
-                    . '</td><td style="padding:10px;border-bottom:1px solid #dce3ea;">' . $quantity
-                    . '</td><td style="padding:10px;border-bottom:1px solid #dce3ea;white-space:nowrap;">'
-                    . $this->escape($money) . '</td></tr>';
-                $lines[] = "Job #{$jobId}: {$name}" . ($sku !== '' ? " ({$sku})" : '')
-                    . " — Quantity: {$quantity} — Subtotal: {$money}";
+                $subtotal += (float)($job['subtotal'] ?? 0);
+                $content = $this->orderJobContent($job, $orderId, $currency);
+                $rows .= $content['html'];
+                $lines[] = $content['text'];
             }
             $paidAt = trim((string)($order['paid_at'] ?? ''));
             $total = $currency . ' ' . number_format($subtotal, 2, '.', ',');
@@ -244,19 +233,121 @@ class EmailsSender
                 '<p>Hello ' . $this->escape($this->recipientName !== '' ? $this->recipientName : 'there') . ',</p>'
                 . '<p>Payment has been confirmed. The following jobs are ready to process.</p>'
                 . ($paidAt !== '' ? '<p><strong>Confirmed:</strong> ' . $this->escape($paidAt) . '</p>' : '')
-                . '<table style="width:100%;border-collapse:collapse;text-align:left;">'
-                . '<thead><tr><th style="padding:10px;">Product / job</th><th style="padding:10px;">Quantity</th>'
-                . '<th style="padding:10px;">Subtotal</th></tr></thead><tbody>' . $rows . '</tbody></table>'
+                . $rows
                 . '<p><strong>Included jobs subtotal:</strong> ' . $this->escape($total) . '</p>'
             );
             $mail->AltBody = "New order #{$orderId}\n\nPayment has been confirmed. These jobs are ready to process.\n"
                 . ($paidAt !== '' ? "Confirmed: {$paidAt}\n" : '') . "\n"
-                . implode("\n", $lines) . "\n\nIncluded jobs subtotal: {$total}";
+                . implode("\n\n", $lines) . "\n\nIncluded jobs subtotal: {$total}";
             return $this->deliver($mail);
         } catch (Throwable $error) {
             error_log('EmailsSender::sendEmailOrderNotification error -> ' . $error->getMessage());
             return false;
         }
+    }
+
+    private function orderJobContent(array $job, int $orderId, string $currency): array
+    {
+        $jobId = (int)($job['job_id'] ?? 0);
+        $name = trim((string)($job['product_name'] ?? '')) ?: 'Job #' . $jobId;
+        $sku = trim((string)($job['product_sku'] ?? ''));
+        $money = static fn($amount): string => $currency . ' ' . number_format((float)$amount, 2, '.', ',');
+        $fields = [
+            'Order' => '#' . (int)($job['order_id'] ?? $orderId),
+            'Status' => trim((string)($job['status'] ?? '')) ?: 'Not recorded',
+            'Created at' => trim((string)($job['created_at'] ?? '')) ?: 'Not recorded',
+            'Quantity' => (string)(int)($job['quantity'] ?? 0),
+            'Unit price' => $money($job['price_per_unit'] ?? 0),
+        ];
+        if (isset($job['id_order'])) {
+            $fields['Legacy order reference'] = (string)$job['id_order'];
+        }
+        if (isset($job['discount_percentage'])) {
+            $fields['Discount'] = number_format((float)$job['discount_percentage'], 2, '.', ',') . '%';
+        }
+        $fields['Subtotal'] = $money($job['subtotal'] ?? 0);
+        $fields['Notes'] = trim((string)($job['notes'] ?? '')) ?: 'None';
+
+        $html = '<div style="margin:20px 0;padding:16px;border:1px solid #dce3ea;border-radius:10px;overflow-wrap:anywhere;">'
+            . '<h2 style="margin:0 0 8px;font-size:18px;">' . $this->escape($name) . '</h2>'
+            . '<p style="margin:0 0 12px;">' . $this->escape('Job #' . $jobId . ($sku !== '' ? ' · ' . $sku : '')) . '</p>'
+            . '<table role="presentation" style="width:100%;border-collapse:collapse;text-align:left;">';
+        $lines = ["Job #{$jobId}: {$name}" . ($sku !== '' ? " ({$sku})" : '')];
+        foreach ($fields as $label => $value) {
+            $html .= '<tr><th style="padding:4px 12px 4px 0;vertical-align:top;text-align:left;">' . $this->escape($label)
+                . '</th><td style="padding:4px 0;vertical-align:top;word-break:break-word;">' . nl2br($this->escape($value)) . '</td></tr>';
+            $lines[] = $label . ': ' . $value;
+        }
+        $html .= '</table><p><strong>Selected options</strong></p>';
+        $lines[] = 'Selected options:';
+        $details = $job['details'] ?? [];
+        if (!$details) {
+            $html .= '<p>No options recorded.</p>';
+            $lines[] = 'No options recorded.';
+        }
+        foreach ($details as $detail) {
+            $variationId = (int)($detail['variation_id'] ?? 0);
+            $optionName = trim((string)($detail['name'] ?? '')) ?: 'Variation #' . $variationId;
+            $optionSku = trim((string)($detail['sku'] ?? ''));
+            $price = isset($detail['price']) && is_numeric($detail['price']) ? $money($detail['price']) : 'Not recorded';
+            $quantity = trim((string)($detail['quantity'] ?? ''));
+            $description = $optionName . ' — Variation #' . $variationId . ($optionSku !== '' ? ' · ' . $optionSku : '')
+                . ' — Unit price: ' . $price . ' — Quantity: ' . ($quantity !== '' ? $quantity : 'Not recorded');
+            $html .= '<p style="margin:8px 0;">' . $this->escape($description);
+            $lines[] = $description;
+            $image = trim((string)($detail['image'] ?? ''));
+            if ($image !== '') {
+                $imageUrl = $this->publicFileUrl($image);
+                $html .= '<br>Image: ' . ($imageUrl !== ''
+                    ? '<a href="' . $this->escape($imageUrl) . '">View option image</a>'
+                    : $this->escape($image));
+                $lines[] = 'Image: ' . ($imageUrl !== '' ? $imageUrl : $image);
+            }
+            $html .= '</p>';
+        }
+
+        $artwork = trim((string)($job['pdf_artwork_link'] ?? ''));
+        $artworkUrl = $this->publicFileUrl($artwork);
+        if ($artworkUrl !== '') {
+            $html .= '<p style="margin:18px 0 8px;"><a href="' . $this->escape($artworkUrl)
+                . '" download style="display:inline-block;padding:12px 18px;background:#1f3551;color:#fff;text-decoration:none;border-radius:6px;">Download artwork PDF</a></p>'
+                . '<p style="margin:0;font-size:12px;word-break:break-all;"><a href="' . $this->escape($artworkUrl) . '">'
+                . $this->escape($artworkUrl) . '</a></p>';
+            $lines[] = 'Download artwork PDF: ' . $artworkUrl;
+        } else {
+            $message = $artwork === '' ? 'Not supplied' : 'Unavailable';
+            $html .= '<p><strong>Artwork PDF:</strong> ' . $message . '</p>';
+            $lines[] = 'Artwork PDF: ' . $message;
+        }
+        return ['html' => $html . '</div>', 'text' => implode("\n", $lines)];
+    }
+
+    private function publicFileUrl(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '' || preg_match('/[\x00-\x1f\x7f\\\\]/', $path)) {
+            return '';
+        }
+        if (preg_match('#^https?://#i', $path)) {
+            return filter_var($path, FILTER_VALIDATE_URL) && !isset(parse_url($path)['user']) ? $path : '';
+        }
+        if (preg_match('#^(?:[a-z][a-z0-9+.-]*:|//)#i', $path) || strpbrk($path, '?#') !== false) {
+            return '';
+        }
+        $segments = array_map('rawurldecode', explode('/', ltrim($path, '/')));
+        foreach ($segments as $segment) {
+            if ($segment === '.' || $segment === '..' || preg_match('/[\x00-\x1f\x7f\\\\\/]/', $segment)) {
+                return '';
+            }
+        }
+        // Email links must use a trusted public origin, never the webhook Host header.
+        $baseUrl = rtrim($this->environmentValue('DOT63_PUBLIC_URL', 'https://lanyardsforyou.com'), '/');
+        $parts = parse_url($baseUrl);
+        if (!filter_var($baseUrl, FILTER_VALIDATE_URL) || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)
+            || isset($parts['user']) || isset($parts['query']) || isset($parts['fragment'])) {
+            throw new RuntimeException('DOT63_PUBLIC_URL must be an absolute HTTP(S) site URL.');
+        }
+        return $baseUrl . '/' . implode('/', array_map('rawurlencode', $segments));
     }
 
     /**

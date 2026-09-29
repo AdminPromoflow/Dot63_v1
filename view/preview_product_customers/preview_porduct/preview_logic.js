@@ -32,7 +32,8 @@ const [{
 }, {
   ItemsRenderer
 }, {
-  ArtworkRenderer
+  ArtworkRenderer,
+  ArtworkUpload
 }, {
   PricesController
 }, {
@@ -62,6 +63,7 @@ class CustomerPreviewApp {
     this.images = new ImagesRenderer();
     this.items = new ItemsRenderer();
     this.artwork = new ArtworkRenderer();
+    this.artworkUpload = new ArtworkUpload();
     this.prices = new PricesController({
       api: this.api,
       store: this.store,
@@ -87,8 +89,7 @@ class CustomerPreviewApp {
       back: document.getElementById("btn_back_products"),
       addToCart: document.getElementById("bb_add_to_cart"),
       buyNow: document.getElementById("bb_buy_now"),
-      itemsSection: document.getElementById("items_section"),
-      artworkSection: document.getElementById("artwork_section")
+      itemsSection: document.getElementById("items_section")
     };
     this.purchaseReady = false;
     this.purchasePending = false;
@@ -180,7 +181,6 @@ class CustomerPreviewApp {
     const imageKeys = new Set();
     const itemKeys = new Set();
     let renderedItems = 0;
-    let renderedArtwork = 0;
 
     // [Customer 7.1] Store devuelve la raíz y todas las variaciones elegidas en orden.
     const selectedRows = this.store.getSelectedRows();
@@ -211,9 +211,9 @@ class CustomerPreviewApp {
       renderedItems += this.items.render(uniqueItems);
       if (row?.artwork) {
         // [Customer 7.3.3] ArtworkRenderer agrega el PDF asociado, si existe.
-        renderedArtwork += this.artwork.render(row.artwork, {
+        this.artwork.render(row.artwork, {
           variationName
-        }) ? 1 : 0;
+        });
       }
     }
 
@@ -223,7 +223,6 @@ class CustomerPreviewApp {
       keepIndex: false
     });
     if (this.elements.itemsSection) this.elements.itemsSection.hidden = renderedItems === 0;
-    if (this.elements.artworkSection) this.elements.artworkSection.hidden = renderedArtwork === 0;
 
     // [Customer 7.5] El precio base viene del nivel más específico con modo "prices";
     // las opciones con modo "variation" se calculan como extras.
@@ -258,6 +257,15 @@ class CustomerPreviewApp {
   async submitPurchase(buyNow, savedPayload = null) {
     // [Customer 10.1] No enviamos compras incompletas ni permitimos dos solicitudes simultáneas.
     if (!this.purchaseReady || this.purchasePending) return;
+    if (!savedPayload && !this.artworkUpload.validateSelection()) {
+      this.artworkUpload.input?.focus();
+      return;
+    }
+    if (!savedPayload && !this.artworkUpload.getFile()
+      && !window.confirm("You haven't attached an artwork PDF. Are you sure you want to add this product to your cart without one?")) {
+      this.artworkUpload.input?.focus();
+      return;
+    }
 
     // [Customer 10.1.1] Si venimos de autenticación usamos la copia guardada; de lo contrario,
     // tomamos la cantidad, price_id y variaciones seleccionadas actualmente.
@@ -273,21 +281,28 @@ class CustomerPreviewApp {
       quantity,
       price_id: priceId,
       variation_ids: variationIds,
-      intent: buyNow ? "buy_now" : "add_to_cart"
+      intent: buyNow ? "buy_now" : "add_to_cart",
+      artwork_pdf: this.artworkUpload.getFile()
     };
     this.setPurchasePending(true, buyNow ? this.elements.buyNow : this.elements.addToCart);
     this.hideMessage();
     try {
       // [Customer 10.2] PreviewApi envía la selección a controller/order/cart.php.
-      const result = await this.makeRequest(this.api.cartUrl, {
-        action: "add_to_cart",
-        ...purchasePayload
-      }, {
+      const request = new FormData();
+      request.append("action", "add_to_cart");
+      for (const key of ["sku", "quantity", "price_id", "intent"]) request.append(key, purchasePayload[key]);
+      purchasePayload.variation_ids.forEach(id => request.append("variation_ids[]", id));
+      if (purchasePayload.artwork_pdf) {
+        request.append("artwork_pdf", purchasePayload.artwork_pdf);
+        this.artworkUpload.setStatus("Uploading your artwork…");
+      }
+      const result = await this.makeRequest(this.api.cartUrl, request, {
         requireSuccess: true
       });
 
       // [Customer 10.3] En éxito limpiamos el intento pendiente y avisamos al contador global del carrito.
       this.pendingPurchase = null;
+      this.artworkUpload.markSaved(purchasePayload.artwork_pdf);
       this.showMessage(result.message || "The product was added to your cart.", "success");
       window.dispatchEvent(new CustomEvent("promoflow:cart-updated", {
         detail: {
@@ -299,6 +314,11 @@ class CustomerPreviewApp {
         window.location.assign(new URL("../../view/shopping_cart/index.php", window.location.href));
       }
     } catch (error) {
+      if (purchasePayload.artwork_pdf) {
+        this.artworkUpload.setStatus(error.status === 401
+          ? "Your PDF is selected. Sign in to upload it with this product."
+          : "Your artwork has not been saved. Please try adding the product again.");
+      }
       // [Customer 10.4] Un 401/AUTH_REQUIRED no descarta la configuración: la guardamos y abrimos el modal.
       if (error.status === 401 && (!error.code || error.code === "AUTH_REQUIRED")) {
         this.pendingPurchase = {
@@ -333,6 +353,7 @@ class CustomerPreviewApp {
   setPurchasePending(pending, activeButton = null) {
     // [Customer 10.1.2] Mientras el servidor responde, ambos botones quedan bloqueados.
     this.purchasePending = pending;
+    this.artworkUpload.setPending(pending);
     [this.elements.addToCart, this.elements.buyNow].forEach(button => {
       if (!button) return;
       button.disabled = pending || !this.purchaseReady;

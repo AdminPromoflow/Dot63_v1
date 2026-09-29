@@ -30,7 +30,11 @@ final class SafeUpload
 
     public static function validate(array $file, string $kind = 'image'): string
     {
+        if (in_array($file['error'] ?? null, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+            throw new InvalidArgumentException('The file exceeds the server upload limit. Choose a smaller file.');
+        }
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+            || !is_string($file['name'] ?? null)
             || !is_string($file['tmp_name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
             throw new InvalidArgumentException('The upload failed. Please choose the file again.');
         }
@@ -42,6 +46,17 @@ final class SafeUpload
         $extension = self::validate($file, $kind);
         // Only server-generated names; product ownership is checked by CatalogAccess first.
         $relative = 'controller/uploads/' . hash('sha256', $product) . '/' . hash('sha256', $variation);
+        return self::save($file, $extension, $relative);
+    }
+
+    public static function storeJobArtwork(array $file, int $jobId): string
+    {
+        if ($jobId <= 0) throw new InvalidArgumentException('A valid job is required for the artwork.');
+        return self::save($file, self::validate($file, 'pdf'), 'controller/uploads/job-artworks/' . $jobId);
+    }
+
+    private static function save(array $file, string $extension, string $relative): string
+    {
         $directory = dirname(__DIR__, 2) . '/' . $relative;
         if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
             throw new RuntimeException('Unable to create the upload directory.');

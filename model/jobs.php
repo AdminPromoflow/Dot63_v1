@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../controller/security/uploads.php';
+
 class Jobs
 {
     private $connection;
@@ -9,7 +11,7 @@ class Jobs
         $this->connection = $connection;
     }
 
-    public function addProductToJobs(array $input, string $customerEmail): array
+    public function addProductToJobs(array $input, string $customerEmail, ?array $artwork = null): array
     {
         $sku = trim((string)($input['sku'] ?? ''));
         $quantity = (int)($input['quantity'] ?? 0);
@@ -20,6 +22,7 @@ class Jobs
             return $this->failure('Please select a valid product configuration.', 422);
         }
 
+        $artworkLink = null;
         try {
             $pdo = $this->getPdo();
             $product = $this->getAvailableProduct($pdo, $sku);
@@ -56,7 +59,6 @@ class Jobs
 
             $pricePerUnit = (float)$pricing['price_per_unit'];
             $subtotal = $pricePerUnit * $quantity;
-            $artworkLink = $pricing['artwork_link'];
             $notes = sprintf(
                 'Product: %s (%s). Customer session: %s.',
                 trim((string)$product['name']),
@@ -83,6 +85,12 @@ class Jobs
             $jobId = (int)$pdo->lastInsertId();
             if ($jobId <= 0) {
                 throw new RuntimeException('The job record was not created.');
+            }
+
+            if ($artwork !== null && ($artwork['error'] ?? null) !== UPLOAD_ERR_NO_FILE) {
+                $artworkLink = SafeUpload::storeJobArtwork($artwork, $jobId);
+                $pdo->prepare('UPDATE jobs SET pdf_artwork_link = :link WHERE job_id = :job_id')
+                    ->execute([':link' => $artworkLink, ':job_id' => $jobId]);
             }
 
             $detailStatement = $pdo->prepare("
@@ -113,9 +121,18 @@ class Jobs
                 'quantity' => $quantity,
                 'price_per_unit' => round($pricePerUnit, 2),
                 'subtotal' => round($subtotal, 2),
+                'pdf_artwork_link' => $artworkLink,
             ];
         } catch (Throwable $error) {
             $this->rollBack($pdo ?? null);
+            if ($artworkLink !== null) {
+                $path = dirname(__DIR__) . '/' . $artworkLink;
+                if (is_file($path)) @unlink($path);
+                @rmdir(dirname($path));
+            }
+            if ($error instanceof InvalidArgumentException) {
+                return $this->failure($error->getMessage(), 422);
+            }
             error_log('addProductToJobs error: ' . $error->getMessage());
             return $this->failure('The product could not be added to your cart.', 500);
         }
@@ -575,7 +592,6 @@ class Jobs
         $basePrice = max(0, (float)$baseTier['price']);
         $pricePerUnit = $basePrice;
         $prices = [];
-        $artworkLink = null;
 
         foreach ($variations as $variation) {
             $variationId = (int)$variation['variation_id'];
@@ -598,17 +614,12 @@ class Jobs
                 $pricePerUnit += $linePrice;
             }
             $prices[$variationId] = $linePrice;
-
-            if ($artworkLink === null && trim((string)($variation['pdf_artwork'] ?? '')) !== '') {
-                $artworkLink = trim((string)$variation['pdf_artwork']);
-            }
         }
 
         return [
             'success' => true,
             'price_per_unit' => $pricePerUnit,
             'prices' => $prices,
-            'artwork_link' => $artworkLink,
         ];
     }
 

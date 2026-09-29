@@ -2,3 +2,4 @@
 .env
 controller/config/stripe.local.php
 controller/config/database.local.php
+controller/uploads/job-artworks/*/

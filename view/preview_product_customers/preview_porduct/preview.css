@@ -1346,6 +1346,63 @@ body.customer-auth-open {
   gap: 10px;
 }
 
+.artwork-grid:empty {
+  display: none;
+}
+
+.artwork-upload {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 13px;
+  background: var(--surface-soft);
+}
+
+.artwork-upload label {
+  color: var(--navy);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.artwork-upload p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.artwork-upload input[type="file"] {
+  width: 100%;
+  min-width: 0;
+  color: var(--navy);
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.artwork-upload input::file-selector-button {
+  margin-right: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--navy);
+  font: inherit;
+  cursor: pointer;
+}
+
+.artwork-upload-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.artwork-upload-feedback [data-tone="error"] {
+  color: var(--danger);
+}
+
 .sp-artwork-card {
   padding: 14px;
   display: grid;

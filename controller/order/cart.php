@@ -20,7 +20,15 @@ class CartController
             return;
         }
 
-        $data = json_decode((string)file_get_contents('php://input'), true);
+        $isMultipart = stripos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') === 0;
+        if ($isMultipart && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+            $this->respond([
+                'success' => false,
+                'error' => 'The upload exceeds the server request limit. Choose a smaller PDF.',
+            ], 413);
+            return;
+        }
+        $data = $isMultipart ? $_POST : json_decode((string)file_get_contents('php://input'), true);
         if (!is_array($data)) {
             $this->respond([
                 'success' => false,
@@ -58,7 +66,12 @@ class CartController
 
         switch ($action) {
             case 'add_to_cart':
-                $result = $jobs->addProductToJobs($data, $email);
+                $artwork = $_FILES['artwork_pdf'] ?? null;
+                if ($artwork !== null && !is_array($artwork)) {
+                    $this->respond(['success' => false, 'error' => 'Please choose a valid PDF.'], 422);
+                    return;
+                }
+                $result = $jobs->addProductToJobs($data, $email, $artwork);
                 if (!empty($result['success'])) {
                     $result['message'] = ($data['intent'] ?? '') === 'buy_now'
                         ? 'Your product is ready in the cart.'

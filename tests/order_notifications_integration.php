@@ -34,11 +34,18 @@ $insert = static function (string $table, string $idColumn, array $values) use (
 $addJob = static function (int $orderId, string $email, string $name) use ($pdo, $insert): int {
     $supplierId = $insert('suppliers', 'supplier_id', ['email' => $email, 'company_name' => $name]);
     $productId = $insert('products', 'product_id', ['name' => $name . ' product', 'supplier_id' => $supplierId]);
-    $jobId = $insert('jobs', 'job_id', ['order_id' => $orderId, 'status' => 'cart', 'quantity' => 10, 'price_per_unit' => 2.50, 'subtotal' => 25]);
+    $jobId = $insert('jobs', 'job_id', [
+        'order_id' => $orderId, 'id_order' => 123, 'status' => 'cart',
+        'created_at' => '2026-09-29 10:00:00', 'notes' => $name . " notes\nSecond line",
+        'quantity' => 10, 'price_per_unit' => 2.50, 'subtotal' => 25,
+    ]);
+    $pdo->prepare('UPDATE jobs SET pdf_artwork_link = ? WHERE job_id = ?')
+        ->execute(['controller/uploads/job-artworks/' . $jobId . '/artwork.pdf', $jobId]);
     // Multiple variations of the same product must not duplicate jobs or recipients.
     for ($i = 0; $i < 2; $i++) {
         $variationId = $insert('variations', 'variation_id', ['product_id' => $productId, 'name' => 'Option ' . $i]);
-        $pdo->prepare('INSERT INTO job_details (job_id, variation_id) VALUES (?, ?)')->execute([$jobId, $variationId]);
+        $pdo->prepare('INSERT INTO job_details (job_id, variation_id, name, image, price, quantity) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([$jobId, $variationId, $i === 0 ? 'Saved option name' : null, 'controller/uploads/option.jpg', $i === 0 ? '2.50' : '0.00', '10']);
     }
     return $jobId;
 };
@@ -71,6 +78,17 @@ try {
     assertOrderNotice(count($sent) === 1 && $sent[0]['recipient']['email'] === 'ian@kan-do-it.com', 'Ian address was not normalized.');
     assertOrderNotice(count($sent[0]['recipient']['jobs']) === 1, 'Job was duplicated by its variations.');
     assertOrderNotice((int)$sent[0]['recipient']['jobs'][0]['job_id'] === $ianJob, 'Incorrect job in notification.');
+    $job = $sent[0]['recipient']['jobs'][0];
+    foreach (['order_id' => $ianOrder, 'id_order' => 123, 'status' => 'ordered', 'created_at' => '2026-09-29 10:00:00',
+        'notes' => "Ian supplier notes\nSecond line", 'price_per_unit' => 2.50,
+        'pdf_artwork_link' => 'controller/uploads/job-artworks/' . $ianJob . '/artwork.pdf'] as $field => $value) {
+        assertOrderNotice((string)$job[$field] === (string)$value, 'Job information missing or changed: ' . $field);
+    }
+    assertOrderNotice(count($job['details']) === 2, 'Selected options were lost or duplicated.');
+    assertOrderNotice($job['details'][0]['name'] === 'Saved option name', 'Stored option name was replaced by the current catalog name.');
+    assertOrderNotice($job['details'][1]['name'] === 'Option 1', 'Legacy option name fallback is missing.');
+    assertOrderNotice($job['details'][0]['price'] === '2.50' && $job['details'][0]['quantity'] === '10'
+        && $job['details'][0]['image'] === 'controller/uploads/option.jpg', 'Stored option details were lost.');
     $payments->processWebhookEvent($eventId, 'payment_intent.succeeded', $event);
     $result = $notifications->dispatchForPaidOrder($intents[0], $record);
     assertOrderNotice($result['already_sent_count'] === 1 && count($sent) === 1, 'Duplicate webhook resent an email.');
@@ -82,6 +100,7 @@ try {
     $aJob = $addJob($multiOrder, ' SupplierA@example.test ', 'Supplier A');
     $aSecondJob = $addJob($multiOrder, 'SUPPLIERA@EXAMPLE.TEST', 'Supplier A second account');
     $bJob = $addJob($multiOrder, 'supplierb@example.test', 'Supplier B');
+    $pdo->prepare('UPDATE jobs SET pdf_artwork_link = NULL WHERE job_id = ?')->execute([$bJob]);
     $anotherIanJob = $addJob($multiOrder, 'Ian@kan-do-it.com', 'Ian second account');
     $payments->processWebhookEvent('evt_notice_multi_' . $suffix, 'payment_intent.succeeded', [
         'id' => $intents[1], 'status' => 'succeeded', 'amount_received' => 10000, 'currency' => 'gbp',
@@ -110,6 +129,11 @@ try {
     assertOrderNotice(count($multiSent['ian@kan-do-it.com']['jobs']) === 4, 'Ian did not receive all order jobs.');
     assertOrderNotice(array_column($multiSent['suppliera@example.test']['jobs'], 'job_id') === [$aJob, $aSecondJob], 'Supplier A received another supplier\'s jobs.');
     assertOrderNotice(array_column($multiSent['supplierb@example.test']['jobs'], 'job_id') === [$bJob], 'Supplier B received another supplier\'s jobs.');
+    assertOrderNotice($multiSent['supplierb@example.test']['jobs'][0]['pdf_artwork_link'] === '', 'Job without artwork did not preserve the missing PDF.');
+    foreach ($multiSent['suppliera@example.test']['jobs'] as $job) {
+        assertOrderNotice($job['pdf_artwork_link'] === 'controller/uploads/job-artworks/' . $job['job_id'] . '/artwork.pdf', 'Supplier received another job\'s artwork.');
+        assertOrderNotice(count($job['details']) === 2 && (int)$job['details'][0]['job_id'] === $job['job_id'], 'Supplier received another job\'s selected options.');
+    }
     $notifications->dispatchForPaidOrder($intents[1], $sender);
     assertOrderNotice(array_sum($attempts) === 4, 'Completed order notifications were resent.');
     fwrite(STDOUT, "Order notification integration passed: confirmed payments, Ian deduplication, multiple suppliers, isolated retries and duplicate webhooks.\n");

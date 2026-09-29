@@ -1,0 +1,9 @@
+Options -Indexes
+
+<FilesMatch "(?i)\.pdf$">
+    ForceType application/pdf
+    <IfModule mod_headers.c>
+        Header set X-Content-Type-Options "nosniff"
+        Header set Content-Disposition "attachment"
+    </IfModule>
+</FilesMatch>

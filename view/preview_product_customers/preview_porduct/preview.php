@@ -240,8 +240,8 @@ foreach ($moduleFiles as $moduleFile) {
       </aside>
     </section>
 
-    <!-- [Customer 2.4.5] Esta sección solo aparece si la ruta seleccionada tiene archivos de artwork. -->
-    <section id="artwork_section" class="artwork-section" aria-labelledby="artwork_heading" hidden>
+    <!-- [Customer 2.4.5] El cliente puede adjuntar su PDF aunque no haya plantillas. -->
+    <section id="artwork_section" class="artwork-section" aria-labelledby="artwork_heading">
       <div class="section-heading">
         <div>
           <span class="section-kicker">Production assets</span>
@@ -250,6 +250,17 @@ foreach ($moduleFiles as $moduleFile) {
         <span class="section-helper">Templates update with the selected options.</span>
       </div>
       <div id="wrap-artworks-group" class="artwork-grid"></div>
+      <div class="artwork-upload">
+        <div class="artwork-upload-copy">
+          <label for="artwork_pdf">Upload your artwork (PDF)</label>
+          <p id="artwork_upload_help">Optional · PDF only, up to 8 MB. Your file is saved when you add this product to your cart or choose Buy now.</p>
+        </div>
+        <input type="file" id="artwork_pdf" name="artwork_pdf" accept=".pdf,application/pdf" aria-describedby="artwork_upload_help artwork_upload_status">
+        <div class="artwork-upload-feedback">
+          <p id="artwork_upload_status" role="status" aria-live="polite">No artwork selected.</p>
+          <button type="button" id="artwork_remove" class="btn btn-secondary btn-compact" hidden>Remove file</button>
+        </div>
+      </div>
     </section>
   </div>
 </main>

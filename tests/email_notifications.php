@@ -5,6 +5,7 @@ if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 
 
 putenv('DOT63_SMTP_PASSWORD=non-secret-test-value');
+putenv('DOT63_PUBLIC_URL=https://lanyardsforyou.com');
 require_once __DIR__ . '/../controller/emails/send_emails.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -119,16 +120,69 @@ assertEmailNotification($orderNotice->sendEmailOrderNotification([
     'paid_at' => '2026-09-17 12:00:00',
 ], [[
     'job_id' => 15,
+    'order_id' => 124,
+    'id_order' => 900,
+    'status' => 'ordered',
+    'created_at' => '2026-09-17 11:45:00',
+    'notes' => "Front: <script>logo</script> & text\nBack: white",
     'product_name' => 'Lanyard <script>test</script>',
     'product_sku' => 'ORDER-TEST',
     'quantity' => 10,
+    'price_per_unit' => 6,
+    'discount_percentage' => 9,
     'subtotal' => 54.60,
+    'pdf_artwork_link' => 'controller/uploads/job-artworks/15/customer artwork.pdf',
+    'details' => [[
+        'variation_id' => 31, 'name' => 'Blue <lanyard>', 'sku' => 'BLUE-20',
+        'image' => 'controller/uploads/blue.jpg', 'price' => '6.00', 'quantity' => '10',
+    ], [
+        'variation_id' => 32, 'name' => 'Safety clip', 'sku' => 'CLIP',
+        'image' => null, 'price' => '0.00', 'quantity' => '10',
+    ]],
 ]]), 'Supplier order notification was not prepared.');
 assertEmailNotification(recipientEmails($orderNotice->messages[0]) === ['supplier@example.test'], 'Order notification recipient is incorrect.');
 assertEmailNotification($orderNotice->messages[0]['subject'] === 'New order #124', 'Order notification subject is incorrect.');
 assertEmailNotification(strpos($orderNotice->messages[0]['body'], '<script>') === false, 'Order notification HTML was not escaped.');
 assertEmailNotification(strpos($orderNotice->messages[0]['body'], 'GBP 54.60') !== false, 'Order subtotal is missing.');
 assertEmailNotification(strpos($orderNotice->messages[0]['alt_body'], 'Quantity: 10') !== false, 'Plain-text order details are missing.');
+$orderMessage = $orderNotice->messages[0];
+foreach (['ordered', '2026-09-17 11:45:00', 'GBP 6.00', '9.00%', '900', 'Safety clip', 'Variation #31', 'BLUE-20'] as $value) {
+    assertEmailNotification(strpos($orderMessage['body'], $value) !== false && strpos($orderMessage['alt_body'], $value) !== false, 'Missing job information: ' . $value);
+}
+assertEmailNotification(strpos($orderMessage['body'], 'Front: &lt;script&gt;logo&lt;/script&gt; &amp; text<br') !== false, 'Multiline job notes were not safely rendered.');
+assertEmailNotification(strpos($orderMessage['body'], 'Blue &lt;lanyard&gt;') !== false, 'Option name was not escaped.');
+assertEmailNotification(strpos($orderMessage['body'], 'href="https://lanyardsforyou.com/controller/uploads/blue.jpg"') !== false, 'Option image link is missing.');
+$artworkUrl = 'https://lanyardsforyou.com/controller/uploads/job-artworks/15/customer%20artwork.pdf';
+assertEmailNotification(strpos($orderMessage['body'], 'href="' . $artworkUrl . '" download') !== false, 'Relative artwork path is not a downloadable absolute link.');
+assertEmailNotification(strpos($orderMessage['alt_body'], 'Download artwork PDF: ' . $artworkUrl) !== false, 'Plain-text artwork download link is missing.');
+
+// Paths from old orders, missing PDFs, and hostile values must not break email links.
+$renderArtwork = static function (?string $path): array {
+    $sender = new RecordingEmailsSender();
+    $sender->setRecipientEmail('supplier@example.test');
+    assertEmailNotification($sender->sendEmailOrderNotification(['order_id' => 125], [[
+        'job_id' => 16, 'pdf_artwork_link' => $path,
+    ]]), 'Artwork email could not be prepared.');
+    return $sender->messages[0];
+};
+$absoluteUrl = 'https://files.example.test/artwork.pdf?download=1&token=test';
+$absoluteMessage = $renderArtwork($absoluteUrl);
+assertEmailNotification(strpos($absoluteMessage['body'], 'href="https://files.example.test/artwork.pdf?download=1&amp;token=test"') !== false, 'Absolute artwork URL was not preserved and escaped.');
+assertEmailNotification(strpos($absoluteMessage['alt_body'], $absoluteUrl) !== false, 'Absolute plain-text URL was altered.');
+foreach ([null, ''] as $missing) {
+    $message = $renderArtwork($missing);
+    assertEmailNotification(strpos($message['body'], 'Download artwork PDF') === false && strpos($message['alt_body'], 'Artwork PDF: Not supplied') !== false, 'Missing PDF generated a broken download link.');
+}
+foreach (['javascript:alert(1)', 'data:text/html,test', '//untrusted.example/a.pdf', '../private.pdf', 'controller/%2e%2e/private.pdf', "controller/uploads/a\n.pdf", 'controller/uploads/a%00.pdf', 'controller\\uploads\\a.pdf'] as $unsafe) {
+    $message = $renderArtwork($unsafe);
+    assertEmailNotification(strpos($message['body'], 'Download artwork PDF') === false && strpos($message['alt_body'], 'Artwork PDF: Unavailable') !== false, 'Unsafe artwork link was rendered: ' . $unsafe);
+}
+putenv('DOT63_PUBLIC_URL=https://shop.example.test/dot63/');
+$subdirectoryMessage = $renderArtwork('/controller/uploads/job-artworks/16/artwork.pdf');
+assertEmailNotification(strpos($subdirectoryMessage['alt_body'], 'https://shop.example.test/dot63/controller/uploads/job-artworks/16/artwork.pdf') !== false, 'Configured site subdirectory was lost.');
+putenv('DOT63_PUBLIC_URL');
+$defaultOriginMessage = $renderArtwork('controller/uploads/job-artworks/16/artwork.pdf');
+assertEmailNotification(strpos($defaultOriginMessage['alt_body'], 'https://lanyardsforyou.com/controller/uploads/job-artworks/16/artwork.pdf') !== false, 'Default public origin is incorrect.');
 
 $statusNotice = new RecordingEmailsSender();
 $statusNotice->setProductName('Status test');

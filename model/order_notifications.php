@@ -58,7 +58,7 @@ final class OrderNotifications
     {
         $statement = $this->pdo->prepare('
             SELECT DISTINCT
-                j.job_id, j.quantity, j.price_per_unit, j.subtotal,
+                j.*,
                 p.SKU AS product_sku, p.name AS product_name,
                 s.supplier_id, s.email AS supplier_email,
                 COALESCE(NULLIF(TRIM(s.company_name), \'\'), s.contact_name) AS supplier_name
@@ -71,17 +71,30 @@ final class OrderNotifications
             ORDER BY j.job_id, s.supplier_id
         ');
         $statement->execute([':order_id' => $orderId]);
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+        $details = $this->getJobDetails($orderId);
         $recipients = [self::IAN_EMAIL => ['name' => 'Ian Southworth', 'jobs' => []]];
-        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        foreach ($rows as $row) {
             $jobId = (int)$row['job_id'];
             $job = [
                 'job_id' => $jobId,
+                'order_id' => (int)$row['order_id'],
+                'id_order' => $row['id_order'],
+                'status' => (string)($row['status'] ?? ''),
+                'created_at' => (string)($row['created_at'] ?? ''),
+                'notes' => (string)($row['notes'] ?? ''),
                 'product_name' => (string)($row['product_name'] ?? ''),
                 'product_sku' => (string)($row['product_sku'] ?? ''),
                 'quantity' => (int)$row['quantity'],
                 'price_per_unit' => (float)$row['price_per_unit'],
                 'subtotal' => (float)$row['subtotal'],
+                'pdf_artwork_link' => (string)($row['pdf_artwork_link'] ?? ''),
+                'details' => $details[$jobId] ?? [],
             ];
+            // Older installations do not have the optional job discount column.
+            if (isset($row['discount_percentage'])) {
+                $job['discount_percentage'] = (float)$row['discount_percentage'];
+            }
             $recipients[self::IAN_EMAIL]['jobs'][$jobId] = $job;
             $email = strtolower(trim((string)($row['supplier_email'] ?? '')));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -94,6 +107,26 @@ final class OrderNotifications
             $recipients[$email]['jobs'][$jobId] = $job;
         }
         return $recipients;
+    }
+
+    private function getJobDetails(int $orderId): array
+    {
+        $statement = $this->pdo->prepare('
+            SELECT jd.job_id, jd.variation_id,
+                COALESCE(NULLIF(TRIM(jd.name), \'\'), v.name) AS name,
+                jd.image, jd.price, jd.quantity, v.SKU AS sku
+            FROM job_details jd
+            INNER JOIN jobs j ON j.job_id = jd.job_id
+            LEFT JOIN variations v ON v.variation_id = jd.variation_id
+            WHERE j.order_id = :order_id
+            ORDER BY jd.job_id, jd.variation_id
+        ');
+        $statement->execute([':order_id' => $orderId]);
+        $details = [];
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $details[(int)$row['job_id']][] = $row;
+        }
+        return $details;
     }
 
     private function dispatchRecipient(
