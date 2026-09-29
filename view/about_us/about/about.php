@@ -132,7 +132,7 @@ $aboutCssFile = __DIR__ . '/about.css';
 </main>
 
 <footer class="about-footer">
-  <a href="../../view/main/index.php" class="about-footer__brand"><span>.</span>63 <small>PromoFlow</small></a>
+  <a href="../../view/product/index.php" class="about-footer__brand"><span>.</span>63 <small>PromoFlow</small></a>
   <p>Promotional products, made refreshingly simple.</p>
   <p>&copy; <?= date('Y') ?> PromoFlow</p>
 </footer>

@@ -62,9 +62,9 @@ $logoutAction = 'logout_customer';
   data-cart-status-url="../../controller/order/cart.php"
   data-logout-url="<?= $logoutUrl ?>"
   data-logout-action="<?= $logoutAction ?>"
-  data-logout-redirect="../../view/main/index.php"
+  data-logout-redirect="../../view/product/index.php"
 >
-  <a class="general-menu__brand" href="../../view/main/index.php" aria-label="PromoFlow, home">
+  <a class="general-menu__brand" href="../../view/product/index.php" aria-label="PromoFlow, home">
     <span class="general-menu__brand-mark"><span aria-hidden="true">.</span>63</span>
     <span class="general-menu__brand-name">PromoFlow</span>
   </a>

@@ -1,14 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>.63</title>
-  </head>
+<?php
+require_once __DIR__ . '/controller/security/bootstrap.php';
 
-  <body>
-    <script type="text/javascript">
-      window.location.href = 'view/product/index.php';
-    </script>
-  </body>
-</html>
+header('Location: view/product/index.php', true, 302);
+exit;

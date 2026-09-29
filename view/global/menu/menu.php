@@ -8,7 +8,7 @@ $jsTime = filemtime('');   // ejemplo: '../Home/5.Video/video.js'
 <!-- HEADER -->
 <header class="site-header">
   <!-- Marca / logo -->
-  <a class="brand" href="../../view/main/index.php" aria-label="Inicio">
+  <a class="brand" href="../../view/product/index.php" aria-label="Inicio">
     <h1 class="brand-text">.63</h1>
     <!-- Si quieres imagen, descomenta:
     <img src="../../view/login/menu/img/logo.png" alt="" class="brand-logo">

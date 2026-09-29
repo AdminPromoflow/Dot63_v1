@@ -2,6 +2,9 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../../controller/security/bootstrap.php';
 
+// Keep the previous home view hidden while the catalog is the main page.
+header('Location: ../product/index.php', true, 302);
+exit;
 
 if (session_status() !== PHP_SESSION_ACTIVE && !headers_sent()) {
     session_start();
