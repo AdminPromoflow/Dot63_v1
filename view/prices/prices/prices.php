@@ -1,4 +1,6 @@
 <?php
+
+require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 // Absolute paths (safe)
 $base = realpath(__DIR__ . '/../../view/prices/prices/');
 

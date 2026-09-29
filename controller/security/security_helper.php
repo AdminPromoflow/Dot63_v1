@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/catalog_access.php";
 
 class securityHelper
 {
@@ -24,6 +25,7 @@ class securityHelper
         $action = $data['action'] ?? null;
 
         // 5) Enrutar
+        CatalogAccess::enforce('parameters', $data);
         switch ($action) {
             case 'check_parameters':
                 $this->checkParameters($data);

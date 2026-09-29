@@ -1,4 +1,6 @@
 <?php
+
+require_once __DIR__ . '/../../controller/security/bootstrap.php';
 // [Supplier 1] El servidor empieza por este archivo cuando el proveedor abre el preview.
 // [Supplier 1.1] Antes de enviar HTML, recuperamos la sesión y confirmamos que el proveedor siga autenticado.
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -14,6 +16,7 @@ if (empty($_SESSION['login']) || empty($_SESSION['email'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <?php require __DIR__ . '/../global/security/page_head.php'; ?>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>

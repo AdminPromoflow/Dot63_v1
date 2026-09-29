@@ -151,12 +151,15 @@ class Items {
         <div class="row">
           <span class="small">Item #${idx + 1}</span>
           <div class="cp-actions">
-            <button type="button" class="btn btn-danger btn-icon remove" data-id="${it.id}">✕</button>
+            <button type="button" class="btn btn-danger btn-icon remove">✕</button>
           </div>
         </div>
-        <input type="text" class="label-input" data-id="${it.id}" placeholder="Label (optional), e.g., Includes" value="${it.label}">
-        <textarea class="text-input" data-id="${it.id}" placeholder="Write the item text shown to customers…">${it.text}</textarea>
+        <input type="text" class="label-input" placeholder="Label (optional), e.g., Includes">
+        <textarea class="text-input" placeholder="Write the item text shown to customers…"></textarea>
       `;
+      card.querySelectorAll('button, input, textarea').forEach(element => { element.dataset.id = String(it.id); });
+      card.querySelector('input').value = it.label ?? '';
+      card.querySelector('textarea').value = it.text ?? '';
       this.list.appendChild(card);
     });
   }

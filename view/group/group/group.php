@@ -1,4 +1,6 @@
 <?php
+
+require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 $cssTime = filemtime('../../view/group/group/group.css');
 $jsTime  = filemtime('../../view/group/group/group.js');
 ?>

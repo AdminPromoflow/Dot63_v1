@@ -172,7 +172,7 @@ $mainJsFile = __DIR__ . '/main.js';
         <h2 id="auth-title">Log in to your account</h2>
         <p class="auth-panel__intro">Continue where you left off.</p>
 
-        <form id="main-login-form" novalidate>
+        <form id="main-login-form" method="post" action="../../controller/customers/login.php" novalidate>
           <label class="auth-field" for="main-login-email">
             <span>Email address</span>
             <input id="main-login-email" name="email" type="email" autocomplete="email" placeholder="you@company.com" required>
@@ -198,7 +198,7 @@ $mainJsFile = __DIR__ . '/main.js';
         <h2>Create your account</h2>
         <p class="auth-panel__intro">Save your details for a smoother checkout.</p>
 
-        <form id="main-register-form" novalidate>
+        <form id="main-register-form" method="post" action="../../controller/customers/sing_up.php" novalidate>
           <?php $registrationPrefix = 'main-register'; require __DIR__ . '/../../global/customer_auth/registration_fields.php'; ?>
 
           <p class="auth-status" data-auth-status="register" aria-live="polite"></p>

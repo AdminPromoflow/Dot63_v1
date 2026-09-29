@@ -1,4 +1,6 @@
 <?php
+
+require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
@@ -12,6 +14,7 @@ $isRegistration = $customerAuthMode === 'register';
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <?php require __DIR__ . '/../security/page_head.php'; ?>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Log in or create your PromoFlow account to customize products and save your delivery details.">

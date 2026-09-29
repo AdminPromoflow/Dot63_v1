@@ -25,6 +25,7 @@ class CustomerLoginController
             return;
         }
 
+        if (($data['action'] ?? '') === 'logout_customer') Dot63Security::csrf($data);
         switch ((string)($data['action'] ?? '')) {
             case 'requestLogin':
                 $this->login($data);
@@ -157,7 +158,7 @@ class CustomerLoginController
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
-        session_start();
+        Dot63Security::startSession();
     }
 
     private function respond(array $payload, int $status): void

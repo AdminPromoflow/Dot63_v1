@@ -1,10 +1,13 @@
 <?php
+require_once __DIR__ . "/../security/catalog_access.php";
 
 class Product {
   public function handleProduct(){
 
     $input = file_get_contents('php://input');
     $data  = json_decode($input, true);
+
+    CatalogAccess::enforce('product', is_array($data) ? $data : []);
 
     switch ($data["action"] ?? null) {
       case 'create_new_product':
@@ -112,7 +115,7 @@ class Product {
     header('Content-Type: application/json; charset=utf-8');
 
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
 
     $email    = $_SESSION['email'] ?? null;
@@ -131,7 +134,7 @@ class Product {
 
   private function supplierEmail(): string
   {
-    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) Dot63Security::startSession();
     $email = strtolower(trim((string)($_SESSION['email'] ?? '')));
     if (empty($_SESSION['login']) || $email === '') {
       throw new RuntimeException('Your supplier session has expired. Please sign in again.', 401);
@@ -240,7 +243,7 @@ class Product {
     $products   = new Products($connection);
 
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
 
     $products->setEmail($_SESSION['email']);
@@ -285,7 +288,7 @@ class Product {
     header('Content-Type: application/json; charset=utf-8');
 
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
 
     $connection = new Database();
@@ -314,7 +317,7 @@ class Product {
     $products->setSku($sku);
 
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
 
     $email = $_SESSION['email'] ?? '';
@@ -410,13 +413,13 @@ class Product {
   }
 }
 
-include "../../controller/config/database.php";
+require_once "../../controller/config/database.php";
 
-include "../../model/products.php";
+require_once "../../model/products.php";
 require_once __DIR__ . "/../../model/product_status.php";
 
-include "../../controller/products/variations.php";
-include "../../controller/emails/send_emails.php";
+require_once "../../controller/products/variations.php";
+require_once "../../controller/emails/send_emails.php";
 
 $productClass = new Product();
 

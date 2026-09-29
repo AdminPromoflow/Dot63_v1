@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../security/catalog_access.php";
 /**
  * =====================================================
  * Class: Item
@@ -28,6 +29,8 @@ class Item {
       $action = $data['action'] ?? null;
 
       // 4) Route to appropriate handler
+    CatalogAccess::enforce('item', is_array($data) ? $data : []);
+
       switch ($action) {
           case 'get_items_details':
               $this->getItemsDetails($data);
@@ -175,8 +178,8 @@ class Item {
 // ------------------------------------------------------
 // Bootstrap: includes and self-invocation
 // ------------------------------------------------------
-include_once "../../controller/config/database.php";
-include_once "../../model/items.php";
+require_once "../../controller/config/database.php";
+require_once "../../model/items.php";
 
 $itemClass = new Item();
 if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) {

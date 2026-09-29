@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../security/catalog_access.php";
 /**
  * =====================================================
  * Class: Price
@@ -29,6 +30,8 @@ class Price {
       $action = $data['action'] ?? null;
 
       // 4) Route
+    CatalogAccess::enforce('price', is_array($data) ? $data : []);
+
       switch ($action) {
           case 'get_prices_details':
               $this->getPricesDetails($data);
@@ -247,9 +250,9 @@ class Price {
 // ------------------------------------------------------
 // Bootstrap: includes and self-invocation
 // ------------------------------------------------------
-include_once "../../controller/config/database.php";
-include_once "../../model/prices.php"; // modelo correcto
-include_once "../../model/variations.php"; // modelo correcto
+require_once "../../controller/config/database.php";
+require_once "../../model/prices.php"; // modelo correcto
+require_once "../../model/variations.php"; // modelo correcto
 
 $priceClass = new Price(); // controlador en singular
 if (isset($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) {

@@ -30,7 +30,7 @@ class CartController
         }
 
         if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+            Dot63Security::startSession();
         }
 
         $customerAuthenticated = !empty($_SESSION['customer_login'])
@@ -47,6 +47,10 @@ class CartController
                 'error' => 'Please log in before using your shopping cart.',
             ], 401);
             return;
+        }
+
+        if (!in_array($data['action'] ?? '', ['get_cart_status', 'validate_promo'], true)) {
+            Dot63Security::csrf($data);
         }
 
         $jobs = new Jobs(new Database());

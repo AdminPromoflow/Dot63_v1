@@ -13,18 +13,20 @@ $jsTime = filemtime('../../view/product/products/article.js');
     <div class="filter_products">
       <h1>Filters</h1>
 
-      <div class="filter-group filter-category">
-        <h1>Category</h1>
-        <div class="parent_category_filter scroll_filter category-scroll">
-          <ul id="category_filter" class="checklist category-list">
-            <li>Loading categories...</li>
-          </ul>
+      <div class="filters-content">
+        <div class="filter-groups">
+          <div class="filter-group filter-category">
+            <h1>Category</h1>
+            <div class="parent_category_filter scroll_filter category-scroll">
+              <ul id="category_filter" class="checklist category-list">
+                <li>Loading categories...</li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="variation-filters"></div>
         </div>
       </div>
-
-      <div id="variation-filters"></div>
-
-
     </div>
 
     <div class="articles" id="articles">

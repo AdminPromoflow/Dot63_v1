@@ -22,6 +22,16 @@ class ResquesPromoflowAPI
             exit;
         }
 
+        Dot63Security::post();
+        $supplierEmail = Dot63Security::supplierEmail();
+        if (in_array($data['action'] ?? '', ['create_case', 'send_message'], true)) Dot63Security::csrf($data);
+        if (($data['action'] ?? '') === 'create_case') {
+            $supplier = new Users(new Database());
+            $supplier->setEmail($supplierEmail);
+            $data['supplierId'] = $supplier->getIdSupplierByEmail();
+            if (!$data['supplierId']) Dot63Security::fail(403, 'Supplier not found.');
+        }
+
         switch ($data["action"] ?? null) {
             case 'get_cases_and_messages':
                 $this->getCasesAndMessages($data);
@@ -100,7 +110,7 @@ class ResquesPromoflowAPI
     private function getCasesAndMessages($data)
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+            Dot63Security::startSession();
         }
 
         $email = $_SESSION['email'] ?? null;
@@ -140,7 +150,7 @@ class ResquesPromoflowAPI
     private function getCases($data)
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+            Dot63Security::startSession();
         }
 
         $email = $_SESSION['email'] ?? null;
@@ -190,7 +200,7 @@ class ResquesPromoflowAPI
     private function sendMessage($data)
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+            Dot63Security::startSession();
         }
 
         $email = $_SESSION['email'] ?? null;

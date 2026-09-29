@@ -1,8 +1,11 @@
 <?php
+require_once __DIR__ . "/../security/catalog_access.php";
 class Group {
   public function handleGroup(){
     $input = file_get_contents('php://input');
     $data  = json_decode($input, true);
+
+    CatalogAccess::enforce('group', is_array($data) ? $data : []);
 
     switch ($data["action"] ?? null) {
 
@@ -56,7 +59,9 @@ class Group {
     // Asignar group_id al producto por SKU
     $connection = new Database();
     $product    = new Products($connection);
-    $product->updateGroupIdBySKU($data['sku'] ?? '', $idGroup);
+    $product->setSku($data['sku'] ?? '');
+    $product->setGroupId($idGroup);
+    $product->updateGroupIdBySKU();
 
     echo json_encode($response);
   }
@@ -82,9 +87,9 @@ class Group {
   }
 }
 
-include "../../controller/config/database.php";
-include "../../model/groups.php";
-include "../../model/products.php";
+require_once "../../controller/config/database.php";
+require_once "../../model/groups.php";
+require_once "../../model/products.php";
 
 $groupClass = new Group(); // instancia
 $groupClass->handleGroup();

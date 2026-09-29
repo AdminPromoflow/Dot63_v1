@@ -112,7 +112,8 @@ class MainAuth {
     this.dialog.querySelectorAll('[data-password-toggle], [data-registration-toggle]').forEach(button => {
       button.textContent = 'Show';
       button.setAttribute('aria-pressed', 'false');
-      button.setAttribute('aria-label', 'Show password');
+      const input = document.getElementById(button.getAttribute('aria-controls'));
+      button.setAttribute('aria-label', input?.name === 'password_confirmation' ? 'Show confirm password' : 'Show password');
     });
     if (this.lastFocusedElement instanceof HTMLElement) {
       this.lastFocusedElement.focus({

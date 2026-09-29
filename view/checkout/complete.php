@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/../../controller/security/bootstrap.php';
+
 
 if (session_status() !== PHP_SESSION_ACTIVE && !headers_sent()) {
   session_start();
@@ -22,6 +24,7 @@ $completeJs = __DIR__ . '/checkout/complete.js';
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <?php require __DIR__ . '/../global/security/page_head.php'; ?>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Check the status of your PromoFlow payment.">

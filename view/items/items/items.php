@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../../../controller/security/bootstrap.php'; ?>
 
 <?php
 // Rutas absolutas (seguras)

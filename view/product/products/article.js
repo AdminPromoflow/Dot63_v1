@@ -3,6 +3,10 @@ class ProductsClass {
     this.articles = document.getElementById("articles");
     this.categoryFilter = document.getElementById("category_filter");
     this.variationFilters = document.getElementById("variation-filters");
+    this.filtersPanel = document.querySelector(".filter_products");
+    this.filterScrollId = 0;
+    this.filterScrollFrame = null;
+    this.filterResizeObserver = new ResizeObserver(() => this.queueFilterScrollUpdate());
     this.productsData = [];
     this.variationRows = [];
     this.statusThreeProductsData = [];
@@ -14,11 +18,78 @@ class ProductsClass {
     this.prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false;
     this.categoryFilter?.addEventListener("change", () => this.applyFilters());
     this.variationFilters?.addEventListener("change", () => this.applyFilters());
+    this.filtersPanel?.addEventListener("scroll", () => this.queueFilterScrollUpdate(), { capture: true, passive: true });
+    this.filtersPanel?.addEventListener("click", event => this.handleFilterScrollClick(event));
+    window.addEventListener("resize", () => this.queueFilterScrollUpdate());
+    this.syncFilterScrollControls();
     this.getCatalog();
     document.addEventListener("input", event => this.handleProductSearch(event));
     document.addEventListener("keydown", event => this.handleProductSearchKey(event));
     document.addEventListener("click", event => this.handleProductClick(event));
     this.articles?.addEventListener("error", event => this.handleProductImageError(event), true);
+  }
+
+  syncFilterScrollControls() {
+    if (!this.filtersPanel) return;
+    this.filterResizeObserver.disconnect();
+    this.filtersPanel.querySelectorAll(".filters-content, .scroll_filter").forEach(scroll => {
+      if (!scroll.hasAttribute("data-filter-scroll")) {
+        const shell = document.createElement("div");
+        shell.className = "filter-scroll";
+        const label = scroll.closest(".filter-group")?.querySelector("h1")?.textContent || "Filters";
+        scroll.id ||= `filter-scroll-${++this.filterScrollId}`;
+        scroll.dataset.filterScroll = "";
+        scroll.tabIndex = 0;
+        scroll.setAttribute("aria-label", label);
+        scroll.before(shell);
+        shell.append(scroll);
+        ["up", "down"].forEach(direction => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "filter-scroll-button";
+          button.dataset.filterScrollDirection = direction;
+          button.setAttribute("aria-label", `Scroll ${label.toLowerCase()} ${direction}`);
+          button.setAttribute("aria-controls", scroll.id);
+          button.hidden = true;
+          if (direction === "up") shell.prepend(button);
+          else shell.append(button);
+        });
+      }
+      this.filterResizeObserver.observe(scroll);
+      if (scroll.firstElementChild) this.filterResizeObserver.observe(scroll.firstElementChild);
+    });
+    this.queueFilterScrollUpdate();
+  }
+
+  queueFilterScrollUpdate() {
+    if (this.filterScrollFrame !== null) return;
+    this.filterScrollFrame = requestAnimationFrame(() => {
+      this.filterScrollFrame = null;
+      // Measure nested lists first, since their controls affect the panel height.
+      Array.from(this.filtersPanel?.querySelectorAll(".filter-scroll") || []).reverse().forEach(shell => {
+        const scroll = shell.querySelector(":scope > [data-filter-scroll]");
+        const up = shell.querySelector(':scope > [data-filter-scroll-direction="up"]');
+        const down = shell.querySelector(':scope > [data-filter-scroll-direction="down"]');
+        const hasOverflow = scroll.scrollHeight - scroll.clientHeight > 1;
+        shell.classList.toggle("is-scrollable", hasOverflow);
+        up.hidden = !hasOverflow || scroll.scrollTop <= 1;
+        down.hidden = !hasOverflow || scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 1;
+        if ((up.hidden && document.activeElement === up) || (down.hidden && document.activeElement === down)) {
+          scroll.focus({ preventScroll: true });
+        }
+      });
+    });
+  }
+
+  handleFilterScrollClick(event) {
+    const button = event.target.closest("[data-filter-scroll-direction]");
+    if (!button || !this.filtersPanel?.contains(button)) return;
+    const scroll = document.getElementById(button.getAttribute("aria-controls"));
+    const direction = button.dataset.filterScrollDirection === "up" ? -1 : 1;
+    scroll.scrollBy({
+      top: direction * Math.max(80, scroll.clientHeight * 0.75),
+      behavior: this.prefersReducedMotion ? "instant" : "smooth"
+    });
   }
 
   async getCategoryFilters() {
@@ -421,6 +492,7 @@ class ProductsClass {
       group.append(heading, scroll);
       this.variationFilters.append(group);
     });
+    this.syncFilterScrollControls();
   }
 
   getProductSpecifications(product) {

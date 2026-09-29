@@ -13,6 +13,8 @@ class Login {
       return;
     }
 
+    Dot63Security::post();
+    if (($data['action'] ?? '') === 'logout_supplier') Dot63Security::csrf($data);
     switch ($data['action']) {
       case 'requestLoginSupplier':
         $this->loginSupplier($data);
@@ -36,7 +38,7 @@ class Login {
   private function logoutSupplier(): void
   {
       if (session_status() !== PHP_SESSION_ACTIVE) {
-          session_start();
+          Dot63Security::startSession();
       }
 
       // Clear only supplier authentication and supplier editing context.
@@ -91,7 +93,7 @@ class Login {
 
     // ===== Session (email and login only) =====
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
     // Prevent session fixation (recommended)
     if (function_exists('session_regenerate_id')) {
@@ -109,7 +111,7 @@ class Login {
   private function verifyLoginSupplier($data){
     // ===== Session (email and login only) =====
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
     echo json_encode(['response' => !empty($_SESSION['login'])
       && trim((string)($_SESSION['email'] ?? '')) !== '']);

@@ -1,8 +1,11 @@
 <?php
+require_once __DIR__ . "/../security/catalog_access.php";
 class Category {
   public function handleCateogory(){
     $input = file_get_contents('php://input');
     $data  = json_decode($input, true);
+
+    CatalogAccess::enforce('category', is_array($data) ? $data : []);
 
     switch ($data["action"] ?? null) {
       case 'create_new_category':
@@ -64,9 +67,11 @@ class Category {
 
     $connection = new Database();
     $product  = new Products($connection);
-    $product-> updateCategoryIdBySKU($data['sku'],$idCategory);
+    $product->setSku($data['sku']);
+    $product->setCategoryId($idCategory);
+    $product->updateCategoryIdBySKU();
 
-    session_start();
+    Dot63Security::startSession();
     $_SESSION['idCategory'] = $idCategory;
 
     echo json_encode($response);
@@ -83,7 +88,7 @@ class Category {
     $response = $groups->create();
 
 
-    session_start(); // siempre al inicio
+    Dot63Security::startSession(); // siempre al inicio
     $idCategory = isset($_SESSION['idCategory']) ? (int)$_SESSION['idCategory'] : "";
 
     $connection = new Database();
@@ -116,10 +121,10 @@ class Category {
 
 }
 
-include "../../controller/config/database.php";
-include "../../model/categories.php";
-include "../../model/groups.php";
-include "../../model/products.php";
+require_once "../../controller/config/database.php";
+require_once "../../model/categories.php";
+require_once "../../model/groups.php";
+require_once "../../model/products.php";
 
 $categoryClass = new Category(); // instancia
 $categoryClass->handleCateogory();

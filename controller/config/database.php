@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../security/bootstrap.php";
 
 class Database
 {
@@ -18,24 +19,13 @@ class Database
                 'user' => $environmentUser,
                 'password' => $environmentPassword !== false ? $environmentPassword : '',
             ]];
+        } elseif (strpos(__DIR__, '/Applications/XAMPP/') === 0
+            && $environmentHost === false && $environmentName === false && $environmentUser === false) {
+            // Local XAMPP development only. Hosted deployments must supply environment variables.
+            $candidates = [['host' => 'localhost', 'name' => 'dot63', 'user' => 'root', 'password' => '']];
         } else {
-            $production = [
-                'host' => 'localhost',
-                'name' => 'u273173398_dot63',
-                'user' => 'u273173398_test',
-                'password' => '32skiff32!CI',
-            ];
-            $localXampp = [
-                'host' => 'localhost',
-                'name' => 'dot63',
-                'user' => 'root',
-                'password' => '',
-            ];
-
-            $isLocalXampp = strpos(__DIR__, '/Applications/XAMPP/') === 0;
-            $candidates = $isLocalXampp
-                ? [$localXampp, $production]
-                : [$production];
+            error_log('Dot63 database credentials are not configured. Set DOT63_DB_HOST, DOT63_DB_NAME, DOT63_DB_USER and DOT63_DB_PASSWORD.');
+            return;
         }
 
         $lastError = null;

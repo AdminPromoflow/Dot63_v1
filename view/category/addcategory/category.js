@@ -143,7 +143,18 @@ class ClassCategory {
       var name = list[i].name || "";
       var count = Number(list[i].products_count) || 0;
       var id = list[i].category_id;
-      category_list.innerHTML += '<div class="cp-cat" role="listitem" id="' + id + '">' + '<span class="cp-cat-name">' + name + '</span>' + '<small class="cp-cat-meta">' + count + ' products</small>' + '</div>';
+      const row = document.createElement('div');
+      row.className = 'cp-cat';
+      row.setAttribute('role', 'listitem');
+      row.id = String(id);
+      const label = document.createElement('span');
+      label.className = 'cp-cat-name';
+      label.textContent = name;
+      const meta = document.createElement('small');
+      meta.className = 'cp-cat-meta';
+      meta.textContent = `${count} products`;
+      row.append(label, meta);
+      category_list.appendChild(row);
     }
     this.getCategorySelected();
   }

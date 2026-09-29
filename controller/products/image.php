@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . "/../security/catalog_access.php";
+require_once __DIR__ . "/../security/uploads.php";
 class Image {
   public function handleAjax(): void
   {
@@ -22,6 +24,8 @@ class Image {
       $action = $data['action'] ?? null;
 
       // 5) Enrutar
+    CatalogAccess::enforce('image', is_array($data) ? $data : []);
+
       switch ($action) {
           case 'get_images_details':
               // Si necesitas archivos opcionales en esta acción:
@@ -74,7 +78,7 @@ class Image {
       $sku_variation = $data["sku_variation"] ?? '';
       $imagesModel->setSKUVariation($sku_variation); // <- fijar una sola vez
 
-      $imagesModel->setTo0UpdatedBySKUVariation(); // <- fijar una sola vez
+
 
 
       // 3) Todos los archivos de images[]
@@ -82,6 +86,19 @@ class Image {
       if (!$files || !isset($files['tmp_name']) || !is_array($files['tmp_name'])) {
           echo json_encode(["success"=>true,"message"=>"No images have been received yet."]);
           return;
+      }
+
+      if (count($files['tmp_name']) > 20) Dot63Security::fail(422, 'Upload no more than 20 images at a time.');
+      // Validate the entire batch before touching any existing image records.
+      foreach ($files['tmp_name'] as $index => $tmp) {
+          try {
+              SafeUpload::validate([
+                  'tmp_name' => $tmp, 'name' => $files['name'][$index] ?? '',
+                  'error' => $files['error'][$index] ?? UPLOAD_ERR_NO_FILE,
+              ]);
+          } catch (InvalidArgumentException $error) {
+              Dot63Security::fail(422, $error->getMessage());
+          }
       }
 
       $saved  = [];
@@ -143,76 +160,16 @@ class Image {
 
   private function handleImageUpload(?array $imageFile = null, ?array $supplier = null, ?string $sku_product = null, ?string $sku_variation = null): ?string
   {
-      $base = realpath(__DIR__ . '/../');
-      if ($base === false) return null;
-      $base = rtrim(str_replace('\\','/',$base), '/'); // <-- (nuevo) normaliza $base
-
-      // Sanitizador simple
-      $clean = function (?string $s): string {
-          $s = (string)$s;
-          $s = preg_replace('/[^\pL\pN._-]+/u', '-', $s);
-          $s = trim($s, '-_. ');
-          return $s !== '' ? $s : 'nd';
-      };
-
-      // Datos limpios
-      $supplierId   = $clean($supplier['supplier_id']   ?? 'nd');
-      $supplierName = $clean($supplier['contact_name'] ?? 'nd');
-      $skuP         = $clean($sku_product);
-      $skuV         = $clean($sku_variation);
-
-      // Carpeta destino
-      $dir = $base . '/uploads/' . $supplierId . '_' . $supplierName . '/' . $skuP . '/' . $skuV;
-      if (!is_dir($dir)) {
-          $old = umask(0000);
-          @mkdir($dir, 0775, true);
-          umask($old);
-          @chmod($dir, 0775);
+      try {
+          return SafeUpload::store($imageFile ?? [], 'image', (string)$sku_product, (string)$sku_variation);
+      } catch (InvalidArgumentException $error) {
+          Dot63Security::fail(422, $error->getMessage());
+      } catch (Throwable $error) {
+          error_log('Image upload failed: ' . $error->getMessage());
+          Dot63Security::fail(500, 'The image could not be saved.');
       }
-
-      if (!$imageFile || empty($imageFile['tmp_name'])) {
-          return null;
-      }
-
-      // Nombre final del archivo
-      $name = $clean(pathinfo($imageFile['name'] ?? 'imagen', PATHINFO_FILENAME));
-      $ext  = strtolower(pathinfo($imageFile['name'] ?? '', PATHINFO_EXTENSION));
-      $ext  = $ext ? ".$ext" : '';
-      $destPath = $dir . '/' . $name . $ext;
-
-      // Evitar colisión
-      if (is_file($destPath)) {
-          $destPath = $dir . '/' . $name . '-' . date('Ymd-His') . $ext;
-      }
-
-      // Mover el archivo (un solo archivo)
-      $tmp = $imageFile['tmp_name'];
-      if (is_uploaded_file($tmp)) {
-          if (@move_uploaded_file($tmp, $destPath)) {
-              @chmod($destPath, 0664);
-              $rel = ltrim(str_replace('\\','/', substr($destPath, strlen($base))), '/'); // <-- (nuevo)
-              return "controller/".$rel; // p.ej.: uploads/.../archivo.pdf
-          }
-      } else {
-          if (@rename($tmp, $destPath) || @copy($tmp, $destPath)) {
-              @chmod($destPath, 0664);
-              $rel = ltrim(str_replace('\\','/', substr($destPath, strlen($base))), '/'); // <-- (nuevo)
-              return "controller/".$rel; // p.ej.: uploads/.../archivo.pdf
-          }
-      }
-
       return null;
   }
-
-
-
-
-
-
-
-
-
-
 
   private function getImagesDetails($data){
 
@@ -231,8 +188,8 @@ class Image {
 
 }
 
-include_once "../../controller/config/database.php";
-include_once "../../model/images.php";
+require_once "../../controller/config/database.php";
+require_once "../../model/images.php";
 
 
 

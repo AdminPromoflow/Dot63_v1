@@ -1,5 +1,7 @@
 <?php
 
+
+require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 $cssFile =
   '../../view/variations/varia/variations.css';
 

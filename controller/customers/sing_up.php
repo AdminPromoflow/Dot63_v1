@@ -158,7 +158,7 @@ class CustomerSignUpController
                 'httponly' => true,
                 'samesite' => 'Lax',
             ]);
-            session_start();
+            Dot63Security::startSession();
         }
 
         session_regenerate_id(true);

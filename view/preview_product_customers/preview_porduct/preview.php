@@ -1,4 +1,6 @@
 <?php
+
+require_once __DIR__ . '/../../../controller/security/bootstrap.php';
 // [Customer 2] index.php llegó a este archivo para construir el configurador público del producto.
 // [Customer 2.1] Estas rutas indican qué CSS y qué módulo JavaScript debe recibir el navegador.
 $cssPath = '../../view/preview_product_customers/preview_porduct/preview.css';
@@ -279,7 +281,7 @@ foreach ($moduleFiles as $moduleFile) {
     <div id="customer_auth_feedback" class="customer-auth-feedback" role="status" aria-live="polite" hidden></div>
 
     <div id="customer_auth_login_panel" class="customer-auth-panel" role="tabpanel" aria-labelledby="customer_auth_login_tab">
-      <form id="customer_login_form" novalidate>
+      <form id="customer_login_form" method="post" action="../../controller/customers/login.php" novalidate>
         <div class="customer-auth-field">
           <label for="customer_login_email">Email address</label>
           <input id="customer_login_email" name="email" type="email" autocomplete="email" maxlength="50" required>
@@ -300,7 +302,7 @@ foreach ($moduleFiles as $moduleFile) {
     </div>
 
     <div id="customer_auth_register_panel" class="customer-auth-panel" role="tabpanel" aria-labelledby="customer_auth_register_tab" hidden>
-      <form id="customer_register_form" novalidate>
+      <form id="customer_register_form" method="post" action="../../controller/customers/sing_up.php" novalidate>
         <?php $registrationPrefix = 'customer-register'; require __DIR__ . '/../../global/customer_auth/registration_fields.php'; ?>
 
         <button type="submit" class="btn btn-primary customer-auth-submit">

@@ -144,19 +144,20 @@ class ClassGroup {
       const name = list[i].name || "";
       const count = Number(list[i].products_count) || 0;
       const id = list[i].group_id;
-      group_list.innerHTML += `
-        <div
-          class="cp-group"
-          role="listitem"
-          id="${id}"
-
-        >
-          <div>
-            <div class="cp-group-name">${name}</div>
-            <small class="cp-group-meta">${count} product${count !== 1 ? 's' : ''}</small>
-          </div>
-        </div>
-      `;
+      const row = document.createElement('div');
+      row.className = 'cp-group';
+      row.setAttribute('role', 'listitem');
+      row.id = String(id);
+      const content = document.createElement('div');
+      const label = document.createElement('div');
+      label.className = 'cp-group-name';
+      label.textContent = name;
+      const meta = document.createElement('small');
+      meta.className = 'cp-group-meta';
+      meta.textContent = `${count} product${count !== 1 ? 's' : ''}`;
+      content.append(label, meta);
+      row.appendChild(content);
+      group_list.appendChild(row);
     }
     this.getGroupSelected();
   }

@@ -1,7 +1,7 @@
 <p class="customer-auth-kicker">YOUR NEXT GREAT IDEA STARTS HERE</p>
 <h1 id="customer-auth-title">Welcome back.</h1>
 <p class="customer-auth-intro">Log in to continue your product journey.</p>
-<form id="loginForm" class="customer-login-form" novalidate>
+<form id="loginForm" method="post" action="../../controller/customers/login.php" class="customer-login-form" novalidate>
   <div class="customer-field">
     <label for="email">Email address</label>
     <div class="customer-input-wrap"><input id="email" name="email" type="email" autocomplete="email" required placeholder="you@company.com" aria-describedby="email-help"></div>

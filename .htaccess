@@ -1,0 +1,31 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L,NC]
+    RewriteRule ^(?:tests|docs|Diagrams|model)(?:/|$) - [F,L,NC]
+    RewriteRule ^controller/(?:config|assets/(?:vendor|lib))(?:/|$) - [F,L,NC]
+    RewriteRule ^Test\.php(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:controller/(?:views/)?uploads|view/uploads)/.*\.(?:php[0-9]*|phtml|phar|cgi|pl|py|sh|shtml|html?|svg)(?:[./]|$) - [F,L,NC]
+</IfModule>
+
+<FilesMatch "(?i)(^\.|\.(?:env|ini|log|sql|bak|old|orig|save|swp|lock)$|^composer\.json$)">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "base-uri 'self'; object-src 'none'; frame-ancestors 'self'"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+<IfModule php_module>
+    php_flag session.use_strict_mode On
+    php_flag session.use_only_cookies On
+    php_flag session.cookie_httponly On
+    php_value session.cookie_samesite Lax
+    php_flag display_errors Off
+</IfModule>

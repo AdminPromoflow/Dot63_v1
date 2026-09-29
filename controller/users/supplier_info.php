@@ -13,6 +13,10 @@ class SupplierInfo {
       return;
     }
 
+    Dot63Security::post();
+    Dot63Security::supplierEmail();
+    if ($data['action'] === 'request_update_profile_info') Dot63Security::csrf($data);
+
     switch ($data['action']) {
       case 'request_profile_info':
         $this->requestProfileInfo();
@@ -30,7 +34,7 @@ class SupplierInfo {
   private function requestProfileInfo(){
     // ===== Session (email and login only) =====
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
 
 
@@ -50,7 +54,7 @@ class SupplierInfo {
   private function requestUpdateProfileInfo($data){
     // ===== Session (email and login only) =====
     if (session_status() !== PHP_SESSION_ACTIVE) {
-      session_start();
+      Dot63Security::startSession();
     }
 
 
@@ -60,7 +64,7 @@ class SupplierInfo {
     $supplier = new Users($connection);
     $supplier->setName($data['contact_name']);
     $supplier->setCompanyName($data['company_name']);
-    $supplier->setEmail($data['email']);
+    $supplier->setEmail(Dot63Security::supplierEmail());
     $supplier->setPhone($data['phone']);
     $supplier->setCountry($data['country']);
     $supplier->setCity($data['city']);

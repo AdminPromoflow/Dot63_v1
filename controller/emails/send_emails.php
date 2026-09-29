@@ -318,7 +318,10 @@ class EmailsSender
         $mail->Port = (int)$this->environmentValue('DOT63_SMTP_PORT', '587');
         $mail->SMTPAuth = true;
         $mail->Username = $this->environmentValue('DOT63_SMTP_USERNAME', 'admin@lanyardsforyou.com');
-        $mail->Password = $this->environmentValue('DOT63_SMTP_PASSWORD', '32skiff32!CI');
+        $mail->Password = $this->environmentValue('DOT63_SMTP_PASSWORD', '');
+        if ($mail->Password === '') {
+            throw new RuntimeException('DOT63_SMTP_PASSWORD must be configured before sending email.');
+        }
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Timeout = max(5, (int)$this->environmentValue('DOT63_SMTP_TIMEOUT', '15'));
         $mail->CharSet = 'UTF-8';

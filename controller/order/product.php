@@ -76,7 +76,7 @@ class Product {
           $this->jsonError('A JSON POST request is required.', 415);
           return;
       }
-      if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+      if (session_status() !== PHP_SESSION_ACTIVE) Dot63Security::startSession();
       $authorized = ($_SESSION['is_logged'] ?? false) === true && !empty($_SESSION['user_email']);
       session_write_close();
       if (!$authorized) {
@@ -95,7 +95,7 @@ class Product {
   {
       // [Supplier servidor 4.2.3] Una sesión válida necesita la bandera de login y un email no vacío.
       if (session_status() !== PHP_SESSION_ACTIVE) {
-          session_start();
+          Dot63Security::startSession();
       }
 
       $isLoggedIn = !empty($_SESSION['login']);

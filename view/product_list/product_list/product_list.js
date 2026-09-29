@@ -138,17 +138,19 @@ class ClassProductList {
     for (let i = 0; i < list.length; i++) {
       const sku = list[i].SKU || "";
       const name = list[i].name || "Unnamed product";
-      productList.innerHTML += `
-        <div
-          id="${sku}"
-          class="pl-product"
-          role="listitem"
-          data-product-sku="${sku}"
-        >
-          <span class="pl-product-number">${i + 1}</span>
-          <span class="pl-product-name">${name}</span>
-        </div>
-      `;
+      const row = document.createElement('div');
+      row.id = sku;
+      row.className = 'pl-product';
+      row.setAttribute('role', 'listitem');
+      row.dataset.productSku = sku;
+      const number = document.createElement('span');
+      number.className = 'pl-product-number';
+      number.textContent = String(i + 1);
+      const label = document.createElement('span');
+      label.className = 'pl-product-name';
+      label.textContent = name;
+      row.append(number, label);
+      productList.appendChild(row);
     }
     const params = new URLSearchParams(window.location.search);
     const sku = params.get("sku");

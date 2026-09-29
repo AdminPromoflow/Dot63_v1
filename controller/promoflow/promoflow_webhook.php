@@ -17,20 +17,10 @@ class Resques63API
       exit;
     }
 
+    Dot63Security::post();
+    Dot63Security::reviewer();
     if (in_array($data['action'] ?? '', ['approve_product', 'publish_product'], true)) {
-      if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
-        http_response_code(415);
-        echo json_encode(['success' => false, 'message' => 'A JSON POST request is required.']);
-        exit;
-      }
-      if (session_status() !== PHP_SESSION_ACTIVE) session_start();
-      $authorized = ($_SESSION['is_logged'] ?? false) === true && !empty($_SESSION['user_email']);
-      session_write_close();
-      if (!$authorized) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Sign in to Promoflow to approve changes.']);
-        exit;
-      }
+      Dot63Security::csrf($data);
     }
 
     switch ($data["action"] ?? null) {

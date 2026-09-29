@@ -93,11 +93,26 @@ class Images {
     fig.dataset.id = it.id;
     const sizeTxt = Number.isFinite(Number(it.size)) ? ` • ${this.humanSize(it.size)}` : '';
     const displayName = it.name || it.url.split('/').pop()?.split('?')[0] || 'Imagen';
-    fig.innerHTML = `
-      <img class="thumb-img" src="${it.url}" alt="${displayName}" loading="lazy" decoding="async" width="80" height="80">
-      <button class="rm" type="button" data-id="${it.id}" aria-label="Quitar imagen">×</button>
-      <figcaption class="meta" title="${displayName}">${displayName}${sizeTxt}</figcaption>
-    `;
+    const img = document.createElement('img');
+    img.className = 'thumb-img';
+    const imageURL = new URL(it.url, location.href);
+    if (['http:', 'https:', 'blob:'].includes(imageURL.protocol)) img.src = imageURL.href;
+    img.alt = displayName;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.width = 80;
+    img.height = 80;
+    const remove = document.createElement('button');
+    remove.className = 'rm';
+    remove.type = 'button';
+    remove.dataset.id = String(it.id);
+    remove.setAttribute('aria-label', 'Quitar imagen');
+    remove.textContent = '×';
+    const caption = document.createElement('figcaption');
+    caption.className = 'meta';
+    caption.title = displayName;
+    caption.textContent = displayName + sizeTxt;
+    fig.append(img, remove, caption);
     this.gallery.appendChild(fig);
     return fig;
   }
