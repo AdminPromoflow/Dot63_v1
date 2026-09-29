@@ -156,6 +156,22 @@ $artworkUrl = 'https://lanyardsforyou.com/controller/uploads/job-artworks/15/cus
 assertEmailNotification(strpos($orderMessage['body'], 'href="' . $artworkUrl . '" download') !== false, 'Relative artwork path is not a downloadable absolute link.');
 assertEmailNotification(strpos($orderMessage['alt_body'], 'Download artwork PDF: ' . $artworkUrl) !== false, 'Plain-text artwork download link is missing.');
 
+$customerOrder = new RecordingEmailsSender();
+$customerOrder->setRecipientEmail('CUSTOMER@example.test');
+$customerOrder->setRecipientName('Customer <Test>');
+assertEmailNotification($customerOrder->sendEmailOrderNotification(['order_id' => 124, 'currency' => 'GBP'], [[
+    'job_id' => 15, 'quantity' => 10, 'price_per_unit' => 6, 'subtotal' => 60,
+    'pdf_artwork_link' => 'controller/uploads/job-artworks/15/customer artwork.pdf',
+], ['job_id' => 16, 'pdf_artwork_link' => null]], true), 'Customer order copy was not prepared.');
+$customerMessage = $customerOrder->messages[0];
+assertEmailNotification(recipientEmails($customerMessage) === ['customer@example.test'], 'Customer order copy has an unexpected recipient.');
+assertEmailNotification($customerMessage['subject'] === 'Your order #124', 'Customer order subject is incorrect.');
+assertEmailNotification(strpos($customerMessage['body'], 'Customer &lt;Test&gt;') !== false, 'Customer greeting was not escaped.');
+foreach (['Thank you for your order.', 'Quantity: 10', 'Download artwork PDF: ' . $artworkUrl, 'Artwork PDF: Not supplied'] as $value) {
+    assertEmailNotification(strpos($customerMessage['alt_body'], $value) !== false, 'Customer order copy is missing: ' . $value);
+}
+assertEmailNotification(strpos($customerMessage['body'], 'href="' . $artworkUrl . '" download') !== false, 'Customer HTML artwork download link is missing.');
+
 // Paths from old orders, missing PDFs, and hostile values must not break email links.
 $renderArtwork = static function (?string $path): array {
     $sender = new RecordingEmailsSender();

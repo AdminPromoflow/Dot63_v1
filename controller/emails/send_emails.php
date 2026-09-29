@@ -200,10 +200,10 @@ class EmailsSender
         }
     }
 
-    public function sendEmailOrderNotification(array $order, array $jobs): bool
+    public function sendEmailOrderNotification(array $order, array $jobs, bool $forCustomer = false): bool
     {
         try {
-            $this->notificationType = 'supplier_order_notification';
+            $this->notificationType = $forCustomer ? 'customer_order_notification' : 'supplier_order_notification';
             if (!filter_var($this->recipientEmail, FILTER_VALIDATE_EMAIL)) {
                 throw new InvalidArgumentException('A valid order notification recipient is required.');
             }
@@ -223,20 +223,24 @@ class EmailsSender
             }
             $paidAt = trim((string)($order['paid_at'] ?? ''));
             $total = $currency . ' ' . number_format($subtotal, 2, '.', ',');
+            $subject = ($forCustomer ? 'Your order #' : 'New order #') . $orderId;
+            $introduction = $forCustomer
+                ? 'Thank you for your order. Payment has been confirmed. Your order details and artwork files are below.'
+                : 'Payment has been confirmed. The following jobs are ready to process.';
             $mail = $this->createMailer();
             $mail->addAddress(strtolower(trim($this->recipientEmail)), $this->recipientName);
-            $mail->Subject = 'New order #' . $orderId;
+            $mail->Subject = $subject;
             $mail->isHTML(true);
             $mail->Body = $this->htmlTemplate(
                 '.63 order notification',
-                'New order #' . $orderId,
+                $subject,
                 '<p>Hello ' . $this->escape($this->recipientName !== '' ? $this->recipientName : 'there') . ',</p>'
-                . '<p>Payment has been confirmed. The following jobs are ready to process.</p>'
+                . '<p>' . $introduction . '</p>'
                 . ($paidAt !== '' ? '<p><strong>Confirmed:</strong> ' . $this->escape($paidAt) . '</p>' : '')
                 . $rows
                 . '<p><strong>Included jobs subtotal:</strong> ' . $this->escape($total) . '</p>'
             );
-            $mail->AltBody = "New order #{$orderId}\n\nPayment has been confirmed. These jobs are ready to process.\n"
+            $mail->AltBody = $subject . "\n\n" . $introduction . "\n"
                 . ($paidAt !== '' ? "Confirmed: {$paidAt}\n" : '') . "\n"
                 . implode("\n\n", $lines) . "\n\nIncluded jobs subtotal: {$total}";
             return $this->deliver($mail);

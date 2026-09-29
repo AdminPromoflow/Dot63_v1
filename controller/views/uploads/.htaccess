@@ -12,3 +12,12 @@ RemoveType .php .php3 .php4 .php5 .php7 .php8 .phtml .phar
     Header always set X-Content-Type-Options "nosniff"
     Header always set Content-Security-Policy "sandbox; default-src 'none'"
 </IfModule>
+
+# Safari cannot preview PDFs under CSP sandbox. Keep the policy and download them.
+<FilesMatch "(?i)\.pdf$">
+    ForceType application/pdf
+    <IfModule mod_headers.c>
+        Header onsuccess unset Content-Disposition
+        Header always set Content-Disposition "attachment"
+    </IfModule>
+</FilesMatch>

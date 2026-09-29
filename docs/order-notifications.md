@@ -1,6 +1,6 @@
 # Paid-order emails
 
-After the Stripe webhook confirms a paid order, Ian receives all its jobs and each supplier receives only their jobs. The customer payment confirmation remains a separate email. Existing delivery markers prevent already-sent notices from being sent again.
+After the Stripe webhook confirms a paid order, Ian and the customer associated with `orders.customer_id` each receive all its jobs, including the artwork download links. Each supplier receives only their jobs. The customer copy is addressed to the customer's account email and uses the subject **Your order #...**. The customer payment confirmation remains a separate email. Existing delivery markers prevent already-sent notices from being sent again; matching customer, supplier and Ian email addresses receive just one order-details email per order. Orders without a valid customer email still notify Ian and their suppliers.
 
 Each order email includes the job ID, order reference, product and SKU, status, creation date, notes, quantity, unit price and subtotal. The legacy `id_order` and `discount_percentage` appear when recorded. Selected `job_details` include variation ID, name, SKU, stored price, quantity and an image link when available. Stored option names are preferred over current catalog names.
 

@@ -22,7 +22,7 @@ if (!$pdo instanceof PDO) {
 }
 $suffix = bin2hex(random_bytes(6));
 $intents = ['pi_notice_ian_' . $suffix, 'pi_notice_multi_' . $suffix];
-$created = ['job_details' => [], 'jobs' => [], 'variations' => [], 'products' => [], 'suppliers' => [], 'orders' => []];
+$created = ['job_details' => [], 'jobs' => [], 'variations' => [], 'products' => [], 'suppliers' => [], 'orders' => [], 'customers' => []];
 $insert = static function (string $table, string $idColumn, array $values) use ($pdo, &$created): int {
     $columns = implode(', ', array_map(static fn($column) => '`' . $column . '`', array_keys($values)));
     $placeholders = implode(', ', array_fill(0, count($values), '?'));
@@ -58,9 +58,10 @@ try {
         $sent[] = ['order' => $order, 'recipient' => $recipient];
         return true;
     };
+    $ianCustomer = $insert('customers', 'customer_id', ['name' => 'Ian Customer', 'email' => ' IAN@KAN-DO-IT.COM ']);
     $ianOrder = $insert('orders', 'order_id', [
         'status' => 'payment_pending', 'currency' => 'GBP', 'total_amount' => 25,
-        'stripe_payment_intent_id' => $intents[0],
+        'stripe_payment_intent_id' => $intents[0], 'customer_id' => $ianCustomer,
     ]);
     $ianJob = $addJob($ianOrder, ' IAN@KAN-DO-IT.COM ', 'Ian supplier');
     foreach (['payment_pending', 'payment_processing', 'payment_failed', 'payment_canceled', 'payment_review'] as $status) {
@@ -76,6 +77,7 @@ try {
     $result = $notifications->dispatchForPaidOrder($intents[0], $record);
     assertOrderNotice($result['sent_count'] === 1, 'Ian supplier received more than one email.');
     assertOrderNotice(count($sent) === 1 && $sent[0]['recipient']['email'] === 'ian@kan-do-it.com', 'Ian address was not normalized.');
+    assertOrderNotice($sent[0]['recipient']['is_customer'] === true && $sent[0]['recipient']['name'] === 'Ian Customer', 'Shared customer/supplier/Ian recipient lost the customer copy.');
     assertOrderNotice(count($sent[0]['recipient']['jobs']) === 1, 'Job was duplicated by its variations.');
     assertOrderNotice((int)$sent[0]['recipient']['jobs'][0]['job_id'] === $ianJob, 'Incorrect job in notification.');
     $job = $sent[0]['recipient']['jobs'][0];
@@ -93,9 +95,10 @@ try {
     $result = $notifications->dispatchForPaidOrder($intents[0], $record);
     assertOrderNotice($result['already_sent_count'] === 1 && count($sent) === 1, 'Duplicate webhook resent an email.');
 
+    $customerId = $insert('customers', 'customer_id', ['name' => 'Customer Test', 'email' => ' CUSTOMER@example.test ']);
     $multiOrder = $insert('orders', 'order_id', [
         'status' => 'payment_pending', 'currency' => 'GBP', 'total_amount' => 100,
-        'stripe_payment_intent_id' => $intents[1],
+        'stripe_payment_intent_id' => $intents[1], 'customer_id' => $customerId,
     ]);
     $aJob = $addJob($multiOrder, ' SupplierA@example.test ', 'Supplier A');
     $aSecondJob = $addJob($multiOrder, 'SUPPLIERA@EXAMPLE.TEST', 'Supplier A second account');
@@ -110,7 +113,7 @@ try {
     $sender = static function (array $order, array $recipient) use (&$multiSent, &$attempts): bool {
         $email = $recipient['email'];
         $attempts[$email] = ($attempts[$email] ?? 0) + 1;
-        if ($email === 'supplierb@example.test' && $attempts[$email] === 1) {
+        if (in_array($email, ['supplierb@example.test', 'customer@example.test'], true) && $attempts[$email] === 1) {
             return false;
         }
         $multiSent[$email] = $recipient;
@@ -124,8 +127,15 @@ try {
     }
     assertOrderNotice($failed && count($multiSent) === 2, 'A failed recipient blocked the other recipients.');
     $retry = $notifications->dispatchForPaidOrder($intents[1], $sender);
-    assertOrderNotice($retry['sent_count'] === 1 && $retry['already_sent_count'] === 2, 'Retry did not isolate the failed recipient.');
-    assertOrderNotice(count($multiSent) === 3 && $attempts['ian@kan-do-it.com'] === 1 && $attempts['suppliera@example.test'] === 1, 'Shared email or Ian was notified twice.');
+    assertOrderNotice($retry['sent_count'] === 2 && $retry['already_sent_count'] === 2, 'Retry did not isolate the failed recipients.');
+    assertOrderNotice(count($multiSent) === 4 && $attempts['ian@kan-do-it.com'] === 1 && $attempts['suppliera@example.test'] === 1, 'Shared email or Ian was notified twice.');
+    $customerCopy = $multiSent['customer@example.test'];
+    assertOrderNotice($customerCopy['is_customer'] === true && $customerCopy['name'] === 'Customer Test', 'Customer recipient was not identified correctly.');
+    assertOrderNotice(array_column($customerCopy['jobs'], 'job_id') === [$aJob, $aSecondJob, $bJob, $anotherIanJob], 'Customer did not receive exactly their own order jobs.');
+    assertOrderNotice($customerCopy['jobs'] === $multiSent['ian@kan-do-it.com']['jobs'], 'Customer copy lost job details or artwork links.');
+    $marker = $pdo->prepare('SELECT event_type FROM stripe_webhook_events WHERE event_id = ?');
+    $marker->execute(['dot63_order_email_' . hash('sha256', $multiOrder . ':customer@example.test')]);
+    assertOrderNotice($marker->fetchColumn() === 'dot63.customer_order_notification.sent', 'Customer delivery marker is missing.');
     assertOrderNotice(count($multiSent['ian@kan-do-it.com']['jobs']) === 4, 'Ian did not receive all order jobs.');
     assertOrderNotice(array_column($multiSent['suppliera@example.test']['jobs'], 'job_id') === [$aJob, $aSecondJob], 'Supplier A received another supplier\'s jobs.');
     assertOrderNotice(array_column($multiSent['supplierb@example.test']['jobs'], 'job_id') === [$bJob], 'Supplier B received another supplier\'s jobs.');
@@ -135,8 +145,14 @@ try {
         assertOrderNotice(count($job['details']) === 2 && (int)$job['details'][0]['job_id'] === $job['job_id'], 'Supplier received another job\'s selected options.');
     }
     $notifications->dispatchForPaidOrder($intents[1], $sender);
-    assertOrderNotice(array_sum($attempts) === 4, 'Completed order notifications were resent.');
-    fwrite(STDOUT, "Order notification integration passed: confirmed payments, Ian deduplication, multiple suppliers, isolated retries and duplicate webhooks.\n");
+    assertOrderNotice(array_sum($attempts) === 6, 'Completed order notifications were resent.');
+    $pdo->prepare('UPDATE customers SET email = ? WHERE customer_id = ?')->execute(['invalid-address', $customerId]);
+    $invalidCustomer = $notifications->dispatchForPaidOrder($intents[1], $sender);
+    assertOrderNotice($invalidCustomer['sent_count'] === 0 && $invalidCustomer['already_sent_count'] === 3, 'Invalid customer email disrupted supplier notifications.');
+    $pdo->prepare('UPDATE orders SET customer_id = NULL WHERE order_id = ?')->execute([$multiOrder]);
+    $legacyOrder = $notifications->dispatchForPaidOrder($intents[1], $sender);
+    assertOrderNotice($legacyOrder['sent_count'] === 0 && $legacyOrder['already_sent_count'] === 3, 'Legacy order without a customer disrupted notifications.');
+    fwrite(STDOUT, "Order notification integration passed: confirmed payments, customer artwork copy, recipient isolation/deduplication, missing customers, isolated retries and duplicate webhooks.\n");
 } finally {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

@@ -85,7 +85,7 @@ try {
                     $emailSender = new EmailsSender();
                     $emailSender->setRecipientEmail($recipient['email']);
                     $emailSender->setRecipientName($recipient['name']);
-                    return $emailSender->sendEmailOrderNotification($order, $recipient['jobs']);
+                    return $emailSender->sendEmailOrderNotification($order, $recipient['jobs'], $recipient['is_customer']);
                 }
             );
         } catch (Throwable $error) {

@@ -24,9 +24,11 @@ final class OrderNotifications
         }
 
         $statement = $this->pdo->prepare('
-            SELECT order_id, currency, paid_at
-            FROM orders
-            WHERE stripe_payment_intent_id = :intent AND status = \'paid\'
+            SELECT o.order_id, o.currency, o.paid_at,
+                c.name AS customer_name, c.email AS customer_email
+            FROM orders o
+            LEFT JOIN customers c ON c.customer_id = o.customer_id
+            WHERE o.stripe_payment_intent_id = :intent AND o.status = \'paid\'
             LIMIT 1
         ');
         $statement->execute([':intent' => $paymentIntentId]);
@@ -35,7 +37,7 @@ final class OrderNotifications
             return ['sent_count' => 0, 'not_ready' => true];
         }
 
-        $recipients = $this->getRecipients((int)$order['order_id']);
+        $recipients = $this->getRecipients($order);
         $result = ['order_id' => (int)$order['order_id'], 'sent_count' => 0, 'already_sent_count' => 0];
         $failed = false;
         foreach ($recipients as $email => $recipient) {
@@ -54,8 +56,9 @@ final class OrderNotifications
         return $result;
     }
 
-    private function getRecipients(int $orderId): array
+    private function getRecipients(array $order): array
     {
+        $orderId = (int)$order['order_id'];
         $statement = $this->pdo->prepare('
             SELECT DISTINCT
                 j.*,
@@ -74,6 +77,16 @@ final class OrderNotifications
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
         $details = $this->getJobDetails($orderId);
         $recipients = [self::IAN_EMAIL => ['name' => 'Ian Southworth', 'jobs' => []]];
+        $customerEmail = strtolower(trim((string)($order['customer_email'] ?? '')));
+        if (filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+            $recipients[$customerEmail] = [
+                'name' => trim((string)($order['customer_name'] ?? '')) ?: 'Customer',
+                'jobs' => [],
+                'is_customer' => true,
+            ];
+        } else {
+            $customerEmail = '';
+        }
         foreach ($rows as $row) {
             $jobId = (int)$row['job_id'];
             $job = [
@@ -96,6 +109,9 @@ final class OrderNotifications
                 $job['discount_percentage'] = (float)$row['discount_percentage'];
             }
             $recipients[self::IAN_EMAIL]['jobs'][$jobId] = $job;
+            if ($customerEmail !== '') {
+                $recipients[$customerEmail]['jobs'][$jobId] = $job;
+            }
             $email = strtolower(trim((string)($row['supplier_email'] ?? '')));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 error_log('No valid supplier email for job #' . $jobId . ' in order #' . $orderId);
@@ -146,11 +162,14 @@ final class OrderNotifications
             }
             $marker = $this->pdo->prepare('
                 INSERT INTO stripe_webhook_events (event_id, event_type, payment_intent_id, processed_at)
-                VALUES (:event_id, \'dot63.supplier_order_notification.sent\', :intent, NOW())
+                VALUES (:event_id, :event_type, :intent, NOW())
             ');
             try {
                 $marker->execute([
                     ':event_id' => 'dot63_order_email_' . hash('sha256', $order['order_id'] . ':' . $email),
+                    ':event_type' => !empty($recipient['is_customer'])
+                        ? 'dot63.customer_order_notification.sent'
+                        : 'dot63.supplier_order_notification.sent',
                     ':intent' => $paymentIntentId,
                 ]);
             } catch (PDOException $error) {
@@ -163,6 +182,7 @@ final class OrderNotifications
             if (!(bool)$sender($order, [
                 'email' => $email,
                 'name' => $recipient['name'],
+                'is_customer' => !empty($recipient['is_customer']),
                 'jobs' => array_values($recipient['jobs']),
             ])) {
                 throw new RuntimeException('The order email was not accepted by the mail server.');

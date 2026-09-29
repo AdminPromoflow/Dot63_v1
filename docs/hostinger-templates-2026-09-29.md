@@ -17,6 +17,14 @@ Inventario consultado mediante consultas SELECT en phpMyAdmin de Hostinger, base
 
 Se verificó la disponibilidad de los archivos, no el contenido gráfico de cada plantilla. Los archivos subidos por clientes en `jobs.pdf_artwork_link` son distintos de estos templates de producto.
 
+## Corrección de pantalla negra en Safari
+
+El PDF `15mm-Lanyard-Spot-Colour-Template.pdf` de las variaciones 655 y 2528 se descargó completo (643372 bytes) y se renderizó correctamente. En Safari, una prueba con los mismos bytes reprodujo la pantalla negra al incluir `Content-Security-Policy: sandbox; default-src 'none'`; sin esa cabecera, el visor mostró el documento.
+
+Se actualizó `controller/views/uploads/.htaccess`, tanto localmente como en Hostinger, para servir los PDF con `Content-Disposition: attachment` y `Content-Type: application/pdf`. Se conserva la política de seguridad y el bloqueo de archivos ejecutables. Los enlaces ahora descargan el PDF directamente.
+
+Validación posterior: la URL de producción respondió HTTP 206, conservó la firma `%PDF-1.5` y la política CSP, y devolvió `Content-Disposition: attachment`. También se comprobó la descarga completa en Safari. Esta regla cubre las 41 rutas inventariadas; no supone una revisión visual individual de las otras 40.
+
 ## Variaciones con nombre de template pero sin enlace
 
 | ID de variación | Producto | Variación | Nombre del template | Estado |
@@ -73,4 +81,3 @@ Las rutas almacenadas comienzan con `views/uploads/`; se resolvieron como hace e
 | 809, 2552 | Super Lanyard \| Super Lanyard - Double-Ended | [12mm-Lanyard-Spot-Colour-Template1S_copia.pdf](https://promoflow.net/dot63/controller/views/uploads/1_Ian_Southworth/PRD-20260820-202626-008131-7E0BD6F150/VRT-20260821-123248-734377-6B43B0529D/12mm-Lanyard-Spot-Colour-Template1S_copia.pdf) | 206 | 480675 |
 | 810, 2553 | Super Lanyard \| Super Lanyard - Double-Ended | [15mm-Lanyard-Spot-Colour-Template1S.pdf](https://promoflow.net/dot63/controller/views/uploads/1_Ian_Southworth/PRD-20260820-202626-008131-7E0BD6F150/VRT-20260821-123248-734377-6B43B06E9D/15mm-Lanyard-Spot-Colour-Template1S.pdf) | 206 | 136330 |
 | 812, 2555 | Super Lanyard \| Super Lanyard - Double-Ended | [15mm-Lanyard-Spot-Colour-Template2S.pdf](https://promoflow.net/dot63/controller/views/uploads/1_Ian_Southworth/PRD-20260820-202626-008131-7E0BD6F150/VRT-20260821-123248-734377-6B43B0869D/15mm-Lanyard-Spot-Colour-Template2S.pdf) | 206 | 643372 |
-
