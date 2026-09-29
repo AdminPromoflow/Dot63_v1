@@ -1,10 +1,21 @@
--- SUPER LANYARD TWO ENDS: imagenes disponibles en SuperLanyardTwoEnds.zip.
--- Requisito: producto creado con insert_super_lanyard_double_ended.sql.
--- Copiar primero la carpeta controller del paquete a la raiz del sitio.
--- 64 imagenes de opcion y 61 de galeria. Flat y Polyester quedan pendientes.
+-- SUPER LANYARD TWO ENDS: actualizacion para phpMyAdmin / Hostinger.
+-- Verificado contra el respaldo adjunto del 29-09-2026, 13:14 (hora indicada en el dump).
+-- Producto 281, SKU PRD-DOUBLE-ENDED-20260923-39, 68 variaciones (2512-2579).
+-- El respaldo contiene 0 imagenes de opcion y 0 imagenes de galeria para este producto.
+-- Las 125 rutas coinciden con los archivos instalados en la copia local del proyecto.
+-- Antes de importar, subir a la raiz del sitio las dos carpetas del producto:
+-- controller/uploads/1_Ian-Southworth/PRD-DOUBLE-ENDED-20260923-39/
+-- controller/views/uploads/1_Ian_Southworth/PRD-DOUBLE-ENDED-20260923-39/
+-- En variations.image se omite controller/ porque el frontend lo agrega al resolver la ruta.
+-- En images.link la ruta ya incluye controller/. Respetar guiones, subrayados y mayusculas.
+-- Importar este archivo completo en la base del sitio desde phpMyAdmin.
+-- Resultado esperado: APPLIED_AVAILABLE_IMAGES, 64 opciones y 61 imagenes de galeria.
+-- Flat (2513) y Polyester (2515, 2517) quedan pendientes por falta de archivos.
+-- Default (2512) conserva image = NULL, igual que el producto de referencia.
 -- No modifica precios, estructura, PDF ni el Super Lanyard original.
--- Completa solo images de opcion vacias. No duplica filas de galeria al reimportar.
--- Este archivo no se ha aplicado a una base real.
+-- Completa solo imagenes de opcion vacias. No duplica filas de galeria al reimportar.
+-- Usa los SKU para resolver los IDs. No volver a importar el dump ni recrear el producto.
+-- No se ha ejecutado en Hostinger ni se ha comprobado la subida de archivos al servidor.
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 START TRANSACTION;
