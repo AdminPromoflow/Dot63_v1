@@ -41,13 +41,12 @@ export class ArtworkRenderer {
     card.append(icon, copy);
 
     if (href) {
-      // [Supplier 7.3.3.3] noopener impide que el PDF abierto controle esta página.
+      // [Supplier 7.3.3.3] Descarga el PDF sin abrir otra ventana, también en Safari.
       const link = document.createElement("a");
       link.className = "btn btn-secondary btn-compact";
       link.href = href;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.textContent = "Open template";
+      link.download = "";
+      link.textContent = "Download template";
       card.appendChild(link);
     }
 

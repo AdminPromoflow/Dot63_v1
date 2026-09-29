@@ -871,7 +871,7 @@ class PreviewLogic {
       artwork.className = "sp-artwork";
       artwork.innerHTML = `
         ${name ? `<strong class="sp-artwork-name">${name}</strong>` : ""}
-        ${pdfSrc ? `<a class="sp-artwork-link" href="${pdfSrc}" target="_blank" rel="noopener">Open PDF</a>` : ""}
+        ${pdfSrc ? `<a class="sp-artwork-link" href="${pdfSrc}" download>Download template</a>` : ""}
       `;
       wrapper.appendChild(artwork);
     }
