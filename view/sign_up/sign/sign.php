@@ -1,49 +1,11 @@
-
-<?php
-$cssTime = filemtime('../../view/sign_up/sign/sign.css'); // ejemplo: '../Home/5.Video/video.css'
-$jsTime = filemtime('../../view/sign_up/sign/sign.js');   // ejemplo: '../Home/5.Video/video.js'
-?>
-<link rel="stylesheet" href="../../view/sign_up/sign/sign.css?v=<?= $cssTime ?>">
-<main class="card" aria-labelledby="login-title">
-    <h1 id="login-title">Sign up</h1>
-
-    <seccion>
-      <div class="field">
-        <label for="name_sign_up">Name</label>
-        <input id="name_sign_up" name="email" type="email" autocomplete="email" required
-               placeholder="Full name" />
-        <div id="email-help" class="help" aria-live="polite"></div>
-      </div>
-      <div class="field">
-        <label for="email_sign_up">Email</label>
-        <input id="email_sign_up" name="email" type="email" autocomplete="email" required
-               placeholder="you@example.com" />
-        <div id="email-help" class="help" aria-live="polite"></div>
-      </div>
-
-      <div class="field">
-        <div class="row" style="margin-bottom:.35rem">
-          <label for="password_sign_up" style="margin:0">Password</label>
-        </div>
-        <div class="password-wrap">
-          <input id="password_sign_up" name="password" type="password" autocomplete="current-password" required
-                 minlength="6" placeholder="••••••••" />
-          <button type="button" class="toggle-pass" aria-label="Show password" data-show="false">Show</button>
-        </div>
-        <a class="muted-link" href="#forgot">Forgot your password?</a>
-
-        <div id="pass-help" class="help" aria-live="polite"></div>
-      </div>
-
-      <div class="actions">
-        <button id="signup_enter" class="btn" type="submit">Sign Up</button>
-      </div>
-
-      <p class="footer">
-        Don’t have an account?
-        <a class="link" href="#signup">Sign up</a>
-      </p>
-    </seccion>
-  </main>
-
-<script src="../../view/sign_up/sign/sign.js?v=<?= $jsTime ?>" type="text/javascript"></script>
+<p class="customer-auth-kicker">LET’S MAKE SOMETHING GREAT</p>
+<h1 id="customer-auth-title">Create your account.</h1>
+<p class="customer-auth-intro">A few details now. A smoother journey from here.</p>
+<form id="signupForm" class="customer-registration-form" novalidate>
+  <?php $registrationPrefix = 'signup'; require __DIR__ . '/../../global/customer_auth/registration_fields.php'; ?>
+  <p id="signup-status" class="customer-auth-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <button id="signup_enter" class="customer-auth-submit" type="submit">Create account <span aria-hidden="true">→</span></button>
+  <noscript><p>Please enable JavaScript to create your account.</p></noscript>
+</form>
+<p class="customer-auth-switch">Already have an account? <a href="../log_in/index.php">Log in</a></p>
+<script src="../../view/sign_up/sign/sign.js?v=<?= filemtime(__DIR__ . '/sign.js') ?>"></script>

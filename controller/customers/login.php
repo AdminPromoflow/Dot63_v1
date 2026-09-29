@@ -10,6 +10,11 @@ class CustomerLoginController
 {
     public function handle(): void
     {
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            header('Allow: POST');
+            $this->respond(['success' => false, 'error' => 'Use POST for authentication.'], 405);
+            return;
+        }
         $data = json_decode((string)file_get_contents('php://input'), true);
 
         if (!is_array($data)) {
@@ -43,8 +48,8 @@ class CustomerLoginController
 
     private function login(array $data): void
     {
-        $email = strtolower(trim((string)($data['email'] ?? '')));
-        $password = (string)($data['password'] ?? '');
+        $email = strtolower(trim(is_string($data['email'] ?? null) ? $data['email'] : ''));
+        $password = is_string($data['password'] ?? null) ? $data['password'] : '';
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
             $this->respond([

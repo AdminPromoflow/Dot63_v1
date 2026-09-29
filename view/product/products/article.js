@@ -28,9 +28,14 @@ class ProductsClass {
     }, {
       signal: null
     });
-    if (!result.success || !this.categoryFilter) return;
+    return result.success && Array.isArray(result.cateogories) ? result.cateogories : [];
+  }
+
+  drawCategoryFilters(categories, products) {
+    if (!this.categoryFilter) return;
+    const productCategories = new Set(products.map(product => String(product.category_name || "")).filter(Boolean));
     this.categoryFilter.innerHTML = "";
-    (result.cateogories || []).filter(category => Number(category.approved) === 1).forEach(category => {
+    categories.filter(category => Number(category.approved) === 1 && productCategories.has(String(category.name || ""))).forEach(category => {
       const item = document.createElement("li");
       const label = document.createElement("label");
       const input = document.createElement("input");
@@ -753,7 +758,8 @@ class ProductsClass {
 
   async getCatalog() {
     try {
-      await Promise.all([this.getCategoryFilters(), this.fetchGetProducts()]);
+      const [categories] = await Promise.all([this.getCategoryFilters(), this.fetchGetProducts()]);
+      this.drawCategoryFilters(categories, this.productsData);
       this.selectCategoriesForProducts(this.productsData);
       this.applyFilters();
     } catch (error) {

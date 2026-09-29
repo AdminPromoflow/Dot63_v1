@@ -33,6 +33,8 @@ foreach ($moduleFiles as $moduleFile) {
 <!-- [Customer 2.3] El navegador carga los estilos del preview con su versión actual. -->
 <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>?v=<?= $cssTime ?>">
 
+<?php require __DIR__ . '/../../global/customer_auth/assets.php'; ?>
+
 <!-- [Customer 2.4] Se entrega primero una estructura vacía; JavaScript la llenará con datos públicos del servidor. -->
 <main class="supplier-preview customer-product-preview" aria-labelledby="sp-title">
   <!-- [Customer 2.4.1] Este estado permanece visible mientras se buscan el producto y sus opciones. -->
@@ -299,26 +301,7 @@ foreach ($moduleFiles as $moduleFile) {
 
     <div id="customer_auth_register_panel" class="customer-auth-panel" role="tabpanel" aria-labelledby="customer_auth_register_tab" hidden>
       <form id="customer_register_form" novalidate>
-        <div class="customer-auth-field">
-          <label for="customer_register_name">Full name</label>
-          <input id="customer_register_name" name="name" type="text" autocomplete="name" maxlength="50" required>
-        </div>
-
-        <div class="customer-auth-field">
-          <label for="customer_register_email">Email address</label>
-          <input id="customer_register_email" name="email" type="email" autocomplete="email" maxlength="50" required>
-        </div>
-
-        <div class="customer-auth-field">
-          <label for="customer_register_password">Password</label>
-          <input id="customer_register_password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="customer_password_help" required>
-          <small id="customer_password_help">At least 8 characters with uppercase, lowercase, a number and a symbol.</small>
-        </div>
-
-        <div class="customer-auth-field">
-          <label for="customer_register_password_confirm">Confirm password</label>
-          <input id="customer_register_password_confirm" name="password_confirmation" type="password" autocomplete="new-password" minlength="8" required>
-        </div>
+        <?php $registrationPrefix = 'customer-register'; require __DIR__ . '/../../global/customer_auth/registration_fields.php'; ?>
 
         <button type="submit" class="btn btn-primary customer-auth-submit">
           <span class="btn-spinner" aria-hidden="true"></span>

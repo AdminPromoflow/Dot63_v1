@@ -86,8 +86,9 @@ class Customers
         }
     }
 
-    public function createCustomer(): array
+    public function createCustomer(array $address): array
     {
+        $pdo = null;
         try {
             $pdo = $this->getPdo();
 
@@ -98,6 +99,7 @@ class Customers
                 ];
             }
 
+            $pdo->beginTransaction();
             $statement = $pdo->prepare("
                 INSERT INTO customers
                     (name, email, password_hash, notes, `group`)
@@ -117,8 +119,29 @@ class Customers
                 throw new RuntimeException('The customer ID was not generated.');
             }
 
+            $addressStatement = $pdo->prepare('
+                INSERT INTO addresses
+                    (first_name, last_name, company_name, phone, email, street_address_1,
+                     street_address_2, town_city, country, postcode, customer_id)
+                VALUES
+                    (:first_name, :last_name, :company_name, :phone, :email, :street_address_1,
+                     :street_address_2, :town_city, :country, :postcode, :customer_id)
+            ');
+            $parameters = [':customer_id' => $customerId];
+            foreach (['first_name', 'last_name', 'company_name', 'phone', 'email',
+                      'street_address_1', 'street_address_2', 'town_city', 'country', 'postcode'] as $field) {
+                $parameters[':' . $field] = $address[$field] === '' ? null : $address[$field];
+            }
+            $addressStatement->execute($parameters);
+            $addressId = (int)$pdo->lastInsertId();
+            if ($addressId <= 0) {
+                throw new RuntimeException('The address ID was not generated.');
+            }
+            $pdo->commit();
+
             return [
                 'success' => true,
+                'address_id' => $addressId,
                 'customer' => [
                     'customer_id' => $customerId,
                     'name' => $this->name,
@@ -126,9 +149,12 @@ class Customers
                 ],
             ];
         } catch (PDOException $error) {
+            if ($pdo instanceof PDO && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log('Customer registration error: ' . $error->getMessage());
 
-            if ((string)$error->getCode() === '23000') {
+            if ((int)($error->errorInfo[1] ?? 0) === 1062) {
                 return [
                     'success' => false,
                     'reason' => 'email_exists',
@@ -140,6 +166,9 @@ class Customers
                 'reason' => 'database_error',
             ];
         } catch (Throwable $error) {
+            if ($pdo instanceof PDO && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log('Customer registration error: ' . $error->getMessage());
             return [
                 'success' => false,

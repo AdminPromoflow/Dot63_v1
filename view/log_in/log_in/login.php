@@ -1,43 +1,23 @@
-
-<?php
-$cssTime = filemtime('../../view/log_in/log_in/login.css'); // ejemplo: '../Home/5.Video/video.css'
-$jsTime = filemtime('../../view/log_in/log_in/login.js');   // ejemplo: '../Home/5.Video/video.js'
-?>
-<link rel="stylesheet" href="../../view/log_in/log_in/login.css?v=<?= $cssTime ?>">
-<main class="card" aria-labelledby="login-title">
-  <h1 id="login-title">Log in</h1>
-
-  <seccion id="loginForm">
-    <input type="hidden" name="action" value="login">
-
-    <div class="field">
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" autocomplete="email" required
-             placeholder="you@example.com" aria-describedby="email-help"/>
-      <div id="email-help" class="help" aria-live="polite"></div>
+<p class="customer-auth-kicker">YOUR NEXT GREAT IDEA STARTS HERE</p>
+<h1 id="customer-auth-title">Welcome back.</h1>
+<p class="customer-auth-intro">Log in to continue your product journey.</p>
+<form id="loginForm" class="customer-login-form" novalidate>
+  <div class="customer-field">
+    <label for="email">Email address</label>
+    <div class="customer-input-wrap"><input id="email" name="email" type="email" autocomplete="email" required placeholder="you@company.com" aria-describedby="email-help"></div>
+    <small id="email-help" class="customer-field-error" hidden></small>
+  </div>
+  <div class="customer-field">
+    <label for="password">Password</label>
+    <div class="customer-input-wrap">
+      <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password" aria-describedby="pass-help">
+      <button type="button" class="customer-password-toggle toggle-pass" aria-label="Show password" aria-controls="password" aria-pressed="false">Show</button>
     </div>
-
-    <div class="field">
-      <div class="row" style="margin-bottom:.35rem">
-        <label for="password" style="margin:0">Password</label>
-      </div>
-      <div class="password-wrap">
-        <input id="password" name="password" type="password" autocomplete="current-password" required
-               minlength="6" placeholder="••••••••" aria-describedby="pass-help"/>
-        <button type="button" class="toggle-pass" aria-label="Show password" aria-pressed="false" data-show="false">Show</button>
-      </div>
-      <a class="muted-link" href="../../view/forg_password/index.php">Forgot your password?</a>
-      <div id="pass-help" class="help" aria-live="polite"></div>
-    </div>
-
-    <div class="actions">
-      <button id="login_enter" class="btn" type="submit">Login</button>
-    </div>
-
-    <p class="footer">
-      Don’t have an account? <a class="link" href="../../view/sign_up/index.php">Sign up</a>
-    </p>
-  </seccion>
-</main>
-
-<script src="../../view/log_in/log_in/login.js?v=<?= $jsTime ?>"></script>
+    <small id="pass-help" class="customer-field-error" hidden></small>
+  </div>
+  <p id="login-status" class="customer-auth-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <button id="login_enter" class="customer-auth-submit" type="submit">Log in <span aria-hidden="true">→</span></button>
+  <noscript><p>Please enable JavaScript to log in.</p></noscript>
+</form>
+<p class="customer-auth-switch">New to PromoFlow? <a href="../sign_up/index.php">Create an account</a></p>
+<script src="../../view/log_in/log_in/login.js?v=<?= filemtime(__DIR__ . '/login.js') ?>"></script>

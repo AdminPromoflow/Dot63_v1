@@ -11,6 +11,11 @@ class CustomerSignUpController
 {
     public function handle(): void
     {
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            header('Allow: POST');
+            $this->respond(['success' => false, 'error' => 'Use POST to create an account.'], 405);
+            return;
+        }
         $data = json_decode((string)file_get_contents('php://input'), true);
 
         if (!is_array($data) || ($data['action'] ?? '') !== 'requestSignUp') {
@@ -22,11 +27,24 @@ class CustomerSignUpController
             return;
         }
 
-        $name = trim((string)($data['name'] ?? ''));
-        $email = strtolower(trim((string)($data['email'] ?? '')));
-        $password = (string)($data['password'] ?? '');
+        $name = trim(is_string($data['name'] ?? null) ? $data['name'] : '');
+        $email = strtolower(trim(is_string($data['email'] ?? null) ? $data['email'] : ''));
+        $password = is_string($data['password'] ?? null) ? $data['password'] : '';
+        $address = [];
+        $rawAddress = is_array($data['address'] ?? null) ? $data['address'] : [];
+        foreach (['first_name', 'last_name', 'company_name', 'phone', 'email',
+                  'street_address_1', 'street_address_2', 'town_city', 'country', 'postcode'] as $field) {
+            $address[$field] = trim(is_string($rawAddress[$field] ?? null) ? $rawAddress[$field] : '');
+        }
+        $address['email'] = strtolower($address['email']);
 
         $validationError = $this->validate($name, $email, $password);
+        if ($validationError === null && $password !== ($data['password_confirmation'] ?? null)) {
+            $validationError = 'Passwords do not match.';
+        }
+        if ($validationError === null) {
+            $validationError = $this->validateAddress($address);
+        }
         if ($validationError !== null) {
             $this->respond([
                 'success' => false,
@@ -41,7 +59,7 @@ class CustomerSignUpController
         $customer->setName($name);
         $customer->setEmail($email);
         $customer->setPassword($password);
-        $result = $customer->createCustomer();
+        $result = $customer->createCustomer($address);
 
         if (empty($result['success'])) {
             if (($result['reason'] ?? '') === 'email_exists') {
@@ -77,13 +95,14 @@ class CustomerSignUpController
                 ? 'Your account was created successfully. A welcome email has been sent.'
                 : 'Your account was created successfully, but the welcome email could not be sent.',
             'notification_sent' => $notificationSent,
+            'address_id' => $result['address_id'],
             'customer' => $publicCustomer,
         ], 201);
     }
 
     private function validate(string $name, string $email, string $password): ?string
     {
-        if ($name === '' || strlen($name) > 50) {
+        if ($name === '' || mb_strlen($name, 'UTF-8') > 50) {
             return 'Enter your name using no more than 50 characters.';
         }
 
@@ -91,7 +110,10 @@ class CustomerSignUpController
             return 'Enter a valid email address using no more than 50 characters.';
         }
 
-        if (strlen($password) < 8
+        if (strlen($password) > 72) {
+            return 'This password is too long. Please choose a shorter one.';
+        }
+        if (mb_strlen($password, 'UTF-8') < 8
             || !preg_match('/[A-Z]/', $password)
             || !preg_match('/[a-z]/', $password)
             || !preg_match('/[0-9]/', $password)
@@ -99,6 +121,29 @@ class CustomerSignUpController
             return 'Use at least 8 characters with uppercase, lowercase, a number and a symbol.';
         }
 
+        return null;
+    }
+
+    private function validateAddress(array $address): ?string
+    {
+        $labels = [
+            'first_name' => 'First name', 'last_name' => 'Last name',
+            'company_name' => 'Company name', 'phone' => 'Phone number',
+            'email' => 'Delivery email', 'street_address_1' => 'Address line 1',
+            'street_address_2' => 'Address line 2', 'town_city' => 'Town / city',
+            'country' => 'Country', 'postcode' => 'Postal code',
+        ];
+        foreach ($labels as $field => $label) {
+            if ($address[$field] === '' && !in_array($field, ['company_name', 'street_address_2'], true)) {
+                return $label . ' is required for your delivery address.';
+            }
+            if (mb_strlen($address[$field], 'UTF-8') > 50) {
+                return $label . ' must be no more than 50 characters.';
+            }
+        }
+        if (!filter_var($address['email'], FILTER_VALIDATE_EMAIL)) {
+            return 'Enter a valid delivery email address.';
+        }
         return null;
     }
 

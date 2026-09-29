@@ -137,6 +137,7 @@ $mainJsFile = __DIR__ . '/main.js';
 </footer>
 
 <?php if (!$isCustomerLoggedIn): ?>
+<?php require __DIR__ . '/../../global/customer_auth/assets.php'; ?>
 <dialog
   class="auth-dialog"
   id="auth-dialog"
@@ -163,7 +164,7 @@ $mainJsFile = __DIR__ . '/main.js';
 
       <div class="auth-tabs" role="tablist" aria-label="Account access">
         <button id="auth-login-tab" type="button" role="tab" aria-controls="auth-login-panel" aria-selected="true" data-auth-tab="login">Log in</button>
-        <button id="auth-register-tab" type="button" role="tab" aria-controls="auth-register-panel" aria-selected="false" tabindex="-1" data-auth-tab="register">Register</button>
+        <button id="auth-register-tab" type="button" role="tab" aria-controls="auth-register-panel" aria-selected="false" tabindex="-1" data-auth-tab="register">Create account</button>
       </div>
 
       <div class="auth-panel" id="auth-login-panel" role="tabpanel" aria-labelledby="auth-login-tab" data-auth-panel="login">
@@ -185,10 +186,6 @@ $mainJsFile = __DIR__ . '/main.js';
             </span>
           </label>
 
-          <div class="auth-panel__meta">
-            <a href="../../view/forg_password/index.php">Forgot password?</a>
-          </div>
-
           <p class="auth-status" data-auth-status="login" aria-live="polite"></p>
           <button class="auth-submit" type="submit">Log in <span aria-hidden="true">→</span></button>
         </form>
@@ -199,27 +196,10 @@ $mainJsFile = __DIR__ . '/main.js';
       <div class="auth-panel" id="auth-register-panel" role="tabpanel" aria-labelledby="auth-register-tab" data-auth-panel="register" hidden>
         <p class="auth-panel__kicker">Let’s get started</p>
         <h2>Create your account</h2>
-        <p class="auth-panel__intro">It only takes a minute.</p>
+        <p class="auth-panel__intro">Save your details for a smoother checkout.</p>
 
         <form id="main-register-form" novalidate>
-          <label class="auth-field" for="main-register-name">
-            <span>Full name</span>
-            <input id="main-register-name" name="name" type="text" autocomplete="name" maxlength="50" placeholder="Your name" required>
-          </label>
-
-          <label class="auth-field" for="main-register-email">
-            <span>Email address</span>
-            <input id="main-register-email" name="email" type="email" autocomplete="email" maxlength="50" placeholder="you@company.com" required>
-          </label>
-
-          <label class="auth-field" for="main-register-password">
-            <span>Password</span>
-            <span class="auth-field__password">
-              <input id="main-register-password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="Create a secure password" aria-describedby="password-requirements" required>
-              <button type="button" data-password-toggle aria-label="Show password">Show</button>
-            </span>
-          </label>
-          <p class="auth-requirements" id="password-requirements">8+ characters with uppercase, lowercase, a number and a symbol.</p>
+          <?php $registrationPrefix = 'main-register'; require __DIR__ . '/../../global/customer_auth/registration_fields.php'; ?>
 
           <p class="auth-status" data-auth-status="register" aria-live="polite"></p>
           <button class="auth-submit" type="submit">Create account <span aria-hidden="true">→</span></button>

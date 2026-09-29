@@ -15,6 +15,7 @@ export class CustomerAuthModal {
     this.registerPanel = document.getElementById("customer_auth_register_panel");
     this.loginForm = document.getElementById("customer_login_form");
     this.registerForm = document.getElementById("customer_register_form");
+    this.registrationFields = new CustomerRegistrationFields(this.registerForm);
     this.currentView = "login";
     this.busy = false;
     this.previousFocus = null;
@@ -117,27 +118,10 @@ export class CustomerAuthModal {
       // [Customer 10.4.7] Además de la validación HTML, comprobamos fortaleza y coincidencia de contraseñas.
       event.preventDefault();
       if (this.busy || !this.registerForm) return;
-      const password = document.getElementById("customer_register_password");
-      const confirmation = document.getElementById("customer_register_password_confirm");
-      const passwordValue = String(password?.value || "");
-      const passwordIsStrong = passwordValue.length >= 8 && /[A-Z]/.test(passwordValue) && /[a-z]/.test(passwordValue) && /[0-9]/.test(passwordValue) && /[^A-Za-z0-9]/.test(passwordValue);
-      password?.setCustomValidity(passwordIsStrong ? "" : "Use at least 8 characters with uppercase, lowercase, a number and a symbol.");
-      confirmation?.setCustomValidity(passwordValue === String(confirmation?.value || "") ? "" : "Passwords do not match.");
-      if (!this.registerForm.checkValidity()) {
-        this.registerForm.reportValidity();
-        return;
-      }
-      const formData = new FormData(this.registerForm);
-      const name = String(formData.get("name") || "").trim();
-      const email = String(formData.get("email") || "").trim();
+      if (!this.registrationFields.validate()) return;
       this.setBusy(true);
       this.showFeedback("");
-      const response = await this.makeRequest(this.api.registerUrl, {
-        action: "requestSignUp",
-        name: name,
-        email: email,
-        password: passwordValue
-      }, {
+      const response = await this.makeRequest(this.api.registerUrl, this.registrationFields.payload(), {
         requireSuccess: true
       });
       await this.completeAuthentication(response);
@@ -174,9 +158,16 @@ export class CustomerAuthModal {
   }
 
   clearPasswords() {
-    this.modal?.querySelectorAll('input[type="password"]').forEach(input => {
+    this.modal?.querySelectorAll('input[autocomplete="current-password"], input[autocomplete="new-password"]').forEach(input => {
       input.value = "";
+      input.type = "password";
       input.setCustomValidity("");
+    });
+    this.modal?.querySelectorAll('[data-registration-toggle]').forEach(button => {
+      button.textContent = 'Show';
+      button.setAttribute('aria-pressed', 'false');
+      const input = document.getElementById(button.getAttribute('aria-controls'));
+      button.setAttribute('aria-label', input?.name === 'password_confirmation' ? 'Show confirm password' : 'Show password');
     });
   }
 

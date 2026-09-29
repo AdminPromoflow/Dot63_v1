@@ -1,57 +1,60 @@
 class CustomerLogin {
   constructor() {
-    this.email = document.getElementById("email");
-    this.password = document.getElementById("password");
-    this.submit = document.getElementById("login_enter");
-    this.emailHelp = document.getElementById("email-help");
-    this.passwordHelp = document.getElementById("pass-help");
-    this.submit?.addEventListener("click", () => this.login());
-    [this.email, this.password].forEach(input => {
-      input?.addEventListener("keydown", event => this.handleInputKeydown(event));
+    this.form = document.getElementById('loginForm');
+    this.email = document.getElementById('email');
+    this.password = document.getElementById('password');
+    this.submit = document.getElementById('login_enter');
+    this.status = document.getElementById('login-status');
+    this.form.addEventListener('submit', event => {
+      event.preventDefault();
+      this.login();
+    });
+    [this.email, this.password].forEach(input => input.addEventListener('input', () => this.fieldError(input, '')));
+    document.querySelector('.toggle-pass').addEventListener('click', event => {
+      const show = this.password.type === 'password';
+      this.password.type = show ? 'text' : 'password';
+      event.currentTarget.textContent = show ? 'Hide' : 'Show';
+      event.currentTarget.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      event.currentTarget.setAttribute('aria-pressed', String(show));
     });
   }
 
-  showError(message) {
-    if (this.passwordHelp) this.passwordHelp.textContent = message;
+  fieldError(input, message) {
+    input.setAttribute('aria-invalid', String(Boolean(message)));
+    const help = document.getElementById(input === this.email ? 'email-help' : 'pass-help');
+    help.textContent = message;
+    help.hidden = !message;
   }
 
   async login() {
-    if (!this.email || !this.password || !this.submit || this.submit.disabled) return;
-    const email = this.email.value.trim();
-    const password = this.password.value;
-    if (!email || !this.email.validity.valid) {
-      if (this.emailHelp) this.emailHelp.textContent = "Enter a valid email address.";
-      this.email.focus();
+    if (this.submit.disabled) return;
+    this.email.value = this.email.value.trim();
+    this.status.textContent = '';
+    const emailError = !this.email.value || !this.email.validity.valid ? 'Enter a valid email address.' : '';
+    const passwordError = !this.password.value ? 'Enter your password.' : '';
+    this.fieldError(this.email, emailError);
+    this.fieldError(this.password, passwordError);
+    if (emailError || passwordError) {
+      (emailError ? this.email : this.password).focus();
       return;
     }
-    if (!password) {
-      this.showError("Enter your password.");
-      this.password.focus();
-      return;
-    }
-    if (this.emailHelp) this.emailHelp.textContent = "";
-    this.showError("");
     this.submit.disabled = true;
-    this.submit.textContent = "Signing in…";
+    this.form.setAttribute('aria-busy', 'true');
+    this.submit.textContent = 'Logging in…';
     try {
-      const response = await this.makeRequest("../../controller/customers/login.php", {
-        action: "requestLogin",
-        email,
-        password
-      });
-      if (!response.success) {
-        throw new Error(response.error || "Unable to sign in.");
-      }
-      window.location.assign("../../view/product/index.php");
+      const response = await this.makeRequest('../../controller/customers/login.php', {
+        action: 'requestLogin', email: this.email.value, password: this.password.value
+      }, { requireSuccess: true });
+      this.status.dataset.state = 'success';
+      this.status.textContent = 'Welcome back! Opening the catalog…';
+      window.location.assign('../product/index.php');
     } catch (error) {
-      this.showError(error.message || "Unable to sign in. Please try again.");
+      this.status.dataset.state = 'error';
+      this.status.textContent = error instanceof TypeError ? 'Unable to connect. Check your connection and try again.' : error.message || 'Unable to log in. Please try again.';
       this.submit.disabled = false;
-      this.submit.textContent = "Login";
+      this.form.setAttribute('aria-busy', 'false');
+      this.submit.textContent = 'Log in';
     }
-  }
-
-  handleInputKeydown(event) {
-    if (event.key === "Enter") this.login();
   }
 
   async makeRequest(url, data, options = {}) {

@@ -8,6 +8,7 @@ class MainAuth {
     this.panels = [...this.dialog.querySelectorAll("[data-auth-panel]")];
     this.loginForm = document.getElementById("main-login-form");
     this.registerForm = document.getElementById("main-register-form");
+    this.registrationFields = new CustomerRegistrationFields(this.registerForm);
     this.lastFocusedElement = null;
     document.querySelectorAll("[data-auth-open]").forEach(trigger => {
       trigger.addEventListener("click", () => this.openDialog(trigger.dataset.authOpen));
@@ -32,7 +33,10 @@ class MainAuth {
     });
     this.dialog.addEventListener("click", event => this.handleDialogClick(event));
     this.dialog.addEventListener("close", () => this.handleClose());
-    this.dialog.addEventListener("cancel", () => document.body.classList.remove("is-modal-open"));
+    this.dialog.addEventListener("cancel", event => {
+      if (this.isBusy()) event.preventDefault();
+      else document.body.classList.remove("is-modal-open");
+    });
     this.loginForm?.addEventListener("submit", event => this.handleLoginFormSubmit(event));
     this.registerForm?.addEventListener("submit", event => this.handleRegisterFormSubmit(event));
     const requestedMode = window.location.hash.replace("#", "").toLowerCase();
@@ -52,7 +56,12 @@ class MainAuth {
     status.dataset.state = state;
   }
 
+  isBusy() {
+    return [this.loginForm, this.registerForm].some(form => form?.dataset.loading === 'true');
+  }
+
   setMode(mode, moveFocus = false) {
+    if (this.isBusy()) return;
     const nextMode = mode === "register" ? "register" : "login";
     this.tabs.forEach(tab => {
       const active = tab.dataset.authTab === nextMode;
@@ -85,6 +94,7 @@ class MainAuth {
   }
 
   closeDialog() {
+    if (this.isBusy()) return;
     if (typeof this.dialog.close === "function" && this.dialog.open) {
       this.dialog.close();
     } else {
@@ -95,6 +105,15 @@ class MainAuth {
 
   handleClose() {
     document.body.classList.remove("is-modal-open");
+    this.dialog.querySelectorAll('input[autocomplete="current-password"], input[autocomplete="new-password"]').forEach(input => {
+      input.value = '';
+      input.type = 'password';
+    });
+    this.dialog.querySelectorAll('[data-password-toggle], [data-registration-toggle]').forEach(button => {
+      button.textContent = 'Show';
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-label', 'Show password');
+    });
     if (this.lastFocusedElement instanceof HTMLElement) {
       this.lastFocusedElement.focus({
         preventScroll: true
@@ -102,15 +121,6 @@ class MainAuth {
     }
   }
 
-  validateRegistration(form) {
-    const password = form.elements.password.value;
-    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      this.setStatus("register", "Use 8+ characters with uppercase, lowercase, a number and a symbol.", "error");
-      form.elements.password.focus();
-      return false;
-    }
-    return true;
-  }
 
   async sendAuthRequest({
     form,
@@ -118,10 +128,11 @@ class MainAuth {
     url,
     payload
   }) {
-    if (form.dataset.loading === "true") return;
+    if (this.isBusy()) return;
     const button = form.querySelector("button[type=submit]");
     const originalLabel = button.innerHTML;
     form.dataset.loading = "true";
+    form.setAttribute("aria-busy", "true");
     button.disabled = true;
     button.innerHTML = mode === "login" ? "Logging in…" : "Creating account…";
     this.setStatus(mode, mode === "login" ? "Checking your details…" : "Setting up your account…", "loading");
@@ -135,10 +146,11 @@ class MainAuth {
         window.location.assign(new URL(this.dialog.dataset.successUrl, window.location.href));
       }, 650);
     } catch (error) {
-      this.setStatus(mode, error.message || "Connection error. Please try again.", "error");
+      this.setStatus(mode, error instanceof TypeError ? "Unable to connect. Check your connection and try again." : error.message || "Connection error. Please try again.", "error");
       button.disabled = false;
       button.innerHTML = originalLabel;
       form.dataset.loading = "false";
+      form.setAttribute("aria-busy", "false");
     }
   }
 
@@ -163,6 +175,7 @@ class MainAuth {
     input.type = show ? "text" : "password";
     button.textContent = show ? "Hide" : "Show";
     button.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    button.setAttribute("aria-pressed", String(show));
   }
 
   handleDialogClick(event) {
@@ -188,17 +201,12 @@ class MainAuth {
   handleRegisterFormSubmit(event) {
     event.preventDefault();
     this.setStatus("register");
-    if (!this.registerForm.reportValidity() || !this.validateRegistration(this.registerForm)) return;
+    if (!this.registrationFields.validate()) return;
     this.sendAuthRequest({
       form: this.registerForm,
       mode: "register",
       url: this.dialog.dataset.registerUrl,
-      payload: {
-        action: "requestSignUp",
-        name: this.registerForm.elements.name.value.trim(),
-        email: this.registerForm.elements.email.value.trim(),
-        password: this.registerForm.elements.password.value
-      }
+      payload: this.registrationFields.payload()
     });
   }
 
