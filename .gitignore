@@ -1,3 +1,4 @@
 .DS_Store
 .env
 controller/config/stripe.local.php
+controller/config/database.local.php

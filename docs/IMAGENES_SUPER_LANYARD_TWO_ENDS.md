@@ -548,3 +548,12 @@ Default / Tubular / Polyester / 15mm / Screen print / Two sides / Two colours
 ## Traslado desde Downloads completado
 
 Se movieron y renombraron las 46 imágenes originales de `/Users/aleinarossui/Downloads/SuperLanyardTwoEnds` a `/private/tmp/super-lanyard-two-ends`. Las 19 imágenes usadas por el producto conservan sus 125 destinos por variación; las otras 27 están en `extras` con nombres terminados en `-TwoEnds.png`. El archivo `IMAGENES_MOVIDAS.md` del paquete detalla cada cambio de nombre y ubicación. No quedan PNG en la carpeta de origen.
+
+## Instalación de las carpetas en el proyecto
+
+Las imágenes de Double Ended ya están instaladas en `/Applications/XAMPP/xamppfiles/htdocs/Dot63_v1`, en las dos rutas siguientes:
+
+- `/Applications/XAMPP/xamppfiles/htdocs/Dot63_v1/controller/uploads/1_Ian-Southworth/PRD-DOUBLE-ENDED-20260923-39`
+- `/Applications/XAMPP/xamppfiles/htdocs/Dot63_v1/controller/views/uploads/1_Ian_Southworth/PRD-DOUBLE-ENDED-20260923-39`
+
+Cada carpeta de producto contiene las 68 subcarpetas `VRT-DOUBLE-ENDED-20260923-39-…`. Galería contiene 61 PNG y opciones contiene 64 PNG. Se verificó que los 125 archivos coinciden con el paquete. Default y los destinos pendientes conservan sus carpetas vacías. Este traslado instala archivos; el SQL de imágenes sigue sin aplicarse a una base real.
