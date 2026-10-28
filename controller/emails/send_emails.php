@@ -247,8 +247,13 @@ class EmailsSender
             $rows = '';
             $lines = [];
             $subtotal = 0.0;
+            $mail = $this->createMailer();
+            // Leave room for base64 encoding and the message within common SMTP limits.
+            $attachmentBytesLeft = 16 * 1024 * 1024;
+            $attachedPaths = [];
             foreach ($jobs as $job) {
                 $subtotal += (float)($job['subtotal'] ?? 0);
+                $job['artwork_attachment_name'] = $this->attachJobArtwork($mail, $job, $orderId, $attachmentBytesLeft, $attachedPaths);
                 $content = $this->orderJobContent($job, $orderId, $currency);
                 $rows .= $content['html'];
                 $lines[] = $content['text'];
@@ -259,7 +264,6 @@ class EmailsSender
             $introduction = $forCustomer
                 ? 'Thank you for your order. Payment has been confirmed. Your order details and artwork files are below.'
                 : 'Payment has been confirmed. The following jobs are ready to process.';
-            $mail = $this->createMailer();
             $mail->addAddress(strtolower(trim($this->recipientEmail)), $this->recipientName);
             $mail->Subject = $subject;
             $mail->isHTML(true);
@@ -280,6 +284,28 @@ class EmailsSender
             error_log('EmailsSender::sendEmailOrderNotification error -> ' . $error->getMessage());
             return false;
         }
+    }
+
+    private function attachJobArtwork(PHPMailer $mail, array $job, int $orderId, int &$bytesLeft, array &$attachedPaths): string
+    {
+        $jobId = (int)($job['job_id'] ?? 0);
+        $relative = trim((string)($job['pdf_artwork_link'] ?? ''));
+        // Only attach this job's customer upload. Never read a caller-selected local file,
+        // a supplier template, another job's PDF, or fetch an external URL.
+        if ($jobId <= 0 || !preg_match('#\Acontroller/uploads/job-artworks/' . $jobId . '/[a-zA-Z0-9 _.-]+\.pdf\z#', $relative)) return '';
+        $directory = realpath(__DIR__ . '/../uploads/job-artworks');
+        $path = realpath(dirname(__DIR__, 2) . '/' . $relative);
+        if (!$directory || !$path || $path !== $directory . '/' . $jobId . '/' . basename($relative)
+            || !is_file($path) || !is_readable($path)) return '';
+        if (isset($attachedPaths[$path])) return $attachedPaths[$path];
+        $size = filesize($path);
+        if ($size <= 0 || $size > 8 * 1024 * 1024 || $size > $bytesLeft
+            || (new finfo(FILEINFO_MIME_TYPE))->file($path) !== 'application/pdf') return '';
+        $name = 'order-' . $orderId . '-job-' . $jobId . '-artwork.pdf';
+        if (!$mail->addAttachment($path, $name, 'base64', 'application/pdf')) return '';
+        $bytesLeft -= $size;
+        $attachedPaths[$path] = $name;
+        return $name;
     }
 
     private function orderJobContent(array $job, int $orderId, string $currency): array
@@ -350,6 +376,12 @@ class EmailsSender
                 . '<p style="margin:0;font-size:12px;word-break:break-all;"><a href="' . $this->escape($artworkUrl) . '">'
                 . $this->escape($artworkUrl) . '</a></p>';
             $lines[] = 'Download artwork PDF: ' . $artworkUrl;
+            $attachment = (string)($job['artwork_attachment_name'] ?? '');
+            $attachmentNote = $attachment !== ''
+                ? 'PDF attached: ' . $attachment
+                : 'Use the download link above. This PDF is not attached to the email.';
+            $html .= '<p style="font-size:12px;color:#6b7280;">' . $this->escape($attachmentNote) . '</p>';
+            $lines[] = $attachmentNote;
         } else {
             $message = $artwork === '' ? 'Not supplied' : 'Unavailable';
             $html .= '<p><strong>Artwork PDF:</strong> ' . $message . '</p>';

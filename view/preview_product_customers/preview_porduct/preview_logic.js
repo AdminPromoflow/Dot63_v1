@@ -93,6 +93,7 @@ class CustomerPreviewApp {
     };
     this.purchaseReady = false;
     this.purchasePending = false;
+    this.purchaseConfirming = false;
     this.pendingPurchase = null;
     this.auth = new CustomerAuthModal({
       api: this.api,
@@ -256,15 +257,19 @@ class CustomerPreviewApp {
 
   async submitPurchase(buyNow, savedPayload = null) {
     // [Customer 10.1] No enviamos compras incompletas ni permitimos dos solicitudes simultáneas.
-    if (!this.purchaseReady || this.purchasePending) return;
+    if (!this.purchaseReady || this.purchasePending || this.purchaseConfirming) return;
     if (!savedPayload && !this.artworkUpload.validateSelection()) {
       this.artworkUpload.input?.focus();
       return;
     }
-    if (!savedPayload && !this.artworkUpload.getFile()
-      && !window.confirm("You haven't attached an artwork PDF. Are you sure you want to add this product to your cart without one?")) {
-      this.artworkUpload.input?.focus();
-      return;
+    if (!savedPayload && !this.artworkUpload.getFile()) {
+      this.purchaseConfirming = true;
+      try {
+        if (!await this.artworkUpload.confirmWithoutArtwork()) return;
+      } finally {
+        this.purchaseConfirming = false;
+      }
+      if (!this.purchaseReady || this.purchasePending) return;
     }
 
     // [Customer 10.1.1] Si venimos de autenticación usamos la copia guardada; de lo contrario,

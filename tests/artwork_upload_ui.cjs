@@ -14,11 +14,11 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
   try {
     const page = await browser.newPage({viewport: {width: 1280, height: 900}});
     const errors = [], cartRequests = [], dialogs = [];
-    let authenticated = true, confirmWithoutPdf = false;
+    let authenticated = true;
     page.on('pageerror', error => errors.push(error.message));
     page.on('dialog', async dialog => {
       dialogs.push(dialog.message());
-      if (confirmWithoutPdf) await dialog.accept(); else await dialog.dismiss();
+      await dialog.dismiss();
     });
     await page.route('**/*', async route => {
       const request = route.request();
@@ -63,13 +63,35 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
     await waitReady();
     assert(await page.locator('#artwork_section').isVisible(), 'Upload must be visible without supplier templates');
     await page.locator('#bb_add_to_cart').click();
+    await page.locator('#artwork_confirmation').waitFor({state: 'visible'});
+    assert.match(await page.locator('#artwork_confirmation_message').innerText(), /Are you sure.*without it/);
+    await page.locator('#artwork_confirm_cancel').click();
+    await page.locator('#artwork_confirmation').waitFor({state: 'hidden'});
     assert.equal(cartRequests.length, 0, 'Cancel should not add a cart job');
-    assert.match(dialogs[0], /Are you sure.*without one/);
-    confirmWithoutPdf = true;
-    await addAndWait();
+    await page.locator('#bb_add_to_cart').click();
+    await page.locator('#artwork_confirmation').waitFor({state: 'visible'});
+    await page.locator('#artwork_confirmation').screenshot({path: '/private/tmp/dot63-artwork-confirmation.png'});
+    const continueResponse = page.waitForResponse(url => url.url().endsWith('/order/cart.php'));
+    await page.locator('#artwork_confirm_continue').click();
+    await continueResponse;
+    await waitReady();
     assert.equal(cartRequests.length, 1);
     assert.doesNotMatch(cartRequests[0], /filename=/);
     assert.match(cartRequests[0], /name="variation_ids\[\]"\r\n\r\n1/);
+
+    await page.locator('#bb_add_to_cart').click();
+    await page.locator('#artwork_confirmation').waitFor({state: 'visible'});
+    await page.keyboard.press('Escape');
+    await page.locator('#artwork_confirmation').waitFor({state: 'hidden'});
+    assert.equal(cartRequests.length, 1, 'Escape reused the previous confirmation');
+    await page.locator('#bb_add_to_cart').click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('#artwork_confirm_upload').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({name: 'from-alert.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\nArtwork test\n%%EOF')});
+    await page.locator('#artwork_confirmation').waitFor({state: 'hidden'});
+    assert.match(await page.locator('#artwork_summary').innerText(), /from-alert.pdf/);
+    assert.equal(cartRequests.length, 1, 'Choosing artwork submitted before the customer continued');
 
     await page.locator('#artwork_pdf').setInputFiles({name: 'wrong.txt', mimeType: 'text/plain', buffer: Buffer.from('wrong')});
     await page.locator('#bb_add_to_cart').click();
@@ -82,6 +104,7 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
     assert.match(await page.locator('#artwork_upload_status').innerText(), /up to 8 MB/);
     await page.locator('#artwork_remove').click();
     assert.equal(await page.locator('#artwork_pdf').inputValue(), '');
+    assert.match(await page.locator('#artwork_summary').innerText(), /No artwork uploaded/);
 
     await choosePdf();
     const dialogCount = dialogs.length;
@@ -116,7 +139,25 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
     await page.waitForURL('**/view/shopping_cart/index.php');
     assert.match(cartRequests.at(-1), /name="intent"\r\n\r\nbuy_now/);
     assert.match(cartRequests.at(-1), /filename="my-artwork.pdf"/);
+    await page.goto(previewUrl);
+    await waitReady();
+    const beforeBuyNow = cartRequests.length;
+    await page.locator('#bb_buy_now').click();
+    await page.locator('#artwork_confirmation').waitFor({state: 'visible'});
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Mobile confirmation overflows');
+    await page.locator('#artwork_confirmation').screenshot({path: '/private/tmp/dot63-artwork-confirmation-mobile.png'});
+    await page.locator('#artwork_confirm_cancel').click();
+    await page.locator('#artwork_confirmation').waitFor({state: 'hidden'});
+    assert.equal(cartRequests.length, beforeBuyNow, 'Cancel Buy now created a job');
+    assert.equal(page.url(), previewUrl);
+    await page.locator('#bb_buy_now').click();
+    await page.locator('#artwork_confirm_continue').click();
+    await page.waitForURL('**/view/shopping_cart/index.php');
+    assert.equal(cartRequests.length, beforeBuyNow + 1, 'Buy now submitted more than once');
+    assert.match(cartRequests.at(-1), /name="intent"\r\n\r\nbuy_now/);
+    assert.doesNotMatch(cartRequests.at(-1), /filename=/);
     assert.deepEqual(errors, []);
-    console.log('PASS: artwork UI, missing-PDF cancel/confirm, invalid files, multipart/CSRF, sign-in retry, mobile layout and Buy now.');
+    assert.deepEqual(dialogs, [], 'Legacy browser confirmation should not appear');
+    console.log('PASS: artwork UI, upload from confirmation, cancel/Escape/continue, invalid files, multipart/CSRF, sign-in retry, mobile layout and Buy now with/without artwork.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

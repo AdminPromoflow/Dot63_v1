@@ -70,11 +70,45 @@ export class ArtworkUpload {
     this.input = document.getElementById("artwork_pdf");
     this.status = document.getElementById("artwork_upload_status");
     this.remove = document.getElementById("artwork_remove");
+    this.shortcut = document.getElementById("artwork_upload_shortcut");
+    this.summary = document.getElementById("artwork_summary");
+    this.dialog = document.getElementById("artwork_confirmation");
+    this.confirmation = null;
     this.input?.addEventListener("change", () => this.validateSelection());
+    this.shortcut?.addEventListener("click", () => this.chooseFile());
+    document.getElementById("artwork_confirm_upload")?.addEventListener("click", () => {
+      this.dialog.close("upload");
+      // Open the chooser inside this click so browsers retain the user gesture.
+      this.chooseFile();
+    });
+    document.getElementById("artwork_confirm_continue")?.addEventListener("click", () => this.dialog.close("continue"));
+    document.getElementById("artwork_confirm_cancel")?.addEventListener("click", () => this.dialog.close("cancel"));
     this.remove?.addEventListener("click", () => {
       this.input.value = "";
       this.validateSelection();
     });
+  }
+
+  chooseFile() {
+    if (!this.input || this.input.disabled) return;
+    document.getElementById("artwork_section")?.scrollIntoView({ block: "center" });
+    this.input.focus({ preventScroll: true });
+    this.input.click();
+  }
+
+  confirmWithoutArtwork() {
+    if (this.confirmation) return this.confirmation;
+    if (!this.dialog) return Promise.resolve(false);
+    this.confirmation = new Promise(resolve => {
+      this.dialog.addEventListener("close", () => {
+        this.confirmation = null;
+        resolve(this.dialog.returnValue === "continue");
+      }, { once: true });
+      // Escape must never inherit a previous confirmation.
+      this.dialog.returnValue = "cancel";
+      this.dialog.showModal();
+    });
+    return this.confirmation;
   }
 
   getFile() {
@@ -89,6 +123,8 @@ export class ArtworkUpload {
     this.input?.setCustomValidity(error);
     this.input?.setAttribute("aria-invalid", String(Boolean(error)));
     if (this.remove) this.remove.hidden = !file;
+    if (this.shortcut) this.shortcut.textContent = file ? "Change artwork" : "Upload artwork";
+    if (this.summary) this.summary.textContent = error || (file ? file.name : "No artwork uploaded. You can upload your PDF before continuing.");
     this.setStatus(error || (file ? `${file.name} · Ready to upload with this product.` : "No artwork selected."), error ? "error" : "info");
     return !error;
   }
@@ -102,6 +138,7 @@ export class ArtworkUpload {
   setPending(pending) {
     if (this.input) this.input.disabled = pending;
     if (this.remove) this.remove.disabled = pending;
+    if (this.shortcut) this.shortcut.disabled = pending;
   }
 
   markSaved(file) {

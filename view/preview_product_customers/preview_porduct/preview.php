@@ -226,6 +226,12 @@ foreach ($moduleFiles as $moduleFile) {
             This estimate updates automatically when you change a product option, quantity or delivery.
           </p>
 
+          <div class="artwork-shortcut">
+            <strong>Your artwork</strong>
+            <p id="artwork_summary" role="status" aria-live="polite">No artwork uploaded. You can upload your PDF before continuing.</p>
+            <button type="button" class="btn btn-secondary btn-compact" id="artwork_upload_shortcut">Upload artwork</button>
+          </div>
+
           <div class="purchase-actions" aria-label="Purchase actions">
             <button type="button" class="btn btn-primary purchase-button" id="bb_add_to_cart" disabled>
               <span class="btn-spinner" aria-hidden="true"></span>
@@ -245,7 +251,7 @@ foreach ($moduleFiles as $moduleFile) {
       <div class="section-heading">
         <div>
           <span class="section-kicker">Production assets</span>
-          <h2 id="artwork_heading">Artwork templates</h2>
+          <h2 id="artwork_heading">Artwork templates &amp; your design</h2>
         </div>
         <span class="section-helper">Templates update with the selected options.</span>
       </div>
@@ -253,7 +259,7 @@ foreach ($moduleFiles as $moduleFile) {
       <div class="artwork-upload">
         <div class="artwork-upload-copy">
           <label for="artwork_pdf">Upload your artwork (PDF)</label>
-          <p id="artwork_upload_help">Optional · PDF only, up to 8 MB. Your file is saved when you add this product to your cart or choose Buy now.</p>
+          <p id="artwork_upload_help">Download the supplier’s template above, add your design, then upload your finished PDF here. Optional · PDF only, up to 8 MB. Your file is saved with this product and included in the supplier’s email when your order is confirmed.</p>
         </div>
         <input type="file" id="artwork_pdf" name="artwork_pdf" accept=".pdf,application/pdf" aria-describedby="artwork_upload_help artwork_upload_status">
         <div class="artwork-upload-feedback">
@@ -264,6 +270,18 @@ foreach ($moduleFiles as $moduleFile) {
     </section>
   </div>
 </main>
+
+<dialog id="artwork_confirmation" class="artwork-confirmation" role="alertdialog" aria-labelledby="artwork_confirmation_title" aria-describedby="artwork_confirmation_message">
+  <span class="artwork-confirmation-icon" aria-hidden="true">PDF</span>
+  <h2 id="artwork_confirmation_title">Continue without artwork?</h2>
+  <p id="artwork_confirmation_message">You haven’t uploaded your artwork. Are you sure you want to continue without it?</p>
+  <p class="artwork-confirmation-help">Choose Upload artwork to select your PDF, then click Add to cart or Buy now again.</p>
+  <div class="artwork-confirmation-actions">
+    <button type="button" id="artwork_confirm_upload" class="btn btn-primary" autofocus>Upload artwork</button>
+    <button type="button" id="artwork_confirm_continue" class="btn btn-secondary">Continue without artwork</button>
+    <button type="button" id="artwork_confirm_cancel" class="btn btn-secondary">Cancel</button>
+  </div>
+</dialog>
 
 <!-- [Customer 2.5] El modal permanece oculto hasta que el carrito responde que hace falta autenticarse. -->
 <div class="customer-auth-modal" id="customer_auth_modal" hidden>
