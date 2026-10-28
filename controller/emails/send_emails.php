@@ -147,6 +147,38 @@ class EmailsSender
         );
     }
 
+    public function sendEmailPasswordReset(string $accountType, string $token): bool
+    {
+        try {
+            if (!in_array($accountType, ['customer', 'supplier'], true)
+                || !preg_match('/\A[a-f0-9]{64}\z/', $token)
+                || !filter_var($this->recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                throw new InvalidArgumentException('Invalid password recovery message.');
+            }
+            $this->notificationType = $accountType . '_password_reset';
+            // A fragment keeps the secret out of HTTP access logs and Referer headers.
+            $url = $this->publicFileUrl('view/forg_password/index.php') . '?account=' . $accountType . '#token=' . $token;
+            $mail = $this->createMailer();
+            $mail->addAddress($this->recipientEmail, $this->recipientName);
+            $mail->Subject = 'Reset your .63 ' . $accountType . ' password';
+            $mail->isHTML(true);
+            $mail->Body = $this->htmlTemplate('.63 account recovery', 'Reset your password',
+                '<p>Hello ' . $this->escape($this->recipientName !== '' ? $this->recipientName : 'there') . ',</p>'
+                . '<p>We received a request to reset the password for your ' . $accountType . ' account.</p>'
+                . '<p><a href="' . $this->escape($url) . '" style="display:inline-block;padding:12px 18px;background:#1f3551;color:#fff;text-decoration:none;border-radius:8px;">Reset password</a></p>'
+                . '<p>This link expires in 30 minutes and can only be used once. If you request another link, use the most recent email.</p>'
+                . '<p>If you did not request this, ignore this email. Your password will stay the same.</p>'
+            );
+            $mail->AltBody = "Reset the password for your .63 {$accountType} account:\n{$url}\n\n"
+                . 'This link expires in 30 minutes and can only be used once. Use the most recent email. '
+                . 'If you did not request this, ignore this email. Your password will stay the same.';
+            return $this->deliver($mail);
+        } catch (Throwable $error) {
+            error_log('Dot63 password recovery email failed. Check SMTP and DOT63_PUBLIC_URL configuration.');
+            return false;
+        }
+    }
+
     public function sendEmailPaymentConfirmation(array $order): bool
     {
         try {

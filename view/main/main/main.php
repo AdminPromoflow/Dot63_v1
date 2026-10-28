@@ -186,6 +186,7 @@ $mainJsFile = __DIR__ . '/main.js';
             </span>
           </label>
 
+          <p class="customer-auth-switch"><a href="../forg_password/index.php?account=customer">Forgot your password?</a></p>
           <p class="auth-status" data-auth-status="login" aria-live="polite"></p>
           <button class="auth-submit" type="submit">Log in <span aria-hidden="true">→</span></button>
         </form>

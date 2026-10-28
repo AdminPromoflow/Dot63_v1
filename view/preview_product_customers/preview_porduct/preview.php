@@ -302,6 +302,8 @@ foreach ($moduleFiles as $moduleFile) {
           <input id="customer_login_password" name="password" type="password" autocomplete="current-password" required>
         </div>
 
+        <p class="customer-auth-switch"><a href="../forg_password/index.php?account=customer">Forgot your password?</a></p>
+
         <button type="submit" class="btn btn-primary customer-auth-submit">
           <span class="btn-spinner" aria-hidden="true"></span>
           <span class="customer-auth-submit-label">Log in and continue</span>

@@ -209,4 +209,25 @@ assertEmailNotification($statusNotice->messages[0]['subject'] === 'Product statu
 assertEmailNotification(strpos($statusNotice->messages[0]['body'], 'Current status:</strong> Published') !== false, 'Current status missing from approval email.');
 assertEmailNotification(strpos($statusNotice->messages[0]['alt_body'], 'Requested status: Draft') !== false, 'Requested status missing from approval email.');
 
+putenv('DOT63_PUBLIC_URL=https://shop.example.test/dot63/');
+$_SERVER['HTTP_HOST'] = 'attacker.example.test';
+foreach (['supplier', 'customer'] as $accountType) {
+    $resetMail = new RecordingEmailsSender();
+    $resetMail->setRecipientEmail('reset@example.test');
+    $resetMail->setRecipientName('<script>Example</script>');
+    $resetMail->setRecipientPassword('NeverSendPasswords!42');
+    $token = bin2hex(random_bytes(32));
+    assertEmailNotification($resetMail->sendEmailPasswordReset($accountType, $token), 'Reset email was not prepared.');
+    $message = $resetMail->messages[0];
+    $url = 'https://shop.example.test/dot63/view/forg_password/index.php?account=' . $accountType . '#token=' . $token;
+    assertEmailNotification(recipientEmails($message) === ['reset@example.test'], 'Reset link copied to another recipient.');
+    assertEmailNotification(strpos($message['body'], $url) !== false && strpos($message['alt_body'], $url) !== false, 'Reset URL missing or incorrect.');
+    assertEmailNotification(strpos($message['body'], '30 minutes') !== false, 'Expiry missing from email.');
+    assertEmailNotification(strpos($message['body'], '<script>') === false, 'Recipient name not escaped.');
+    assertEmailNotification(strpos($message['body'] . $message['alt_body'], 'attacker.example.test') === false, 'Host header poisoned reset link.');
+    assertEmailNotification(strpos($message['body'] . $message['alt_body'], 'NeverSendPasswords!42') === false, 'Password exposed in recovery email.');
+}
+putenv('DOT63_PUBLIC_URL');
+unset($_SERVER['HTTP_HOST']);
+
 fwrite(STDOUT, "Email notification tests passed.\n");

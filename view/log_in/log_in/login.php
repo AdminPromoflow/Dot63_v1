@@ -15,6 +15,7 @@
     </div>
     <small id="pass-help" class="customer-field-error" hidden></small>
   </div>
+  <p class="customer-auth-switch"><a href="../forg_password/index.php?account=customer">Forgot your password?</a></p>
   <p id="login-status" class="customer-auth-status" role="status" aria-live="polite" aria-atomic="true"></p>
   <button id="login_enter" class="customer-auth-submit" type="submit">Log in <span aria-hidden="true">→</span></button>
   <noscript><p>Please enable JavaScript to log in.</p></noscript>

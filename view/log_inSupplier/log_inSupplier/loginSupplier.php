@@ -45,6 +45,8 @@ $jsTime = filemtime('../../view/log_inSupplier/log_inSupplier/loginSupplier.js')
         <div id="pass-help" class="help" aria-live="polite"></div>
       </div>
 
+      <p class="footer"><a class="link" href="../forg_password/index.php?account=supplier">Forgot your password?</a></p>
+
       <div class="actions">
         <button id="login_enter" class="btn" type="button">Log in</button>
       </div>

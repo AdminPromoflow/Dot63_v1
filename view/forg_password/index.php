@@ -1,34 +1,29 @@
 <?php
-
 require_once __DIR__ . '/../../controller/security/bootstrap.php';
-if (session_status() !== PHP_SESSION_ACTIVE) {
-  session_start();
-}
+header('Cache-Control: no-store');
+header('Referrer-Policy: no-referrer');
+$accountType = ($_GET['account'] ?? '') === 'supplier' ? 'supplier' : 'customer';
+$accountLabel = ucfirst($accountType);
+$loginUrl = $accountType === 'supplier' ? '../log_inSupplier/index.php' : '../log_in/index.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Reset your password · .63</title>
   <?php require __DIR__ . '/../global/security/page_head.php'; ?>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <meta name="description" content="" />
-  <meta name="author" content="Promoflow" />
-  <meta name="keywords" content="" />
-  <title>Forgot password</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
-
-  <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
-
-  <link rel="stylesheet" href="../../view/forg_password/style.css?v=<?php echo filemtime("../../view/forg_password/style.css"); ?>">
+  <link rel="stylesheet" href="password/password.css?v=<?= filemtime(__DIR__ . '/password/password.css') ?>">
 </head>
-
-<body class="body_for_password">
-  <?php include "../../view/global/menu_general/menu_general.php"; ?>
-  <?php include "../../view/forg_password/navigation/navigation.php" ?>
-  <?php include "../../view/forg_password/password/password.php";?>
+<body class="recovery-page">
+  <header class="recovery-header">
+    <a class="recovery-brand" href="../main/index.php" aria-label=".63 home">.63</a>
+    <a href="<?= $loginUrl ?>">Back to <?= $accountType ?> login <span aria-hidden="true">↗</span></a>
+  </header>
+  <?php require __DIR__ . '/password/password.php'; ?>
+  <footer class="recovery-footer">© <?= date('Y') ?> .63 · Promotional products, made simple.</footer>
+  <script src="password/password.js?v=<?= filemtime(__DIR__ . '/password/password.js') ?>" defer></script>
 </body>
 </html>
