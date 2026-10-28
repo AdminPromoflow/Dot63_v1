@@ -15,6 +15,7 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
     const page = await browser.newPage({viewport: {width: 1280, height: 900}});
     const errors = [], cartRequests = [], dialogs = [];
     let authenticated = true;
+    let supplierArtwork = null;
     page.on('pageerror', error => errors.push(error.message));
     page.on('dialog', async dialog => {
       dialogs.push(dialog.message());
@@ -34,7 +35,7 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
         if (data.action === 'get_customer_preview') return reply({success: true, root_variation_id: 1, product: {sku: 'ARTWORK-TEST', name: 'Artwork test', supplier_name: 'Test supplier'}});
         if (data.action === 'get_customer_variation_children') return reply({success: true, current: {
           variation: {variation_id: 1, name: 'Default', price_display_mode: 'prices'},
-          artwork: null, images: [], items: [], prices: [{price_id: 1, min_quantity: 1, max_quantity: 100, price: 2.50}]
+          artwork: supplierArtwork, images: [], items: [], prices: [{price_id: 1, min_quantity: 1, max_quantity: 100, price: 2.50}]
         }, children: [], types: []});
         return reply({success: true, prices: []});
       }
@@ -47,6 +48,10 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
       }
       if (url.pathname.endsWith('/customers/login.php')) { authenticated = true; return reply({success: true}); }
       if (url.pathname.endsWith('/shopping_cart/index.php')) return route.fulfill({contentType: 'text/html', body: '<h1>Shopping cart</h1>'});
+      if (url.pathname === '/controller/uploads/supplier-template.pdf') return route.fulfill({
+        contentType: 'application/pdf', headers: {'Content-Disposition': 'attachment; filename="supplier-template.pdf"'},
+        body: '%PDF-1.4\nSupplier template\n%%EOF'
+      });
       const file = path.join(root, url.pathname);
       if (!fs.existsSync(file)) return route.fulfill({status: 404, body: ''});
       return route.fulfill({contentType: file.endsWith('.css') ? 'text/css' : 'text/javascript', body: fs.readFileSync(file)});
@@ -65,6 +70,7 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
     await page.locator('#bb_add_to_cart').click();
     await page.locator('#artwork_confirmation').waitFor({state: 'visible'});
     assert.match(await page.locator('#artwork_confirmation_message').innerText(), /Are you sure.*without it/);
+    assert.equal(await page.locator('#artwork_confirmation_templates').isVisible(), false, 'No template should produce no download link');
     await page.locator('#artwork_confirm_cancel').click();
     await page.locator('#artwork_confirmation').waitFor({state: 'hidden'});
     assert.equal(cartRequests.length, 0, 'Cancel should not add a cart job');
@@ -139,11 +145,20 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
     await page.waitForURL('**/view/shopping_cart/index.php');
     assert.match(cartRequests.at(-1), /name="intent"\r\n\r\nbuy_now/);
     assert.match(cartRequests.at(-1), /filename="my-artwork.pdf"/);
+    supplierArtwork = {pdf_artwork: 'controller/uploads/supplier-template.pdf', name_pdf_artwork: 'Print layout'};
     await page.goto(previewUrl);
     await waitReady();
     const beforeBuyNow = cartRequests.length;
     await page.locator('#bb_buy_now').click();
     await page.locator('#artwork_confirmation').waitFor({state: 'visible'});
+    const templateLink = page.getByRole('link', {name: 'Download template — Print layout', exact: true});
+    assert(await templateLink.isVisible(), 'Supplier template is missing from the warning');
+    const downloadPromise = page.waitForEvent('download');
+    await templateLink.click();
+    assert.equal((await downloadPromise).suggestedFilename(), 'supplier-template.pdf');
+    assert.equal(page.url(), previewUrl, 'Template download left the configured product');
+    assert.equal(cartRequests.length, beforeBuyNow, 'Downloading a template added the product');
+    assert(await page.locator('#artwork_confirmation').isVisible(), 'Downloading should leave the warning open');
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Mobile confirmation overflows');
     const modalBounds = await page.locator('#artwork_confirmation').boundingBox();
     assert(modalBounds.x >= 0 && modalBounds.x + modalBounds.width <= 375, 'Mobile dialog exceeds the viewport');

@@ -275,6 +275,10 @@ foreach ($moduleFiles as $moduleFile) {
   <span class="artwork-confirmation-icon" aria-hidden="true">PDF</span>
   <h2 id="artwork_confirmation_title">Continue without artwork?</h2>
   <p id="artwork_confirmation_message">You haven’t uploaded your artwork. Are you sure you want to continue without it?</p>
+  <div id="artwork_confirmation_templates" class="artwork-confirmation-templates" hidden>
+    <p>Download the supplier’s template to prepare your artwork:</p>
+    <div id="artwork_confirmation_template_links"></div>
+  </div>
   <p class="artwork-confirmation-help">Choose Upload artwork to select your PDF, then click Add to cart or Buy now again.</p>
   <div class="artwork-confirmation-actions">
     <button type="button" id="artwork_confirm_upload" class="btn btn-primary" autofocus>Upload artwork</button>

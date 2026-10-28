@@ -2,11 +2,17 @@
 export class ArtworkRenderer {
   constructor(rootId = "wrap-artworks-group") {
     this.root = document.getElementById(rootId);
+    this.confirmationTemplates = document.getElementById("artwork_confirmation_templates");
+    this.confirmationLinks = document.getElementById("artwork_confirmation_template_links");
+    this.templateUrls = new Set();
   }
 
   clear() {
     // [Customer 7.3.3.1] Los archivos siempre se reconstruyen según la ruta seleccionada.
     if (this.root) this.root.innerHTML = "";
+    this.confirmationLinks?.replaceChildren();
+    if (this.confirmationTemplates) this.confirmationTemplates.hidden = true;
+    this.templateUrls.clear();
   }
 
   render(row = {}, context = {}) {
@@ -48,6 +54,17 @@ export class ArtworkRenderer {
       link.download = "";
       link.textContent = "Download template";
       card.appendChild(link);
+      if (this.confirmationLinks && !this.templateUrls.has(href)) {
+        const download = link.cloneNode(true);
+        download.className = "artwork-confirmation-template-link";
+        download.textContent = `Download template — ${title.textContent}`;
+        // External PDFs may ignore download; keep the customer's selection open.
+        download.target = "_blank";
+        download.rel = "noopener noreferrer";
+        this.confirmationLinks.appendChild(download);
+        this.confirmationTemplates.hidden = false;
+        this.templateUrls.add(href);
+      }
     }
 
     this.root.appendChild(card);
