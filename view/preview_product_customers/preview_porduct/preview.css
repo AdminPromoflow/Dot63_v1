@@ -1635,6 +1635,7 @@ body.customer-auth-open {
 .artwork-shortcut strong { color: var(--navy); font-size: .85rem; }
 .artwork-shortcut p { margin: 7px 0 12px; color: var(--muted); font-size: .75rem; line-height: 1.6; overflow-wrap: anywhere; }
 .artwork-confirmation {
+  box-sizing: border-box;
   width: min(460px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
   margin: auto;

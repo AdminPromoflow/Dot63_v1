@@ -10,6 +10,18 @@ $admin = new PDO('mysql:host=127.0.0.1;charset=utf8mb4', 'root', '', [PDO::ATTR_
 $server = null;
 $stored = [];
 $checks = 0;
+require_once $root . '/controller/config/database.php';
+require_once $root . '/model/checkout_payments.php';
+require_once $root . '/model/order_notifications.php';
+require_once $root . '/controller/emails/send_emails.php';
+class ArtworkOrderEmailRecorder extends EmailsSender {
+    public array $messages = [];
+    protected function deliver(\PHPMailer\PHPMailer\PHPMailer $mail): bool {
+        $this->messages[] = ['to' => $mail->getToAddresses(), 'html' => $mail->Body,
+            'text' => $mail->AltBody, 'attachments' => $mail->getAttachments()];
+        return true;
+    }
+}
 function artworkCheck(bool $condition, string $message): void {
     global $checks;
     if (!$condition) throw new RuntimeException($message);
@@ -18,12 +30,12 @@ function artworkCheck(bool $condition, string $message): void {
 try {
     mkdir($temp, 0700);
     $admin->exec("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4");
-    foreach (['products', 'suppliers', 'variations', 'prices', 'jobs', 'job_details', 'images', 'type_variations'] as $table) {
+    foreach (['products', 'suppliers', 'variations', 'prices', 'jobs', 'job_details', 'images', 'type_variations', 'customers', 'orders', 'stripe_webhook_events'] as $table) {
         $admin->exec("CREATE TABLE `$dbName`.`$table` LIKE dot63.`$table`");
     }
     $pdo = new PDO("mysql:host=127.0.0.1;dbname=$dbName;charset=utf8mb4", 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     $pdo->exec('ALTER TABLE jobs AUTO_INCREMENT = 1900000000');
-    $pdo->exec("INSERT INTO suppliers (supplier_id, company_name) VALUES (1, 'Artwork test')");
+    $pdo->exec("INSERT INTO suppliers (supplier_id, company_name, email) VALUES (1, 'Artwork test', 'artwork-supplier@example.test')");
     $pdo->exec("INSERT INTO products (product_id, SKU, name, supplier_id, status, is_approved) VALUES (1, 'ARTWORK-TEST', 'Artwork test', 1, 2, 1)");
     $pdo->exec("INSERT INTO variations (variation_id, SKU, name, product_id, price_display_mode, pdf_artwork) VALUES (1, 'ARTWORK-VAR', 'Default', 1, 'prices', 'controller/uploads/supplier-template.pdf')");
     $pdo->exec('INSERT INTO prices (price_id, min_quantity, max_quantity, price, variation_id) VALUES (1, 1, 100, 2.50, 1)');
@@ -109,7 +121,40 @@ try {
     artworkCheck($request($base + ['artwork_pdf' => $upload($temp . '/valid.pdf')])[0] === 500, 'Forced database error not reported');
     artworkCheck(glob($root . '/controller/uploads/job-artworks/*/*.pdf') === $before, 'Failed job left its PDF behind');
     artworkCheck((int)$pdo->query('SELECT COUNT(*) FROM jobs')->fetchColumn() === $count, 'Failed job transaction was not rolled back');
-    echo "PASS: $checks artwork checks (HTTP uploads, saved paths/bytes, auth, CSRF, optional PDF, limits, spoofed files and rollback).\n";
+
+    // Exercise the complete upload -> saved job -> paid order -> supplier email path.
+    foreach (['DOT63_DB_HOST', 'DOT63_DB_PORT', 'DOT63_DB_NAME', 'DOT63_DB_USER', 'DOT63_DB_PASSWORD'] as $key) putenv($key . '=' . $env[$key]);
+    putenv('DOT63_SMTP_PASSWORD=non-secret-test-value');
+    putenv('DOT63_PUBLIC_URL=https://shop.example.test/dot63');
+    $database = new Database();
+    $pdo->exec("INSERT INTO customers (customer_id, name, email) VALUES (1, 'Artwork customer', 'artwork@example.test')");
+    $intent = 'pi_artwork_' . bin2hex(random_bytes(6));
+    $pdo->prepare("INSERT INTO orders (order_id, status, customer_id, currency, total_amount, stripe_payment_intent_id) VALUES (1, 'payment_pending', 1, 'GBP', 12.50, ?)")->execute([$intent]);
+    $uploadedIds = array_map(static fn(string $file): int => (int)basename(dirname($file)), $stored);
+    $pdo->prepare('UPDATE jobs SET order_id = 1 WHERE job_id IN (?, ?)')->execute($uploadedIds);
+    $notifications = new OrderNotifications($database);
+    $emails = [];
+    $send = static function (array $order, array $recipient) use (&$emails): bool {
+        $sender = new ArtworkOrderEmailRecorder();
+        $sender->setRecipientEmail($recipient['email']);
+        $sender->setRecipientName($recipient['name']);
+        $result = $sender->sendEmailOrderNotification($order, $recipient['jobs'], $recipient['is_customer']);
+        $emails[$recipient['email']] = $sender->messages[0] ?? [];
+        return $result;
+    };
+    artworkCheck(!empty($notifications->dispatchForPaidOrder($intent, $send)['not_ready']) && !$emails, 'Artwork email sent before payment.');
+    (new CheckoutPayments($database))->processWebhookEvent('evt_artwork_' . bin2hex(random_bytes(6)), 'payment_intent.succeeded',
+        ['id' => $intent, 'status' => 'succeeded', 'amount_received' => 1250, 'currency' => 'gbp']);
+    artworkCheck($notifications->dispatchForPaidOrder($intent, $send)['sent_count'] === 3, 'Paid order did not notify its recipients.');
+    $supplierEmail = $emails['artwork-supplier@example.test'];
+    artworkCheck(count($supplierEmail['attachments']) === 2, 'Supplier did not receive both customer PDFs.');
+    foreach ($supplierEmail['attachments'] as $attachment) {
+        artworkCheck(in_array($attachment[0], $stored, true), 'Supplier received an unrelated PDF.');
+        artworkCheck(file_get_contents($attachment[0]) === $pdf, 'Supplier attachment differs from uploaded bytes.');
+        artworkCheck(strpos($supplierEmail['html'], 'https://shop.example.test/dot63/' . substr($attachment[0], strlen($root) + 1)) !== false, 'Uploaded artwork download URL missing from supplier email.');
+    }
+    artworkCheck($notifications->dispatchForPaidOrder($intent, $send)['already_sent_count'] === 3, 'Duplicate webhook would resend attachments.');
+    echo "PASS: $checks artwork checks (HTTP uploads, validation, rollback, paid-order supplier attachments and duplicate protection).\n";
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     foreach ($stored as $file) { if (is_file($file)) unlink($file); @rmdir(dirname($file)); }

@@ -145,6 +145,8 @@ const previewUrl = `${origin}/view/preview_product_customers/index.php?sku=ARTWO
     await page.locator('#bb_buy_now').click();
     await page.locator('#artwork_confirmation').waitFor({state: 'visible'});
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Mobile confirmation overflows');
+    const modalBounds = await page.locator('#artwork_confirmation').boundingBox();
+    assert(modalBounds.x >= 0 && modalBounds.x + modalBounds.width <= 375, 'Mobile dialog exceeds the viewport');
     await page.locator('#artwork_confirmation').screenshot({path: '/private/tmp/dot63-artwork-confirmation-mobile.png'});
     await page.locator('#artwork_confirm_cancel').click();
     await page.locator('#artwork_confirmation').waitFor({state: 'hidden'});

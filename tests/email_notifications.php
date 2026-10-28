@@ -13,9 +13,11 @@ use PHPMailer\PHPMailer\PHPMailer;
 final class RecordingEmailsSender extends EmailsSender
 {
     public array $messages = [];
+    public bool $buildMime = false;
 
     protected function deliver(PHPMailer $mail): bool
     {
+        if ($this->buildMime && !$mail->preSend()) throw new RuntimeException('Unable to build MIME message.');
         $this->messages[] = [
             'subject' => $mail->Subject,
             'recipients' => $mail->getToAddresses(),
@@ -23,6 +25,8 @@ final class RecordingEmailsSender extends EmailsSender
             'alt_body' => $mail->AltBody,
             'hostname' => $mail->Hostname,
             'sender' => $mail->Sender,
+            'attachments' => $mail->getAttachments(),
+            'mime' => $this->buildMime ? $mail->getSentMIMEMessage() : '',
         ];
 
         return true;
@@ -230,4 +234,73 @@ foreach (['supplier', 'customer'] as $accountType) {
 putenv('DOT63_PUBLIC_URL');
 unset($_SERVER['HTTP_HOST']);
 
-fwrite(STDOUT, "Email notification tests passed.\n");
+$fixtureFiles = [];
+$fixtureDirs = [];
+$artworkRoot = dirname(__DIR__) . '/controller/uploads/job-artworks';
+$firstJob = random_int(1800000000, 1899999900);
+$pdf = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n";
+try {
+    for ($i = 0; $i < 3; $i++) {
+        $jobId = $firstJob + $i;
+        $directory = $artworkRoot . '/' . $jobId;
+        assertEmailNotification(!file_exists($directory) && mkdir($directory, 0755), 'Fixture directory collision.');
+        $fixtureDirs[] = $directory;
+        $path = $directory . '/artwork.pdf';
+        file_put_contents($path, $pdf);
+        $fixtureFiles[] = $path;
+    }
+    $job = ['job_id' => $firstJob, 'pdf_artwork_link' => 'controller/uploads/job-artworks/' . $firstJob . '/artwork.pdf'];
+    foreach ([false, true] as $forCustomer) {
+        $sender = new RecordingEmailsSender();
+        $sender->buildMime = true;
+        $sender->setRecipientEmail($forCustomer ? 'customer@example.test' : 'supplier@example.test');
+        assertEmailNotification($sender->sendEmailOrderNotification(['order_id' => 456], [$job, $job], $forCustomer), 'Artwork email failed.');
+        $message = $sender->messages[0];
+        assertEmailNotification(count($message['attachments']) === 1, 'Duplicate artwork was attached twice.');
+        assertEmailNotification($message['attachments'][0][0] === realpath($fixtureFiles[0]), 'Wrong PDF attached.');
+        assertEmailNotification($message['attachments'][0][2] === 'order-456-job-' . $firstJob . '-artwork.pdf', 'Attachment name does not identify the job.');
+        assertEmailNotification(strpos($message['mime'], 'Content-Type: application/pdf') !== false, 'PDF is not a MIME attachment.');
+        assertEmailNotification(strpos($message['mime'], chunk_split(base64_encode($pdf), 76, "\r\n")) !== false, 'Attached bytes differ from the uploaded PDF.');
+        assertEmailNotification(strpos($message['body'], 'PDF attached:') !== false && strpos($message['body'], 'Download artwork PDF') !== false, 'Attachment and download link must both be explained.');
+    }
+
+    $outside = tempnam(sys_get_temp_dir(), 'dot63-artwork-external-');
+    file_put_contents($outside, $pdf);
+    $fixtureFiles[] = $outside;
+    $symlink = $fixtureDirs[0] . '/external.pdf';
+    symlink($outside, $symlink);
+    $fixtureFiles[] = $symlink;
+    $invalid = $fixtureDirs[0] . '/invalid.pdf';
+    file_put_contents($invalid, '<?php echo "not a PDF";');
+    $fixtureFiles[] = $invalid;
+    foreach ([
+        'controller/uploads/job-artworks/' . ($firstJob + 1) . '/artwork.pdf',
+        'controller/uploads/job-artworks/' . $firstJob . '/../' . ($firstJob + 1) . '/artwork.pdf',
+        'controller/uploads/job-artworks/' . $firstJob . '/external.pdf',
+        'controller/uploads/job-artworks/' . $firstJob . '/invalid.pdf',
+        'controller/uploads/job-artworks/' . $firstJob . '/missing.pdf',
+        'controller/config/database.local.php', $outside, 'https://example.test/artwork.pdf', null,
+    ] as $unsafe) {
+        $sender = new RecordingEmailsSender();
+        $sender->setRecipientEmail('supplier@example.test');
+        assertEmailNotification($sender->sendEmailOrderNotification(['order_id' => 456], [array_merge($job, ['pdf_artwork_link' => $unsafe])]), 'Unavailable attachment blocked order email.');
+        assertEmailNotification(count($sender->messages[0]['attachments']) === 0, 'Unsafe, missing, remote, or unrelated file attached.');
+    }
+
+    $largeJobs = [];
+    foreach ($fixtureDirs as $i => $directory) {
+        file_put_contents($directory . '/artwork.pdf', $pdf . str_repeat(' ', 8 * 1024 * 1024 - strlen($pdf)));
+        $largeJobs[] = ['job_id' => $firstJob + $i, 'pdf_artwork_link' => 'controller/uploads/job-artworks/' . ($firstJob + $i) . '/artwork.pdf'];
+    }
+    $sender = new RecordingEmailsSender();
+    $sender->setRecipientEmail('supplier@example.test');
+    assertEmailNotification($sender->sendEmailOrderNotification(['order_id' => 456], $largeJobs), 'Large order email failed.');
+    assertEmailNotification(count($sender->messages[0]['attachments']) === 2, '16 MB total attachment budget not respected.');
+    assertEmailNotification(strpos($sender->messages[0]['alt_body'], 'This PDF is not attached') !== false, 'Download fallback not explained.');
+    foreach ($largeJobs as $largeJob) assertEmailNotification(strpos($sender->messages[0]['alt_body'], $largeJob['pdf_artwork_link']) !== false, 'Attachment budget removed a download link.');
+} finally {
+    foreach (array_reverse($fixtureFiles) as $path) if (is_file($path) || is_link($path)) unlink($path);
+    foreach ($fixtureDirs as $directory) rmdir($directory);
+}
+
+fwrite(STDOUT, "Email notification tests passed, including PDF MIME bytes, safe paths, deduplication and attachment budget.\n");

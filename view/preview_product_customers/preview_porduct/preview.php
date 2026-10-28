@@ -259,7 +259,7 @@ foreach ($moduleFiles as $moduleFile) {
       <div class="artwork-upload">
         <div class="artwork-upload-copy">
           <label for="artwork_pdf">Upload your artwork (PDF)</label>
-          <p id="artwork_upload_help">Download the supplier’s template above, add your design, then upload your finished PDF here. Optional · PDF only, up to 8 MB. Your file is saved with this product and included in the supplier’s email when your order is confirmed.</p>
+          <p id="artwork_upload_help">Use the supplier’s template if available, then upload your finished PDF here. Optional · PDF only, up to 8 MB. Your file is saved with this product and included in the supplier’s email when your order is confirmed.</p>
         </div>
         <input type="file" id="artwork_pdf" name="artwork_pdf" accept=".pdf,application/pdf" aria-describedby="artwork_upload_help artwork_upload_status">
         <div class="artwork-upload-feedback">
