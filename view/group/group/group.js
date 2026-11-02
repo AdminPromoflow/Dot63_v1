@@ -14,7 +14,7 @@ class ClassGroup {
       this.cancelGroupEdit();
     });
     next_group.addEventListener("click", () => {
-      headerAddProduct.goNext('../../view/product_list/index.php');
+      headerAddProduct.goNext('../../view/product_details/index.php');
     });
     document.addEventListener('DOMContentLoaded', () => {
       headerAddProduct.setCurrentHeader('group');
@@ -128,7 +128,7 @@ class ClassGroup {
 
       if (response["success"]) {
         if (goNext) {
-          headerAddProduct.goNext('../../view/product_list/index.php');
+          headerAddProduct.goNext('../../view/product_details/index.php');
         }
       }
     } catch (error) {
