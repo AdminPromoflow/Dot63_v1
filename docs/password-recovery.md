@@ -17,7 +17,7 @@ La migración se aplicó a `dot63` local durante el desarrollo. La configuració
 - El token viaja en el fragmento `#token=...` del enlace, fuera de los registros HTTP y del Referer. JavaScript lo envía al controlador en el cuerpo POST.
 - Customer y supplier se mantienen separados, incluso cuando comparten correo o identificador. Un nuevo enlace reemplaza al anterior del mismo tipo de cuenta. Cambiar la contraseña invalida los enlaces pendientes.
 - Límites persistentes de 3 solicitudes por tipo de cuenta/correo y 10 por dirección IP en 15 minutos. Se cuentan también correos inexistentes; no se confía en cabeceras de IP reenviadas.
-- Las respuestas públicas no revelan si existe una cuenta ni si falló el correo. Los fallos SMTP se registran en el log de PHP y se elimina el token correspondiente.
+- Las respuestas indican correo no registrado para el rol seleccionado (404), límite alcanzado (429) o fallo de envío (503). Solo se confirma el envío cuando el transporte de correo lo acepta; esto no garantiza entrega en bandeja de entrada. Los fallos SMTP se registran en el log de PHP y se elimina el token correspondiente. Esta distinción permite comprobar la existencia de una cuenta; se mantienen los límites persistentes y CSRF.
 - Todas las acciones exigen POST y CSRF. La contraseña debe cumplir la política del registro de clientes y coincidir con su confirmación.
 - El cambio de contraseña y la eliminación del token se ejecutan en una transacción con bloqueos. Consultar el enlace no lo consume. Tras restablecer la contraseña se vuelve al login, sin inicio automático de sesión.
 - Las sesiones ya iniciadas conservan el comportamiento actual de la aplicación; este cambio no incorpora revocación global de sesiones.

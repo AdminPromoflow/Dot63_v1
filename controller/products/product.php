@@ -144,6 +144,13 @@ class Product {
 
   private function statusError(Throwable $error): void
   {
+    if ($error instanceof PDOException && (string)$error->getCode() === '42S22'
+        && preg_match('/pending_status|status_request_version|status_requested_at/', $error->getMessage())) {
+      error_log('Product status schema missing: apply controller/config/migrations/20261101_add_product_status_review.sql');
+      http_response_code(503);
+      echo json_encode(['success' => false, 'message' => 'Product saving is unavailable until the product approval database update is installed. Please contact the administrator.']);
+      return;
+    }
     $code = (int)$error->getCode();
     http_response_code(in_array($code, [401, 403, 404, 409, 422, 502], true) ? $code : 500);
     if ($code < 400 || $code > 599) error_log('Product status error: ' . $error->getMessage());

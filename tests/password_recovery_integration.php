@@ -39,7 +39,7 @@ try {
         $pdo->exec('DELETE FROM password_reset_requests');
     };
     foreach (['customer', 'supplier'] as $type) {
-        $recovery->request($type, ' RECOVERY@EXAMPLE.TEST ', '127.0.0.1', $capture);
+        recoveryCheck($recovery->request($type, ' RECOVERY@EXAMPLE.TEST ', '127.0.0.1', $capture) === 'sent', 'Successful delivery outcome missing.');
         $token = end($sent)['token'];
         recoveryCheck($recovery->isValid($type, $token), 'Normalized account token is invalid.');
         recoveryCheck(!$recovery->isValid($type === 'customer' ? 'supplier' : 'customer', $token), 'Cross-role token accepted.');
@@ -69,7 +69,7 @@ try {
     $recovery->request('customer', $email, '127.0.0.1', $capture);
     recoveryCheck(count($sent) === 0, 'IP limit must also count nonexistent accounts.');
     $clear();
-    $recovery->request('customer', $email, '127.0.0.1', static fn(): bool => false);
+    recoveryCheck($recovery->request('customer', $email, '127.0.0.1', static fn(): bool => false) === 'delivery_failed', 'Failed delivery reported as success.');
     recoveryCheck((int)$pdo->query('SELECT COUNT(*) FROM password_reset_tokens')->fetchColumn() === 0, 'Failed email left an active token.');
     $recovery->request('customer', $email, '127.0.0.1', static function (): bool { throw new RuntimeException('Test delivery failure'); });
     recoveryCheck((int)$pdo->query('SELECT COUNT(*) FROM password_reset_tokens')->fetchColumn() === 0, 'Mailer exception left an active token.');
@@ -114,7 +114,13 @@ try {
     $clear();
     $known = $request($endpoint, $payload);
     $missing = $request($endpoint, array_merge($payload, ['email' => 'missing@example.test']));
-    recoveryCheck($known[0] === 200 && $known[1] === $missing[1], 'Response disclosed account existence or SMTP failure.');
+    recoveryCheck($known[0] === 503 && $known[1]['success'] === false, 'SMTP failure reported as success.');
+    recoveryCheck($missing[0] === 404 && strpos($missing[1]['error'], 'not registered') !== false, 'Missing account warning not returned.');
+    $missingSupplier = $request($endpoint, array_merge($payload, ['account_type' => 'supplier', 'email' => 'missing@example.test']));
+    recoveryCheck($missingSupplier[0] === 404 && strpos($missingSupplier[1]['error'], 'supplier') !== false, 'Missing supplier warning not returned.');
+    $request($endpoint, $payload);
+    $request($endpoint, $payload);
+    recoveryCheck($request($endpoint, $payload)[0] === 429, 'Rate limit warning not returned.');
     recoveryCheck(!isset($known[1]['token']), 'API exposed a reset token.');
 
     foreach (['customer', 'supplier'] as $type) {

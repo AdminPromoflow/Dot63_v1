@@ -18,8 +18,8 @@ final class PasswordRecovery
         throw new InvalidArgumentException('Invalid account type.');
     }
 
-    /** The caller always returns the same public response, including for missing accounts. */
-    public function request(string $type, string $email, string $ip, callable $send): void
+    /** Return the actual outcome so the caller never reports a failed delivery as success. */
+    public function request(string $type, string $email, string $ip, callable $send): string
     {
         [$table, $id, $name, $password] = $this->accountColumns($type);
         $email = strtolower(trim($email));
@@ -28,12 +28,12 @@ final class PasswordRecovery
         $this->pdo->prepare('DELETE FROM password_reset_tokens WHERE expires_at <= ?')->execute([$now]);
         // Persistent limits work across sessions. Never trust an incoming forwarded IP header.
         if (!$this->allowRequest('ip:' . $ip, 10, $now)
-            || !$this->allowRequest('account:' . $type . ':' . $email, 3, $now)) return;
+            || !$this->allowRequest('account:' . $type . ':' . $email, 3, $now)) return 'rate_limited';
 
         $query = $this->pdo->prepare("SELECT $id AS id, $name AS name, email, $password AS password FROM $table WHERE LOWER(TRIM(email)) = ? LIMIT 1");
         $query->execute([$email]);
         $account = $query->fetch(PDO::FETCH_ASSOC);
-        if (!$account) return;
+        if (!$account) return 'not_registered';
 
         $token = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $token);
@@ -51,7 +51,9 @@ final class PasswordRecovery
         if (!$sent) {
             $this->pdo->prepare('DELETE FROM password_reset_tokens WHERE token_hash = ?')->execute([$tokenHash]);
             error_log('Dot63 password recovery email could not be delivered. Check SMTP configuration.');
+            return 'delivery_failed';
         }
+        return 'sent';
     }
 
     private function allowRequest(string $bucket, int $limit, int $now): bool

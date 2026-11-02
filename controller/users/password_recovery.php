@@ -31,14 +31,17 @@ try {
     }
     $recovery = new PasswordRecovery((new Database())->getConnection());
     if ($action === 'request_reset') {
-        $recovery->request($type, $email, (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
+        $outcome = $recovery->request($type, $email, (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'),
             static function (array $account, string $type, string $token): bool {
                 $mail = new EmailsSender();
                 $mail->setRecipientEmail($account['email']);
                 $mail->setRecipientName($account['name']);
                 return $mail->sendEmailPasswordReset($type, $token);
             });
-        echo json_encode(['success' => true, 'message' => 'If an account matches that email, you will receive a password reset link. Check your inbox and spam folder. You can request up to 3 links every 15 minutes.']);
+        if ($outcome === 'rate_limited') Dot63Security::fail(429, 'Too many recovery requests. Please wait 15 minutes before trying again.');
+        if ($outcome === 'not_registered') Dot63Security::fail(404, 'This email address is not registered for a ' . $type . ' account. Check your email address and the selected account type.');
+        if ($outcome !== 'sent') Dot63Security::fail(503, 'We could not send the recovery email. Please contact support or try again later.');
+        echo json_encode(['success' => true, 'message' => 'Your password reset email has been sent. Check your inbox and spam folder.']);
     } elseif ($action === 'validate_token') {
         if (!$recovery->isValid($type, $string('token'))) Dot63Security::fail(410, 'This reset link is invalid or has expired. Request a new link.');
         echo json_encode(['success' => true]);

@@ -89,6 +89,10 @@
         intro.textContent = 'The link is valid for 30 minutes. Keep this page open if you need to try another email.';
       }
     } catch (error) {
+      if (!resetting) {
+        title.textContent = 'Forgot your password?';
+        intro.textContent = `Enter the email address for your ${accountType} account and we’ll send you a link to reset your password.`;
+      }
       if (error.status === 410) invalidLink();
       showStatus(error.message || 'Unable to connect. Please try again.', 'error', true);
     } finally {
