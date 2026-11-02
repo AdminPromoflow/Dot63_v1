@@ -149,6 +149,8 @@ class EmailsSender
 
     public function sendEmailPasswordReset(string $accountType, string $token): bool
     {
+        $stage = 'validate_message';
+        $mail = null;
         try {
             if (!in_array($accountType, ['customer', 'supplier'], true)
                 || !preg_match('/\A[a-f0-9]{64}\z/', $token)
@@ -156,10 +158,14 @@ class EmailsSender
                 throw new InvalidArgumentException('Invalid password recovery message.');
             }
             $this->notificationType = $accountType . '_password_reset';
+            $stage = 'build_url';
             // A fragment keeps the secret out of HTTP access logs and Referer headers.
             $url = $this->publicFileUrl('view/forg_password/index.php') . '?account=' . $accountType . '#token=' . $token;
+            $stage = 'configure_mailer';
             $mail = $this->createMailer();
+            $stage = 'set_recipient';
             $mail->addAddress($this->recipientEmail, $this->recipientName);
+            $stage = 'compose_message';
             $mail->Subject = 'Reset your .63 ' . $accountType . ' password';
             $mail->isHTML(true);
             $mail->Body = $this->htmlTemplate('.63 account recovery', 'Reset your password',
@@ -172,6 +178,7 @@ class EmailsSender
             $mail->AltBody = "Reset the password for your .63 {$accountType} account:\n{$url}\n\n"
                 . 'This link expires in 30 minutes and can only be used once. Use the most recent email. '
                 . 'If you did not request this, ignore this email. Your password will stay the same.';
+            $stage = 'smtp_delivery';
             return $this->deliver($mail);
         } catch (Throwable $error) {
             // Log only a fixed category, never credentials, recipients or reset links.
@@ -181,7 +188,17 @@ class EmailsSender
             elseif (strpos($message, 'DOT63_PUBLIC_URL must be') !== false) $reason = 'public_url_invalid';
             elseif (stripos($message, 'authenticate') !== false) $reason = 'smtp_authentication_failed';
             elseif (stripos($message, 'connect') !== false) $reason = 'smtp_connection_failed';
-            error_log('Dot63 password recovery email failed: ' . $reason);
+            elseif (stripos($message, 'Invalid address') !== false) $reason = 'invalid_email_address';
+            elseif (stripos($message, 'recipient') !== false) $reason = 'recipient_rejected';
+            elseif (stripos($message, 'data not accepted') !== false) $reason = 'message_rejected';
+            elseif (stripos($message, 'instantiate mail') !== false) $reason = 'mail_transport_unavailable';
+            elseif ($error instanceof Error) $reason = 'php_runtime_error';
+            // File/line and stage identify PHP/configuration failures without exposing message data.
+            $smtpError = $mail instanceof PHPMailer ? $mail->getSMTPInstance()->getError() : [];
+            $smtpCode = (string)($smtpError['smtp_code'] ?? '');
+            $smtpCode = preg_match('/\A[0-9]{3}\z/', $smtpCode) ? $smtpCode : 'none';
+            error_log(sprintf('Dot63 password recovery email failed: %s; stage=%s; exception=%s; source=%s:%d; smtp_code=%s',
+                $reason, $stage, get_class($error), basename($error->getFile()), $error->getLine(), $smtpCode));
             return false;
         }
     }
