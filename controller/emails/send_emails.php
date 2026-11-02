@@ -174,7 +174,14 @@ class EmailsSender
                 . 'If you did not request this, ignore this email. Your password will stay the same.';
             return $this->deliver($mail);
         } catch (Throwable $error) {
-            error_log('Dot63 password recovery email failed. Check SMTP and DOT63_PUBLIC_URL configuration.');
+            // Log only a fixed category, never credentials, recipients or reset links.
+            $message = $error->getMessage();
+            $reason = 'mail_configuration_or_delivery';
+            if (strpos($message, 'DOT63_SMTP_PASSWORD must be configured') !== false) $reason = 'smtp_password_missing';
+            elseif (strpos($message, 'DOT63_PUBLIC_URL must be') !== false) $reason = 'public_url_invalid';
+            elseif (stripos($message, 'authenticate') !== false) $reason = 'smtp_authentication_failed';
+            elseif (stripos($message, 'connect') !== false) $reason = 'smtp_connection_failed';
+            error_log('Dot63 password recovery email failed: ' . $reason);
             return false;
         }
     }
@@ -561,7 +568,13 @@ class EmailsSender
 
     private function environmentValue(string $name, string $fallback): string
     {
-        $value = getenv($name);
-        return $value !== false && trim((string)$value) !== '' ? trim((string)$value) : $fallback;
+        // Hosting can expose SetEnv through PHP server variables after internal redirects.
+        // Only read trusted configuration names, never HTTP_ request headers.
+        foreach ([$name, 'REDIRECT_' . $name, 'REDIRECT_REDIRECT_' . $name] as $candidate) {
+            foreach ([getenv($candidate), $_ENV[$candidate] ?? false, $_SERVER[$candidate] ?? false] as $value) {
+                if (is_string($value) && trim($value) !== '') return trim($value);
+            }
+        }
+        return $fallback;
     }
 }
