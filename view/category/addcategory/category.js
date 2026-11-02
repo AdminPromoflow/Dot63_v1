@@ -32,6 +32,7 @@ class ClassCategory {
       };
       const response = await this.makeRequest(url, data);
       if (!response) return;
+      this.savedCategoryId = response.category_selected?.data?.[0]?.category_id;
       edit_categories.style.display = "block";
       cancel_editing.style.display = "none";
       this.drawListCategories(response.category_selected);
@@ -54,6 +55,7 @@ class ClassCategory {
       };
       const response = await this.makeRequest(url, data);
       if (!response) return;
+      this.savedCategoryId = response.category_selected?.data?.[0]?.category_id;
       edit_categories.style.display = "none";
       cancel_editing.style.display = "block";
       this.drawListCategories(response);
@@ -74,6 +76,7 @@ class ClassCategory {
       };
       const response = await this.makeRequest(url, data);
       if (!response) return;
+      this.savedCategoryId = response.category_selected?.data?.[0]?.category_id;
       if (response.category_selected?.data?.[0]?.name === "Unassigned Category") {
         this.drawListCategories(response);
       } else {
@@ -161,6 +164,10 @@ class ClassCategory {
 
   selectCategory(divId) {
     if (!window.category_list) return;
+    if (this.savedCategoryId != null && Number(this.savedCategoryId) === Number(divId)) {
+      headerAddProduct.goNext('../../view/group/index.php');
+      return;
+    }
     var boxes = category_list.querySelectorAll('.cp-cat');
 
     // Limpiar bordes
