@@ -51,6 +51,7 @@ class ProductsSupplierClass {
     const q = (data.get("q") || "").toString().trim().toLowerCase();
     const cat = (data.get("category") || "").toString();
     const sts = (data.get("status") || "").toString();
+    const group = (data.get("group") || "").toString();
     let visible = 0;
     rows.forEach(tr => {
       const name = (tr.dataset.name || "").toLowerCase();
@@ -60,7 +61,8 @@ class ProductsSupplierClass {
       const passQ = !q || name.includes(q) || sku.includes(q);
       const passC = !cat || c === cat;
       const passS = !sts || s === sts;
-      const show = passQ && passC && passS;
+      const passG = !group || (tr.dataset.group || "") === group;
+      const show = passQ && passC && passS && passG;
       tr.style.display = show ? "" : "none";
       if (show) visible++;
     });
@@ -106,6 +108,7 @@ class ProductsSupplierClass {
       const data = response?.data || [];
       this.drawProductsSupplier(data);
       this.drawCategoriesOptiones(data);
+      this.drawGroupOptions(data);
 
       // ✅ Re-aplica orden/filtros con las nuevas filas
       this.applySort();
@@ -141,6 +144,16 @@ class ProductsSupplierClass {
     }
   }
 
+  drawGroupOptions(list) {
+    const select = document.getElementById("list_groups");
+    if (!select) return;
+    const groups = [...new Set(list.map(product => String(product.group_name || "").trim()).filter(Boolean))];
+    groups.sort((a, b) => a.localeCompare(b));
+    select.innerHTML = '<option value="">All</option>' + groups.map(group =>
+      `<option value="${this._escAttr(group)}">${this._escHtml(group)}</option>`
+    ).join("");
+  }
+
   // =========================
   //   Pintar filas de productos
   // =========================
@@ -152,7 +165,7 @@ class ProductsSupplierClass {
     if (!Array.isArray(list) || list.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="5">
+          <td colspan="4">
             <div style="padding:12px; color: var(--muted);">No products found.</div>
           </td>
         </tr>
@@ -166,6 +179,7 @@ class ProductsSupplierClass {
       const skuVariation = (p.first_variation_sku || "").toString();
       const name = (p.product_name || "Untitled product").toString();
       const category = (p.category_name || "—").toString();
+      const group = String(p.group_name || "").trim();
       const statusRaw = (p.status || "draft").toString().toLowerCase();
       const statusMap = {
         active: {
@@ -195,21 +209,19 @@ class ProductsSupplierClass {
             data-name="${this._escAttr(name.toLowerCase())}"
             data-sku="${this._escAttr(sku.toLowerCase())}"
             data-category="${this._escAttr(category)}"
+            data-group="${this._escAttr(group)}"
             data-status="${this._escAttr(st.text)}"
+            data-href="${this._escAttr(href)}"
             tabindex="0">
-          <td>${this._escHtml(sku)}</td>
           <td>
-            <div class="prod-name">${this._escHtml(name)}</div>
-            <small class="muted">—</small>
+            <a class="prod-name" href="${this._escAttr(href)}">${this._escHtml(name)}</a>
           </td>
           <td><span class="chip">${this._escHtml(category)}</span></td>
+          <td>${this._escHtml(group || "—")}</td>
           <td class="center">
             <span class="badge ${st.cls}">
               <i></i>${this._escHtml(st.text)}
             </span>
-          </td>
-          <td class="center">
-            <a class="btn btn-small" href="${this._escAttr(href)}">Edit</a>
           </td>
         </tr>
       `;
@@ -238,6 +250,7 @@ class ProductsSupplierClass {
   }
 
   handleDocumentKeydown(e) {
+    if (e.target.closest("a, button, input, select")) return;
     const tr = e.target.closest("tr.row-link");
     if (!tr) return;
     if (e.key !== "Enter" && e.key !== " ") return;

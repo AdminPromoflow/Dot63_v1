@@ -80,16 +80,28 @@ $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard
       </div>
     </div>
 
-    <aside class="card ds-order-guide" aria-labelledby="order-guide-title">
-      <p class="ds-orders-eyebrow">From request to delivery</p>
-      <h2 id="order-guide-title">Every step, in one place</h2>
-      <p>A preview of the order stages you’ll be able to follow.</p>
-      <ol class="ds-order-stages">
-        <li><span aria-hidden="true">01</span><div><h3>New order</h3><p>Customer information and order requirements.</p></div></li>
-        <li><span aria-hidden="true">02</span><div><h3>In production</h3><p>Preparation and production progress.</p></div></li>
-        <li><span aria-hidden="true">03</span><div><h3>Ready to ship</h3><p>Dispatch details and delivery updates.</p></div></li>
-        <li><span aria-hidden="true">04</span><div><h3>Completed</h3><p>Delivered orders and their history.</p></div></li>
-      </ol>
+    <aside class="card profile" aria-labelledby="profile-title">
+      <h2 id="profile-title" class="sr-only">Supplier Profile</h2>
+
+      <div class="profile-row">
+        <div class="avatar" aria-hidden="true">S</div>
+        <div>
+          <p class="title">Supplier Name</p>
+          <p class="muted">supplier@example.com</p>
+        </div>
+      </div>
+
+      <ul class="meta">
+        <li><span>Company:</span> Demo Company Ltd</li>
+        <li><span>Country:</span> Colombia</li>
+        <li><span>City:</span> Arbeláez</li>
+      </ul>
+
+      <div class="quick-links">
+        <a id="open-supplier-dashboard" class="btn btn-block" href="../../view/supplier_profile/index.php">Supplier Profile</a>
+        <a class="btn btn-block" href="#">Manage Promotions</a>
+        <a class="btn btn-block" href="#">Download Reports</a>
+      </div>
     </aside>
   </section>
 </main>
