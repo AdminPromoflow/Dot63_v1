@@ -15,7 +15,6 @@ class ProductsClass {
     this.searchRequestController = null;
     this.imageRotationTimer = null;
     this.imageRotationInterval = 5000;
-    this.fallbackImage = "../../view/product/products/img/icon_products.png";
     this.prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false;
     this.variationFilters?.addEventListener("change", () => this.applyFilters());
     this.filtersPanel?.addEventListener("scroll", () => this.queueFilterScrollUpdate(), { capture: true, passive: true });
@@ -343,7 +342,7 @@ class ProductsClass {
       const variationIds = selectedVariations.map(variation => variation.variation_id);
       const combinationId = `${product.product_id}:${variationIds.join("-")}`;
       const titleParts = selectedVariations.map(variation => variation.name).map(value => String(value || "").trim()).filter(Boolean);
-      const selectedImages = Array.from(new Set(selectedVariations.flatMap(variation => [variation.image, ...(Array.isArray(variation.images) ? variation.images.map(image => image.link) : [])]).map(value => String(value || "").trim()).filter(Boolean)));
+      const selectedImages = Array.from(new Set(selectedVariations.flatMap(variation => (Array.isArray(variation.images) ? variation.images.map(image => image.link) : [])).map(value => String(value || "").trim()).filter(Boolean)));
       const productImages = (Array.isArray(product.images) ? product.images : []).map(value => String(value || "").trim()).filter(Boolean);
       const images = selectedImages.length ? selectedImages : Array.from(new Set(productImages));
       const prices = this.mergeUniqueRows([], selectedVariations.flatMap(variation => (Array.isArray(variation.prices) ? variation.prices : []).map(price => ({
@@ -689,6 +688,13 @@ class ProductsClass {
     media.productImages = images;
     media.productName = productName;
     media.setAttribute("aria-label", `${productName} images`);
+    if (!images.length) {
+      const empty = document.createElement("span");
+      empty.className = "product-media-empty";
+      empty.textContent = "No image selected";
+      media.append(empty);
+      return media;
+    }
     const image = document.createElement("img");
     image.className = "product-card-image";
     image.src = images[0];
@@ -722,7 +728,7 @@ class ProductsClass {
       const resolvedSource = this.resolveProductImage(rawSource);
       if (resolvedSource) uniqueImages.add(resolvedSource);
     });
-    return uniqueImages.size ? Array.from(uniqueImages) : [this.fallbackImage];
+    return Array.from(uniqueImages);
   }
 
   resolveProductImage(source) {
@@ -830,7 +836,8 @@ class ProductsClass {
     const image = event.target;
     if (!image.matches?.(".product-card-image") || image.dataset.fallbackApplied === "true") return;
     image.dataset.fallbackApplied = "true";
-    image.src = this.fallbackImage;
+    image.removeAttribute("src");
+    image.alt = "Selected image unavailable";
   }
 
   async getCatalog() {

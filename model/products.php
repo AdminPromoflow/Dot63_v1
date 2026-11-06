@@ -615,6 +615,7 @@ class Products {
                   ON p.product_id = v.product_id
               LEFT JOIN images i
                   ON v.variation_id = i.variation_id
+                  AND i.show_on_product_main = 1
               ORDER BY p.product_id DESC
           ";
 
@@ -694,6 +695,7 @@ class Products {
                   ON p.product_id = image_variation.product_id
               LEFT JOIN images image
                   ON image_variation.variation_id = image.variation_id
+                  AND image.show_on_product_main = 1
               WHERE COALESCE(p.name, '') LIKE :product_name
                  OR COALESCE(p.SKU, '') LIKE :product_sku
                  OR COALESCE(c.name, '') LIKE :category_name
@@ -847,6 +849,7 @@ class Products {
               SELECT image_id, link, updated, variation_id
               FROM images
               WHERE variation_id IN ($variationPlaceholders)
+                AND show_on_product_main = 1
               ORDER BY image_id ASC
           ");
           $imageStmt->execute($variationIds);
