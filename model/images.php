@@ -6,12 +6,25 @@ class Images {
   private $sku  = null;
   private $sku_variation = null;
   private $image_address;
+  private $show_on_product_main = 0;
 
   // ===== Constructor =====
   public function __construct($connection) { $this->connection = $connection; }
 
   // ===== Setters =====
   public function setId($id)              { $this->product_id = (int)$id; }
+  public function setShowOnProductMain(int $value): void { $this->show_on_product_main = $value === 1 ? 1 : 0; }
+
+  public function updateMainVisibility(int $imageId, int $value): bool
+  {
+      $pdo = $this->connection->getConnection();
+      $params = [':id' => $imageId, ':sku' => $this->sku_variation];
+      $find = $pdo->prepare('SELECT i.image_id FROM images i JOIN variations v ON v.variation_id = i.variation_id WHERE i.image_id = :id AND v.SKU = :sku');
+      $find->execute($params);
+      if (!$find->fetchColumn()) return false;
+      $stmt = $pdo->prepare('UPDATE images i JOIN variations v ON v.variation_id = i.variation_id SET i.show_on_product_main = :visible WHERE i.image_id = :id AND v.SKU = :sku');
+      return $stmt->execute($params + [':visible' => $value === 1 ? 1 : 0]);
+  }
 
   public function setSKU(?string $v)      { $v = trim((string)$v); $this->sku  = ($v === '') ? null : $v; }
 
@@ -234,7 +247,7 @@ class Images {
           $variationId = (int)$variation['variation_id'];
 
           $stmt = $pdo->prepare("
-              SELECT image_id, link
+              SELECT image_id, link, show_on_product_main
               FROM images
               WHERE variation_id = :vid
               ORDER BY image_id ASC
@@ -324,8 +337,8 @@ class Images {
               // Reemplazar: mantener el primero, actualizarlo y limpiar duplicados
               $keepId = (int)$ids[0];
 
-              $stmt = $pdo->prepare("UPDATE images SET link = :link, updated = 1 WHERE image_id = :id");
-              $stmt->execute([':link' => $link, ':id' => $keepId]);
+              $stmt = $pdo->prepare("UPDATE images SET link = :link, updated = 1, show_on_product_main = :visible WHERE image_id = :id");
+              $stmt->execute([':link' => $link, ':id' => $keepId, ':visible' => $this->show_on_product_main]);
 
               if (count($ids) > 1) {
                   $rest = array_map('intval', array_slice($ids, 1));
@@ -345,10 +358,10 @@ class Images {
 
           // 3) No existía: crear con updated=1
           $stmt = $pdo->prepare("
-              INSERT INTO images (link, updated, variation_id)
-              VALUES (:link, 1, :vid)
+              INSERT INTO images (link, updated, variation_id, show_on_product_main)
+              VALUES (:link, 1, :vid, :visible)
           ");
-          $stmt->execute([':link' => $link, ':vid' => $vid]);
+          $stmt->execute([':link' => $link, ':vid' => $vid, ':visible' => $this->show_on_product_main]);
 
           return [
               'success'      => true,

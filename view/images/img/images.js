@@ -112,7 +112,40 @@ class Images {
     caption.className = 'meta';
     caption.title = displayName;
     caption.textContent = displayName + sizeTxt;
-    fig.append(img, remove, caption);
+    const mainLabel = document.createElement('label');
+    mainLabel.className = 'cp-main-toggle';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = Number(it.show_on_product_main) === 1;
+    checkbox.setAttribute('aria-label', `Show on main: ${displayName}`);
+    const text = document.createElement('span');
+    text.textContent = 'Show on main';
+    const status = document.createElement('small');
+    status.className = 'cp-main-status';
+    status.setAttribute('role', 'status');
+    checkbox.addEventListener('change', async () => {
+      const previous = Number(it.show_on_product_main) === 1 ? 1 : 0;
+      if (this.logic?.uploading) { checkbox.checked = previous === 1; return; }
+      it.show_on_product_main = checkbox.checked ? 1 : 0;
+      if (it.origin === 'local') {
+        status.textContent = 'Save to upload';
+        return;
+      }
+      checkbox.disabled = true;
+      status.textContent = 'Saving…';
+      try {
+        await this.logic.updateMainVisibility(it.image_id, it.show_on_product_main);
+        status.textContent = 'Saved';
+      } catch (error) {
+        it.show_on_product_main = previous;
+        checkbox.checked = previous === 1;
+        status.textContent = 'Not saved. Try again.';
+      } finally {
+        checkbox.disabled = false;
+      }
+    });
+    mainLabel.append(checkbox, text);
+    fig.append(img, remove, caption, mainLabel, status);
     this.gallery.appendChild(fig);
     return fig;
   }
@@ -134,6 +167,7 @@ class Images {
         url: URL.createObjectURL(f),
         name: f.name,
         size: f.size,
+        show_on_product_main: 0,
         origin: 'local',
         file: f
       };
@@ -205,13 +239,15 @@ class Images {
 
   // ====== (Opcional) wrapper para agregar una imagen del servidor manualmente ======
 
-  renderImage(size, name, url) {
+  renderImage(size, name, url, imageId = null, showOnMain = 0) {
     if (!url || !this.gallery) return null;
     const it = {
       id: this.uid(),
       url,
       name,
       size,
+      image_id: imageId,
+      show_on_product_main: Number(showOnMain) === 1 ? 1 : 0,
       origin: 'server'
     };
     this.items.push(it);

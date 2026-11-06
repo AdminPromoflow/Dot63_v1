@@ -42,10 +42,13 @@ class ImageLogic {
         order: i,
         filename: it.name
       }))));
-      locals.forEach(it => fd.append('images[]', it.file, it.name));
+      locals.forEach(it => {
+      fd.append('images[]', it.file, it.name);
+      fd.append('show_on_product_main[]', String(it.show_on_product_main || 0));
+    });
       try {
         loader.show();
-        const data = await this.createUpdateImages(fd);
+        const data = await this.createUpdateImages(fd, locals);
         if (data?.success) {
           loader.hide();
           window.headerAddProduct.goNext('../../view/items/index.php');
@@ -98,10 +101,13 @@ class ImageLogic {
       order: i,
       filename: it.name
     }))));
-    locals.forEach(it => fd.append('images[]', it.file, it.name));
+    locals.forEach(it => {
+      fd.append('images[]', it.file, it.name);
+      fd.append('show_on_product_main[]', String(it.show_on_product_main || 0));
+    });
     try {
       loader.show();
-      const data = await this.createUpdateImages(fd);
+      const data = await this.createUpdateImages(fd, locals);
       if (data?.success) {
         loader.hide();
       }
@@ -150,13 +156,14 @@ class ImageLogic {
       const list = Array.isArray(data.images) ? data.images : [];
       list.forEach(({
         image_id,
-        link
+        link,
+        show_on_product_main
       }) => {
         const sid = String(image_id ?? '');
         if (sid && this.images.renderedIds?.has(sid)) return;
         const url = this.images.normalizeUrl(link);
         const name = this.images.basename(url);
-        this.images.renderImage(undefined, name, url);
+        this.images.renderImage(undefined, name, url, image_id, show_on_product_main);
         if (sid) this.images.renderedIds.add(sid);
       });
       if (data.variations) {
@@ -168,19 +175,51 @@ class ImageLogic {
     }
   }
 
-  async createUpdateImages(fd) {
+  async updateMainVisibility(imageId, value) {
+    return this.makeRequest('../../controller/products/image.php', {
+      action: 'update_image_main_visibility',
+      sku_variation: new URLSearchParams(window.location.search).get('sku_variation'),
+      image_id: imageId,
+      show_on_product_main: value
+    }, {requireSuccess: true});
+  }
+
+  async createUpdateImages(fd, locals = []) {
+    if (this.uploading) return null;
+    this.uploading = true;
+    const controls = Array.from(document.querySelectorAll('#save_images, #next_images, #gallery input, #gallery .rm'));
+    const disabledStates = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
     const url = "../../controller/products/image.php";
     try {
       const response = await this.makeRequest(url, fd);
-      //  alert(JSON.stringify(data));
-      if (response?.success) {
-        alert(response.message);
+      (response?.paths || []).forEach(saved => {
+        const item = locals[saved.index];
+        if (!item || !saved.image_id) return;
+        URL.revokeObjectURL(item.url);
+        item.origin = 'server';
+        item.image_id = saved.image_id;
+        item.url = this.images.normalizeUrl(saved.path);
+        item.show_on_product_main = Number(saved.show_on_product_main) === 1 ? 1 : 0;
+        delete item.file;
+        this.images.renderedIds.add(String(saved.image_id));
+      });
+      this.images.renderAll();
+      if (response?.errors?.length) {
+        alert('Some images could not be uploaded. Please retry the remaining images.');
+        return {...response, success: false};
       }
+      if (response?.success) alert(response.message);
+      else alert(response?.error || 'The images could not be saved.');
       return response;
     } catch (err) {
       console.error("Error:", err);
       alert("There was a network or server error while uploading the images.");
       throw err;
+    } finally {
+      this.uploading = false;
+      controls.forEach((control, index) => { control.disabled = disabledStates[index]; });
+      loader.hide();
     }
   }
 

@@ -27,6 +27,9 @@ class Image {
     CatalogAccess::enforce('image', is_array($data) ? $data : []);
 
       switch ($action) {
+          case 'update_image_main_visibility':
+              $this->updateMainVisibility($data);
+              break;
           case 'get_images_details':
               // Si necesitas archivos opcionales en esta acción:
               $data['_files'] = $_FILES ?? [];
@@ -63,6 +66,23 @@ class Image {
     echo json_encode(["success"=> $ok]);
   }
 
+  private function updateMainVisibility(array $data): void
+  {
+      header('Content-Type: application/json; charset=utf-8');
+      $id = filter_var($data['image_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+      $value = $data['show_on_product_main'] ?? null;
+      if (!$id || !in_array($value, [0, 1, '0', '1'], true)) Dot63Security::fail(422, 'Invalid image visibility.');
+      try {
+          $images = new Images(new Database());
+          $images->setSKUVariation($data['sku_variation']);
+          if (!$images->updateMainVisibility($id, (int)$value)) Dot63Security::fail(404, 'Image not found for this variation.');
+          echo json_encode(['success' => true, 'show_on_product_main' => (int)$value]);
+      } catch (Throwable $error) {
+          error_log('Image visibility update failed: ' . $error->getMessage());
+          Dot63Security::fail(500, 'The image setting could not be saved.');
+      }
+  }
+
   private function createUpdateImages($data){
       header('Content-Type: application/json; charset=utf-8');
 
@@ -89,6 +109,11 @@ class Image {
       }
 
       if (count($files['tmp_name']) > 20) Dot63Security::fail(422, 'Upload no more than 20 images at a time.');
+      $visibility = $data['show_on_product_main'] ?? [];
+      if (!is_array($visibility)) Dot63Security::fail(422, 'Invalid image visibility.');
+      foreach ($visibility as $value) {
+          if (!in_array($value, [0, 1, '0', '1'], true)) Dot63Security::fail(422, 'Invalid image visibility.');
+      }
       // Validate the entire batch before touching any existing image records.
       foreach ($files['tmp_name'] as $index => $tmp) {
           try {
@@ -130,6 +155,7 @@ class Image {
 
           // 5) Guardar en BD (usa la misma instancia/conexión)
           $imagesModel->setImageAddress($path);
+          $imagesModel->setShowOnProductMain((int)($visibility[$i] ?? 0));
           $result = $imagesModel->saveImage();
 
           if (!($result['success'] ?? false)) {
@@ -139,6 +165,8 @@ class Image {
           }
 
           $saved[] = [
+              "index"       => $i,
+              "show_on_product_main" => (int)($visibility[$i] ?? 0),
               "path"        => $path,
               "image_id"    => $result['image_id'] ?? null,
               "variation_id"=> $result['variation_id'] ?? null,

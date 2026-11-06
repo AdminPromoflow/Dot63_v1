@@ -43,6 +43,7 @@ final class CatalogAccess
             'get_images_details' => [false, ['sku' => 'product', 'sku_variation' => 'variation']],
             'create_update_images' => [true, ['sku_product' => 'product', 'sku_variation' => 'variation']],
             'delete_image' => [true, ['sku_variation' => 'variation']],
+            'update_image_main_visibility' => [true, ['sku_variation' => 'variation']],
         ],
         'price' => [
             'get_prices_details' => [false, ['sku_variation' => 'variation']],
