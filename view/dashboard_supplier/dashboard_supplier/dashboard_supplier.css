@@ -352,3 +352,35 @@ body.body_dashboard_supplier{
 @media (max-width: 540px){
   .btn{ width:100%; }
 }
+
+/* Static customer order workspace */
+.ds-orders-layout{ grid-template-columns:minmax(0, 1.8fr) minmax(240px, 1fr); align-items:start; }
+.ds-orders{ padding:0; overflow:hidden; box-shadow:0 6px 24px rgba(17,24,39,.035); }
+.ds-orders-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:26px; }
+.ds-orders-eyebrow{ margin:0 0 8px; color:#55766d; font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.ds-orders-header h2, .ds-order-guide h2{ margin:0 0 8px; font-size:1.25rem; letter-spacing:-.025em; }
+.ds-orders-header p:not(.ds-orders-eyebrow), .ds-order-guide > p:not(.ds-orders-eyebrow){ margin:0; color:#707780; font-size:.82rem; line-height:1.7; }
+.ds-orders-badge{ flex-shrink:0; padding:6px 10px; border:1px solid #e9deca; border-radius:30px; background:#faf5ea; color:#826839; font-size:.68rem; font-weight:600; }
+.ds-orders-table-wrap{ overflow-x:auto; }
+.ds-orders-table{ width:100%; border-collapse:collapse; text-align:left; }
+.ds-orders-table thead{ background:#f7f8f8; }
+.ds-orders-table th{ padding:14px 16px; border-block:1px solid #ecefef; color:#727984; font-size:.68rem; font-weight:600; white-space:nowrap; }
+.ds-orders-table td{ padding:0; }
+.ds-orders-empty{ display:flex; flex-direction:column; align-items:center; padding:52px 24px; text-align:center; }
+.ds-orders-icon{ display:grid; place-items:center; width:80px; height:80px; margin-bottom:22px; border:1px solid #dce8e2; border-radius:24px; background:#f0f6f3; color:#56776b; }
+.ds-orders-empty h3{ margin:0 0 10px; color:#303c37; font-size:1rem; font-weight:600; }
+.ds-orders-empty p{ max-width:330px; margin:0; color:#737c77; font-size:.82rem; line-height:1.8; }
+.ds-orders-note{ margin-top:24px; color:#7b817d; font-size:.72rem; }
+.ds-order-guide{ padding:26px; background:#fafaf7; box-shadow:none; }
+.ds-order-stages{ list-style:none; padding:0; margin:26px 0 0; }
+.ds-order-stages li{ display:flex; gap:14px; padding:0 0 24px; }
+.ds-order-stages li:last-child{ padding-bottom:0; }
+.ds-order-stages li > span{ display:grid; place-items:center; flex-shrink:0; width:30px; height:30px; border:1px solid #dfe5df; border-radius:50%; color:#6d7e72; background:white; font-size:.65rem; font-variant-numeric:tabular-nums; }
+.ds-order-stages h3{ margin:3px 0 5px; font-size:.8rem; font-weight:600; color:#3d4b42; }
+.ds-order-stages p{ margin:0; color:#7c827d; font-size:.75rem; line-height:1.7; }
+@media (max-width:1100px){ .ds-orders-layout{ grid-template-columns:1fr; } }
+@media (max-width:540px){
+  .ds-orders-header{ padding:20px; flex-direction:column; }
+  .ds-orders-table th{ padding:12px 8px; font-size:.62rem; }
+  .ds-orders-empty{ padding:38px 16px; }
+}

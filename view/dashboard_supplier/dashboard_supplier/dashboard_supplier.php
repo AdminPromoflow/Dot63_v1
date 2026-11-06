@@ -45,47 +45,51 @@ $jsTime  = filemtime('../../view/dashboard_supplier/dashboard_supplier/dashboard
       </article>
     </a>
   </section>
-  <section class="ds-columns">
-    <div class="card catalog-card" aria-labelledby="catalog-browser-title">
-      <div class="catalog-toolbar">
-        <button id="catalog-back" class="catalog-back" type="button" hidden aria-label="Volver al nivel anterior">
-          <span aria-hidden="true">←</span> Atrás
-        </button>
+  <section class="ds-columns ds-orders-layout" aria-label="Customer orders workspace">
+    <div class="card ds-orders" aria-labelledby="supplier-orders-title">
+      <header class="ds-orders-header">
         <div>
-          <p class="catalog-eyebrow">Product catalogue</p>
-          <h2 id="catalog-browser-title">Categories</h2>
+          <p class="ds-orders-eyebrow">Your order workspace</p>
+          <h2 id="supplier-orders-title">Customer orders</h2>
+          <p>Orders placed by customers with your business will appear here.</p>
         </div>
-      </div>
+        <span class="ds-orders-badge">Coming soon</span>
+      </header>
 
-      <p id="catalog-description" class="catalog-description">Select a category to view its groups.</p>
-      <div id="catalog-status" class="catalog-status" role="status" aria-live="polite"></div>
-      <div id="catalog-list" class="catalog-list" aria-live="polite"></div>
+      <div class="ds-orders-table-wrap">
+        <table class="ds-orders-table">
+          <caption class="sr-only">Future customer orders for this supplier</caption>
+          <thead>
+            <tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Date</th><th scope="col">Status</th><th scope="col">Total</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5">
+              <div class="ds-orders-empty">
+                <div class="ds-orders-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+                    <path d="M15 9h-4v32h26V9h-4M18 7h12v7H18zM17 23h14M17 30h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <h3>A dedicated space for your orders</h3>
+                <p>Customer details, ordered products and delivery progress will be brought together in one place.</p>
+                <span class="ds-orders-note">Order management will be available here soon.</span>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Lateral: perfil y acciones rápidas -->
-    <aside class="card profile" aria-labelledby="profile-title">
-      <h2 id="profile-title" class="sr-only">Supplier Profile</h2>
-
-      <div class="profile-row">
-        <div class="avatar" aria-hidden="true">S</div>
-        <div>
-          <p class="title">Supplier Name</p>
-          <p class="muted">supplier@example.com</p>
-        </div>
-      </div>
-
-      <ul class="meta">
-        <li><span>Company:</span> Demo Company Ltd</li>
-        <li><span>Country:</span> Colombia</li>
-        <li><span>City:</span> Arbeláez</li>
-      </ul>
-
-      <div class="quick-links">
-        <a id="open-supplier-dashboard" class="btn btn-block" >Supplier Profile</a>
-        <a class="btn btn-block" href="#">Manage Promotions</a>
-        <a class="btn btn-block" href="#">Download Reports</a>
-      </div>
-
+    <aside class="card ds-order-guide" aria-labelledby="order-guide-title">
+      <p class="ds-orders-eyebrow">From request to delivery</p>
+      <h2 id="order-guide-title">Every step, in one place</h2>
+      <p>A preview of the order stages you’ll be able to follow.</p>
+      <ol class="ds-order-stages">
+        <li><span aria-hidden="true">01</span><div><h3>New order</h3><p>Customer information and order requirements.</p></div></li>
+        <li><span aria-hidden="true">02</span><div><h3>In production</h3><p>Preparation and production progress.</p></div></li>
+        <li><span aria-hidden="true">03</span><div><h3>Ready to ship</h3><p>Dispatch details and delivery updates.</p></div></li>
+        <li><span aria-hidden="true">04</span><div><h3>Completed</h3><p>Delivered orders and their history.</p></div></li>
+      </ol>
     </aside>
   </section>
 </main>
