@@ -415,7 +415,6 @@ class ProductsClass {
   drawTypeVariations(visibleProducts, previousSelections = new Map()) {
     if (!this.variationFilters) return;
     this.variationFilters.innerHTML = "";
-    const colors = ["#7C3AED", "#2563EB", "#059669", "#EA580C", "#DC2626", "#0891B2"];
     this.catalogCategories.forEach(category => {
       const categoryName = String(category.name);
       const products = (visibleProducts || []).filter(product => String(product.category_name) === categoryName);
@@ -462,11 +461,9 @@ class ProductsClass {
         this.queueFilterScrollUpdate();
       });
       update();
-      let colorIndex = 0;
       grouped.forEach((type, typeId) => {
         const group = document.createElement("div");
         group.className = "filter-group";
-        group.style.setProperty("--filter-accent", colors[colorIndex++ % colors.length]);
         const heading = document.createElement("h1");
         heading.textContent = type.name;
         const scroll = document.createElement("div");
@@ -483,8 +480,13 @@ class ProductsClass {
           input.dataset.category = categoryName;
           input.value = optionName;
           input.checked = previousSelections.get(categoryName)?.get(typeId)?.has(optionName) || false;
-          text.textContent = `${optionName} (${productSet.size})`;
-          label.append(input, text);
+          text.className = "filter-option-name";
+          text.textContent = optionName;
+          const count = document.createElement("span");
+          count.className = "filter-option-count";
+          count.textContent = String(productSet.size);
+          count.setAttribute("aria-label", `${productSet.size} products`);
+          label.append(input, text, count);
           item.append(label);
           list.append(item);
         });
