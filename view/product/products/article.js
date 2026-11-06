@@ -1,12 +1,12 @@
 class ProductsClass {
   constructor() {
     this.articles = document.getElementById("articles");
-    this.categoryFilter = document.getElementById("category_filter");
     this.variationFilters = document.getElementById("variation-filters");
     this.filtersPanel = document.querySelector(".filter_products");
     this.filterScrollId = 0;
     this.filterScrollFrame = null;
-    this.expandedFilters = new Set();
+    this.expandedCategories = new Set();
+    this.catalogCategories = [];
     this.filterResizeObserver = new ResizeObserver(() => this.queueFilterScrollUpdate());
     this.productsData = [];
     this.variationRows = [];
@@ -17,7 +17,6 @@ class ProductsClass {
     this.imageRotationInterval = 5000;
     this.fallbackImage = "../../view/product/products/img/icon_products.png";
     this.prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false;
-    this.categoryFilter?.addEventListener("change", () => this.applyFilters());
     this.variationFilters?.addEventListener("change", () => this.applyFilters());
     this.filtersPanel?.addEventListener("scroll", () => this.queueFilterScrollUpdate(), { capture: true, passive: true });
     this.filtersPanel?.addEventListener("click", event => this.handleFilterScrollClick(event));
@@ -32,37 +31,6 @@ class ProductsClass {
 
   syncFilterScrollControls() {
     if (!this.filtersPanel) return;
-    this.filtersPanel.querySelectorAll('.filter-group').forEach(group => {
-      if (group.querySelector('.filter-options-toggle')) return;
-      const heading = group.querySelector('h1');
-      const options = group.querySelector('.scroll_filter');
-      if (!heading || !options) return;
-      const key = group.dataset.filterKey || 'category';
-      const panel = document.createElement('div');
-      panel.className = 'filter-options-panel';
-      panel.id = `filter-options-${++this.filterScrollId}`;
-      options.before(panel);
-      panel.append(options);
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'filter-options-toggle';
-      button.setAttribute('aria-controls', panel.id);
-      const update = () => {
-        const expanded = this.expandedFilters.has(key);
-        panel.hidden = !expanded;
-        button.setAttribute('aria-expanded', String(expanded));
-        button.textContent = expanded ? 'View fewer options' : 'View more options';
-        button.setAttribute('aria-label', `${button.textContent}: ${heading.textContent}`);
-      };
-      button.addEventListener('click', () => {
-        if (this.expandedFilters.has(key)) this.expandedFilters.delete(key);
-        else this.expandedFilters.add(key);
-        update();
-        this.queueFilterScrollUpdate();
-      });
-      heading.after(button);
-      update();
-    });
     this.filterResizeObserver.disconnect();
     this.filtersPanel.querySelectorAll(".filters-content, .scroll_filter").forEach(scroll => {
       if (!scroll.hasAttribute("data-filter-scroll")) {
@@ -135,22 +103,8 @@ class ProductsClass {
   }
 
   drawCategoryFilters(categories, products) {
-    if (!this.categoryFilter) return;
-    const productCategories = new Set(products.map(product => String(product.category_name || "")).filter(Boolean));
-    this.categoryFilter.innerHTML = "";
-    categories.filter(category => Number(category.approved) === 1 && productCategories.has(String(category.name || ""))).forEach(category => {
-      const item = document.createElement("li");
-      const label = document.createElement("label");
-      const input = document.createElement("input");
-      const text = document.createElement("span");
-      input.type = "checkbox";
-      input.name = "category[]";
-      input.value = String(category.name || "");
-      text.textContent = category.name || "Unnamed category";
-      label.append(input, text);
-      item.append(label);
-      this.categoryFilter.append(item);
-    });
+    const available = new Set(products.map(product => String(product.category_name || "")));
+    this.catalogCategories = categories.filter(category => Number(category.approved) === 1 && available.has(String(category.name || "")));
   }
 
   async fetchGetProducts() {
@@ -166,14 +120,6 @@ class ProductsClass {
       this.statusThreeProductsData = productSets.statusThreeProducts;
     }
     return productSets.normalProducts;
-  }
-
-  selectCategoriesForProducts(products) {
-    if (!this.categoryFilter) return;
-    const productCategories = new Set((Array.isArray(products) ? products : []).map(product => String(product.category_name || "").trim()).filter(Boolean));
-    this.categoryFilter.querySelectorAll('input[name="category[]"]').forEach(input => {
-      input.checked = productCategories.has(input.value);
-    });
   }
 
   getPublishedProducts(products) {
@@ -443,87 +389,111 @@ class ProductsClass {
   }
 
   applyFilters() {
-    const selectedCategories = this.getSelectedValues(this.categoryFilter, 'input[name="category[]"]');
-    const selectionsByType = new Map();
+    const selections = new Map();
     this.variationFilters?.querySelectorAll("input[data-type-id]:checked").forEach(input => {
-      const typeId = input.dataset.typeId;
-      if (!selectionsByType.has(typeId)) selectionsByType.set(typeId, new Set());
-      selectionsByType.get(typeId).add(input.value);
+      const category = input.dataset.category;
+      if (!selections.has(category)) selections.set(category, new Map());
+      const types = selections.get(category);
+      if (!types.has(input.dataset.typeId)) types.set(input.dataset.typeId, new Set());
+      types.get(input.dataset.typeId).add(input.value);
     });
     const filtered = this.productsData.filter(product => {
-      if (selectedCategories.size && !selectedCategories.has(String(product.category_name || ""))) {
-        return false;
-      }
-      return Array.from(selectionsByType).every(([typeId, options]) => {
+      if (!selections.size) return true;
+      const types = selections.get(String(product.category_name || ""));
+      if (!types) return false;
+      return Array.from(types).every(([typeId, options]) => {
         if (product.is_status_three_combination) {
-          return (Array.isArray(product.selected_variations) ? product.selected_variations : []).some(variation => String(variation.type_id) === String(typeId) && options.has(String(variation.name)));
+          return (product.selected_variations || []).some(variation => String(variation.type_id) === typeId && options.has(String(variation.name)));
         }
-        return this.variationRows.some(row => String(row.product_id) === String(product.product_id) && String(row.type_id) === String(typeId) && options.has(String(row.option_name)));
+        return this.variationRows.some(row => String(row.product_id) === String(product.product_id) && String(row.type_id) === typeId && options.has(String(row.option_name)));
       });
     });
     this.drawProducts(filtered);
-    this.drawTypeVariations(filtered, selectionsByType);
+    this.drawTypeVariations(this.productsData, selections);
   }
 
   drawTypeVariations(visibleProducts, previousSelections = new Map()) {
     if (!this.variationFilters) return;
-    const products = Array.isArray(visibleProducts) ? visibleProducts : [];
-    const normalProductIds = new Set(products.filter(product => !product.is_status_three_combination).map(product => String(product.product_id)));
-    const grouped = new Map();
-    const addOption = (typeId, typeName, optionName, productKey) => {
-      const normalizedTypeId = String(typeId ?? "");
-      const normalizedOptionName = String(optionName ?? "").trim();
-      if (!normalizedTypeId || !normalizedOptionName) return;
-      if (!grouped.has(normalizedTypeId)) {
-        grouped.set(normalizedTypeId, {
-          name: typeName,
-          options: new Map()
-        });
-      }
-      const options = grouped.get(normalizedTypeId).options;
-      if (!options.has(normalizedOptionName)) options.set(normalizedOptionName, new Set());
-      options.get(normalizedOptionName).add(String(productKey));
-    };
-    this.variationRows.forEach(row => {
-      if (!normalProductIds.has(String(row.product_id))) return;
-      addOption(row.type_id, row.type_name, row.option_name, `product:${row.product_id}`);
-    });
-    products.filter(product => product.is_status_three_combination).forEach(product => {
-      (Array.isArray(product.selected_variations) ? product.selected_variations : []).forEach(variation => {
-        addOption(variation.type_id, variation.type_name, variation.name, `combination:${product.combination_id}`);
-      });
-    });
     this.variationFilters.innerHTML = "";
-    let colorIndex = 0;
     const colors = ["#7C3AED", "#2563EB", "#059669", "#EA580C", "#DC2626", "#0891B2"];
-    grouped.forEach((type, typeId) => {
-      const group = document.createElement("div");
-      group.className = "filter-group";
-      group.dataset.filterKey = `type:${typeId}`;
-      group.style.setProperty("--filter-accent", colors[colorIndex++ % colors.length]);
-      const heading = document.createElement("h1");
-      heading.textContent = type.name;
-      const scroll = document.createElement("div");
-      scroll.className = "scroll_filter";
-      const list = document.createElement("ul");
-      list.className = "checklist";
-      type.options.forEach((productSet, optionName) => {
-        const item = document.createElement("li");
-        const label = document.createElement("label");
-        const input = document.createElement("input");
-        const text = document.createElement("span");
-        input.type = "checkbox";
-        input.dataset.typeId = typeId;
-        input.value = optionName;
-        input.checked = previousSelections.get(typeId)?.has(optionName) || false;
-        text.textContent = `${optionName} (${productSet.size})`;
-        label.append(input, text);
-        item.append(label);
-        list.append(item);
+    this.catalogCategories.forEach(category => {
+      const categoryName = String(category.name);
+      const products = (visibleProducts || []).filter(product => String(product.category_name) === categoryName);
+      if (!products.length) return;
+      const normalIds = new Set(products.filter(product => !product.is_status_three_combination).map(product => String(product.product_id)));
+      const grouped = new Map();
+      const addOption = (typeId, typeName, optionName, productKey) => {
+        typeId = String(typeId ?? "");
+        optionName = String(optionName ?? "").trim();
+        if (!typeId || !optionName) return;
+        if (!grouped.has(typeId)) grouped.set(typeId, {name: typeName, options: new Map()});
+        const options = grouped.get(typeId).options;
+        if (!options.has(optionName)) options.set(optionName, new Set());
+        options.get(optionName).add(productKey);
+      };
+      this.variationRows.forEach(row => {
+        if (normalIds.has(String(row.product_id))) addOption(row.type_id, row.type_name, row.option_name, `product:${row.product_id}`);
       });
-      scroll.append(list);
-      group.append(heading, scroll);
-      this.variationFilters.append(group);
+      products.filter(product => product.is_status_three_combination).forEach(product => {
+        (product.selected_variations || []).forEach(variation => addOption(variation.type_id, variation.type_name, variation.name, `combination:${product.combination_id}`));
+      });
+      const section = document.createElement("section");
+      section.className = "filter-group filter-category";
+      const title = document.createElement("h1");
+      title.textContent = categoryName;
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "category-options-toggle";
+      const panel = document.createElement("div");
+      panel.className = "category-options-panel";
+      panel.id = `category-options-${++this.filterScrollId}`;
+      toggle.setAttribute("aria-controls", panel.id);
+      const update = () => {
+        const expanded = this.expandedCategories.has(categoryName);
+        panel.hidden = !expanded;
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.textContent = expanded ? "Hide filter options" : "View filter options";
+        toggle.setAttribute("aria-label", `${toggle.textContent}: ${categoryName}`);
+      };
+      toggle.addEventListener("click", () => {
+        if (this.expandedCategories.has(categoryName)) this.expandedCategories.delete(categoryName);
+        else this.expandedCategories.add(categoryName);
+        update();
+        this.queueFilterScrollUpdate();
+      });
+      update();
+      let colorIndex = 0;
+      grouped.forEach((type, typeId) => {
+        const group = document.createElement("div");
+        group.className = "filter-group";
+        group.style.setProperty("--filter-accent", colors[colorIndex++ % colors.length]);
+        const heading = document.createElement("h1");
+        heading.textContent = type.name;
+        const scroll = document.createElement("div");
+        scroll.className = "scroll_filter";
+        const list = document.createElement("ul");
+        list.className = "checklist";
+        type.options.forEach((productSet, optionName) => {
+          const item = document.createElement("li");
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+          const text = document.createElement("span");
+          input.type = "checkbox";
+          input.dataset.typeId = typeId;
+          input.dataset.category = categoryName;
+          input.value = optionName;
+          input.checked = previousSelections.get(categoryName)?.get(typeId)?.has(optionName) || false;
+          text.textContent = `${optionName} (${productSet.size})`;
+          label.append(input, text);
+          item.append(label);
+          list.append(item);
+        });
+        scroll.append(list);
+        group.append(heading, scroll);
+        panel.append(group);
+      });
+      section.append(title, toggle, panel);
+      this.variationFilters.append(section);
     });
     this.syncFilterScrollControls();
   }
@@ -865,7 +835,6 @@ class ProductsClass {
     try {
       const [categories] = await Promise.all([this.getCategoryFilters(), this.fetchGetProducts()]);
       this.drawCategoryFilters(categories, this.productsData);
-      this.selectCategoriesForProducts(this.productsData);
       this.applyFilters();
     } catch (error) {
       console.error("Error loading product filters:", error);
