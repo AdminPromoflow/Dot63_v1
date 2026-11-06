@@ -104,6 +104,9 @@ class ProductsClass {
   drawCategoryFilters(categories, products) {
     const available = new Set(products.map(product => String(product.category_name || "")));
     this.catalogCategories = categories.filter(category => Number(category.approved) === 1 && available.has(String(category.name || "")));
+    this.expandedCategories = new Set(
+      this.catalogCategories.length === 1 ? [String(this.catalogCategories[0].name)] : []
+    );
   }
 
   async fetchGetProducts() {

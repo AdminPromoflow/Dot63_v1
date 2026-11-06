@@ -66,8 +66,8 @@ img{
   top: 90px;
   max-height: calc(100vh - 120px);
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #e8e9ec;
+  background: linear-gradient(165deg, #ffeddb 0%, #fffaf5 45%, #f0f8f5 100%);
+  border: 1px solid #e9c9af;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(15, 23, 42, .035);
   padding: 20px 16px;
@@ -80,8 +80,8 @@ img{
   font-size: .75rem;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: #717680;
-  border-bottom: 1px solid #eff0f2;
+  color: #a45125;
+  border-bottom: 1px solid #efdfd2;
   font-weight: 600;
 }
 
@@ -104,16 +104,21 @@ img{
   overflow-wrap: anywhere;
 }
 
+.filter-category{
+  border-color: #ebc6a8;
+  background: linear-gradient(180deg, #ffe2c5 0, #fff8f0 95px, #ffffff 180px);
+}
+
 .filter-category > h1{
   margin-bottom: 4px;
-  color: #20242c;
+  color: #874522;
   font-size: 1rem;
   letter-spacing: -.02em;
   font-weight: 650;
 }
 
 .filter-category:has(.category-options-toggle[aria-expanded="true"]){
-  border-color: #e3d7cd;
+  border-color: #e8bf9c;
 }
 
 .category-options-toggle{
@@ -137,6 +142,7 @@ img{
 
 .category-options-toggle::after{
   content: '';
+  color: #c2652c;
   flex-shrink: 0;
   width: 7px;
   height: 7px;
@@ -171,6 +177,26 @@ img{
 .category-options-panel > .filter-group:last-child{
   padding-bottom: 0;
   border-bottom: 0;
+}
+
+.category-options-panel > .filter-group > h1{
+  border-left: 3px solid #df945e;
+  padding: 7px 9px;
+  border-radius: 0 7px 7px 0;
+  background: #fff0e2;
+  color: #8b4b26;
+}
+
+.category-options-panel > .filter-group:nth-child(even) > h1{
+  border-left-color: #6ba998;
+  background: #eaf5ef;
+  color: #356858;
+}
+
+.category-options-panel > .filter-group:nth-child(3n) > h1{
+  border-left-color: #8d9fce;
+  background: #edf1fb;
+  color: #52658f;
 }
 
 /* SCROLL AREA */
@@ -295,10 +321,10 @@ img{
   transition: background .16s ease, border-color .16s ease;
 }
 
-.checklist label:hover{ background: #f6f7f8; }
+.checklist label:hover{ background: #fff7ef; }
 .checklist label:has(input:checked){
-  background: #fff6ee;
-  border-color: #f1dfd0;
+  background: #ffeddd;
+  border-color: #edc9a9;
   color: #874522;
 }
 .checklist label:has(input:focus-visible){
