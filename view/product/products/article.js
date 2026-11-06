@@ -6,6 +6,7 @@ class ProductsClass {
     this.filtersPanel = document.querySelector(".filter_products");
     this.filterScrollId = 0;
     this.filterScrollFrame = null;
+    this.expandedFilters = new Set();
     this.filterResizeObserver = new ResizeObserver(() => this.queueFilterScrollUpdate());
     this.productsData = [];
     this.variationRows = [];
@@ -31,6 +32,37 @@ class ProductsClass {
 
   syncFilterScrollControls() {
     if (!this.filtersPanel) return;
+    this.filtersPanel.querySelectorAll('.filter-group').forEach(group => {
+      if (group.querySelector('.filter-options-toggle')) return;
+      const heading = group.querySelector('h1');
+      const options = group.querySelector('.scroll_filter');
+      if (!heading || !options) return;
+      const key = group.dataset.filterKey || 'category';
+      const panel = document.createElement('div');
+      panel.className = 'filter-options-panel';
+      panel.id = `filter-options-${++this.filterScrollId}`;
+      options.before(panel);
+      panel.append(options);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'filter-options-toggle';
+      button.setAttribute('aria-controls', panel.id);
+      const update = () => {
+        const expanded = this.expandedFilters.has(key);
+        panel.hidden = !expanded;
+        button.setAttribute('aria-expanded', String(expanded));
+        button.textContent = expanded ? 'View fewer options' : 'View more options';
+        button.setAttribute('aria-label', `${button.textContent}: ${heading.textContent}`);
+      };
+      button.addEventListener('click', () => {
+        if (this.expandedFilters.has(key)) this.expandedFilters.delete(key);
+        else this.expandedFilters.add(key);
+        update();
+        this.queueFilterScrollUpdate();
+      });
+      heading.after(button);
+      update();
+    });
     this.filterResizeObserver.disconnect();
     this.filtersPanel.querySelectorAll(".filters-content, .scroll_filter").forEach(scroll => {
       if (!scroll.hasAttribute("data-filter-scroll")) {
@@ -467,6 +499,7 @@ class ProductsClass {
     grouped.forEach((type, typeId) => {
       const group = document.createElement("div");
       group.className = "filter-group";
+      group.dataset.filterKey = `type:${typeId}`;
       group.style.setProperty("--filter-accent", colors[colorIndex++ % colors.length]);
       const heading = document.createElement("h1");
       heading.textContent = type.name;

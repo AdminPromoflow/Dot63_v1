@@ -124,6 +124,50 @@ img{
   color: var(--filter-accent, var(--accent-category));
 }
 
+.filter-options-toggle{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font: inherit;
+  font-size: .8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.filter-options-toggle::after{
+  content: '+';
+  color: var(--filter-accent, var(--accent-category));
+  font-size: 1.1rem;
+}
+
+.filter-options-toggle[aria-expanded="true"]::after{
+  content: '−';
+}
+
+.filter-options-toggle:hover{
+  color: var(--filter-accent, var(--accent-category));
+}
+
+.filter-options-toggle:focus-visible{
+  outline: 2px solid var(--filter-accent, var(--accent-category));
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.filter-options-panel{
+  margin-top: 12px;
+}
+
+.filter-options-panel[hidden]{
+  display: none;
+}
+
 /* SCROLL AREA */
 
 .filters-content{
