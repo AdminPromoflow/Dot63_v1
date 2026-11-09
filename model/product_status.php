@@ -106,22 +106,39 @@ final class ProductStatus
                 ':pending' => $pending, ':version' => $version, ':changed' => (int)$needsReview,
                 ':id' => $product['product_id'],
             ]);
-            if ($needsReview) {
-                $notice = array_merge($product, $fields, [
-                    'pending_status' => $requested,
-                    'pending_status_label' => self::LABELS[$requested],
-                    'status_request_version' => $version,
-                ]);
-                if (!$notify($notice)) throw new RuntimeException('The approval request could not be sent. Your changes have not been saved. Please try again.', 502);
-            }
             $result = $this->getOwned($sku, $email);
             $this->pdo->commit();
-            return ['success' => true, 'data' => $result, 'pending_approval' => $pending !== null,
-                'message' => $needsReview ? 'Change submitted to Promoflow for approval. The current status remains in effect.' : 'Product details saved.'];
         } catch (Throwable $error) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
             throw $error;
         }
+
+        // The persisted pending status is the approval request. Email is only a
+        // notification: a transport failure must not discard the supplier's work.
+        $notificationSent = null;
+        if ($needsReview) {
+            $notice = array_merge($product, $fields, [
+                'pending_status' => $requested,
+                'pending_status_label' => self::LABELS[$requested],
+                'status_request_version' => $version,
+            ]);
+            try {
+                $notificationSent = (bool)$notify($notice);
+            } catch (Throwable $error) {
+                $notificationSent = false;
+            }
+            if (!$notificationSent) {
+                error_log('Product approval request saved, but email notification failed; product_id=' . (int)$product['product_id'] . '; version=' . $version);
+            }
+        }
+        $message = $needsReview
+            ? 'Change submitted to Promoflow for approval. The current status remains in effect.'
+            : 'Product details saved.';
+        if ($notificationSent === false) {
+            $message = 'Your changes and approval request have been saved. The email notification could not be sent. The request is available for review in Promoflow, and the current status remains in effect.';
+        }
+        return ['success' => true, 'data' => $result, 'pending_approval' => $pending !== null,
+            'notification_sent' => $notificationSent, 'message' => $message];
     }
 
     public function approve(string $sku, int $expectedVersion, int $expectedStatus): array

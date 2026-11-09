@@ -53,8 +53,9 @@ statusCheck(count($notices) === 0, 'Saving a draft without changing its status s
 statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'another@example.test', ['status'=>1,'status_request_version'=>0], $notify), 403);
 statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'status-test@example.test', ['status'=>'active','status_request_version'=>0], $notify), 422);
 statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'status-test@example.test', ['status'=>1,'status_request_version'=>0,'description'=>''], $notify, true), 422);
-statusError(fn() => $workflow->saveDetails('STATUS-TEST', 'status-test@example.test', ['status'=>1,'status_request_version'=>0], static fn() => false), 502);
-statusCheck($read()['pending_status'] === null && $read()['status'] === 0, 'Failed notification changed the status.');
+$mailFailure = $workflow->saveDetails('STATUS-TEST', 'status-test@example.test', ['status'=>1,'status_request_version'=>0], static fn() => false);
+statusCheck($mailFailure['success'] && $mailFailure['notification_sent'] === false, 'Failed email must be reported without losing the request.');
+statusCheck($read()['pending_status'] === 1 && $read()['status'] === 0, 'Failed email must retain the request without approving it.');
 
 // Save must accept an incomplete product; only publication/approval requires readiness.
 $save(1, ['description'=>'']);

@@ -162,7 +162,7 @@ class ClassAddProductDetails {
       this.renderApprovalState(response.data);
       this.showFeedback(response.message || "Product details saved.");
       window.headerAddProduct?.refreshSelection?.();
-      if (response.success && goNext) {
+      if (response.success && goNext && response.notification_sent !== false) {
         headerAddProduct.goNext("../../view/variations/index.php");
       }
     } catch (error) {
