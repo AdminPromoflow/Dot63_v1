@@ -13,6 +13,9 @@ class Variations {
     this.parentSelect = document.getElementById("parent_variations");
     this.nameInput = document.getElementById("variation_name");
     this.typeSelect = document.getElementById("group");
+    this.deliveryPriceInput = document.getElementById("delivery_price");
+    this.deliveryPriceType = document.getElementById("delivery_price_type");
+    this.deliveryPriceType?.addEventListener("change", () => this.updateDeliveryUnit());
     this.namePdfInput = document.getElementById("name_pdf_artwork");
 
     // Image fields.
@@ -337,7 +340,15 @@ class Variations {
     this.menuBtn?.setAttribute("aria-expanded", "false");
   }
 
+  updateDeliveryUnit() {
+    const unit = document.getElementById("delivery_price_unit");
+    if (unit) unit.textContent = this.deliveryPriceType?.value === 'amount' ? '£ (GBP)' : '%';
+  }
+
   renderCurrentNameAndDefaultRules(current) {
+    if (this.deliveryPriceInput) this.deliveryPriceInput.value = current?.delivery_price ?? '';
+    if (this.deliveryPriceType) this.deliveryPriceType.value = current?.delivery_price_type ?? 'percentage';
+    this.updateDeliveryUnit();
     const currentName = String(current?.name ?? "");
     if (this.nameInput) {
       this.nameInput.value = currentName;
@@ -513,7 +524,10 @@ class Variations {
       alert("Please select a valid PDF file.");
       return false;
     }
+    if (this.deliveryPriceInput && !this.deliveryPriceInput.reportValidity()) return false;
     const formData = new FormData();
+    formData.append("delivery_price", this.deliveryPriceInput?.value ?? '');
+    formData.append("delivery_price_type", this.deliveryPriceType?.value ?? 'percentage');
     formData.append("action", "save_variation_details");
     formData.append("sku_product", skuProduct);
     formData.append("sku_variation", skuVariation);
@@ -554,7 +568,7 @@ class Variations {
       return true;
     } catch (error) {
       console.error("Save error:", error);
-      alert("Network/server error while saving.");
+      alert(error.message || "Network/server error while saving.");
       return false;
     }
   }

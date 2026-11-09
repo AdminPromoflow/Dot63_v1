@@ -79,6 +79,14 @@ class Variations {
   {
       header('Content-Type: application/json; charset=utf-8');
 
+      try {
+          $delivery = DeliveryPrice::normalize($data['delivery_price'] ?? null, $data['delivery_price_type'] ?? null);
+          DeliveryPrice::requireColumns((new Database())->getConnection(), 'variations');
+      } catch (Throwable $error) {
+          http_response_code(422);
+          echo json_encode(['success' => false, 'message' => $error->getMessage()]);
+          return;
+      }
       // Base data
       $sku_product         = $data['sku_product']         ?? null;
       $sku_variation       = $data['sku_variation']       ?? null;
@@ -125,6 +133,7 @@ class Variations {
       $connection = new Database();
       $variation  = new Variation($connection);
 
+      $variation->setDeliveryPrice(...$delivery);
       $variation->setName($name ?: '');
       $variation->setIsAttachAnImage($isAttachAnImage);
       $variation->setIsAttachAPDF($isAttachAPDF);

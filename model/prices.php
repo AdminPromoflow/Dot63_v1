@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/delivery_price.php";
 /**
  * =====================================================
  * Class: Prices
@@ -12,6 +13,11 @@
  */
 class Prices {
   // ---- Properties (solo las necesarias) ----
+  private $delivery_price = null;
+  private $delivery_price_type = null;
+  public function setDeliveryPrice($value, $type): void {
+      [$this->delivery_price, $this->delivery_price_type] = DeliveryPrice::normalize($value, $type);
+  }
   private $connection;        // PDO wrapper
   private $sku;               // Product SKU (para el dropdown)
   private $sku_variation;     // Variation SKU (para resolver variation_id)
@@ -169,7 +175,7 @@ class Prices {
 
       $variationId = (int)$variation['variation_id'];
       $stmt = $pdo->prepare("
-        SELECT price_id, min_quantity, max_quantity, price
+        SELECT *
         FROM prices
         WHERE variation_id = :vid
         ORDER BY price_id ASC
@@ -275,13 +281,15 @@ class Prices {
 
       // Insert
       $stmt = $pdo->prepare("
-        INSERT INTO prices (min_quantity, max_quantity, price, variation_id)
-        VALUES (:minq, :maxq, :price, :vid)
+        INSERT INTO prices (min_quantity, max_quantity, price, variation_id, delivery_price, delivery_price_type)
+        VALUES (:minq, :maxq, :price, :vid, :delivery_price, :delivery_price_type)
       ");
       $stmt->execute([
         ':minq'  => $this->min_quantity,
         ':maxq'  => $this->max_quantity,
         ':price' => $this->price,
+        ':delivery_price' => $this->delivery_price,
+        ':delivery_price_type' => $this->delivery_price_type,
         ':vid'   => $vid
       ]);
 

@@ -159,6 +159,8 @@ class Prices {
       min_qty: String(min_qty ?? ''),
       max_qty: String(max_qty ?? ''),
       price: String(price ?? ''),
+      delivery_price: '',
+      delivery_price_type: 'percentage',
       order: this.rows.length
     });
     this.renderRows();
@@ -316,6 +318,8 @@ class Prices {
       min_qty: String(r.min_quantity ?? r.min_qty ?? r.min ?? ''),
       max_qty: String(r.max_quantity ?? r.max_qty ?? r.max ?? ''),
       price: String(r.price ?? r.amount ?? ''),
+      delivery_price: String(r.delivery_price ?? ''),
+      delivery_price_type: r.delivery_price_type ?? 'percentage',
       order: Number(r.order ?? 0)
     }));
     this.renderRows();
@@ -370,6 +374,18 @@ class Prices {
           aria-label="Price"
         >
 
+        <div class="delivery-price-controls">
+          <label for="delivery-${esc(row.id)}">Delivery Price</label>
+          <div class="delivery-value">
+            <input id="delivery-${esc(row.id)}" class="delivery-input" data-id="${esc(row.id)}" type="number" min="0" max="9999999999.99" step="0.01" placeholder="Sin recargo" value="${esc(row.delivery_price)}">
+            <span class="delivery-unit">${row.delivery_price_type === 'amount' ? '£ (GBP)' : '%'}</span>
+          </div>
+          <select class="delivery-type" data-id="${esc(row.id)}" aria-label="Tipo de Delivery Price, fila ${idx + 1}">
+            <option value="percentage" ${row.delivery_price_type !== 'amount' ? 'selected' : ''}>Porcentaje (%)</option>
+            <option value="amount" ${row.delivery_price_type === 'amount' ? 'selected' : ''}>Valor monetario (£ GBP)</option>
+          </select>
+          <small>Vacío = sin recargo</small>
+        </div>
         <button
           type="button"
           class="btn btn-danger btn-icon remove"
@@ -403,6 +419,7 @@ class Prices {
 
   async save(e, goNext = false) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (this.form && !this.form.reportValidity()) return false;
     const all = sel => Array.from(this.list.querySelectorAll(sel));
     const ids = all('.remove').map(b => b.dataset.id || '');
     const mins = all('.min-input').map(el => el.value);
@@ -452,7 +469,9 @@ class Prices {
       ids,
       min_qty: mins,
       max_qty: maxs,
-      prices
+      prices,
+      delivery_price: all('.delivery-input').map(el => el.value),
+      delivery_price_type: all('.delivery-type').map(el => el.value)
     };
     try {
       const response = await this.makeRequest(url, payload);
@@ -470,6 +489,7 @@ class Prices {
       return false;
     } catch (err) {
       console.error('Error:', err);
+      alert(err.message || 'Could not save prices.');
       return false;
     }
   }
@@ -516,13 +536,14 @@ class Prices {
   }
 
   handleListInput(e) {
-    const maps = [['min-input', 'min_qty'], ['max-input', 'max_qty'], ['price-input', 'price']];
+    const maps = [['min-input', 'min_qty'], ['max-input', 'max_qty'], ['price-input', 'price'], ['delivery-input', 'delivery_price'], ['delivery-type', 'delivery_price_type']];
     for (const [cls, key] of maps) {
       const el = e.target.closest(`.${cls}`);
       if (el) {
         const id = el.dataset.id;
         const row = this.rows.find(x => x.id === id);
         if (row) row[key] = el.value;
+        if (key === 'delivery_price_type') el.closest('.price-row').querySelector('.delivery-unit').textContent = el.value === 'amount' ? '£ (GBP)' : '%';
         break;
       }
     }

@@ -449,3 +449,21 @@ body{
     justify-content:center;
   }
 }
+
+/* Optional surcharge for each quantity tier. */
+.price-row { grid-template-columns: max-content repeat(3, minmax(80px, 1fr)) minmax(220px, 1.5fr) auto; }
+.delivery-price-controls { display: grid; gap: 8px; min-width: 0; }
+.delivery-price-controls label { font-weight: 600; }
+.delivery-value { display: flex; align-items: center; gap: 8px; }
+.delivery-value input { min-width: 0; width: 100%; }
+.delivery-unit { white-space: nowrap; }
+.delivery-price-controls select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+@media (max-width: 1000px) {
+  .price-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .price-row .meta, .price-row .delivery-price-controls { grid-column: 1 / -1; }
+  .price-row .remove { grid-column: 3; }
+}
+@media (max-width: 520px) {
+  .price-row { grid-template-columns: minmax(0, 1fr); }
+  .price-row .price-input, .price-row .remove { grid-column: 1; }
+}

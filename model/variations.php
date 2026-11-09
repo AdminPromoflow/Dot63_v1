@@ -1,6 +1,12 @@
 <?php
+require_once __DIR__ . "/delivery_price.php";
 class Variation {
   // ===== Atributos =====
+  private $delivery_price = null;
+  private $delivery_price_type = null;
+  public function setDeliveryPrice($value, $type): void {
+      [$this->delivery_price, $this->delivery_price_type] = DeliveryPrice::normalize($value, $type);
+  }
   private $connection;          // PDO wrapper (->getConnection())
   private $product_id;          // FK al producto (padre)
   private $variation_id;          // FK al producto (padre)
@@ -702,6 +708,7 @@ class Variation {
           // 2) Variación actual + datos del padre (name/sku) en una sola consulta
           $stmt = $pdo->prepare("
               SELECT
+                v.*,
                 v.variation_id,
                 v.name,
                 v.image,
@@ -804,6 +811,8 @@ class Variation {
                   'sku'              => $row['SKU'],
                   'pdf_artwork'      => $row['pdf_artwork'] ?? null,
                   'name_pdf_artwork' => $row['name_pdf_artwork'] ?? null,
+                  'delivery_price' => $row['delivery_price'] ?? null,
+                  'delivery_price_type' => $row['delivery_price_type'] ?? null,
                   'parent_id'        => !empty($row['parent_id']) ? (int)$row['parent_id'] : null,
 
                   // ✅ NUEVO: type_id agregado al return
@@ -1099,6 +1108,8 @@ class Variation {
               'type_id = :type_id',
               'name_pdf_artwork = :name_pdf_artwork',
               'parent_id = :parent_id',
+              'delivery_price = :delivery_price',
+              'delivery_price_type = :delivery_price_type',
           ];
 
           if ((int)$this->isAttachAnImage === 1) {
@@ -1117,6 +1128,8 @@ class Variation {
 
           $stmt = $pdo->prepare($sql);
 
+          $stmt->bindValue(':delivery_price', $this->delivery_price, $this->delivery_price === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+          $stmt->bindValue(':delivery_price_type', $this->delivery_price_type, $this->delivery_price_type === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
           // Bind common fields
           $stmt->bindValue(':name', (string)($this->name ?? ''), \PDO::PARAM_STR);
 

@@ -155,95 +155,51 @@ class Price {
            ? trim((string)$data["price_display_mode"])
            : "prices";
 
-       // 3) Save the global mode FIRST
-       $variation->setSKUVariation($skuVariation);
-       $variation->setPriceDisplayMode($price_display_mode);
-
-       $modeResult = $variation->updatePriceDisplayMode();
-       if (empty($modeResult['success'])) {
-           echo json_encode([
-               "success" => false,
-               "error"   => $modeResult['error'] ?? 'Could not update price_display_mode'
-           ]);
-           return;
-       }
-
-       // 4) Delete all previous prices for this variation
-       $price->setSKUVariation($skuVariation);
-       $price->deletePricesBySkuVariation();
-
-       // 5) If there are no rows, this is still valid
-       if (empty($mins) && empty($maxs) && empty($pricesA)) {
-           echo json_encode([
-               "success"            => true,
-               "insertados"         => 0,
-               "fallidos"           => 0,
-               "errores"            => [],
-               "prices"             => [],
-               "price_display_mode" => $price_display_mode
-           ]);
-           return;
-       }
-
-       // 6) Insert rows
-       $total = min(count($mins), count($maxs), count($pricesA));
-       $insertados = 0;
-       $errores = [];
-
-       for ($i = 0; $i < $total; $i++) {
-           $minq = $mins[$i] ?? null;
-           $maxq = $maxs[$i] ?? null;
-           $prc  = $pricesA[$i] ?? null;
-
-           $minq = ($minq === '' || $minq === null) ? null : (int)$minq;
-           $maxq = ($maxq === '' || $maxq === null) ? null : (int)$maxq;
-           $prc  = ($prc  === '' || $prc  === null) ? null : (float)$prc;
-
-           if ($prc === null) {
-               continue;
+       $pdo = $connection->getConnection();
+       try {
+           DeliveryPrice::requireColumns($pdo, 'prices');
+           $values = $data['delivery_price'] ?? [];
+           $types = $data['delivery_price_type'] ?? [];
+           if (!is_array($values) || !is_array($types) || count($mins) !== count($pricesA) || count($maxs) !== count($pricesA)
+               || count($values) !== count($pricesA) || count($types) !== count($pricesA)) {
+               throw new InvalidArgumentException('Incomplete price rows. Reload the page and try again.');
            }
-
-           if ($minq !== null && $maxq !== null && $maxq < $minq) {
-               $errores[] = [
-                   "index" => $i,
-                   "min"   => $minq,
-                   "max"   => $maxq,
-                   "price" => $prc,
-                   "msg"   => "max_quantity < min_quantity"
-               ];
-               continue;
+           $delivery = [];
+           foreach ($pricesA as $i => $value) {
+               $delivery[$i] = DeliveryPrice::normalize($values[$i] ?? null, $types[$i] ?? null);
+               if (!is_scalar($value) || !is_numeric($value) || !is_finite((float)$value) || (float)$value < 0) {
+                   throw new InvalidArgumentException('Price must be a non-negative number.');
+               }
+               foreach ([$mins[$i], $maxs[$i]] as $qty) {
+                   if ($qty !== '' && $qty !== null && (!is_scalar($qty) || !ctype_digit((string)$qty))) {
+                       throw new InvalidArgumentException('Quantity must be a non-negative integer.');
+                   }
+               }
+               if ($mins[$i] !== '' && $maxs[$i] !== '' && $mins[$i] !== null && $maxs[$i] !== null && (int)$maxs[$i] < (int)$mins[$i]) {
+                   throw new InvalidArgumentException('Max quantity cannot be less than min quantity.');
+               }
            }
-
-           $price->setMinQuantity($minq);
-           $price->setMaxQuantity($maxq);
-           $price->setPrice($prc);
-
-           $ok = $price->savePrice();
-           if ($ok) {
-               $insertados++;
-           } else {
-               $errores[] = [
-                   "index" => $i,
-                   "min"   => $minq,
-                   "max"   => $maxq,
-                   "price" => $prc,
-                   "msg"   => "No se pudo insertar la fila"
-               ];
+           $pdo->beginTransaction();
+           $variation->setSKUVariation($skuVariation);
+           $variation->setPriceDisplayMode($price_display_mode);
+           $modeResult = $variation->updatePriceDisplayMode();
+           if (empty($modeResult['success'])) throw new RuntimeException('Could not save price display mode.');
+           $price->setSKUVariation($skuVariation);
+           if (!$price->deletePricesBySkuVariation()) throw new RuntimeException('Could not replace prices.');
+           foreach ($pricesA as $i => $value) {
+               $price->setMinQuantity($mins[$i]);
+               $price->setMaxQuantity($maxs[$i]);
+               $price->setPrice($value);
+               $price->setDeliveryPrice(...$delivery[$i]);
+               if (!$price->savePrice()) throw new RuntimeException('Could not save price row. No changes were saved.');
            }
+           $pdo->commit();
+           echo json_encode(['success' => true, 'prices' => $price->getPricesBySKUVariation(), 'price_display_mode' => $price_display_mode]);
+       } catch (Throwable $error) {
+           if ($pdo->inTransaction()) $pdo->rollBack();
+           http_response_code(422);
+           echo json_encode(['success' => false, 'error' => $error->getMessage()]);
        }
-
-       // 7) Get updated rows
-       $price->setSKUVariation($skuVariation);
-       $rows = $price->getPricesBySKUVariation();
-
-       echo json_encode([
-           "success"            => true,
-           "insertados"         => $insertados,
-           "fallidos"           => count($errores),
-           "errores"            => $errores,
-           "prices"             => $rows,
-           "price_display_mode" => $price_display_mode
-       ]);
    }
 }
 
