@@ -3,17 +3,34 @@
 <?php elseif (!$listRows): ?>
   <p class="delivery-message"><?= $kind === 'price' ? 'No variations with configured prices found.' : 'No variations found.' ?></p>
 <?php else: ?>
+  <div class="delivery-tree">
+    <div class="delivery-tree-actions">
+      <button type="button" data-tree-action="expand">Expand all</button>
+      <button type="button" data-tree-action="collapse">Collapse all</button>
+    </div>
   <div class="delivery-table-wrap">
     <table class="delivery-table">
       <thead><tr><th scope="col">Variation<?= $kind === 'price' ? ' / Quantity range' : '' ?></th><th scope="col">Delivery Time (days)</th><th scope="col">Delivery Price</th><th scope="col">Save</th></tr></thead>
       <tbody>
-      <?php foreach ($listRows as $row):
+      <?php $previousVariation = null; foreach ($listRows as $row):
           $formId = 'delivery-' . $kind . '-' . (int)($kind === 'price' ? $row['price_id'] : $row['variation_id']);
           $type = $row['delivery_price_type'] ?? 'percentage';
       ?>
-        <tr class="delivery-edit-row">
+        <?php if ($kind === 'price' && $previousVariation !== $row['variation_id']): ?>
+          <tr class="delivery-price-group" data-tree-level="<?= (int)($row['level'] ?? 0) ?>" data-tree-product="<?= (int)$row['product_id'] ?>">
+            <th colspan="4" scope="rowgroup">
+              <div style="padding-left: <?= (int)($row['level'] ?? 0) * 20 ?>px">
+                <span class="delivery-tree-toggle-slot"></span>
+                <strong><?= $escape($row['name'] ?: 'Unnamed variation') ?></strong>
+                <small><?= $escape($row['product_name']) ?> · <?= $escape($row['SKU']) ?></small>
+              </div>
+            </th>
+          </tr>
+        <?php endif; $previousVariation = $row['variation_id']; ?>
+        <tr class="delivery-edit-row" data-tree-level="<?= (int)($row['level'] ?? 0) + ($kind === 'price' ? 1 : 0) ?>" data-tree-product="<?= (int)$row['product_id'] ?>">
           <th scope="row">
             <div class="delivery-variation" style="padding-left: <?= (int)($row['level'] ?? 0) * 20 ?>px">
+              <?php if ($kind === 'variation'): ?><span class="delivery-tree-toggle-slot"></span><?php endif; ?>
               <strong title="<?= $escape($row['parent_path'] ?? '') ?>"><?= !empty($row['level']) ? '<span aria-hidden="true">↳ </span>' : '' ?><?= $escape($row['name'] ?: 'Unnamed variation') ?></strong>
               <small><?= $escape($row['product_name']) ?> · <?= $escape($row['SKU']) ?></small>
               <?php if ($kind === 'price'): ?>
@@ -43,5 +60,6 @@
       <?php endforeach; ?>
       </tbody>
     </table>
+  </div>
   </div>
 <?php endif; ?>

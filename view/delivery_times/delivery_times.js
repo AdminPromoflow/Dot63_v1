@@ -23,6 +23,49 @@
       target.focus();
     });
   });
+  document.querySelectorAll('.delivery-tree').forEach(tree => {
+    const rows = Array.from(tree.querySelectorAll('[data-tree-level]'));
+    const branches = new Map();
+    rows.forEach((row, index) => {
+      const next = rows[index + 1];
+      const slot = row.querySelector('.delivery-tree-toggle-slot');
+      if (!slot || !next || next.dataset.treeProduct !== row.dataset.treeProduct || Number(next.dataset.treeLevel) <= Number(row.dataset.treeLevel)) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'delivery-tree-toggle';
+      button.setAttribute('aria-expanded', 'true');
+      const name = row.querySelector('strong')?.textContent || 'variation';
+      branches.set(row, {button, expanded: true, name});
+      slot.appendChild(button);
+      button.addEventListener('click', () => {
+        const branch = branches.get(row);
+        branch.expanded = !branch.expanded;
+        refresh();
+      });
+    });
+    function refresh() {
+      const ancestors = [];
+      rows.forEach(row => {
+        const level = Number(row.dataset.treeLevel);
+        while (ancestors.length && (ancestors[ancestors.length - 1].product !== row.dataset.treeProduct || ancestors[ancestors.length - 1].level >= level)) ancestors.pop();
+        row.hidden = ancestors.some(parent => !parent.expanded);
+        const branch = branches.get(row);
+        if (branch) {
+          branch.button.textContent = branch.expanded ? '▾' : '▸';
+          branch.button.setAttribute('aria-expanded', String(branch.expanded));
+          branch.button.setAttribute('aria-label', `${branch.expanded ? 'Collapse' : 'Expand'} ${branch.name}`);
+          ancestors.push({level, product: row.dataset.treeProduct, expanded: branch.expanded});
+        }
+      });
+    }
+    tree.querySelectorAll('[data-tree-action]').forEach(button => {
+      button.addEventListener('click', () => {
+        branches.forEach(branch => { branch.expanded = button.dataset.treeAction === 'expand'; });
+        refresh();
+      });
+    });
+    refresh();
+  });
   const dirtyForms = new Set();
   document.querySelectorAll('.delivery-edit-form').forEach(form => {
     const row = form.closest('.delivery-edit-row');

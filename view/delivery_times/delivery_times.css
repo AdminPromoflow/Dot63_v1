@@ -42,3 +42,12 @@ button:focus-visible, [tabindex]:focus-visible { outline: 3px solid #2563eb; out
 .delivery-save-status { display: block; white-space: normal; min-width: 90px; max-width: 240px; font-size: 12px; margin-top: 8px; color: #65758a; }
 .delivery-table th, .delivery-table td { vertical-align: top; }
 .delivery-quantity { font-weight: 600; }
+
+.delivery-tree-actions { display: flex; gap: 8px; padding: 16px 28px; }
+.delivery-tree-actions button { padding: 7px 12px; border: 1px solid #ccd5e0; border-radius: 7px; background: white; color: #172b45; cursor: pointer; }
+.delivery-tree-toggle { width: 28px; height: 28px; border: 1px solid #ccd5e0; border-radius: 6px; background: white; color: #172b45; cursor: pointer; font-size: 18px; margin-right: 6px; }
+.delivery-tree-toggle-slot { display: inline-block; }
+.delivery-variation > strong, .delivery-price-group strong { display: inline; }
+.delivery-price-group { background: #f1f5fa; }
+.delivery-price-group th { text-align: left; }
+.delivery-table tr[hidden] { display: none; }
