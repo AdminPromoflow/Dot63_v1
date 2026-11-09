@@ -10,6 +10,7 @@ header('Cache-Control: no-store');
 $email = Dot63Security::supplierEmail();
 $sku = is_string($_GET['sku'] ?? null) ? trim($_GET['sku']) : '';
 $rows = [];
+$priceRows = [];
 $loadError = false;
 try {
     $pdo = (new Database())->getConnection();
@@ -17,6 +18,7 @@ try {
         Dot63Security::fail(403, 'You cannot access this product.');
     }
     $rows = DeliverySettings::variations($pdo, $email, $sku);
+    $priceRows = DeliverySettings::priceRows($pdo, $email, $rows);
 } catch (Throwable $error) {
     error_log('Delivery overview: ' . $error->getMessage());
     http_response_code(503);
@@ -41,12 +43,14 @@ $escape = static function ($value): string { return htmlspecialchars((string)$va
       <h1 id="delivery-title">Delivery Times</h1>
       <div class="delivery-tabs" role="tablist" aria-label="Delivery views">
         <button id="variations-tab" type="button" role="tab" aria-selected="true" aria-controls="variations-panel" tabindex="0">Variations</button>
-        <button id="second-tab" type="button" role="tab" aria-selected="false" aria-controls="second-panel" tabindex="-1">Tab 2</button>
+        <button id="second-tab" type="button" role="tab" aria-selected="false" aria-controls="second-panel" tabindex="-1">Prices</button>
       </div>
       <div id="variations-panel" role="tabpanel" aria-labelledby="variations-tab" tabindex="0">
-        <?php require __DIR__ . '/list.php'; ?>
+        <?php $kind = 'variation'; $listRows = $rows; require __DIR__ . '/list.php'; ?>
       </div>
-      <div id="second-panel" role="tabpanel" aria-labelledby="second-tab" tabindex="0" hidden></div>
+      <div id="second-panel" role="tabpanel" aria-labelledby="second-tab" tabindex="0" hidden>
+        <?php $kind = 'price'; $listRows = $priceRows; require __DIR__ . '/list.php'; ?>
+      </div>
     </section>
     <div class="delivery-navigation">
       <button type="button" id="delivery-back">← Back to Prices</button>

@@ -29,3 +29,16 @@ button:focus-visible, [tabindex]:focus-visible { outline: 3px solid #2563eb; out
   .delivery-tabs { padding: 0 16px; }
   .delivery-navigation button { font-size: 13px; padding: 10px; }
 }
+
+.delivery-variation { min-width: 210px; }
+.delivery-variation strong span { color: #8b9bb0; }
+.delivery-table input[type="number"], .delivery-table select { width: 100%; min-width: 100px; padding: 10px 12px; border: 1px solid #ccd5e0; border-radius: 8px; background: #fff; color: #14263d; font: inherit; }
+.delivery-table input[name="delivery_time_days"] { max-width: 140px; }
+.delivery-amount { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.delivery-table select { font-size: 13px; }
+.delivery-table .delivery-unit { min-width: 48px; font-size: 12px; }
+.delivery-edit-form button { padding: 10px 18px; border: 0; border-radius: 8px; background: #172b45; color: white; cursor: pointer; }
+.delivery-edit-form button:disabled { opacity: .6; cursor: wait; }
+.delivery-save-status { display: block; white-space: normal; min-width: 90px; max-width: 240px; font-size: 12px; margin-top: 8px; color: #65758a; }
+.delivery-table th, .delivery-table td { vertical-align: top; }
+.delivery-quantity { font-weight: 600; }

@@ -11,8 +11,8 @@ const tabs = [element({'aria-controls': 'variations-panel'}), element({'aria-con
 const nodes = {'variations-panel':element(), 'second-panel':element(), 'delivery-back':element(), 'delivery-next':element()};
 let destination, current;
 vm.runInNewContext(fs.readFileSync('view/delivery_times/delivery_times.js','utf8'), {
- document:{querySelectorAll:()=>tabs,getElementById:id=>nodes[id]},
- window:{headerAddProduct:{setCurrentHeader:value=>current=value,goNext:value=>destination=value}}
+ document:{querySelectorAll:selector=>selector.includes("delivery-tabs") ? tabs : [],getElementById:id=>nodes[id]},
+ window:{addEventListener(){},headerAddProduct:{setCurrentHeader:value=>current=value,goNext:value=>destination=value}}
 });
 assert.equal(current,'Delivery Times');
 tabs[1].events.click();
