@@ -352,12 +352,12 @@ class CreateCaseModal {
     const response = await this.makeRequest(url, data);
     this.refreshing = false;
 
-    if (!response) return;
-
-    if (response.response === true) {
-      this.drawCases(response.result || []);
+    if (!response || response.response !== true) {
+      this.groupCases.textContent = 'Conversations could not be loaded. Refresh the page to try again.';
+      if (response) this.messagesSection.feedback(response.error || response.message || 'Unable to load conversations.');
+      return;
     }
-
+    this.drawCases(response.result || []);
     this.messagesSection.showNoCaseSelected();
   }
 
