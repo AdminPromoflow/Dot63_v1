@@ -1,4 +1,9 @@
 /* Conversation workspace */
+/* Reserve the fixed supplier menu's height, including its mobile breakpoint. */
+body.messages-page {
+  margin: 0;
+  padding-top: var(--header-height, 72px);
+}
 .msg-shell{--ink:#24354b;--muted:#66788d;--line:#e1e7ef;color:var(--ink);font-family:Poppins,system-ui,sans-serif;display:grid;grid-template-columns:310px minmax(0,1fr);max-width:1440px;margin:24px auto;padding:0 24px;gap:0;height:calc(100dvh - 140px);min-height:540px;box-sizing:border-box}
 .msg-shell *, .msg-case-modal *{box-sizing:border-box}
 .msg-sidebar{background:#f7f9fc;border:1px solid var(--line);border-radius:20px 0 0 20px;padding:26px 20px;display:flex;flex-direction:column;gap:20px;min-height:0}

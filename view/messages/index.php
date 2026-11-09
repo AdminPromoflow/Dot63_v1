@@ -19,7 +19,7 @@
   <!-- <link rel="stylesheet" href="../../view/directory/style.css?v=<?php echo filemtime("../../view/directory/style.css"); ?>"> -->
 </head>
 
-<body class="body_directory">
+<body class="body_directory messages-page">
   <?php include "../../view/global/menu_supplier/menu_general.php"; ?>
   <?php include "../../view/messages/messages_section/messages_section.php"; ?>
   <?php //include "../../view/directory/section_sidebar_navigation/section_sidebar_navigation.php" ?>
