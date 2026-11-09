@@ -257,6 +257,7 @@ class CreateCaseModal {
     this.messagesSection = messagesSection;
 
     this.groupCases = document.getElementById("group_cases");
+    this.caseActions = new CaseActions(this, '../../controller/promoflow/requests_Promoflow_api.php');
     document.getElementById('msg-search')?.addEventListener('input', () => this.drawCases(this.cases || []));
     this.init();
 
@@ -278,7 +279,7 @@ class CreateCaseModal {
   init() {}
 
   async readCasesAndMessages() {
-    if (this.refreshing || this.messagesSection.busy || document.hidden) return;
+    if (this.refreshing || this.messagesSection.busy || document.hidden || !this.caseActions.menu.hidden) return;
     this.refreshing = true;
     const revision = this.messagesSection.revision;
     const params = new URLSearchParams(window.location.search);
@@ -298,7 +299,7 @@ class CreateCaseModal {
     const url = "../../controller/promoflow/requests_Promoflow_api.php";
     const response = await this.makeRequest(url, data);
     this.refreshing = false;
-    if (revision !== this.messagesSection.revision) return;
+    if (revision !== this.messagesSection.revision || !this.caseActions.menu.hidden) return;
 
     if (!response) return;
 
@@ -362,7 +363,7 @@ class CreateCaseModal {
   }
 
   drawCases(result) {
-    if (!this.groupCases) return;
+    if (!this.groupCases || !this.caseActions.menu.hidden) return;
     this.cases = result;
     const search = document.getElementById('msg-search')?.value.trim().toLowerCase() || '';
     result = Array.isArray(result) ? result.filter(item => (item.name || '').toLowerCase().includes(search)) : [];
@@ -409,7 +410,7 @@ class CreateCaseModal {
         this.handleCaseClick(idCase);
       });
 
-      this.groupCases.appendChild(button);
+      this.caseActions.attach(button, caseItem);
     });
   }
 
@@ -456,6 +457,142 @@ class CreateCaseModal {
     } catch (error) {
       (this.messagesSection || this).feedback(error.message || "Unable to connect. Please try again.");
       return null;
+    }
+  }
+}
+
+class CaseActions {
+  constructor(owner, endpoint) {
+    this.owner = owner;
+    this.endpoint = endpoint;
+    this.menu = document.createElement('div');
+    this.menu.className = 'msg-case-actions';
+    this.menu.setAttribute('role', 'menu');
+    this.menu.setAttribute('aria-label', 'Case actions');
+    this.menu.hidden = true;
+    for (const [action, label] of [['rename_case', 'Rename case'], ['delete_case', 'Delete case']]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.setAttribute('role', 'menuitem');
+      if (action === 'delete_case') button.className = 'is-danger';
+      button.addEventListener('click', () => this.run(action));
+      this.menu.appendChild(button);
+    }
+    document.body.appendChild(this.menu);
+    document.addEventListener('pointerdown', event => {
+      if (!this.menu.contains(event.target)) this.close(false);
+    });
+    document.addEventListener('keydown', event => {
+      if (this.menu.hidden) return;
+      if (event.key === 'Escape' || event.key === 'Tab') this.close(event.key === 'Escape');
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const buttons = [...this.menu.querySelectorAll('button')];
+        const current = buttons.indexOf(document.activeElement);
+        const index = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
+          : (current + (event.key === 'ArrowUp' ? -1 : 1) + buttons.length) % buttons.length;
+        buttons[index].focus();
+      }
+    });
+    window.addEventListener('resize', () => this.close(false));
+    window.addEventListener('scroll', () => this.close(false), true);
+  }
+
+  attach(button, item) {
+    if (item.can_manage === false) {
+      this.owner.groupCases.appendChild(button);
+      return;
+    }
+    const row = document.createElement('div');
+    row.className = 'msg-case-row';
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'msg-case-more';
+    more.textContent = '⋯';
+    more.setAttribute('aria-label', `Actions for ${item.name || 'case'}`);
+    more.setAttribute('aria-haspopup', 'menu');
+    more.setAttribute('aria-expanded', 'false');
+    more.addEventListener('click', () => {
+      const rect = more.getBoundingClientRect();
+      this.open(item, more, rect.left, rect.bottom + 4);
+    });
+    row.addEventListener('contextmenu', event => {
+      event.preventDefault();
+      this.open(item, more, event.clientX, event.clientY);
+    });
+    button.addEventListener('keydown', event => {
+      if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+        event.preventDefault();
+        const rect = button.getBoundingClientRect();
+        this.open(item, more, rect.left, rect.bottom);
+      }
+    });
+    row.append(button, more);
+    this.owner.groupCases.appendChild(row);
+  }
+
+  open(item, trigger, x, y) {
+    if (this.owner.messagesSection.busy) return;
+    this.close(false);
+    this.item = item;
+    this.trigger = trigger;
+    trigger.setAttribute('aria-expanded', 'true');
+    this.menu.hidden = false;
+    this.menu.style.left = `${Math.max(8, Math.min(x, window.innerWidth - this.menu.offsetWidth - 8))}px`;
+    this.menu.style.top = `${Math.max(8, Math.min(y, window.innerHeight - this.menu.offsetHeight - 8))}px`;
+    this.menu.querySelector('button').focus();
+  }
+
+  close(restore = true) {
+    if (this.menu.hidden) return;
+    this.menu.hidden = true;
+    this.trigger?.setAttribute('aria-expanded', 'false');
+    if (restore && this.trigger?.isConnected) this.trigger.focus();
+  }
+
+  async run(action) {
+    const item = this.item;
+    const ui = this.owner.messagesSection;
+    this.close();
+    if (!item || ui.busy) return;
+    let name;
+    if (action === 'rename_case') {
+      name = window.prompt('New case name (up to 100 characters):', item.name || '');
+      if (name === null) return;
+      name = name.trim();
+      if (!name || [...name].length > 100) {
+        ui.feedback('Enter a case name of 1–100 characters.');
+        return;
+      }
+      if (name === item.name) return;
+    } else if (!window.confirm(`Delete case "${item.name || item.id_case}" and all its messages for everyone? This cannot be undone.`)) return;
+    ui.busy = true;
+    ui.revision = (ui.revision || 0) + 1;
+    ui.disableMessageForm();
+    try {
+      const result = await this.owner.makeRequest(this.endpoint, {action, caseId: item.id_case, name});
+      if (!result?.response) {
+        if (result) ui.feedback(result.error || result.message || 'Unable to update this case.');
+        return;
+      }
+      const selected = new URLSearchParams(location.search).get('case') === String(item.id_case);
+      if (action === 'delete_case' && selected) {
+        const url = new URL(location.href);
+        url.searchParams.delete('case');
+        location.assign(url.toString());
+        return;
+      }
+      this.owner.cases = (this.owner.cases || []).flatMap(entry => {
+        if (String(entry.id_case) !== String(item.id_case)) return [entry];
+        return action === 'delete_case' ? [] : [{...entry, name: result.name || name}];
+      });
+      this.owner.drawCases(this.owner.cases);
+      if (selected && action === 'rename_case') ui.setSelectedCaseHeader(result.name || name);
+      ui.feedback(result.message);
+    } finally {
+      ui.busy = false;
+      if (new URLSearchParams(location.search).has('case')) ui.enableMessageForm();
     }
   }
 }

@@ -26,7 +26,7 @@ class ResquesPromoflowAPI
 
         Dot63Security::post();
         $supplierEmail = Dot63Security::supplierEmail();
-        if (in_array($data['action'] ?? '', ['create_case', 'send_message', 'delete_message'], true)) Dot63Security::csrf($data);
+        if (in_array($data['action'] ?? '', ['create_case', 'send_message', 'delete_message', 'rename_case', 'delete_case'], true)) Dot63Security::csrf($data);
         if (($data['action'] ?? '') === 'create_case') {
             $supplier = new Users(new Database());
             $supplier->setEmail($supplierEmail);
@@ -45,6 +45,11 @@ class ResquesPromoflowAPI
 
             case 'create_case':
                 $this->createCase($data);
+                break;
+
+            case 'rename_case':
+            case 'delete_case':
+                $this->sendToDotPromoflow(['action' => $data['action'], 'caseId' => $data['caseId'] ?? null, 'name' => $data['name'] ?? null]);
                 break;
 
             case 'delete_message':
