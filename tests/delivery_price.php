@@ -16,21 +16,29 @@ class DeliveryTestPDO extends PDO {
     }
 }
 $pdo = new DeliveryTestPDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$pdo->exec('CREATE TABLE variations (variation_id INTEGER PRIMARY KEY, SKU TEXT, name TEXT, product_id INTEGER, parent_id INTEGER, type_id INTEGER, name_pdf_artwork TEXT, delivery_price DECIMAL(12,2), delivery_price_type TEXT)');
-$pdo->exec('CREATE TABLE prices (price_id INTEGER PRIMARY KEY, min_quantity INTEGER, max_quantity INTEGER, price REAL, variation_id INTEGER, delivery_price DECIMAL(12,2), delivery_price_type TEXT)');
+$pdo->exec('CREATE TABLE variations (variation_id INTEGER PRIMARY KEY, SKU TEXT, name TEXT, product_id INTEGER, parent_id INTEGER, type_id INTEGER, name_pdf_artwork TEXT, delivery_price DECIMAL(12,2), delivery_price_type TEXT, delivery_time_days INTEGER)');
+$pdo->exec('CREATE TABLE prices (price_id INTEGER PRIMARY KEY, min_quantity INTEGER, max_quantity INTEGER, price REAL, variation_id INTEGER, delivery_price DECIMAL(12,2), delivery_price_type TEXT, delivery_time_days INTEGER)');
 $pdo->exec("INSERT INTO variations (variation_id,SKU,name,product_id) VALUES (1,'TEST','Default',1)");
 $connection = new class($pdo) { private $pdo; function __construct($pdo) {$this->pdo=$pdo;} function getConnection() {return $this->pdo;} };
 $price = new Prices($connection); $price->setSKUVariation('TEST'); $price->setMinQuantity(1); $price->setMaxQuantity(100); $price->setPrice('3.25');
 foreach ([['12.50','percentage'],['2.75','amount'],['0','amount'],[null,null]] as [$value,$type]) {
-    $price->setDeliveryPrice($value,$type); check($price->savePrice(),'Insert price');
+    $price->setDeliveryTimeDays($value === null ? null : 8); $price->setDeliveryPrice($value,$type); check($price->savePrice(),'Insert price');
     $rows=$price->getPricesBySKUVariation(); $last=end($rows);
     check($last['delivery_price_type']===$type && ($value===null ? $last['delivery_price']===null : (float)$last['delivery_price']===(float)$value),'Price round trip');
+    check(($value === null ? $last['delivery_time_days'] === null : (int)$last['delivery_time_days'] === 8), 'Price delivery days round trip');
     check((float)$last['price']===3.25,'Base price unchanged');
 }
 $variation = new Variation($connection); $variation->setSKUVariation('TEST'); $variation->setSKUParentVariation('TEST'); $variation->setName('Default'); $variation->setIsAttachAnImage(0); $variation->setIsAttachAPDF(0);
 foreach ([['15','percentage'],['4.25','amount'],['0','percentage'],[null,null]] as [$value,$type]) {
-    $variation->setDeliveryPrice($value,$type); check($variation->updateVariationDetails(),'Update variation');
-    $row=$pdo->query('SELECT delivery_price,delivery_price_type FROM variations')->fetch(PDO::FETCH_ASSOC);
+    $variation->setDeliveryTimeDays($value === null ? null : 10); $variation->setDeliveryPrice($value,$type); check($variation->updateVariationDetails(),'Update variation');
+    $row=$pdo->query('SELECT delivery_time_days,delivery_price,delivery_price_type FROM variations')->fetch(PDO::FETCH_ASSOC);
+    check(($value === null ? $row['delivery_time_days'] === null : (int)$row['delivery_time_days'] === 10), 'Variation delivery days round trip');
     check($row['delivery_price_type']===$type && ($value===null ? $row['delivery_price']===null : (float)$row['delivery_price']===(float)$value),'Variation round trip');
 }
 echo "Delivery Price: validation, persistence, clearing and base-price preservation passed (SQLite memory).\n";
+
+foreach ([null, '', '0', 10, '65535'] as $value) check(DeliveryPrice::normalizeDays($value) === ($value === null || $value === '' ? null : (int)$value), 'Valid days');
+foreach ([-1, '1.5', '65536', 'abc', [], true, '1e2'] as $value) {
+    try { DeliveryPrice::normalizeDays($value); throw new RuntimeException('Invalid days accepted'); } catch (InvalidArgumentException $expected) {}
+}
+echo "Delivery Time: validation, persistence and clearing passed.\n";

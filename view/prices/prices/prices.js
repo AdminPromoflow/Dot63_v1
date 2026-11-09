@@ -159,6 +159,7 @@ class Prices {
       min_qty: String(min_qty ?? ''),
       max_qty: String(max_qty ?? ''),
       price: String(price ?? ''),
+      delivery_time_days: '',
       delivery_price: '',
       delivery_price_type: 'percentage',
       order: this.rows.length
@@ -318,6 +319,7 @@ class Prices {
       min_qty: String(r.min_quantity ?? r.min_qty ?? r.min ?? ''),
       max_qty: String(r.max_quantity ?? r.max_qty ?? r.max ?? ''),
       price: String(r.price ?? r.amount ?? ''),
+      delivery_time_days: String(r.delivery_time_days ?? ''),
       delivery_price: String(r.delivery_price ?? ''),
       delivery_price_type: r.delivery_price_type ?? 'percentage',
       order: Number(r.order ?? 0)
@@ -375,16 +377,18 @@ class Prices {
         >
 
         <div class="delivery-price-controls">
+          <label for="delivery-days-${esc(row.id)}">Delivery Time (days)</label>
+          <input id="delivery-days-${esc(row.id)}" class="delivery-days" data-id="${esc(row.id)}" type="number" min="0" max="65535" step="1" placeholder="Not set" value="${esc(row.delivery_time_days)}">
           <label for="delivery-${esc(row.id)}">Delivery Price</label>
           <div class="delivery-value">
-            <input id="delivery-${esc(row.id)}" class="delivery-input" data-id="${esc(row.id)}" type="number" min="0" max="9999999999.99" step="0.01" placeholder="Sin recargo" value="${esc(row.delivery_price)}">
+            <input id="delivery-${esc(row.id)}" class="delivery-input" data-id="${esc(row.id)}" type="number" min="0" max="9999999999.99" step="0.01" placeholder="No surcharge" value="${esc(row.delivery_price)}">
             <span class="delivery-unit">${row.delivery_price_type === 'amount' ? '£ (GBP)' : '%'}</span>
           </div>
-          <select class="delivery-type" data-id="${esc(row.id)}" aria-label="Tipo de Delivery Price, fila ${idx + 1}">
-            <option value="percentage" ${row.delivery_price_type !== 'amount' ? 'selected' : ''}>Porcentaje (%)</option>
-            <option value="amount" ${row.delivery_price_type === 'amount' ? 'selected' : ''}>Valor monetario (£ GBP)</option>
+          <select class="delivery-type" data-id="${esc(row.id)}" aria-label="Delivery Price type, row ${idx + 1}">
+            <option value="percentage" ${row.delivery_price_type !== 'amount' ? 'selected' : ''}>Percentage (%)</option>
+            <option value="amount" ${row.delivery_price_type === 'amount' ? 'selected' : ''}>Monetary amount (£ GBP)</option>
           </select>
-          <small>Vacío = sin recargo</small>
+          <small>Blank = no surcharge</small>
         </div>
         <button
           type="button"
@@ -470,6 +474,7 @@ class Prices {
       min_qty: mins,
       max_qty: maxs,
       prices,
+      delivery_time_days: all('.delivery-days').map(el => el.value),
       delivery_price: all('.delivery-input').map(el => el.value),
       delivery_price_type: all('.delivery-type').map(el => el.value)
     };
@@ -479,7 +484,7 @@ class Prices {
       if (data.success) {
         alert('The prices have been saved successfully.');
         if (goNext && window.headerAddProduct) {
-          headerAddProduct.goNext('../../view/preview_porduct/index.php');
+          headerAddProduct.goNext('../../view/delivery_times/index.php');
           return true;
         }
         location.reload();
@@ -536,7 +541,7 @@ class Prices {
   }
 
   handleListInput(e) {
-    const maps = [['min-input', 'min_qty'], ['max-input', 'max_qty'], ['price-input', 'price'], ['delivery-input', 'delivery_price'], ['delivery-type', 'delivery_price_type']];
+    const maps = [['min-input', 'min_qty'], ['max-input', 'max_qty'], ['price-input', 'price'], ['delivery-days', 'delivery_time_days'], ['delivery-input', 'delivery_price'], ['delivery-type', 'delivery_price_type']];
     for (const [cls, key] of maps) {
       const el = e.target.closest(`.${cls}`);
       if (el) {

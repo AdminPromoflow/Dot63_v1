@@ -15,11 +15,12 @@
 <nav class="cp-tabs" role="tablist" aria-label="Create product steps">
   <a class="cp-tab" data-href="../../view/category/index.php" tabindex="0">Category</a>
   <a class="cp-tab" data-href="../../view/group/index.php" tabindex="0">Group</a>
-  <a class="cp-tab" data-href="../../view/product_details/index.php" tabindex="0">Product Details</a>
+  <a class="cp-tab" data-href="../../view/product_details/index.php" data-tab="product details" tabindex="0">Product Types</a>
   <a class="cp-tab" data-href="../../view/variations/index.php" tabindex="0">Variations</a>
   <a class="cp-tab" data-href="../../view/images/index.php" tabindex="0">Images</a>
   <a class="cp-tab" data-href="../../view/items/index.php" tabindex="0">Items</a>
   <a class="cp-tab" data-href="../../view/prices/index.php" tabindex="0">Prices</a>
+  <a class="cp-tab" data-href="../../view/delivery_times/index.php" tabindex="0">Delivery Times</a>
   <a class="cp-tab" data-href="../../view/preview_porduct/index.php" tabindex="0">Preview Product</a>
 </nav>
 

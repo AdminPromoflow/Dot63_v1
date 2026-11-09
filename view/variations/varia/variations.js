@@ -13,6 +13,7 @@ class Variations {
     this.parentSelect = document.getElementById("parent_variations");
     this.nameInput = document.getElementById("variation_name");
     this.typeSelect = document.getElementById("group");
+    this.deliveryTimeInput = document.getElementById("delivery_time_days");
     this.deliveryPriceInput = document.getElementById("delivery_price");
     this.deliveryPriceType = document.getElementById("delivery_price_type");
     this.deliveryPriceType?.addEventListener("change", () => this.updateDeliveryUnit());
@@ -346,6 +347,7 @@ class Variations {
   }
 
   renderCurrentNameAndDefaultRules(current) {
+    if (this.deliveryTimeInput) this.deliveryTimeInput.value = current?.delivery_time_days ?? '';
     if (this.deliveryPriceInput) this.deliveryPriceInput.value = current?.delivery_price ?? '';
     if (this.deliveryPriceType) this.deliveryPriceType.value = current?.delivery_price_type ?? 'percentage';
     this.updateDeliveryUnit();
@@ -525,7 +527,9 @@ class Variations {
       return false;
     }
     if (this.deliveryPriceInput && !this.deliveryPriceInput.reportValidity()) return false;
+    if (this.deliveryTimeInput && !this.deliveryTimeInput.reportValidity()) return false;
     const formData = new FormData();
+    formData.append("delivery_time_days", this.deliveryTimeInput?.value ?? "");
     formData.append("delivery_price", this.deliveryPriceInput?.value ?? '');
     formData.append("delivery_price_type", this.deliveryPriceType?.value ?? 'percentage');
     formData.append("action", "save_variation_details");

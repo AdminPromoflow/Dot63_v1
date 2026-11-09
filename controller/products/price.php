@@ -158,14 +158,16 @@ class Price {
        $pdo = $connection->getConnection();
        try {
            DeliveryPrice::requireColumns($pdo, 'prices');
+           $days = $data['delivery_time_days'] ?? [];
            $values = $data['delivery_price'] ?? [];
            $types = $data['delivery_price_type'] ?? [];
-           if (!is_array($values) || !is_array($types) || count($mins) !== count($pricesA) || count($maxs) !== count($pricesA)
+           if (!is_array($days) || count($days) !== count($pricesA) || !is_array($values) || !is_array($types) || count($mins) !== count($pricesA) || count($maxs) !== count($pricesA)
                || count($values) !== count($pricesA) || count($types) !== count($pricesA)) {
                throw new InvalidArgumentException('Incomplete price rows. Reload the page and try again.');
            }
            $delivery = [];
            foreach ($pricesA as $i => $value) {
+               $days[$i] = DeliveryPrice::normalizeDays($days[$i] ?? null);
                $delivery[$i] = DeliveryPrice::normalize($values[$i] ?? null, $types[$i] ?? null);
                if (!is_scalar($value) || !is_numeric($value) || !is_finite((float)$value) || (float)$value < 0) {
                    throw new InvalidArgumentException('Price must be a non-negative number.');
@@ -190,6 +192,7 @@ class Price {
                $price->setMinQuantity($mins[$i]);
                $price->setMaxQuantity($maxs[$i]);
                $price->setPrice($value);
+               $price->setDeliveryTimeDays($days[$i]);
                $price->setDeliveryPrice(...$delivery[$i]);
                if (!$price->savePrice()) throw new RuntimeException('Could not save price row. No changes were saved.');
            }

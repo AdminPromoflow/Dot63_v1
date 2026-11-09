@@ -2,6 +2,10 @@
 require_once __DIR__ . "/delivery_price.php";
 class Variation {
   // ===== Atributos =====
+  private $delivery_time_days = null;
+  public function setDeliveryTimeDays($value): void {
+      $this->delivery_time_days = DeliveryPrice::normalizeDays($value);
+  }
   private $delivery_price = null;
   private $delivery_price_type = null;
   public function setDeliveryPrice($value, $type): void {
@@ -811,6 +815,7 @@ class Variation {
                   'sku'              => $row['SKU'],
                   'pdf_artwork'      => $row['pdf_artwork'] ?? null,
                   'name_pdf_artwork' => $row['name_pdf_artwork'] ?? null,
+                  'delivery_time_days' => $row['delivery_time_days'] ?? null,
                   'delivery_price' => $row['delivery_price'] ?? null,
                   'delivery_price_type' => $row['delivery_price_type'] ?? null,
                   'parent_id'        => !empty($row['parent_id']) ? (int)$row['parent_id'] : null,
@@ -1108,6 +1113,7 @@ class Variation {
               'type_id = :type_id',
               'name_pdf_artwork = :name_pdf_artwork',
               'parent_id = :parent_id',
+              'delivery_time_days = :delivery_time_days',
               'delivery_price = :delivery_price',
               'delivery_price_type = :delivery_price_type',
           ];
@@ -1128,6 +1134,7 @@ class Variation {
 
           $stmt = $pdo->prepare($sql);
 
+          $stmt->bindValue(':delivery_time_days', $this->delivery_time_days, $this->delivery_time_days === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
           $stmt->bindValue(':delivery_price', $this->delivery_price, $this->delivery_price === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
           $stmt->bindValue(':delivery_price_type', $this->delivery_price_type, $this->delivery_price_type === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
           // Bind common fields

@@ -14,12 +14,21 @@ final class DeliveryPrice
         return [(string)$value, $type];
     }
 
+    public static function normalizeDays($value): ?int
+    {
+        if ($value === null || $value === '') return null;
+        if ((!is_string($value) && !is_int($value)) || !ctype_digit((string)$value) || (float)$value > 65535) {
+            throw new InvalidArgumentException('Delivery Time must be a whole number of days between 0 and 65535.');
+        }
+        return (int)$value;
+    }
+
     public static function requireColumns(PDO $pdo, string $table): void
     {
         if (!in_array($table, ['variations', 'prices'], true)) throw new InvalidArgumentException('Invalid table.');
         $columns = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(PDO::FETCH_COLUMN);
-        if (!in_array('delivery_price', $columns, true) || !in_array('delivery_price_type', $columns, true)) {
-            throw new RuntimeException('Delivery Price is not available yet. Apply the Delivery Price SQL migration first.');
+        if (!in_array('delivery_price', $columns, true) || !in_array('delivery_price_type', $columns, true) || !in_array('delivery_time_days', $columns, true)) {
+            throw new RuntimeException('Delivery settings are not available yet. Apply the Delivery Price and Delivery Time SQL migrations first.');
         }
     }
 }

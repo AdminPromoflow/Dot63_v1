@@ -252,23 +252,22 @@ $jsVersion =
         <div class="cp-field">
           <label class="cp-label" for="delivery_price">Delivery Price</label>
           <div class="cp-inline-row">
-            <input id="delivery_price" name="delivery_price" type="number" min="0" max="9999999999.99" step="0.01" placeholder="Sin recargo" aria-describedby="delivery_price_help">
+            <input id="delivery_price" name="delivery_price" type="number" min="0" max="9999999999.99" step="0.01" placeholder="No surcharge" aria-describedby="delivery_price_help">
             <span id="delivery_price_unit">%</span>
           </div>
-          <label class="cp-label" for="delivery_price_type">Tipo de recargo</label>
+          <label class="cp-label" for="delivery_price_type">Surcharge type</label>
           <select id="delivery_price_type" name="delivery_price_type" class="cp-select">
-            <option value="percentage">Porcentaje (%)</option>
-            <option value="amount">Valor monetario (£ GBP)</option>
+            <option value="percentage">Percentage (%)</option>
+            <option value="amount">Monetary amount (£ GBP)</option>
           </select>
-          <small id="delivery_price_help" class="cp-hint">Opcional. Deja el valor vacío para no configurar un recargo.</small>
+          <small id="delivery_price_help" class="cp-hint">Optional. Leave blank for no surcharge.</small>
         </div>
 
-        <!-- Empty field for grid alignment -->
-
-        <div
-          class="cp-field"
-          aria-hidden="true"
-        ></div>
+        <div class="cp-field">
+          <label class="cp-label" for="delivery_time_days">Delivery Time (days)</label>
+          <input id="delivery_time_days" name="delivery_time_days" type="number" min="0" max="65535" step="1" placeholder="Not set" aria-describedby="delivery_time_help">
+          <small id="delivery_time_help" class="cp-hint">Optional. Enter a whole number of days.</small>
+        </div>
 
         <!-- Variation image -->
 

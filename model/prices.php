@@ -13,6 +13,10 @@ require_once __DIR__ . "/delivery_price.php";
  */
 class Prices {
   // ---- Properties (solo las necesarias) ----
+  private $delivery_time_days = null;
+  public function setDeliveryTimeDays($value): void {
+      $this->delivery_time_days = DeliveryPrice::normalizeDays($value);
+  }
   private $delivery_price = null;
   private $delivery_price_type = null;
   public function setDeliveryPrice($value, $type): void {
@@ -281,13 +285,14 @@ class Prices {
 
       // Insert
       $stmt = $pdo->prepare("
-        INSERT INTO prices (min_quantity, max_quantity, price, variation_id, delivery_price, delivery_price_type)
-        VALUES (:minq, :maxq, :price, :vid, :delivery_price, :delivery_price_type)
+        INSERT INTO prices (min_quantity, max_quantity, price, variation_id, delivery_price, delivery_price_type, delivery_time_days)
+        VALUES (:minq, :maxq, :price, :vid, :delivery_price, :delivery_price_type, :delivery_time_days)
       ");
       $stmt->execute([
         ':minq'  => $this->min_quantity,
         ':maxq'  => $this->max_quantity,
         ':price' => $this->price,
+        ':delivery_time_days' => $this->delivery_time_days,
         ':delivery_price' => $this->delivery_price,
         ':delivery_price_type' => $this->delivery_price_type,
         ':vid'   => $vid

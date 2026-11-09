@@ -1,0 +1,31 @@
+* { box-sizing: border-box; }
+body.body_delivery_times { margin: 0; padding-top: 72px; background: #f4f7fb; color: #14263d; font-family: Arial, sans-serif; }
+.delivery-page { max-width: 1280px; margin: 32px auto; padding: 0 24px 40px; }
+.delivery-card { margin-top: 24px; background: #fff; border: 1px solid #dfe5ec; border-radius: 18px; overflow: hidden; }
+.delivery-card h1 { font-size: 26px; margin: 0; padding: 28px 28px 20px; }
+.delivery-tabs { display: flex; gap: 24px; padding: 0 28px; border-bottom: 1px solid #dfe5ec; }
+.delivery-tabs button { border: 0; border-bottom: 3px solid transparent; background: transparent; color: #65758a; padding: 14px 4px; font: inherit; cursor: pointer; }
+.delivery-tabs [aria-selected="true"] { color: #172b45; border-bottom-color: #ff7a2f; font-weight: 700; }
+.delivery-card [role="tabpanel"] { min-height: 180px; }
+.delivery-card [hidden] { display: none; }
+.delivery-table-wrap { overflow-x: auto; }
+.delivery-table { width: 100%; border-collapse: collapse; }
+.delivery-table th, .delivery-table td { padding: 18px 28px; border-bottom: 1px solid #edf0f4; text-align: right; }
+.delivery-table th:first-child { text-align: left; }
+.delivery-table thead th { font-size: 12px; color: #65758a; background: #f8fafc; letter-spacing: .04em; white-space: nowrap; }
+.delivery-table tbody th { font-weight: 400; }
+.delivery-table strong { display: block; font-size: 15px; }
+.delivery-table small { display: block; margin-top: 6px; color: #65758a; font-size: 12px; }
+.delivery-table td { font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.delivery-table tbody tr:last-child > * { border-bottom: 0; }
+.delivery-message { padding: 28px; color: #65758a; }
+.delivery-navigation { display: flex; justify-content: space-between; gap: 16px; margin-top: 24px; }
+.delivery-navigation button { padding: 12px 18px; border: 1px solid #dfe5ec; border-radius: 10px; background: #fff; color: #172b45; font: inherit; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+@media (max-width: 650px) {
+  .delivery-page { margin-top: 16px; padding: 0 12px 24px; }
+  .delivery-table th, .delivery-table td { padding: 16px 12px; }
+  .delivery-card h1 { padding-left: 16px; }
+  .delivery-tabs { padding: 0 16px; }
+  .delivery-navigation button { font-size: 13px; padding: 10px; }
+}

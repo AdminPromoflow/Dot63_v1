@@ -80,6 +80,7 @@ class Variations {
       header('Content-Type: application/json; charset=utf-8');
 
       try {
+          $deliveryDays = DeliveryPrice::normalizeDays($data['delivery_time_days'] ?? null);
           $delivery = DeliveryPrice::normalize($data['delivery_price'] ?? null, $data['delivery_price_type'] ?? null);
           DeliveryPrice::requireColumns((new Database())->getConnection(), 'variations');
       } catch (Throwable $error) {
@@ -133,6 +134,7 @@ class Variations {
       $connection = new Database();
       $variation  = new Variation($connection);
 
+      $variation->setDeliveryTimeDays($deliveryDays);
       $variation->setDeliveryPrice(...$delivery);
       $variation->setName($name ?: '');
       $variation->setIsAttachAnImage($isAttachAnImage);
