@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . "/../security/bootstrap.php";
 
-include "../../controller/config/database.php";
-include "../../model/users.php";
+require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../model/users.php";
 
 class ResquesPromoflowAPI
 {
@@ -72,9 +72,9 @@ class ResquesPromoflowAPI
 
     public function sendToDotPromoflow($payload)
     {
-        $tokenFile = __DIR__ . '/../config/messages_bridge.php';
-        $token = is_file($tokenFile) ? require $tokenFile : '';
-        if (!is_string($token) || strlen($token) < 32) Dot63Security::fail(503, 'Messaging connection is not configured.');
+        // Authenticate through the supplier session; no separately deployed shared key.
+        $csrf = Dot63Security::csrfToken();
+        $sessionId = session_id();
         session_write_close();
         $ch = curl_init($this->dot63WebhookUrl);
 
@@ -83,7 +83,8 @@ class ResquesPromoflowAPI
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json; charset=utf-8',
-                'X-Messages-Token: ' . $token,
+                'X-Dot63-Session: ' . $sessionId,
+                'X-Dot63-CSRF-Token: ' . $csrf,
             ],
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_TIMEOUT => 20,
