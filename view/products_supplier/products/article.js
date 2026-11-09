@@ -4,6 +4,7 @@ class ProductsSupplierClass {
     this.form = document.getElementById("product-filters");
     this.count = document.getElementById("product-count");
     this.sortSelect = document.getElementById("sort-select");
+    this.supplierProducts = [];
 
     // 🔹 Enlazar eventos de click/teclado en filas + filtros/orden
     {
@@ -16,9 +17,16 @@ class ProductsSupplierClass {
       // ✅ Filtros (formulario)
       if (this.form) {
         this.form.addEventListener("submit", e => this.handleFormSubmit(e));
+        this.form.addEventListener("change", event => {
+          if (event.target.name === "category") this.drawGroupOptions();
+          if (["category", "group", "status"].includes(event.target.name)) this.applyFilters();
+        });
         this.form.addEventListener("reset", () => {
           // Espera a que se resetee el form para leer los nuevos valores
-          setTimeout(() => this.applyFilters(), 0);
+          setTimeout(() => {
+            this.drawGroupOptions();
+            this.applyFilters();
+          }, 0);
         });
       }
 
@@ -106,6 +114,7 @@ class ProductsSupplierClass {
 
       // ✅ res esperado: { success:true, data:[...] }
       const data = response?.data || [];
+      this.supplierProducts = data;
       this.drawProductsSupplier(data);
       this.drawCategoriesOptiones(data);
       this.drawGroupOptions(data);
@@ -144,14 +153,18 @@ class ProductsSupplierClass {
     }
   }
 
-  drawGroupOptions(list) {
+  drawGroupOptions(list = this.supplierProducts) {
     const select = document.getElementById("list_groups");
     if (!select) return;
-    const groups = [...new Set(list.map(product => String(product.group_name || "").trim()).filter(Boolean))];
+    const category = document.getElementById("list_categories")?.value || "";
+    const previousGroup = select.value;
+    const matchingProducts = list.filter(product => !category || product.category_name === category);
+    const groups = [...new Set(matchingProducts.map(product => String(product.group_name || "").trim()).filter(Boolean))];
     groups.sort((a, b) => a.localeCompare(b));
     select.innerHTML = '<option value="">All</option>' + groups.map(group =>
       `<option value="${this._escAttr(group)}">${this._escHtml(group)}</option>`
     ).join("");
+    select.value = groups.includes(previousGroup) ? previousGroup : "";
   }
 
   // =========================

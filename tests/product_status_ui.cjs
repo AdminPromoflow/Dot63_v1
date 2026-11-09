@@ -108,6 +108,17 @@ const approved = {status: 1, status_label: 'Published', pending_status: null, st
   assert.match(overview.tableOverviewDetails.innerHTML,/Published → Draft/);
   assert.doesNotMatch(overview.tableOverviewDetails.innerHTML,/<script>/);
   assert.match(overview.tableOverviewDetails.innerHTML,/Status change/);
+  assert.equal(element('dot63-approval-count').textContent, '1');
+  const overviewCell = {textContent: ''};
+  overview.tableOverviewDetails.querySelector = () => overviewCell;
+  context.fetch = async () => ({ok:false,json:async()=>({success:false,message:'Sign in to Promoflow to use this API.'})});
+  await overview.getOverviewData();
+  assert.match(overviewCell.textContent, /Sign in/);
+  assert.equal(element('dot63-approval-count').textContent, '—');
+  context.fetch = async () => ({ok:true,json:async()=>({success:true,result:[]})});
+  await overview.getOverviewData();
+  assert.match(overview.tableOverviewDetails.innerHTML, /No pending products/);
+  assert.equal(element('dot63-approval-count').textContent, '0');
 
   source = fs.readFileSync(path.join(root,'view/product/products/article.js'),'utf8').replace('const productsClass = new ProductsClass();','this.Catalog = ProductsClass;');
   vm.runInContext(source,context);
