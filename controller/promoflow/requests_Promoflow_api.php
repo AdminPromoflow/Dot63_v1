@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../security/bootstrap.php";
 
 include "../../controller/config/database.php";
 include "../../model/users.php";
@@ -10,6 +11,7 @@ class ResquesPromoflowAPI
     public function handleResques63API()
     {
         header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
 
         $input = file_get_contents('php://input');
         $data  = json_decode($input, true);
@@ -24,7 +26,7 @@ class ResquesPromoflowAPI
 
         Dot63Security::post();
         $supplierEmail = Dot63Security::supplierEmail();
-        if (in_array($data['action'] ?? '', ['create_case', 'send_message'], true)) Dot63Security::csrf($data);
+        if (in_array($data['action'] ?? '', ['create_case', 'send_message', 'delete_message'], true)) Dot63Security::csrf($data);
         if (($data['action'] ?? '') === 'create_case') {
             $supplier = new Users(new Database());
             $supplier->setEmail($supplierEmail);
@@ -43,6 +45,10 @@ class ResquesPromoflowAPI
 
             case 'create_case':
                 $this->createCase($data);
+                break;
+
+            case 'delete_message':
+                $this->deleteMessage($data);
                 break;
 
             case 'send_message':
@@ -66,6 +72,10 @@ class ResquesPromoflowAPI
 
     public function sendToDotPromoflow($payload)
     {
+        $tokenFile = __DIR__ . '/../config/messages_bridge.php';
+        $token = is_file($tokenFile) ? require $tokenFile : '';
+        if (!is_string($token) || strlen($token) < 32) Dot63Security::fail(503, 'Messaging connection is not configured.');
+        session_write_close();
         $ch = curl_init($this->dot63WebhookUrl);
 
         curl_setopt_array($ch, [
@@ -73,6 +83,7 @@ class ResquesPromoflowAPI
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json; charset=utf-8',
+                'X-Messages-Token: ' . $token,
             ],
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_TIMEOUT => 20,
@@ -94,13 +105,9 @@ class ResquesPromoflowAPI
         }
 
         if ($httpCode < 200 || $httpCode >= 300) {
-            echo json_encode([
-                'success' => false,
-                'error' => 'DOT63 API returned an invalid HTTP response.',
-                'http_code' => $httpCode,
-                'response' => $response
-            ]);
-            exit;
+            $remote = json_decode($response, true);
+            Dot63Security::fail($httpCode >= 400 && $httpCode < 600 ? $httpCode : 502,
+                is_array($remote) ? ($remote['message'] ?? 'Messaging request failed.') : 'Messaging request failed.');
         }
 
         echo $response;
@@ -219,6 +226,19 @@ class ResquesPromoflowAPI
         ];
 
         $this->sendToDotPromoflow($payload);
+    }
+
+    private function deleteMessage($data)
+    {
+        $id = filter_var($data['messageId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $case = filter_var($data['caseId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if (!$id || !$case) Dot63Security::fail(400, 'Invalid message or case.');
+        $user = new Users(new Database());
+        $user->setEmail(Dot63Security::supplierEmail());
+        $supplierId = $user->getIdSupplierByEmail();
+        if (!$supplierId) Dot63Security::fail(403, 'Supplier not found.');
+        $this->sendToDotPromoflow(['action' => 'delete_message', 'messageId' => $id,
+            'caseId' => $case, 'user_id' => $supplierId]);
     }
 
     private function getSuppliers($data)

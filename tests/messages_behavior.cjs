@@ -1,0 +1,21 @@
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const context = {document:{addEventListener(){}}, window:{location:{search:'?case=10'},confirm:()=>true}, location:{search:'?case=10'}, URLSearchParams};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('view/messages/messages_section/messages_section.js','utf8')+'\nthis.MessagesSection = MessagesSection;',context);
+(async()=>{
+ const ui=Object.create(context.MessagesSection.prototype);
+ Object.assign(ui,{busy:false,revision:0,input:{value:'Keep my text',disabled:false},sendButton:{disabled:false},feedback(text){this.status=text;},addMessageToView(){this.appended=true;},makeRequest:async()=>null});
+ await ui.sendMessage();
+ assert.equal(ui.input.value,'Keep my text'); assert.equal(ui.busy,false); assert.equal(ui.input.disabled,false); assert.equal(ui.appended,undefined);
+ ui.makeRequest=async()=>({response:true,id_message:7});
+ await ui.sendMessage(); assert.equal(ui.input.value,''); assert.equal(ui.appended,true);
+ let removed=false;
+ const button={disabled:false,closest:()=>({remove(){removed=true;}})};
+ ui.makeRequest=async()=>({response:false,message:'Denied'});
+ await ui.deleteMessage({id_message:7},button);assert.equal(removed,false);assert.equal(button.disabled,false);
+ ui.makeRequest=async()=>({response:true}); ui.previewBody={querySelector:()=>true};
+ await ui.deleteMessage({id_message:7},button);assert.equal(removed,true);
+ console.log('PASS failed sends retain drafts, successful sends, rejected and successful deletion');
+})().catch(error=>{console.error(error);process.exit(1);});

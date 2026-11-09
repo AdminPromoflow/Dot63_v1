@@ -1,5 +1,4 @@
 <?php
-
 $cssPath = '../../view/messages/messages_section/messages_section.css';
 $jsPath  = '../../view/messages/messages_section/messages_section.js';
 $jsPathLogic  = '../../view/messages/messages_section/messages_logics.js';
@@ -16,14 +15,11 @@ $jsVLogic  = is_file($jsPathLogic)  ? filemtime($jsPathLogic)  : time();
   <aside class="msg-sidebar" aria-label="Message conversation">
 
     <div class="msg-brand">
-      <h2>Messaging</h2>
-      <p>Live conversation</p>
+      <h2>Messages</h2>
+      <p>A space to keep work moving.</p>
     </div>
 
-    <!-- <button id="open-create-case" class="msg-btn msg-btn-primary" type="button">
-      + Create Case
-    </button> -->
-
+    <label class="msg-search">Search conversations<input id="msg-search" type="search" placeholder="Search by case name…"></label>
     <nav id="group_cases" class="msg-folders" aria-label="Conversations">
       <p class="msg-empty">Loading cases...</p>
     </nav>
@@ -33,7 +29,8 @@ $jsVLogic  = is_file($jsPathLogic)  ? filemtime($jsPathLogic)  : time();
   <main class="msg-main">
 
     <header class="msg-topbar">
-      <h1 class="msg-title">Inbox</h1>
+      <div><span class="msg-eyebrow">WORKSPACE / CONVERSATIONS</span><h1 class="msg-title">Inbox</h1></div>
+
     </header>
 
     <section class="msg-reader" aria-label="Selected message">
@@ -51,11 +48,13 @@ $jsVLogic  = is_file($jsPathLogic)  ? filemtime($jsPathLogic)  : time();
         </div>
       </article>
 
+      <p id="msg-feedback" role="status" aria-live="polite" hidden></p>
       <form class="msg-inputbar is-disabled" id="msg-form-promoflow" autocomplete="off">
         <input
           id="msg-input-promoflow"
           class="msg-input"
           type="text"
+          aria-label="Message"
           placeholder="Select a case before writing a message…"
           disabled
         >
@@ -71,54 +70,4 @@ $jsVLogic  = is_file($jsPathLogic)  ? filemtime($jsPathLogic)  : time();
 
 </section>
 
-<!-- Create Case Modal -->
-<div id="create-case-modal" class="msg-case-modal" hidden>
-  <div class="msg-case-modal-card" role="dialog" aria-modal="true" aria-labelledby="create-case-title">
-
-    <div class="msg-case-modal-header">
-      <h3 id="create-case-title">Create New Case</h3>
-
-      <button id="close-create-case" class="msg-btn msg-btn-close" type="button" aria-label="Close">
-        ✕
-      </button>
-    </div>
-
-    <form id="create-case-form" class="msg-case-form" autocomplete="off">
-
-      <label class="msg-case-field">
-        <span>Case name</span>
-        <input
-          id="case-name"
-          name="case_name"
-          type="text"
-          placeholder="Example: Approval request"
-          required
-        >
-      </label>
-
-      <label class="msg-case-field">
-        <span>Supplier</span>
-
-        <select id="case-supplier" name="id_supplier" required>
-          <option value="">Select supplier</option>
-        </select>
-      </label>
-
-      <div class="msg-case-modal-footer">
-        <button id="cancel-create-case" class="msg-btn" type="button">
-          Cancel
-        </button>
-
-        <!-- <button id="create_case_btn" class="msg-btn msg-btn-primary" type="submit">
-          Create Case
-        </button> -->
-      </div>
-
-    </form>
-
-  </div>
-</div>
-
-<script defer src="<?= $jsPathLogic ?>?v=<?= $jsVLogic ?>"></script>
-<script defer src="../../view/messages/messages_section/create_case.js?v=<?= filemtime(__DIR__ . '/create_case.js') ?>"></script>
 <script defer src="<?= $jsPath ?>?v=<?= $jsV ?>"></script>
