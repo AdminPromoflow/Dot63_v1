@@ -28,11 +28,17 @@ export function commonDelivery(catalog, selectedIds, priceId, quantity, subtotal
 
 export function renderDelivery(container, result, selected) {
   if (!container) return null;
+  const section = container.closest('.delivery-options');
+  if (section) section.hidden = !result.configured;
+  if (!result.configured) {
+    container.replaceChildren();
+    return null;
+  }
   const chosen = result.options.find(option => String(option.days) === String(selected)) || result.options[result.options.length-1] || null;
   const fragment = document.createDocumentFragment();
   if (!result.options.length) {
     const message = document.createElement('p');
-    message.textContent = result.configured ? 'No common delivery option' : 'Delivery options not configured';
+    message.textContent = 'No common delivery option';
     fragment.appendChild(message);
   }
   for (const option of result.options) {
