@@ -1,4 +1,4 @@
-const { commonDelivery, renderDelivery } = await import(new URL("../../global/delivery_options/common_delivery.js" + new URL(import.meta.url).search, import.meta.url));
+const { commonDelivery, renderDelivery, variationExtras } = await import(new URL("../../global/delivery_options/common_delivery.js" + new URL(import.meta.url).search, import.meta.url));
 const { QuantitySelector } = await import(new URL("../../global/quantity_selector/quantity_selector.js" + new URL(import.meta.url).search, import.meta.url));
 
 /*
@@ -145,7 +145,7 @@ export class PricesController {
     this.abortController = new AbortController();
     try {
       // [Customer 8.3.2] PreviewApi continúa el flujo en controller/order/product.php.
-      const result = await this.makeRequest(this.api.previewUrl, {
+      const result = variationExtras(this.store.deliveryCatalog, ids, quantity) || await this.makeRequest(this.api.previewUrl, {
         action: this.variationPricesAction,
         sku: this.getSku(),
         ids: ids,

@@ -36,6 +36,7 @@ export class VariationsController {
     this.root = document.getElementById("wrap-variations-group");
     this.empty = document.getElementById("variations_empty");
     this.rowCache = new Map();
+    this.nodeCache = new Map();
     this.generation = 0;
     this.requestVersions = new Map();
     this.requestControllers = new Map();
@@ -51,6 +52,7 @@ export class VariationsController {
     this.requestControllers.clear();
     this.requestVersions.clear();
     this.rowCache.clear();
+    this.nodeCache.clear();
     this.generation++;
     this.store.clearVariationSelections();
     if (this.root) this.root.innerHTML = "";
@@ -93,16 +95,24 @@ export class VariationsController {
     const request = this.startRequest(requestKey);
     try {
       // [Customer 6.2.3] PreviewApi continúa la ejecución en controller/order/product.php.
-      const result = await this.makeRequest(this.api.previewUrl, {
-        action: this.variationChildrenAction,
-        variation_id: id
-      }, {
-        requireSuccess: true,
-        signal: request.controller.signal
-      });
+      const cachedRow = this.rowCache.get(String(id));
+      let result = this.nodeCache.get(String(id));
+      if (!result && cachedRow?.variation?.has_children != null && Number(cachedRow.variation.has_children) === 0) {
+        result = {success: true, current: cachedRow, children: [], types: []};
+      }
+      if (!result) {
+        result = await this.makeRequest(this.api.previewUrl, {
+          action: this.variationChildrenAction,
+          variation_id: id
+        }, {
+          requireSuccess: true,
+          signal: request.controller.signal
+        });
+      }
       if (!this.isRequestCurrent(requestKey, request.version, id, generation, context.isRoot)) {
         return false;
       }
+      this.nodeCache.set(String(id), result);
       const current = result.current && typeof result.current === "object" ? result.current : null;
       if (current?.variation) {
         // [Customer 6.3] La fila completa queda en caché y Store la ubica en raíz o grupo.

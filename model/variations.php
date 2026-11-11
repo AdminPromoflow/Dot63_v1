@@ -183,7 +183,11 @@ class Variation {
           variations.price_display_mode,
           variations.parent_id,
           variations.product_id,
-          variations.type_id
+          variations.type_id,
+          EXISTS(SELECT 1 FROM variations child
+                 WHERE child.parent_id = variations.variation_id
+                   AND child.variation_id <> variations.variation_id
+                   AND child.product_id = variations.product_id) AS has_children
 
         FROM variations
         WHERE variations.parent_id = :parent_id

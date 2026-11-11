@@ -54,3 +54,22 @@ export function renderDelivery(container, result, selected) {
   container.replaceChildren(fragment);
   return chosen;
 }
+
+// Reuse the authorized product snapshot instead of requesting extras after every selection.
+export function variationExtras(catalog, ids, quantity) {
+  if (!catalog || !Array.isArray(catalog.prices) || !Array.isArray(catalog.variations)
+      || catalog.prices.some(price => !Object.prototype.hasOwnProperty.call(price, 'price'))) return null;
+  const wanted = new Set(ids.map(Number));
+  const extras = new Set(catalog.variations.filter(v => wanted.has(Number(v.id)) && v.mode === 'variation').map(v => Number(v.id)));
+  const tiers = [...catalog.prices].sort((a,b) => Number(b.min)-Number(a.min) || Number(b.id)-Number(a.id));
+  const prices = new Map(); const configured = new Set();
+  for (const tier of tiers) {
+    const id = Number(tier.variationId);
+    if (!extras.has(id)) continue;
+    if (Number(tier.price) > 0) configured.add(id);
+    if (!prices.has(id) && quantity >= Number(tier.min) && (!(Number(tier.max) > 0) || quantity <= Number(tier.max))) {
+      prices.set(id, {variation_id:id, price:Number(tier.price), price_display_mode:'variation'});
+    }
+  }
+  return {success:true, prices:[...prices.values()], priced_variation_ids:[...configured]};
+}

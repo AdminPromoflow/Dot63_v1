@@ -101,6 +101,8 @@ class Product {
 
       $isLoggedIn = !empty($_SESSION['login']);
       $email = strtolower(trim((string)($_SESSION['email'] ?? '')));
+      // Preview requests only read identity; release the session lock before database work.
+      session_write_close();
 
       return ($isLoggedIn && $email !== '') ? $email : null;
   }

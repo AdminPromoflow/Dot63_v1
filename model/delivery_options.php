@@ -41,7 +41,7 @@ final class DeliveryOptions
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) $variations[] = ['id'=>(int)$row['variation_id'], 'name'=>$row['name'], 'mode'=>$row['price_display_mode'] ?? 'prices', 'options'=>self::fromRow($row)];
         $stmt = $pdo->prepare('SELECT r.* FROM prices r JOIN variations v ON v.variation_id=r.variation_id WHERE v.product_id = ? ORDER BY r.min_quantity DESC, r.price_id DESC');
         $stmt->execute([$productId]); $prices=[];
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) $prices[]=['id'=>(int)$row['price_id'], 'variationId'=>(int)$row['variation_id'], 'min'=>(int)$row['min_quantity'], 'max'=>$row['max_quantity'] === null ? null : (int)$row['max_quantity'], 'options'=>self::fromRow($row)];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) $prices[]=['id'=>(int)$row['price_id'], 'variationId'=>(int)$row['variation_id'], 'price'=>(float)$row['price'], 'min'=>(int)$row['min_quantity'], 'max'=>$row['max_quantity'] === null ? null : (int)$row['max_quantity'], 'options'=>self::fromRow($row)];
         return ['variations'=>$variations,'prices'=>$prices];
     }
 }
