@@ -16,8 +16,8 @@ class DeliveryTestPDO extends PDO {
     }
 }
 $pdo = new DeliveryTestPDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$pdo->exec('CREATE TABLE variations (variation_id INTEGER PRIMARY KEY, SKU TEXT, name TEXT, product_id INTEGER, parent_id INTEGER, type_id INTEGER, name_pdf_artwork TEXT, delivery_price DECIMAL(12,2), delivery_price_type TEXT, delivery_time_days INTEGER)');
-$pdo->exec('CREATE TABLE prices (price_id INTEGER PRIMARY KEY, min_quantity INTEGER, max_quantity INTEGER, price REAL, variation_id INTEGER, delivery_price DECIMAL(12,2), delivery_price_type TEXT, delivery_time_days INTEGER)');
+$pdo->exec('CREATE TABLE variations (variation_id INTEGER PRIMARY KEY, SKU TEXT, name TEXT, product_id INTEGER, parent_id INTEGER, type_id INTEGER, name_pdf_artwork TEXT, delivery_price DECIMAL(12,2), delivery_price_type TEXT, delivery_time_days INTEGER, delivery_options TEXT)');
+$pdo->exec('CREATE TABLE prices (price_id INTEGER PRIMARY KEY, min_quantity INTEGER, max_quantity INTEGER, price REAL, variation_id INTEGER, delivery_price DECIMAL(12,2), delivery_price_type TEXT, delivery_time_days INTEGER, delivery_options TEXT)');
 $pdo->exec("INSERT INTO variations (variation_id,SKU,name,product_id) VALUES (1,'TEST','Default',1)");
 $connection = new class($pdo) { private $pdo; function __construct($pdo) {$this->pdo=$pdo;} function getConnection() {return $this->pdo;} };
 $price = new Prices($connection); $price->setSKUVariation('TEST'); $price->setMinQuantity(1); $price->setMaxQuantity(100); $price->setPrice('3.25');
@@ -42,3 +42,15 @@ foreach ([-1, '1.5', '65536', 'abc', [], true, '1e2'] as $value) {
     try { DeliveryPrice::normalizeDays($value); throw new RuntimeException('Invalid days accepted'); } catch (InvalidArgumentException $expected) {}
 }
 echo "Delivery Time: validation, persistence and clearing passed.\n";
+
+$multiple = json_encode([['days'=>8,'value'=>'25','type'=>'percentage'],['days'=>10,'value'=>'5','type'=>'amount']]);
+$price->setDeliveryOptions($multiple); $price->setDeliveryTimeDays(8); $price->setDeliveryPrice('30','percentage');
+check($price->savePrice(),'Save legacy first option');
+$last=$pdo->query('SELECT * FROM prices ORDER BY price_id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+check(count(json_decode($last['delivery_options'],true))===2,'Other price options preserved');
+$pdo->prepare('UPDATE variations SET delivery_options=?')->execute([$multiple]);
+$variation->setDeliveryTimeDays(null); $variation->setDeliveryPrice(null,null);
+check($variation->updateVariationDetails(),'Clear first option');
+$stored=$pdo->query('SELECT * FROM variations')->fetch(PDO::FETCH_ASSOC);
+check((int)$stored['delivery_time_days']===10 && count(json_decode($stored['delivery_options'],true))===1,'Remaining option becomes the legacy default');
+echo "Legacy editors preserve additional delivery options and synchronize the default.\n";

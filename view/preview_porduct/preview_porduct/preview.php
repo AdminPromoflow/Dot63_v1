@@ -14,6 +14,7 @@ $customerCssTime = filemtime(dirname(__DIR__, 2) . '/preview_product_customers/p
 // [Supplier 2.2] Todos estos módulos forman una sola funcionalidad. Si cambia cualquiera,
 // se actualiza la versión del entry point para evitar que el navegador use lógica antigua de caché.
 $moduleFiles = [
+  dirname(__DIR__, 2) . '/global/delivery_options/common_delivery.js',
   dirname(__DIR__, 2) . '/preview_product_customers/preview_porduct/preview_store.js',
   dirname(__DIR__, 2) . '/preview_product_customers/prices/prices.js',
   dirname(__DIR__, 2) . '/preview_product_customers/variations/variations.js',

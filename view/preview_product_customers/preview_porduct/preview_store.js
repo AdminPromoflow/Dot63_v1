@@ -12,6 +12,7 @@ export class PreviewStore {
   reset() {
     // [Customer 5.1.2] Un reset evita que otro producto herede precio o selecciones anteriores.
     this.product = null;
+    this.deliveryCatalog = null;
     this.readiness = null;
     this.permissions = {};
     this.selectedPrice = null;
@@ -26,6 +27,7 @@ export class PreviewStore {
   setProduct(payload) {
     // [Customer 5.1.3] Conservamos únicamente las partes de la respuesta usadas por la interfaz.
     this.product = payload.product || null;
+    this.deliveryCatalog = payload.delivery_catalog || null;
     this.readiness = payload.readiness || null;
     this.permissions = payload.permissions || {};
   }

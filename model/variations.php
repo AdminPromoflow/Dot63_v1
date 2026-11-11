@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/delivery_price.php";
+require_once __DIR__ . "/delivery_options.php";
 class Variation {
   // ===== Atributos =====
   private $delivery_time_days = null;
@@ -1107,6 +1108,16 @@ class Variation {
               $parentId = (int)$parentId;
           }
 
+          $currentStatement = $pdo->prepare('SELECT * FROM variations WHERE SKU=? LIMIT 1');
+          $currentStatement->execute([$targetSku]);
+          $currentDelivery = $currentStatement->fetch(PDO::FETCH_ASSOC);
+          $optionsJson = DeliveryOptions::updateFirst($currentDelivery['delivery_options'] ?? null, $this->delivery_time_days, $this->delivery_price, $this->delivery_price_type);
+          if ($optionsJson !== null) {
+              $first = json_decode($optionsJson, true)[0] ?? [];
+              $this->delivery_time_days = $first['days'] ?? null;
+              $this->delivery_price = $first['value'] ?? null;
+              $this->delivery_price_type = $first['type'] ?? null;
+          }
           // 3) Build UPDATE dynamically based on attach flags
           $set = [
               'name = :name',
@@ -1125,6 +1136,7 @@ class Variation {
               $set[] = 'pdf_artwork = :pdf_artwork';
           }
 
+          if ($optionsJson !== null) $set[] = 'delivery_options = :delivery_options';
           $sql = "
               UPDATE variations
                  SET " . implode(",\n                   ", $set) . "
@@ -1134,6 +1146,7 @@ class Variation {
 
           $stmt = $pdo->prepare($sql);
 
+          if ($optionsJson !== null) $stmt->bindValue(':delivery_options', $optionsJson, PDO::PARAM_STR);
           $stmt->bindValue(':delivery_time_days', $this->delivery_time_days, $this->delivery_time_days === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
           $stmt->bindValue(':delivery_price', $this->delivery_price, $this->delivery_price === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
           $stmt->bindValue(':delivery_price_type', $this->delivery_price_type, $this->delivery_price_type === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
@@ -1163,8 +1176,8 @@ class Variation {
           $pdo->commit();
 
           return $ok;
-      } catch (\PDOException $e) {
-          if (isset($pdo)) $pdo->rollBack();
+      } catch (\Throwable $e) {
+          if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
           return false;
       }
   }

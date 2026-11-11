@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../../model/delivery_options.php";
 /*
  * CONTROLADOR COMPARTIDO DE PREVIEWS
  * [Supplier/Customer 4.2, 6.2 y 8.3]
@@ -297,6 +298,7 @@ class Product {
                   'name' => (string)($product['group_name'] ?? ''),
               ],
           ],
+          'delivery_catalog' => DeliveryOptions::catalog($pdo, (int)$product['product_id']),
           'root_variation_id' => (int)($product['root_variation_id'] ?? 0),
           'readiness' => $readiness,
           'permissions' => [
@@ -561,6 +563,7 @@ class Product {
                   'name' => (string)($product['group_name'] ?? ''),
               ],
           ],
+          'delivery_catalog' => DeliveryOptions::catalog($pdo, (int)$product['product_id']),
           'root_variation_id' => (int)($product['root_variation_id'] ?? 0),
       ], JSON_UNESCAPED_UNICODE);
   }

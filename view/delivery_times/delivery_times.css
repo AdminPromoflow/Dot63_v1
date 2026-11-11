@@ -51,3 +51,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 3px solid #2563eb; out
 .delivery-price-group { background: #f1f5fa; }
 .delivery-price-group th { text-align: left; }
 .delivery-table tr[hidden] { display: none; }
+
+.delivery-option-line { display:grid; grid-template-columns:90px 110px minmax(150px,1fr) auto; gap:8px; margin-bottom:10px; }
+.delivery-option-line button,.delivery-add-option { border:1px solid #ccd5e0; border-radius:6px; background:white; color:#172b45; padding:8px; cursor:pointer; }
+@media(max-width:700px){ .delivery-option-line {grid-template-columns:100px 130px;} }

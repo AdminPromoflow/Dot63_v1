@@ -70,13 +70,35 @@
   document.querySelectorAll('.delivery-edit-form').forEach(form => {
     const row = form.closest('.delivery-edit-row');
     const status = row.querySelector('.delivery-save-status');
-    const controls = Array.from(form.elements);
+    const editor = row.querySelector('.delivery-option-editor');
+    function addOption(option = {}) {
+      const line = document.createElement('div');
+      line.className = 'delivery-option-line';
+      for (const [key, label, max, step] of [['days','Days',65535,1], ['value','Surcharge',9999999999.99,0.01]]) {
+        const input = document.createElement('input');
+        input.type = 'number'; input.min = '0'; input.max = String(max); input.step = String(step); input.required = true;
+        input.dataset.optionField = key; input.value = option[key] ?? ''; input.placeholder = label;
+        input.setAttribute('aria-label', label); input.setAttribute('form', form.id); line.appendChild(input);
+      }
+      const type = document.createElement('select'); type.dataset.optionField = 'type';
+      type.setAttribute('aria-label','Surcharge type'); type.setAttribute('form',form.id);
+      for (const [value,label] of [['percentage','Percentage (%)'],['amount','Amount (£ GBP)']]) {
+        const optionNode = document.createElement('option'); optionNode.value=value; optionNode.textContent=label; type.appendChild(optionNode);
+      }
+      type.value = option.type || 'percentage'; line.appendChild(type);
+      const remove = document.createElement('button'); remove.type='button'; remove.textContent='Remove';
+      remove.addEventListener('click', () => { line.remove(); dirtyForms.add(form); status.textContent='Unsaved changes'; });
+      line.appendChild(remove); editor.appendChild(line);
+    }
+    JSON.parse(editor.dataset.options || '[]').forEach(addOption);
+    row.querySelector('.delivery-add-option').addEventListener('click', () => {
+      addOption(); dirtyForms.add(form); status.textContent='Unsaved changes';
+    });
     row.addEventListener('input', () => {
       dirtyForms.add(form);
       status.textContent = 'Unsaved changes';
     });
     row.addEventListener('change', () => {
-      row.querySelector('.delivery-unit').textContent = form.elements.delivery_price_type.value === 'amount' ? '£ (GBP)' : '%';
       dirtyForms.add(form);
       status.textContent = 'Unsaved changes';
     });
@@ -84,6 +106,8 @@
       event.preventDefault();
       if (!form.reportValidity()) return;
       const data = Object.fromEntries(new FormData(form));
+      data.options = Array.from(editor.querySelectorAll('.delivery-option-line')).map(line => Object.fromEntries(Array.from(line.querySelectorAll('[data-option-field]')).map(input => [input.dataset.optionField, input.value])));
+      const controls = Array.from(row.querySelectorAll('input, select, button'));
       data.action = form.dataset.kind === 'price' ? 'save_price' : 'save_variation';
       controls.forEach(control => { control.disabled = true; });
       status.textContent = 'Saving…';

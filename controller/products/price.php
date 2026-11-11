@@ -158,6 +158,9 @@ class Price {
        $pdo = $connection->getConnection();
        try {
            DeliveryPrice::requireColumns($pdo, 'prices');
+           $price->setSKUVariation($skuVariation);
+           $previousOptions = [];
+           foreach ($price->getPricesBySKUVariation() as $previous) $previousOptions[(string)$previous['price_id']] = $previous['delivery_options'] ?? null;
            $days = $data['delivery_time_days'] ?? [];
            $values = $data['delivery_price'] ?? [];
            $types = $data['delivery_price_type'] ?? [];
@@ -192,6 +195,7 @@ class Price {
                $price->setMinQuantity($mins[$i]);
                $price->setMaxQuantity($maxs[$i]);
                $price->setPrice($value);
+               $price->setDeliveryOptions($previousOptions[(string)($ids[$i] ?? '')] ?? null);
                $price->setDeliveryTimeDays($days[$i]);
                $price->setDeliveryPrice(...$delivery[$i]);
                if (!$price->savePrice()) throw new RuntimeException('Could not save price row. No changes were saved.');

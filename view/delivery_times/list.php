@@ -10,7 +10,7 @@
     </div>
   <div class="delivery-table-wrap">
     <table class="delivery-table">
-      <thead><tr><th scope="col">Variation<?= $kind === 'price' ? ' / Quantity range' : '' ?></th><th scope="col">Delivery Time (days)</th><th scope="col">Delivery Price</th><th scope="col">Save</th></tr></thead>
+      <thead><tr><th scope="col">Variation<?= $kind === 'price' ? ' / Quantity range' : '' ?></th><th scope="col" colspan="2">Delivery options — days and surcharge</th><th scope="col">Save</th></tr></thead>
       <tbody>
       <?php $previousVariation = null; foreach ($listRows as $row):
           $formId = 'delivery-' . $kind . '-' . (int)($kind === 'price' ? $row['price_id'] : $row['variation_id']);
@@ -39,13 +39,9 @@
               <?php endif; ?>
             </div>
           </th>
-          <td><input form="<?= $formId ?>" name="delivery_time_days" type="number" min="0" max="65535" step="1" value="<?= $escape($row['delivery_time_days'] ?? '') ?>" placeholder="Not set" aria-label="Delivery Time (days)"></td>
-          <td>
-            <div class="delivery-amount"><input form="<?= $formId ?>" name="delivery_price" type="number" min="0" max="9999999999.99" step="0.01" value="<?= $escape($row['delivery_price'] ?? '') ?>" placeholder="No surcharge" aria-label="Delivery Price"><span class="delivery-unit"><?= $type === 'amount' ? '£ (GBP)' : '%' ?></span></div>
-            <select form="<?= $formId ?>" name="delivery_price_type" aria-label="Delivery Price type">
-              <option value="percentage" <?= $type === 'percentage' ? 'selected' : '' ?>>Percentage (%)</option>
-              <option value="amount" <?= $type === 'amount' ? 'selected' : '' ?>>Monetary amount (£ GBP)</option>
-            </select>
+          <td colspan="2">
+            <div class="delivery-option-editor" data-form-id="<?= $formId ?>" data-options="<?= $escape(json_encode(DeliveryOptions::fromRow($row))) ?>"></div>
+            <button type="button" class="delivery-add-option">+ Add delivery option</button>
           </td>
           <td>
             <form id="<?= $formId ?>" class="delivery-edit-form" data-kind="<?= $kind ?>">

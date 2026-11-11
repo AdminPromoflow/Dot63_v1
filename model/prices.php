@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/delivery_price.php";
+require_once __DIR__ . "/delivery_options.php";
 /**
  * =====================================================
  * Class: Prices
@@ -13,6 +14,8 @@ require_once __DIR__ . "/delivery_price.php";
  */
 class Prices {
   // ---- Properties (solo las necesarias) ----
+  private $delivery_options = null;
+  public function setDeliveryOptions($json): void { $this->delivery_options = $json; }
   private $delivery_time_days = null;
   public function setDeliveryTimeDays($value): void {
       $this->delivery_time_days = DeliveryPrice::normalizeDays($value);
@@ -272,6 +275,14 @@ class Prices {
     // Validaciones mínimas: requiere SKU de variación y price
     if (!$vsku) return false;
     if ($this->price === null) return false;
+    if ($this->delivery_options !== null) {
+      $this->delivery_options = DeliveryOptions::updateFirst($this->delivery_options, $this->delivery_time_days, $this->delivery_price, $this->delivery_price_type);
+      $first = json_decode($this->delivery_options, true)[0] ?? [];
+      $this->delivery_time_days = $first['days'] ?? null;
+      $this->delivery_price = $first['value'] ?? null;
+      $this->delivery_price_type = $first['type'] ?? null;
+    }
+
 
     try {
       $pdo = $this->connection->getConnection();
@@ -298,6 +309,9 @@ class Prices {
         ':vid'   => $vid
       ]);
 
+      if ($this->delivery_options !== null) {
+        $pdo->prepare('UPDATE prices SET delivery_options=? WHERE price_id=?')->execute([$this->delivery_options, $pdo->lastInsertId()]);
+      }
       return true;
 
     } catch (\PDOException $e) {

@@ -9,6 +9,7 @@ $cssFile = __DIR__ . '/preview.css';
 // [Customer 2.2] Todos estos módulos forman una sola funcionalidad. Si cambia cualquiera,
 // se actualiza la versión del entry point para evitar que el navegador use lógica antigua de caché.
 $moduleFiles = [
+  dirname(__DIR__, 2) . '/global/delivery_options/common_delivery.js',
   dirname(__DIR__, 2) . '/global/quantity_selector/quantity_selector.js',
   __DIR__ . '/preview_logic.js',
   __DIR__ . '/preview_api.js',

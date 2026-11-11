@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/delivery_price.php";
+require_once __DIR__ . "/delivery_options.php";
 /** Delivery configuration restricted to the signed-in supplier. */
 final class DeliverySettings
 {
@@ -66,7 +67,7 @@ final class DeliverySettings
         $result = [];
         foreach ($variations as $variation) {
             foreach ($byVariation[$variation['variation_id']] ?? [] as $price) {
-                $result[] = array_merge($variation, $price);
+                $result[] = array_merge($variation, $price, ['delivery_options'=>$price['delivery_options'] ?? null]);
             }
         }
         return $result;
@@ -92,6 +93,15 @@ final class DeliverySettings
         $stmt->execute([':ref' => $reference, ':owner' => strtolower(trim($owner))]);
         $id = $stmt->fetchColumn();
         if ($id === false) throw new InvalidArgumentException('This delivery configuration is unavailable.');
+        if (array_key_exists('options', $data)) {
+            $options = DeliveryOptions::normalize($data['options']);
+            $columns = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(PDO::FETCH_COLUMN);
+            if (!in_array('delivery_options', $columns, true)) throw new RuntimeException('Apply the delivery options SQL migration before saving.');
+            $first = $options[0] ?? null;
+            $stmt = $pdo->prepare("UPDATE $table SET delivery_options=:options, delivery_time_days=:days, delivery_price=:value, delivery_price_type=:type WHERE $key=:id");
+            $stmt->execute([':options'=>json_encode($options), ':days'=>$first['days'] ?? null, ':value'=>$first['value'] ?? null, ':type'=>$first['type'] ?? null, ':id'=>$id]);
+            return ['options'=>$options];
+        }
         // Update only delivery fields, preserving base prices and variation metadata.
         $stmt = $pdo->prepare("UPDATE $table SET delivery_time_days = :days, delivery_price = :value, delivery_price_type = :type WHERE $key = :id");
         $stmt->execute([':days' => $days, ':value' => $value, ':type' => $type, ':id' => $id]);

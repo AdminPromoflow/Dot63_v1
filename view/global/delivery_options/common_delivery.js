@@ -1,0 +1,50 @@
+// Shared by Supplier, Customer and Promoflow previews. All money is in pence.
+export function commonDelivery(catalog, selectedIds, priceId, quantity, subtotalPence) {
+  const ids = new Set(selectedIds.map(Number));
+  const variations = (catalog?.variations || []).filter(v => ids.has(Number(v.id)));
+  const sources = variations.map(v => ({name:v.name, options:v.options || []}));
+  const priceIds = new Set([Number(priceId)]);
+  for (const variation of variations.filter(v => v.mode === 'variation')) {
+    const tier = (catalog?.prices || []).find(p => Number(p.variationId) === Number(variation.id) && quantity >= p.min && (!p.max || quantity <= p.max));
+    if (tier) priceIds.add(Number(tier.id));
+  }
+  for (const price of catalog?.prices || []) {
+    if (!priceIds.has(Number(price.id)) || !ids.has(Number(price.variationId)) || quantity < price.min || (price.max && quantity > price.max)) continue;
+    sources.push({name:`Quantity tier ${price.min}–${price.max || 'No limit'}`, options:price.options || []});
+  }
+  const configured = sources.filter(source => source.options.length);
+  if (!configured.length) return {configured:false, options:[]};
+  const days = configured[0].options.map(option => Number(option.days)).filter(day => configured.every(source => source.options.some(option => Number(option.days) === day)));
+  const options = [...new Set(days)].sort((a,b)=>a-b).map(day => {
+    const breakdown = configured.map(source => {
+      const option = source.options.find(item => Number(item.days) === day);
+      const pence = option.type === 'percentage' ? Math.round(subtotalPence * Number(option.value) / 100) : Math.round(Number(option.value) * 100);
+      return {name:source.name, type:option.type, value:Number(option.value), pence};
+    });
+    return {days:day, pence:breakdown.reduce((sum,item)=>sum+item.pence,0), breakdown};
+  });
+  return {configured:true, options};
+}
+
+export function renderDelivery(container, result, selected) {
+  if (!container) return null;
+  const chosen = result.options.find(option => String(option.days) === String(selected)) || result.options[result.options.length-1] || null;
+  const fragment = document.createDocumentFragment();
+  if (!result.options.length) {
+    const message = document.createElement('p');
+    message.textContent = result.configured ? 'No common delivery option' : 'Delivery options not configured';
+    fragment.appendChild(message);
+  }
+  for (const option of result.options) {
+    const block = document.createElement('div');
+    const label = document.createElement('label'); label.className='delivery-option';
+    const radio = document.createElement('input');radio.type='radio';radio.name='delivery_option';radio.value=String(option.days);radio.checked=option===chosen;
+    const text = document.createElement('strong');text.textContent=`${option.days} days · +£${(option.pence/100).toFixed(2)}`;
+    label.append(radio,text);block.appendChild(label);
+    const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='View breakdown';details.appendChild(summary);
+    for(const item of option.breakdown){const line=document.createElement('p');line.textContent=`${item.name}: ${item.type==='percentage'?item.value+'%':'£'+item.value.toFixed(2)} → £${(item.pence/100).toFixed(2)}`;details.appendChild(line);}
+    block.appendChild(details);fragment.appendChild(block);
+  }
+  container.replaceChildren(fragment);
+  return chosen;
+}

@@ -1,3 +1,4 @@
+const { commonDelivery, renderDelivery } = await import(new URL("../../global/delivery_options/common_delivery.js" + new URL(import.meta.url).search, import.meta.url));
 const { QuantitySelector } = await import(new URL("../../global/quantity_selector/quantity_selector.js" + new URL(import.meta.url).search, import.meta.url));
 
 /*
@@ -211,13 +212,13 @@ export class PricesController {
     const safeBase = hasPrice ? basePrice : 0;
     const baseTotal = safeBase * safeQuantity;
     const extrasTotal = extrasPerUnit * safeQuantity;
-    const deliveryInputs = Array.from(this.deliveryOptions?.querySelectorAll('input[name="delivery_option"]') || []);
-    const delivery = deliveryInputs.find(input => input.value === this.store.selectedDelivery)
-      || deliveryInputs.find(input => input.defaultChecked);
-    deliveryInputs.forEach(input => { input.checked = input === delivery; });
-    const deliveryPercentage = Math.max(0, Number(delivery?.dataset.surcharge) || 0);
     const subtotalPence = Math.round((baseTotal + extrasTotal) * 100);
-    const deliveryPence = Math.round(subtotalPence * deliveryPercentage / 100);
+    const deliveryResult = commonDelivery(this.store.deliveryCatalog, (this.store.getSelectedVariationIds?.() || []), this.store.selectedPriceId, safeQuantity, subtotalPence);
+    const chosen = renderDelivery(this.deliveryOptions?.querySelector('.delivery-options-list'), deliveryResult, this.store.selectedDelivery);
+    this.store.selectedDelivery = chosen ? String(chosen.days) : null;
+    const deliveryUnavailable = deliveryResult.configured && !chosen;
+    const deliveryPercentage = chosen?.breakdown.filter(item => item.type === 'percentage').reduce((sum,item)=>sum+item.value,0) || 0;
+    const deliveryPence = chosen?.pence || 0;
     const deliverySurcharge = deliveryPence / 100;
     const total = (subtotalPence + deliveryPence) / 100;
 
@@ -228,20 +229,20 @@ export class PricesController {
     this.setText(this.elements.extraUnit, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasPerUnit)}` : "—");
     this.setText(this.elements.extraQuantity, hasPrice && !hasUnavailableSelection && extrasPerUnit > 0 ? safeQuantity.toLocaleString("en-GB") : "—");
     this.setText(this.elements.extraTotal, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasTotal)}` : "—");
-    this.setText(this.elements.deliveryPercentage, `(+${deliveryPercentage}%)`);
+    this.setText(this.elements.deliveryPercentage, chosen ? `(${chosen.days} days)` : "");
     this.setText(this.elements.deliverySurcharge, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(deliverySurcharge)}` : "—");
-    this.setText(this.elements.total, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(total)}` : "—");
+    this.setText(this.elements.total, hasPrice && !hasUnavailableSelection && !deliveryUnavailable ? `£${this.formatMoney(total)}` : "—");
     this.setText(this.elements.mainPrice, hasPrice ? this.formatMoney(safeBase) : "—");
     this.setText(this.elements.quantityLabel, hasPrice ? `${safeQuantity.toLocaleString("en-GB")} units` : "Select a price tier");
     this.setText(this.elements.unitHint, hasPrice ? hasUnavailableSelection ? "Choose an available option for this quantity" : `per unit at ${safeQuantity.toLocaleString("en-GB")} units` : "Pricing not configured");
 
     // [Customer 8.5] Solo una combinación con precio base, price_id y extras disponibles queda lista.
     this.onSummaryChange({
-      ready: hasPrice && !hasUnavailableSelection && Number(this.store.selectedPriceId) > 0,
+      ready: hasPrice && !hasUnavailableSelection && !deliveryUnavailable && Number(this.store.selectedPriceId) > 0,
       quantity: safeQuantity,
       basePrice: safeBase,
       extrasPerUnit,
-      deliveryOption: delivery?.value || "normal",
+      deliveryOption: chosen ? String(chosen.days) : null,
       deliveryPercentage,
       deliverySurcharge,
       total
