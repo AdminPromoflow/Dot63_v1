@@ -215,7 +215,7 @@ export class PricesController {
     const subtotalPence = Math.round((baseTotal + extrasTotal) * 100);
     const deliveryResult = commonDelivery(this.store.deliveryCatalog, (this.store.getSelectedVariationIds?.() || []), this.store.selectedPriceId, safeQuantity, subtotalPence);
     const chosen = renderDelivery(this.deliveryOptions?.querySelector('.delivery-options-list'), deliveryResult, this.store.selectedDelivery);
-    this.store.selectedDelivery = chosen ? String(chosen.days) : null;
+    this.store.selectedDelivery = chosen ? String(chosen.key ?? chosen.days) : null;
     const deliveryUnavailable = deliveryResult.configured && !chosen;
     const deliveryPercentage = chosen?.breakdown.filter(item => item.type === 'percentage').reduce((sum,item)=>sum+item.value,0) || 0;
     const deliveryPence = chosen?.pence || 0;
@@ -229,7 +229,7 @@ export class PricesController {
     this.setText(this.elements.extraUnit, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasPerUnit)}` : "—");
     this.setText(this.elements.extraQuantity, hasPrice && !hasUnavailableSelection && extrasPerUnit > 0 ? safeQuantity.toLocaleString("en-GB") : "—");
     this.setText(this.elements.extraTotal, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(extrasTotal)}` : "—");
-    this.setText(this.elements.deliveryPercentage, chosen ? `(${chosen.days} days)` : "");
+    this.setText(this.elements.deliveryPercentage, chosen ? `(${chosen.days} working days)` : "");
     this.setText(this.elements.deliverySurcharge, hasPrice && !hasUnavailableSelection ? `£${this.formatMoney(deliverySurcharge)}` : "—");
     this.setText(this.elements.total, hasPrice && !hasUnavailableSelection && !deliveryUnavailable ? `£${this.formatMoney(total)}` : "—");
     this.setText(this.elements.mainPrice, hasPrice ? this.formatMoney(safeBase) : "—");
@@ -242,7 +242,7 @@ export class PricesController {
       quantity: safeQuantity,
       basePrice: safeBase,
       extrasPerUnit,
-      deliveryOption: chosen ? String(chosen.days) : null,
+      deliveryOption: chosen ? String(chosen.key ?? chosen.days) : null,
       deliveryPercentage,
       deliverySurcharge,
       total

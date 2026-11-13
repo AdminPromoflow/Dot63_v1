@@ -142,7 +142,6 @@ class ClassGroup {
     const list = data && data.success && Array.isArray(data.data) ? data.data : [];
     for (let i = 0; i < list.length; i++) {
       const name = list[i].name || "";
-      const count = Number(list[i].products_count) || 0;
       const id = list[i].group_id;
       const row = document.createElement('div');
       row.className = 'cp-group';
@@ -152,10 +151,7 @@ class ClassGroup {
       const label = document.createElement('div');
       label.className = 'cp-group-name';
       label.textContent = name;
-      const meta = document.createElement('small');
-      meta.className = 'cp-group-meta';
-      meta.textContent = `${count} product${count !== 1 ? 's' : ''}`;
-      content.append(label, meta);
+      content.append(label);
       row.appendChild(content);
       group_list.appendChild(row);
     }

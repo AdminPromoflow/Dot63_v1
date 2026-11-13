@@ -144,7 +144,6 @@ class ClassCategory {
     var list = data && data.success && Array.isArray(data.data) ? data.data : [];
     for (var i = 0; i < list.length; i++) {
       var name = list[i].name || "";
-      var count = Number(list[i].products_count) || 0;
       var id = list[i].category_id;
       const row = document.createElement('div');
       row.className = 'cp-cat';
@@ -153,10 +152,7 @@ class ClassCategory {
       const label = document.createElement('span');
       label.className = 'cp-cat-name';
       label.textContent = name;
-      const meta = document.createElement('small');
-      meta.className = 'cp-cat-meta';
-      meta.textContent = `${count} products`;
-      row.append(label, meta);
+      row.append(label);
       category_list.appendChild(row);
     }
     this.getCategorySelected();

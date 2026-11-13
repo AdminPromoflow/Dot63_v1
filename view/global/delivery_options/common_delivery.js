@@ -23,7 +23,12 @@ export function commonDelivery(catalog, selectedIds, priceId, quantity, subtotal
     });
     return {days:day, pence:breakdown.reduce((sum,item)=>sum+item.pence,0), breakdown};
   });
-  return {configured:true, options};
+  // A zero-surcharge result uses the shared 15-working-day preview policy.
+  // Keep paid options keyed by their original day, even when that day is 15.
+  const freeOption = options.find(option => option.pence === 0);
+  const displayedOptions = options.filter(option => option.pence !== 0);
+  if (freeOption) displayedOptions.unshift({...freeOption, days:15, key:'free-15'});
+  return {configured:true, options:displayedOptions};
 }
 
 export function renderDelivery(container, result, selected) {
@@ -34,7 +39,7 @@ export function renderDelivery(container, result, selected) {
     container.replaceChildren();
     return null;
   }
-  const chosen = result.options.find(option => String(option.days) === String(selected)) || result.options[result.options.length-1] || null;
+  const chosen = result.options.find(option => String(option.key ?? option.days) === String(selected)) || result.options.find(option => option.pence === 0) || result.options[result.options.length-1] || null;
   const fragment = document.createDocumentFragment();
   if (!result.options.length) {
     const message = document.createElement('p');
@@ -44,8 +49,8 @@ export function renderDelivery(container, result, selected) {
   for (const option of result.options) {
     const block = document.createElement('div');
     const label = document.createElement('label'); label.className='delivery-option';
-    const radio = document.createElement('input');radio.type='radio';radio.name='delivery_option';radio.value=String(option.days);radio.checked=option===chosen;
-    const text = document.createElement('strong');text.textContent=`${option.days} days · +£${(option.pence/100).toFixed(2)}`;
+    const radio = document.createElement('input');radio.type='radio';radio.name='delivery_option';radio.value=String(option.key ?? option.days);radio.checked=option===chosen;
+    const text = document.createElement('strong');text.textContent=`${option.days} working days · +£${(option.pence/100).toFixed(2)}`;
     label.append(radio,text);block.appendChild(label);
     const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='View breakdown';details.appendChild(summary);
     for(const item of option.breakdown){const line=document.createElement('p');line.textContent=`${item.name}: ${item.type==='percentage'?item.value+'%':'£'+item.value.toFixed(2)} → £${(item.pence/100).toFixed(2)}`;details.appendChild(line);}
